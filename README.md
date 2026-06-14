@@ -11,14 +11,17 @@ in [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
 
 ## Tabs
 
+- **About** - the WaveWarZ hub: what it is, how a battle works
+  (buyShares/sellShares/endBattle/claimShares, 2-of-3 judging), the fee model, a
+  live on-chain snapshot, key addresses (Solscan links), team, and official links.
 - **Platform Floor** - the treasury/dev wallet `FNj...` daily end-of-day SOL
   balance vs the 3.5 SOL operating floor. Bars = daily close; the line = intraday
   high (peaks that get skimmed before close - e.g. the wallet hit **4.65 SOL**
   intraday on 2026-06-13 but closed at 3.51). DAY / WEEK toggle. Live from Dune.
-- **Analytics** - WaveWarZ program-wide on-chain: daily activity (14,681 txs over
-  230 active days since Aug 2025), treasury daily flow (lifetime net +3.51 SOL =
-  the floor), and a top-traders leaderboard (treasury excluded). Snapshot in
-  `lib/wwData.ts`.
+- **Analytics** - WaveWarZ program-wide on-chain: 1,127 battles / 9,045 trades /
+  122 traders (decoded instructions), battles-vs-trades timeline, daily activity
+  (14,681 txs over 230 days since Aug 2025), treasury daily flow (lifetime net
+  +3.51 SOL = the floor), and a top-traders leaderboard. Snapshot in `lib/wwData.ts`.
 - **My Trades** - a trader wallet's WaveWarZ PnL. Cumulative SOL PnL is live from
   on-chain (net -2.96 SOL across 518 txs), with SOL bet/returned, win rate, and
   biggest win/loss. Shown alongside the stats-app realized figure.
