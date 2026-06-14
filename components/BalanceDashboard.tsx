@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { sampleBalances } from "@/lib/sampleData";
+import { usd } from "@/lib/price";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -297,6 +298,9 @@ function Hero({
       >
         {fmt(balance)}
         <span style={{ fontSize: "0.4em", color: C.text, marginLeft: 10 }}>◎</span>
+      </p>
+      <p style={{ margin: "6px 0 0", fontFamily: C.mono, fontSize: 13, color: C.dim }}>
+        {usd(balance)}
       </p>
 
       <p

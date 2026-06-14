@@ -2,6 +2,7 @@
 
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
+import { usd } from "@/lib/price";
 
 const PROGRAM = "9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo";
 const TREASURY = "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37";
@@ -37,10 +38,10 @@ export default function AboutWaveWarZ() {
           <Stat label="CLAIMS" value={fmt(p.claims)} sub="winnings withdrawn" />
           <Stat label="UNIQUE TRADERS" value={fmt(p.uniqueTraders)} sub="distinct buyers" />
           {WW.volume.total > 0 && (
-            <Stat label="BUY VOLUME" value={`${fmt(WW.volume.total)} ◎`} sub="SOL committed on buys" />
+            <Stat label="BUY VOLUME" value={`${fmt(WW.volume.total)} ◎`} sub={usd(WW.volume.total)} />
           )}
           <Stat label="PROGRAM TXS" value={fmt(ps.programTxs)} sub={`${ps.activeDays} active days`} />
-          <Stat label="TREASURY NET" value={`${fmt(ps.treasuryNet, 2)} ◎`} sub="~the 3.5 floor" />
+          <Stat label="TREASURY NET" value={`${fmt(ps.treasuryNet, 2)} ◎`} sub={`~the 3.5 floor - ${usd(ps.treasuryNet)}`} />
         </Grid>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
           since {ps.firstDay} - snapshot {WW.generatedAt}. On-chain vs the

@@ -17,6 +17,7 @@ import {
 import { C, metaLabel } from "@/lib/theme";
 import { sampleTraderPnl } from "@/lib/traderSample";
 import { WW } from "@/lib/wwData";
+import { usd } from "@/lib/price";
 
 // ---------------------------------------------------------------------------
 // Known trader figures (from the WaveWarZ stats app). These are seeded until
@@ -133,6 +134,10 @@ export default function TraderScorecard() {
           {down ? "" : "+"}
           {fmt(onChainNet)}
           <span style={{ fontSize: "0.4em", color: C.text, marginLeft: 10 }}>◎</span>
+        </p>
+        <p style={{ margin: "6px 0 0", fontFamily: C.mono, fontSize: 13, color: C.dim }}>
+          {down ? "-" : "+"}
+          {usd(onChainNet)}
         </p>
         <p
           style={{
