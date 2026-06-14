@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
+  Cell,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -238,6 +241,39 @@ export default function TraderScorecard() {
           </ResponsiveContainer>
         </div>
       </section>
+
+      {/* monthly net PnL */}
+      {WW.pnlMonthly.length > 0 && (
+        <section
+          aria-label="Monthly net SOL PnL"
+          style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: "16px 8px 8px" }}
+        >
+          <div style={{ padding: "0 8px 12px" }}>
+            <span style={metaLabel}>MONTHLY NET SOL PnL</span>
+          </div>
+          <div style={{ height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={WW.pnlMonthly} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="month" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} />
+                <YAxis tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={44} tickFormatter={(v: number) => fmt(v, 1)} />
+                <Tooltip
+                  cursor={{ fill: "rgba(255,194,75,0.08)" }}
+                  contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
+                  labelStyle={{ color: C.dim }}
+                  formatter={(v: number | string) => [`${fmt(Number(v))} ◎`, "net"]}
+                />
+                <ReferenceLine y={0} stroke={C.dim} />
+                <Bar dataKey="net" isAnimationActive={!reducedMotion} radius={[2, 2, 0, 0]}>
+                  {WW.pnlMonthly.map((m, i) => (
+                    <Cell key={i} fill={m.net >= 0 ? C.good : C.danger} fillOpacity={0.85} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
 
       {/* biggest moves */}
       {WW.traderTop.wins.length > 0 && (

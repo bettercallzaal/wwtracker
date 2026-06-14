@@ -214,6 +214,62 @@ export default function PlatformAnalytics() {
         </Panel>
       )}
 
+      {/* platform buy volume */}
+      {WW.volume.series.length > 0 && (
+        <Panel label={`PLATFORM BUY VOLUME - ${fmt(WW.volume.total, 1)} ◎ COMMITTED`}>
+          <div style={{ height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={WW.volume.series} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="block_date" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={48} />
+                <YAxis tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={44} tickFormatter={(v: number) => fmt(v, 1)} />
+                <Tooltip
+                  cursor={{ fill: "rgba(255,194,75,0.08)" }}
+                  contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
+                  labelStyle={{ color: C.dim }}
+                  formatter={(v: number | string) => [`${fmt(Number(v), 2)} ◎`, "buy volume"]}
+                />
+                <Bar dataKey="vol" fill={C.accent} fillOpacity={0.8} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>
+            SOL committed by traders on buyShares txs (includes the ~1.5% fees + gas).
+          </p>
+        </Panel>
+      )}
+
+      {/* top traders by volume */}
+      {WW.volume.board.length > 0 && (
+        <Panel label="TOP TRADERS BY SOL VOLUME">
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 13 }}>
+              <thead>
+                <tr style={{ color: C.dim, textAlign: "left" }}>
+                  <th style={th}>#</th>
+                  <th style={th}>WALLET</th>
+                  <th style={{ ...th, textAlign: "right" }}>VOLUME ◎</th>
+                  <th style={{ ...th, textAlign: "right" }}>BUYS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {WW.volume.board.filter((t) => t.trader !== TREASURY).slice(0, 15).map((t, i) => {
+                  const mine = t.trader === ME;
+                  return (
+                    <tr key={t.trader} style={{ borderTop: `1px solid ${C.grid}`, color: mine ? C.accent : C.text }}>
+                      <td style={td}>{i + 1}</td>
+                      <td style={td} title={t.trader}>{short(t.trader)}{mine ? "  (you)" : ""}</td>
+                      <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(t.vol, 2)}</td>
+                      <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(t.buys)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+      )}
+
       {/* top traders */}
       <Panel label="TOP TRADERS BY PROGRAM TXS (TREASURY EXCLUDED)">
         <div style={{ overflowX: "auto" }}>
