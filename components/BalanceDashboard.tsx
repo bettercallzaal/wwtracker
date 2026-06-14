@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bar,
-  BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
+  Line,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -24,6 +25,7 @@ const FLOOR = 3.5;
 interface BalanceRow {
   block_date: string;
   eod_sol_balance: number;
+  day_high?: number;
 }
 
 type Status = "loading" | "live" | "sample" | "error";
@@ -78,8 +80,14 @@ function toWeekly(rows: BalanceRow[]): BalanceRow[] {
     const monday = new Date(d);
     monday.setUTCDate(d.getUTCDate() + toMonday);
     const key = monday.toISOString().slice(0, 10);
-    // rows are ascending, so the last write for a week is its closing balance.
-    byWeek.set(key, { block_date: key, eod_sol_balance: r.eod_sol_balance });
+    // rows ascending: last write = week close; day_high carries the week's peak.
+    const prev = byWeek.get(key);
+    const high = Math.max(prev?.day_high ?? 0, r.day_high ?? r.eod_sol_balance);
+    byWeek.set(key, {
+      block_date: key,
+      eod_sol_balance: r.eod_sol_balance,
+      day_high: high,
+    });
   }
   return Array.from(byWeek.values()).sort((a, b) =>
     a.block_date.localeCompare(b.block_date),
@@ -136,7 +144,12 @@ export default function BalanceDashboard() {
   );
 
   const chartData = useMemo(
-    () => series.map((r) => ({ date: r.block_date, balance: r.eod_sol_balance })),
+    () =>
+      series.map((r) => ({
+        date: r.block_date,
+        balance: r.eod_sol_balance,
+        high: r.day_high ?? r.eod_sol_balance,
+      })),
     [series],
   );
 
@@ -149,7 +162,11 @@ export default function BalanceDashboard() {
     const prior = rows[idx30].eod_sol_balance;
     const change30 = current - prior;
     const change30Pct = prior !== 0 ? (change30 / prior) * 100 : 0;
-    const ath = rows.reduce((m, r) => Math.max(m, r.eod_sol_balance), 0);
+    // ATH uses intraday highs - peaks that get skimmed before close still count.
+    const ath = rows.reduce(
+      (m, r) => Math.max(m, r.day_high ?? r.eod_sol_balance),
+      0,
+    );
     return { current, change30, change30Pct, ath, days: rows.length };
   }, [rows]);
 
@@ -400,6 +417,7 @@ function Tile({
 interface ChartPoint {
   date: string;
   balance: number;
+  high: number;
 }
 
 function ChartCard({
@@ -442,9 +460,14 @@ function ChartCard({
         </div>
       </div>
 
+      <div style={{ marginBottom: 8 }}>
+        <span style={{ fontFamily: C.mono, fontSize: 11, color: C.dim }}>
+          bars = daily close - line = intraday high (peaks skimmed before close)
+        </span>
+      </div>
       <div style={{ height: 360 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+          <ComposedChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="date"
@@ -470,8 +493,10 @@ function ChartCard({
                 fontSize: 12,
               }}
               labelStyle={{ color: C.dim }}
-              itemStyle={{ color: C.accent }}
-              formatter={(v: number | string) => [`${fmt(Number(v))} ◎`, "balance"]}
+              formatter={(v: number | string, name) => [
+                `${fmt(Number(v))} ◎`,
+                name === "high" ? "intraday high" : "close",
+              ]}
             />
             <ReferenceLine
               y={FLOOR}
@@ -490,11 +515,19 @@ function ChartCard({
                 <Cell
                   key={i}
                   fill={d.balance >= FLOOR ? C.good : C.accent}
-                  fillOpacity={d.balance >= FLOOR ? 0.9 : 0.75}
+                  fillOpacity={d.balance >= FLOOR ? 0.9 : 0.7}
                 />
               ))}
             </Bar>
-          </BarChart>
+            <Line
+              type="monotone"
+              dataKey="high"
+              stroke={C.text}
+              strokeWidth={1.5}
+              dot={false}
+              isAnimationActive={!reducedMotion}
+            />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </section>

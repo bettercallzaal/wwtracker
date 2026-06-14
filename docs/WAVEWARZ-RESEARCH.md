@@ -127,15 +127,27 @@ Tables: `solana.instruction_calls` (tx_signer, executing_account, data),
 scans bounded by `block_date` / `executing_account`. Snapshot baked into the app
 via `lib/wwData.ts`; regenerate by re-running `scripts/ww-research.sh`.
 
-Datasets (from program `9TUf`, since 2025-08-01):
-- `daily` - daily txs + unique traders touching the program. **230 days, active
-  since 2025-08-01.**
-- `traders` - top wallets by program tx count.
-- `pnl` - Zaal wallet per-tx SOL delta on WaveWarZ txs; cumulative = real realized
-  PnL (includes fee drag). Drives the My Trades chart.
-- `devflow` - treasury wallet daily inflow / outflow / net.
+Datasets (from program `9TUf`, since 2025-08-01; snapshot 2026-06-14):
 
-(Exact figures land in `lib/wwData.ts` + the app's Analytics tab.)
+**Platform (program 9TUf):**
+- 14,681 program txs across 230 active days (2025-08-01 -> 2026-06-13).
+- Treasury (`FNj`) lifetime: 50.57 SOL in / 47.06 SOL out / **net +3.51 SOL** -
+  which lands exactly on the ~3.5 operating floor. Strong confirmation that `FNj`
+  is the `wavewarz_wallet` and the floor model is real.
+- Top raw tx signer is the treasury itself (5,022 txs - it signs every battle),
+  so it is excluded from the trader leaderboard.
+
+**Zaal trader (`4aY1`):**
+- 518 WaveWarZ txs. 18.02 SOL bet out, 15.06 SOL returned -> **net -2.96 SOL**
+  on-chain (every WaveWarZ tx's SOL delta, includes fees).
+- Win rate 35.7% (185 positive-delta txs / 333 negative). Biggest single win
+  +0.60 SOL, biggest single loss -0.90 SOL.
+- Note the divergence from the stats app's realized PnL (-1.6493 SOL / -30.67%):
+  the app nets settled positions per battle, while our figure is raw net SOL
+  flow across all WaveWarZ txs. The ~1.3 SOL gap = open/unclaimed positions +
+  methodology. Both are shown in the My Trades tab.
+
+Figures live in `lib/wwData.ts` and the app's Analytics + My Trades tabs.
 
 ## 7. Open questions / next
 

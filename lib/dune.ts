@@ -7,8 +7,10 @@ import "server-only";
 export interface BalanceRow {
   /** YYYY-MM-DD */
   block_date: string;
-  /** End-of-day balance. Native SOL or chosen SPL token, already decimal-adjusted. */
+  /** End-of-day (closing) balance. Native SOL or SPL, already decimal-adjusted. */
   eod_sol_balance: number;
+  /** Intraday high for the day (peaks that get skimmed before close). */
+  day_high?: number;
 }
 
 export interface DuneFetchResult {
@@ -84,9 +86,12 @@ function normalizeRows(raw: unknown): BalanceRow[] {
         row.eod_token_balance ??
         row.eod_balance ??
         row.balance;
+      const eod = toNumber(balance);
+      const high = row.day_high != null ? toNumber(row.day_high) : eod;
       return {
         block_date: date.slice(0, 10),
-        eod_sol_balance: toNumber(balance),
+        eod_sol_balance: eod,
+        day_high: high,
       };
     })
     .filter((r): r is BalanceRow => r !== null)

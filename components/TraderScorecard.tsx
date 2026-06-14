@@ -59,6 +59,7 @@ export default function TraderScorecard() {
   }, [live]);
 
   const onChainNet = live ? WW.pnl[WW.pnl.length - 1].cum : TRADER.netPnlSol;
+  const ts = WW.traderStats;
 
   const fmt = (n: number, dp = 2) =>
     n.toLocaleString(undefined, {
@@ -146,7 +147,7 @@ export default function TraderScorecard() {
         </p>
       </section>
 
-      {/* tiles */}
+      {/* tiles - real on-chain trade stats */}
       <div
         style={{
           display: "grid",
@@ -154,17 +155,21 @@ export default function TraderScorecard() {
           gap: 12,
         }}
       >
-        <Tile label="ROI">
-          <span style={{ color: pnlColor }}>
-            {down ? "" : "+"}
-            {fmt(TRADER.roiPct, 2)}%
-          </span>
+        <Tile label="WIN RATE">
+          {fmt(ts.winRate, 1)}%
+          <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>
+            {ts.winTxs}W / {ts.lossTxs}L
+          </small>
         </Tile>
-        <Tile label="BATTLES">{TRADER.battles.toLocaleString()}</Tile>
-        <Tile label="LEADERBOARD RANK">#{TRADER.rank}</Tile>
-        <Tile label="TOTAL VOLUME">
-          <span style={{ color: C.dim }}>pending</span>
+        <Tile label="SOL BET">{fmt(ts.solBet)} ◎</Tile>
+        <Tile label="SOL RETURNED">{fmt(ts.solReturned)} ◎</Tile>
+        <Tile label="BIGGEST WIN">
+          <span style={{ color: C.good }}>+{fmt(ts.biggestWin)} ◎</span>
         </Tile>
+        <Tile label="BIGGEST LOSS">
+          <span style={{ color: C.danger }}>{fmt(ts.biggestLoss)} ◎</span>
+        </Tile>
+        <Tile label="BATTLES (STATS APP)">{TRADER.battles.toLocaleString()}</Tile>
       </div>
 
       {/* cumulative PnL chart */}

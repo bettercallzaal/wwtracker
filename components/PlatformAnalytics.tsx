@@ -114,6 +114,21 @@ export default function PlatformAnalytics() {
             {summary.peak.block_date}
           </small>
         </Tile>
+        <Tile label="TREASURY NET">
+          <span style={{ color: WW.platformStats.treasuryNet >= 0 ? C.good : C.danger }}>
+            {fmt(WW.platformStats.treasuryNet, 2)} ◎
+          </span>
+          <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>
+            ~the 3.5 floor
+          </small>
+        </Tile>
+        <Tile label="TREASURY IN / OUT">
+          <span style={{ fontSize: 16 }}>
+            <span style={{ color: C.good }}>{fmt(WW.platformStats.treasuryInflow, 1)}</span>
+            {" / "}
+            <span style={{ color: C.danger }}>{fmt(WW.platformStats.treasuryOutflow, 1)}</span> ◎
+          </span>
+        </Tile>
       </div>
 
       {/* daily activity */}
