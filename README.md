@@ -26,6 +26,15 @@ in [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
   on-chain (net -2.96 SOL across 518 txs), with SOL bet/returned, win rate, and
   biggest win/loss. Shown alongside the stats-app realized figure.
 
+## Docs
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - how it's built: data paths, the
+  tabs, every metric's methodology, the Dune queries, deploy/env/security, and how
+  to refresh the data.
+- [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md) - WaveWarZ domain
+  research: program model, instruction discriminators, fee/settlement formulas,
+  team, ecosystem, and on-chain findings.
+
 ## How it works
 
 - `lib/dune.ts` - server-only Dune client. `getLatestBalances()` reads cached
