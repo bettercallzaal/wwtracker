@@ -379,7 +379,10 @@ function StatTiles({
           {fmt(change30Pct, 1)}%
         </small>
       </Tile>
-      <Tile label="ALL-TIME HIGH">{fmt(ath)} ◎</Tile>
+      <Tile label="ALL-TIME HIGH">
+        {fmt(ath)} ◎
+        <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>{usd(ath)}</small>
+      </Tile>
       <Tile label="DAYS TRACKED">{days}</Tile>
     </div>
   );

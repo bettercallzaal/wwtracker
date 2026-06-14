@@ -169,8 +169,14 @@ export default function TraderScorecard() {
             {ts.winTxs}W / {ts.lossTxs}L
           </small>
         </Tile>
-        <Tile label="SOL BET">{fmt(ts.solBet)} ◎</Tile>
-        <Tile label="SOL RETURNED">{fmt(ts.solReturned)} ◎</Tile>
+        <Tile label="SOL BET">
+          {fmt(ts.solBet)} ◎
+          <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>{usd(ts.solBet)}</small>
+        </Tile>
+        <Tile label="SOL RETURNED">
+          {fmt(ts.solReturned)} ◎
+          <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>{usd(ts.solReturned)}</small>
+        </Tile>
         <Tile label="BIGGEST WIN">
           <span style={{ color: C.good }}>+{fmt(ts.biggestWin)} ◎</span>
         </Tile>

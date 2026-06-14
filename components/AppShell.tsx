@@ -52,15 +52,17 @@ export default function AppShell() {
         <Tab active={view === "trader"} onClick={() => go("trader")} label="MY TRADES" />
       </nav>
 
-      {view === "about" ? (
-        <AboutWaveWarZ />
-      ) : view === "platform" ? (
-        <BalanceDashboard />
-      ) : view === "analytics" ? (
-        <PlatformAnalytics />
-      ) : (
-        <TraderScorecard />
-      )}
+      <div role="tabpanel" aria-label={`${view} view`}>
+        {view === "about" ? (
+          <AboutWaveWarZ />
+        ) : view === "platform" ? (
+          <BalanceDashboard />
+        ) : view === "analytics" ? (
+          <PlatformAnalytics />
+        ) : (
+          <TraderScorecard />
+        )}
+      </div>
 
       <footer
         style={{
