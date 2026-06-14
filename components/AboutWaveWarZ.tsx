@@ -42,8 +42,10 @@ export default function AboutWaveWarZ() {
           <Stat label="PROGRAM TXS" value={fmt(ps.programTxs)} sub={`${ps.activeDays} active days`} />
           <Stat label="TREASURY NET" value={`${fmt(ps.treasuryNet, 2)} ◎`} sub="~the 3.5 floor" />
         </Grid>
-        <p style={{ ...metaLabel, fontSize: 11, marginTop: 10 }}>
-          since {ps.firstDay} - snapshot {WW.generatedAt}
+        <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
+          since {ps.firstDay} - snapshot {WW.generatedAt}. On-chain vs the
+          wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~1,073);
+          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ buy volume (app 483.88 ◎, both sides).` : ""}
         </p>
       </Section>
 
