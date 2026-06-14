@@ -131,6 +131,22 @@ export default function PlatformAnalytics() {
         </Tile>
       </div>
 
+      {/* battles & trades (decoded instructions) */}
+      <Panel label="BATTLES & TRADES (DECODED ON-CHAIN)">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+            gap: 12,
+          }}
+        >
+          <Mini label="BATTLES" value={fmt(WW.program.battlesCreated)} sub={`${fmt(WW.program.battlesSettled)} settled`} />
+          <Mini label="TRADES" value={fmt(WW.program.buys + WW.program.sells)} sub={`${fmt(WW.program.buys)} buy / ${fmt(WW.program.sells)} sell`} />
+          <Mini label="CLAIMS" value={fmt(WW.program.claims)} sub="winnings withdrawn" />
+          <Mini label="UNIQUE TRADERS" value={fmt(WW.program.uniqueTraders)} sub="distinct buyers" />
+        </div>
+      </Panel>
+
       {/* daily activity */}
       <Panel label="DAILY ACTIVITY (TXS)">
         <div style={{ height: 280 }}>
@@ -218,6 +234,16 @@ function Tile({ label, children }: { label: string; children: React.ReactNode })
     <div style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 12, padding: 16, display: "flex", flexDirection: "column", gap: 6 }}>
       <span style={metaLabel}>{label}</span>
       <span style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{children}</span>
+    </div>
+  );
+}
+
+function Mini({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <span style={{ ...metaLabel, fontSize: 10 }}>{label}</span>
+      <span style={{ fontSize: 20, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{value}</span>
+      <span style={{ color: C.dim, fontFamily: C.mono, fontSize: 11 }}>{sub}</span>
     </div>
   );
 }

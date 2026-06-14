@@ -47,9 +47,9 @@ Program ID (CONFIRMED): **`9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`**
 Solscan: https://solscan.io/account/9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo
 
 Source of truth: IDL in the private repo `hurric4n3ike/wavewagerz`
-(`idl/wavewarzvtwo.json`), read via authenticated GitHub. Discriminators below
-are per that IDL - treat as strong but re-verify against a live tx before relying
-on them for money-moving decode.
+(`idl/wavewarzvtwo.json`). Discriminators below are **VERIFIED on-chain** - a
+Dune decode (`to_hex(bytearray_substring(data,1,8))`) over the program's
+instruction_calls matched all six cleanly with the counts in section 6.
 
 ### Instructions (8-byte Anchor discriminators)
 
@@ -128,6 +128,12 @@ scans bounded by `block_date` / `executing_account`. Snapshot baked into the app
 via `lib/wwData.ts`; regenerate by re-running `scripts/ww-research.sh`.
 
 Datasets (from program `9TUf`, since 2025-08-01; snapshot 2026-06-14):
+
+**Platform (program 9TUf), instruction decode (since 2025-08-01):**
+- initializeBattle 1,127 (battles created) / endBattle 1,110 (settled) -> ~17
+  in-flight. Matches the reported ~1,073 battles.
+- buyShares 6,914 + sellShares 2,131 = 9,045 trades; claimShares 2,299.
+- **122 unique traders** (distinct buyShares signers) - the real trader count.
 
 **Platform (program 9TUf):**
 - 14,681 program txs across 230 active days (2025-08-01 -> 2026-06-13).
