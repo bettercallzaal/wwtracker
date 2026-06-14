@@ -146,6 +146,11 @@ export default function PlatformAnalytics() {
           <Mini label="TRADES" value={fmt(WW.program.buys + WW.program.sells)} sub={`${fmt(WW.program.buys)} buy / ${fmt(WW.program.sells)} sell`} />
           <Mini label="CLAIMS" value={fmt(WW.program.claims)} sub="winnings withdrawn" />
           <Mini label="UNIQUE TRADERS" value={fmt(WW.program.uniqueTraders)} sub="distinct buyers" />
+          <Mini
+            label="SETTLEMENT RATE"
+            value={`${fmt(Math.round((WW.program.battlesSettled / Math.max(1, WW.program.battlesCreated)) * 1000) / 10)}%`}
+            sub={`${fmt(WW.program.battlesCreated - WW.program.battlesSettled)} in-flight`}
+          />
         </div>
       </Panel>
 

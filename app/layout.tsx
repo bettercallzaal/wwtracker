@@ -2,9 +2,24 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "WaveWarZ - Dev Wallet Balance",
+  metadataBase: new URL("https://wwtracker.vercel.app"),
+  title: "WaveWarZ - on-chain tracker",
   description:
-    "Daily end-of-day SOL balance for the WaveWarZ dev wallet, climbing toward the 3.5 SOL operating floor. Backed by a Dune query.",
+    "On-chain analytics for WaveWarZ, the Solana music-battle platform: treasury balance vs the 3.5 SOL floor, battles/trades/traders, and trader PnL. Backed by Dune.",
+  openGraph: {
+    title: "WaveWarZ - on-chain tracker",
+    description:
+      "Treasury balance, program activity, and trader PnL for the WaveWarZ Solana music-battle platform.",
+    url: "https://wwtracker.vercel.app",
+    siteName: "wwtracker",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WaveWarZ - on-chain tracker",
+    description:
+      "Treasury balance, program activity, and trader PnL for WaveWarZ on Solana.",
+  },
 };
 
 export default function RootLayout({

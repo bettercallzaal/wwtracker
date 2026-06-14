@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { C } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
 import BalanceDashboard from "./BalanceDashboard";
@@ -10,8 +10,24 @@ import AboutWaveWarZ from "./AboutWaveWarZ";
 
 type View = "about" | "platform" | "analytics" | "trader";
 
+const isView = (v: string | null): v is View =>
+  v === "about" || v === "platform" || v === "analytics" || v === "trader";
+
 export default function AppShell() {
   const [view, setView] = useState<View>("about");
+
+  // Sync the active tab with ?tab= so a specific view is shareable.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (isView(t)) setView(t);
+  }, []);
+
+  const go = (v: View) => {
+    setView(v);
+    const u = new URL(window.location.href);
+    u.searchParams.set("tab", v);
+    window.history.replaceState({}, "", u);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -20,6 +36,7 @@ export default function AppShell() {
         aria-label="Dashboard view"
         style={{
           display: "flex",
+          flexWrap: "wrap",
           gap: 6,
           background: C.panel,
           border: `1px solid ${C.grid}`,
@@ -29,10 +46,10 @@ export default function AppShell() {
           maxWidth: "100%",
         }}
       >
-        <Tab active={view === "about"} onClick={() => setView("about")} label="ABOUT" />
-        <Tab active={view === "platform"} onClick={() => setView("platform")} label="PLATFORM FLOOR" />
-        <Tab active={view === "analytics"} onClick={() => setView("analytics")} label="ANALYTICS" />
-        <Tab active={view === "trader"} onClick={() => setView("trader")} label="MY TRADES" />
+        <Tab active={view === "about"} onClick={() => go("about")} label="ABOUT" />
+        <Tab active={view === "platform"} onClick={() => go("platform")} label="PLATFORM FLOOR" />
+        <Tab active={view === "analytics"} onClick={() => go("analytics")} label="ANALYTICS" />
+        <Tab active={view === "trader"} onClick={() => go("trader")} label="MY TRADES" />
       </nav>
 
       {view === "about" ? (
