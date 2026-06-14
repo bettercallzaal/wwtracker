@@ -4,8 +4,9 @@ import { useState } from "react";
 import { C } from "@/lib/theme";
 import BalanceDashboard from "./BalanceDashboard";
 import TraderScorecard from "./TraderScorecard";
+import PlatformAnalytics from "./PlatformAnalytics";
 
-type View = "platform" | "trader";
+type View = "platform" | "analytics" | "trader";
 
 export default function AppShell() {
   const [view, setView] = useState<View>("platform");
@@ -27,10 +28,17 @@ export default function AppShell() {
         }}
       >
         <Tab active={view === "platform"} onClick={() => setView("platform")} label="PLATFORM FLOOR" />
+        <Tab active={view === "analytics"} onClick={() => setView("analytics")} label="ANALYTICS" />
         <Tab active={view === "trader"} onClick={() => setView("trader")} label="MY TRADES" />
       </nav>
 
-      {view === "platform" ? <BalanceDashboard /> : <TraderScorecard />}
+      {view === "platform" ? (
+        <BalanceDashboard />
+      ) : view === "analytics" ? (
+        <PlatformAnalytics />
+      ) : (
+        <TraderScorecard />
+      )}
     </div>
   );
 }

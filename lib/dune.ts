@@ -137,6 +137,33 @@ export async function getLatestBalances(
 }
 
 // ---------------------------------------------------------------------------
+// Generic cached read - returns the raw rows of any saved query's last run.
+// Used by the WaveWarZ analytics panels (each panel = one saved Dune query
+// whose cached results we read cheaply, same frugal pattern as the balance).
+// ---------------------------------------------------------------------------
+
+export async function getCachedRows<T = Record<string, unknown>>(
+  queryId: string,
+  apiKey: string,
+  limit = 5000,
+): Promise<T[]> {
+  const res = await duneFetch(
+    `/query/${queryId}/results?limit=${limit}`,
+    apiKey,
+    { next: { revalidate: 43200 } } as RequestInit,
+  );
+  if (!res.ok) {
+    throw new DuneError(
+      `Dune cached results failed: ${res.status} ${res.statusText}`,
+      res.status,
+    );
+  }
+  const json = (await res.json()) as { result?: { rows?: unknown } };
+  const rows = json.result?.rows;
+  return Array.isArray(rows) ? (rows as T[]) : [];
+}
+
+// ---------------------------------------------------------------------------
 // Execute path - any non-default wallet (and/or SPL mint). POST execute,
 // poll status until completed (capped), then fetch results.
 // ---------------------------------------------------------------------------

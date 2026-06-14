@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { sampleTraderPnl } from "@/lib/traderSample";
+import { WW } from "@/lib/wwData";
 
 // ---------------------------------------------------------------------------
 // Known trader figures (from the WaveWarZ stats app). These are seeded until
@@ -46,7 +47,18 @@ function useReducedMotion(): boolean {
 
 export default function TraderScorecard() {
   const reducedMotion = useReducedMotion();
-  const data = useMemo(() => sampleTraderPnl(120, TRADER.netPnlSol), []);
+
+  // Real cumulative SOL PnL from on-chain (every WaveWarZ tx's net SOL delta).
+  // Falls back to the deterministic sample if the snapshot is empty.
+  const live = WW.pnl.length > 0;
+  const data = useMemo(() => {
+    if (live) {
+      return WW.pnl.map((p, i) => ({ battle: i + 1, cumPnl: p.cum }));
+    }
+    return sampleTraderPnl(120, TRADER.netPnlSol);
+  }, [live]);
+
+  const onChainNet = live ? WW.pnl[WW.pnl.length - 1].cum : TRADER.netPnlSol;
 
   const fmt = (n: number, dp = 2) =>
     n.toLocaleString(undefined, {
@@ -54,7 +66,7 @@ export default function TraderScorecard() {
       maximumFractionDigits: dp,
     });
 
-  const down = TRADER.netPnlSol < 0;
+  const down = onChainNet < 0;
   const pnlColor = down ? C.danger : C.good;
 
   return (
@@ -103,7 +115,7 @@ export default function TraderScorecard() {
           padding: "clamp(18px, 4vw, 32px)",
         }}
       >
-        <p style={metaLabel}>NET REALIZED PnL (SAMPLE CURVE, KNOWN TOTAL)</p>
+        <p style={metaLabel}>NET ON-CHAIN SOL PnL ON WAVEWARZ</p>
         <p
           style={{
             margin: "8px 0 0",
@@ -115,7 +127,7 @@ export default function TraderScorecard() {
           }}
         >
           {down ? "" : "+"}
-          {fmt(TRADER.netPnlSol)}
+          {fmt(onChainNet)}
           <span style={{ fontSize: "0.4em", color: C.text, marginLeft: 10 }}>◎</span>
         </p>
         <p
@@ -126,12 +138,11 @@ export default function TraderScorecard() {
             color: C.dim,
           }}
         >
-          {down ? "-" : "+"}${fmt(Math.abs(TRADER.netPnlUsd))} - ROI{" "}
-          <span style={{ color: pnlColor }}>
-            {down ? "" : "+"}
-            {fmt(TRADER.roiPct, 2)}%
-          </span>{" "}
-          across {TRADER.battles.toLocaleString()} battles
+          Net SOL across {WW.pnl.length ? "all WaveWarZ txs" : "battles"} since
+          Aug 2025. Stats-app realized PnL:{" "}
+          <span style={{ color: pnlColor }}>{fmt(TRADER.netPnlSol)} ◎</span> /{" "}
+          {fmt(TRADER.roiPct, 2)}% over {TRADER.battles.toLocaleString()} battles
+          (the gap is open/unclaimed positions + methodology).
         </p>
       </section>
 
@@ -167,7 +178,9 @@ export default function TraderScorecard() {
         }}
       >
         <div style={{ padding: "0 8px 12px" }}>
-          <span style={metaLabel}>CUMULATIVE PnL OVER BATTLES (SAMPLE)</span>
+          <span style={metaLabel}>
+            CUMULATIVE SOL PnL{live ? " (LIVE, ON-CHAIN)" : " (SAMPLE)"}
+          </span>
         </div>
         <div style={{ height: 320 }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -231,10 +244,11 @@ export default function TraderScorecard() {
           lineHeight: 1.5,
         }}
       >
-        Totals are your real WaveWarZ stats; the curve + volume are placeholders
-        until the live Dune query for program{" "}
-        <span style={{ color: C.text }}>{short(TRADER.program)}</span> is wired.
-        Next: per-battle PnL, win rate, biggest-loss list, daily volume.
+        Curve is your real cumulative net SOL across {WW.pnl.length} sampled
+        WaveWarZ txs on program{" "}
+        <span style={{ color: C.text }}>{short(TRADER.program)}</span> (518 total,
+        Aug 2025 - Jun 2026). Volume + win rate are next, via buyShares/sellShares
+        instruction decode. See docs/WAVEWARZ-RESEARCH.md.
       </p>
     </div>
   );
