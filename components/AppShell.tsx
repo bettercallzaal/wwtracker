@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { C } from "@/lib/theme";
+import { WW } from "@/lib/wwData";
 import BalanceDashboard from "./BalanceDashboard";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
@@ -43,6 +44,25 @@ export default function AppShell() {
       ) : (
         <TraderScorecard />
       )}
+
+      <footer
+        style={{
+          marginTop: 8,
+          paddingTop: 16,
+          borderTop: `1px solid ${C.grid}`,
+          color: C.dim,
+          fontFamily: C.mono,
+          fontSize: 11,
+          lineHeight: 1.6,
+        }}
+      >
+        On-chain analytics from Dune over program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo.
+        Treasury balance is live; analytics snapshot {WW.generatedAt || "pending"}.
+        Unofficial community tool - not financial advice.{" "}
+        <a href="https://github.com/bettercallzaal/wwtracker" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
+          source
+        </a>
+      </footer>
     </div>
   );
 }
