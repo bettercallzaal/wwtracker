@@ -36,6 +36,9 @@ export default function AboutWaveWarZ() {
           <Stat label="TRADES" value={fmt(p.buys + p.sells)} sub={`${fmt(p.buys)} buy / ${fmt(p.sells)} sell`} />
           <Stat label="CLAIMS" value={fmt(p.claims)} sub="winnings withdrawn" />
           <Stat label="UNIQUE TRADERS" value={fmt(p.uniqueTraders)} sub="distinct buyers" />
+          {WW.volume.total > 0 && (
+            <Stat label="BUY VOLUME" value={`${fmt(WW.volume.total)} ◎`} sub="SOL committed on buys" />
+          )}
           <Stat label="PROGRAM TXS" value={fmt(ps.programTxs)} sub={`${ps.activeDays} active days`} />
           <Stat label="TREASURY NET" value={`${fmt(ps.treasuryNet, 2)} ◎`} sub="~the 3.5 floor" />
         </Grid>

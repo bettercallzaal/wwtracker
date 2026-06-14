@@ -155,6 +155,27 @@ Datasets (from program `9TUf`, since 2025-08-01; snapshot 2026-06-14):
 
 Figures live in `lib/wwData.ts` and the app's Analytics + My Trades tabs.
 
+## 6b. Methodology (how each number is derived)
+
+- **Treasury balance / floor**: `solana.account_activity` for `FNj`,
+  `max_by(post_balance, block_time)` per day = close, `max(post_balance)` = the
+  intraday high. Gap-filled forward.
+- **Instruction mix (battles / trades / claims)**: decode the 8-byte Anchor
+  discriminator via `to_hex(bytearray_substring(data,1,8))` on the program's
+  `instruction_calls`, mapped to the IDL names. Verified - all six matched.
+- **Trader PnL (flow-based)**: every WaveWarZ tx the wallet signs, take its net
+  `balance_change` on `account_activity`. Negative = SOL committed (bets+fees),
+  positive = SOL back (sells/claims). Cumulative sum = realized net SOL.
+  Win rate = share of positive-delta txs. Honest and methodology-independent of
+  the bonding-curve math; differs from the stats app's per-battle realized PnL.
+- **Platform buy volume**: join `account_activity` (signer's negative delta) to
+  the set of `buyShares` txs by `tx_id` + `tx_signer`. Sum = SOL committed on
+  buys (includes ~1.5% fees + gas). Approximates the Charts-score volume.
+- **Monthly PnL**: the same per-tx deltas, grouped by month.
+
+All figures are a point-in-time snapshot (`lib/wwData.ts.generatedAt`); refresh
+with `scripts/ww-research.sh` then `scripts/ww-gen.py`.
+
 ## 7. Open questions / next
 
 - Decode buyShares vs claimShares per battle for true per-battle PnL + win rate.
