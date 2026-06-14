@@ -126,10 +126,13 @@ export async function getLatestBalances(
   queryId: string,
   apiKey: string,
 ): Promise<BalanceRow[]> {
+  // no-store: we read Dune's already-cached query results (cheap, no execute),
+  // so we don't want Vercel's persistent Data Cache pinning a stale copy across
+  // deploys. Freshness comes from Dune re-running the query (cron / manual).
   const res = await duneFetch(
     `/query/${queryId}/results?limit=${RESULT_LIMIT}`,
     apiKey,
-    { next: { revalidate: 43200 } } as RequestInit,
+    { cache: "no-store" } as RequestInit,
   );
   if (!res.ok) {
     throw new DuneError(

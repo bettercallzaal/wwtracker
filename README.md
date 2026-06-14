@@ -1,61 +1,61 @@
-# SolTracker
+# wwtracker - WaveWarZ on-chain tracker
 
-Next.js (App Router) dashboard that tracks a Solana wallet's daily end-of-day
-SOL balance, backed by a saved Dune query. Renders an area chart, a current
-balance hero, and stat tiles (30d change, ATH, days tracked). Falls back to
-deterministic sample data when Dune is not configured.
+Next.js (App Router) dashboard tracking WaveWarZ on Solana - the platform
+treasury wallet, the program's activity, and a trader's PnL - backed by Dune.
+
+**Live:** https://wwtracker.vercel.app
+
+WaveWarZ is a Solana music-battle platform: fans trade SOL on song-vs-song
+battles. Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`. Full research
+in [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
+
+## Tabs
+
+- **Platform Floor** - the treasury/dev wallet `FNj...` daily end-of-day SOL
+  balance vs the 3.5 SOL operating floor. Bars = daily close; the line = intraday
+  high (peaks that get skimmed before close - e.g. the wallet hit **4.65 SOL**
+  intraday on 2026-06-13 but closed at 3.51). DAY / WEEK toggle. Live from Dune.
+- **Analytics** - WaveWarZ program-wide on-chain: daily activity (14,681 txs over
+  230 active days since Aug 2025), treasury daily flow (lifetime net +3.51 SOL =
+  the floor), and a top-traders leaderboard (treasury excluded). Snapshot in
+  `lib/wwData.ts`.
+- **My Trades** - a trader wallet's WaveWarZ PnL. Cumulative SOL PnL is live from
+  on-chain (net -2.96 SOL across 518 txs), with SOL bet/returned, win rate, and
+  biggest win/loss. Shown alongside the stats-app realized figure.
 
 ## How it works
 
-- `lib/dune.ts` - server-only Dune client. Two paths:
-  - `getLatestBalances()` reads the CACHED results of the saved query (cheap, no
-    credit per call) - used for the default wallet on native SOL.
-  - `executeForWallet()` runs the EXECUTE -> poll status -> fetch results flow
-    for any other wallet or SPL mint, with a 12h in-memory TTL cache keyed by
-    wallet+mint to avoid repeat executes. Polling is capped at ~60s.
-- `app/api/balance/route.ts` - holds the key server-side, reads `DUNE_API_KEY`,
-  `DUNE_QUERY_ID`, `DUNE_DEFAULT_WALLET`. Accepts `?wallet=` and `?mint=`,
-  validates both as base58 Solana addresses before spending a credit.
-- `components/BalanceDashboard.tsx` - client component. Wallet input + SOL/SPL
-  toggle, loading skeletons, error panel with retry, live/sample/error badge.
-- `vercel.json` - daily cron warms `/api/balance` at 09:00 UTC.
+- `lib/dune.ts` - server-only Dune client. `getLatestBalances()` reads cached
+  query results (cheap); `executeForWallet()` runs execute -> poll -> results for
+  other wallets; `getCachedRows()` is the generic cached reader.
+- `app/api/balance/route.ts` - holds the key server-side; `?wallet=` / `?mint=`
+  validated as base58 before any credit is spent.
+- `lib/wwData.ts` - baked Dune analytics snapshot; regenerate with
+  `scripts/ww-research.sh` (needs `DUNE_API_KEY`).
+- `vercel.json` - daily cron warms `/api/balance`.
 
 ## Environment
 
-Copy `.env.example` to `.env.local` and fill in:
+Copy `.env.example` to `.env.local`:
 
-- `DUNE_API_KEY` - server-only, never exposed to the client (no `NEXT_PUBLIC_`).
-- `DUNE_QUERY_ID` - the saved query id.
-- `DUNE_DEFAULT_WALLET` - the wallet the cron warms (uses the cached path).
+- `DUNE_API_KEY` - server-only, never exposed (no `NEXT_PUBLIC_`).
+- `DUNE_QUERY_ID` - the daily-balance query (7717935).
+- `DUNE_DEFAULT_WALLET` - the treasury wallet.
 
-With env unset the dashboard still renders on sample data.
-
-## Dune query contract
-
-The saved query takes a `wallet` parameter (and optional `mint`) and returns one
-gap-filled row per day, ordered by `block_date` ascending, with the closing
-balance carried forward on no-activity days. Source table:
-`solana.account_activity` (`post_balance / 1e9` for native SOL,
-`post_token_balance` for SPL). Result columns: `block_date` (YYYY-MM-DD) and the
-end-of-day balance under `eod_sol_balance` (native) or `eod_token_balance` (SPL);
-the client accepts either.
+With env unset the dashboard still renders on deterministic sample data.
 
 ## Develop
 
 ```bash
 npm install
 npm run dev        # http://localhost:3000
-npm run typecheck  # tsc --noEmit
+npm run typecheck
 npm run build
 ```
 
-## Changelog (this build)
+## Status / next
 
-- Multi-wallet: `?wallet=` accepted and validated as base58; default wallet uses
-  cached results, any other wallet triggers the Dune execute path with a 12h
-  in-memory TTL cache.
-- SPL toggle: SOL/SPL switch in the UI; `?mint=` forwarded to Dune as a second
-  parameter; labels switch between the SOL glyph and the token symbol.
-- State + a11y: real loading skeletons, explicit error panel with retry (no more
-  silent sample fallback on explicit queries), keyboard focus styles,
-  `prefers-reduced-motion` respected (chart animation off), responsive to ~360px.
+Done: multi-tab dashboard, live treasury balance with intraday highs, program
+analytics, live trader PnL, full research doc. Next: per-battle PnL + win rate
+via buyShares/sellShares instruction decode; artist-payout tracing; ops-budget
+wallet + weekly-skim quantification.
