@@ -182,8 +182,14 @@ cron) so its cached results update; the app reads them no-store.
 
 ## 9. Constraints & deferred work
 
-Dune is a **free-tier** account (~2,500 credits/mo). Cached reads are cheap;
-large Solana scans and joins are slow and can time out. Be credit-frugal.
+Dune is a **free-tier** account (~2,500 credits/mo). Confirmed ceiling: **single-table
+aggregations over `instruction_calls` / `account_activity` complete fine**
+(daily activity, instruction decode, timeseries, daily volume, treasury flow),
+but **joins of `account_activity` to a tx-set time out** (volume-per-trader,
+artist payouts, per-battle PnL all failed). Those deep analytics need either a
+paid Dune tier (faster execution) or the Helius RPC + Supabase path that candy's
+apps already use (`getAccountInfo`/`getProgramAccounts` on Battle PDAs). Stay
+credit-frugal and prefer single-table aggregations on free tier.
 
 Deferred (each needs heavier/repeated executions or RPC decode):
 - Per-trader volume leaderboard - the GROUP-BY-signer join times out on free tier.
