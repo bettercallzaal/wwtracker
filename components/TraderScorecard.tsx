@@ -239,6 +239,20 @@ export default function TraderScorecard() {
         </div>
       </section>
 
+      {/* biggest moves */}
+      {WW.traderTop.wins.length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: 12,
+          }}
+        >
+          <MovesPanel label="BIGGEST WINS" moves={WW.traderTop.wins} color={C.good} sign="+" fmt={fmt} />
+          <MovesPanel label="BIGGEST LOSSES" moves={WW.traderTop.losses} color={C.danger} sign="" fmt={fmt} />
+        </div>
+      )}
+
       {/* data-source note */}
       <p
         style={{
@@ -255,6 +269,39 @@ export default function TraderScorecard() {
         Aug 2025 - Jun 2026). Volume + win rate are next, via buyShares/sellShares
         instruction decode. See docs/WAVEWARZ-RESEARCH.md.
       </p>
+    </div>
+  );
+}
+
+function MovesPanel({
+  label,
+  moves,
+  color,
+  sign,
+  fmt,
+}: {
+  label: string;
+  moves: { t: string; sol: number }[];
+  color: string;
+  sign: string;
+  fmt: (n: number, dp?: number) => string;
+}) {
+  return (
+    <div style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 12, padding: 16 }}>
+      <span style={metaLabel}>{label}</span>
+      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8, fontFamily: C.mono, fontSize: 13 }}>
+        <tbody>
+          {moves.map((m, i) => (
+            <tr key={i} style={{ borderTop: `1px solid ${C.grid}` }}>
+              <td style={{ padding: "7px 0", color: C.dim }}>{m.t}</td>
+              <td style={{ padding: "7px 0", textAlign: "right", color, fontVariantNumeric: "tabular-nums" }}>
+                {sign}
+                {fmt(m.sol)} ◎
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

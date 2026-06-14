@@ -5,11 +5,12 @@ import { C } from "@/lib/theme";
 import BalanceDashboard from "./BalanceDashboard";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
+import AboutWaveWarZ from "./AboutWaveWarZ";
 
-type View = "platform" | "analytics" | "trader";
+type View = "about" | "platform" | "analytics" | "trader";
 
 export default function AppShell() {
-  const [view, setView] = useState<View>("platform");
+  const [view, setView] = useState<View>("about");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -27,12 +28,15 @@ export default function AppShell() {
           maxWidth: "100%",
         }}
       >
+        <Tab active={view === "about"} onClick={() => setView("about")} label="ABOUT" />
         <Tab active={view === "platform"} onClick={() => setView("platform")} label="PLATFORM FLOOR" />
         <Tab active={view === "analytics"} onClick={() => setView("analytics")} label="ANALYTICS" />
         <Tab active={view === "trader"} onClick={() => setView("trader")} label="MY TRADES" />
       </nav>
 
-      {view === "platform" ? (
+      {view === "about" ? (
+        <AboutWaveWarZ />
+      ) : view === "platform" ? (
         <BalanceDashboard />
       ) : view === "analytics" ? (
         <PlatformAnalytics />

@@ -6,6 +6,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -166,6 +168,29 @@ export default function PlatformAnalytics() {
           </ResponsiveContainer>
         </div>
       </Panel>
+
+      {/* battles vs trades over time */}
+      {WW.timeline.length > 0 && (
+        <Panel label="BATTLES (LINE) vs TRADES (BARS) PER DAY">
+          <div style={{ height: 280 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={WW.timeline} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="block_date" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={48} />
+                <YAxis tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={40} />
+                <Tooltip
+                  cursor={{ fill: "rgba(255,194,75,0.08)" }}
+                  contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
+                  labelStyle={{ color: C.dim }}
+                  formatter={(v: number | string, n) => [fmt(Number(v)), n]}
+                />
+                <Bar dataKey="trades" fill={C.accent} fillOpacity={0.7} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
+                <Line type="monotone" dataKey="battles" stroke={C.good} strokeWidth={1.5} dot={false} isAnimationActive={!reduced} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      )}
 
       {/* treasury flow */}
       {flowData.length > 0 && (
