@@ -135,6 +135,11 @@ Datasets (from program `9TUf`, since 2025-08-01; snapshot 2026-06-14):
 - buyShares 6,914 + sellShares 2,131 = 9,045 trades; claimShares 2,299.
 - **122 unique traders** (distinct buyShares signers) - the real trader count.
 
+**Platform buy volume:** 324.62 SOL committed by traders on buyShares txs (peak
+28.44 SOL on 2026-03-02). Buy-side only; candy's app reports 483.88 SOL total
+(both sides) - same ballpark. (Per-trader volume leaderboard query times out on
+the free tier - deferred.)
+
 **Platform (program 9TUf):**
 - 14,681 program txs across 230 active days (2025-08-01 -> 2026-06-13).
 - Treasury (`FNj`) lifetime: 50.57 SOL in / 47.06 SOL out / **net +3.51 SOL** -
