@@ -133,6 +133,30 @@ export default function PlatformAnalytics() {
         </Tile>
       </div>
 
+      {/* what the data says */}
+      <Panel label="WHAT THE DATA SAYS">
+        <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 14 }}>
+          <li>
+            Treasury nets <b>{fmt(WW.platformStats.treasuryNet, 2)} ◎</b> lifetime -
+            landing on the ~3.5 SOL floor, so the skim discipline holds on-chain.
+          </li>
+          <li>
+            <b>{fmt(Math.round((WW.program.battlesSettled / Math.max(1, WW.program.battlesCreated)) * 1000) / 10)}%</b>{" "}
+            of battles settle - the program resolves what it starts.
+          </li>
+          <li>
+            <b>{fmt(WW.program.uniqueTraders)} traders</b> moved{" "}
+            <b>{fmt(WW.volume.total)} ◎</b> of buy volume across{" "}
+            {fmt(WW.program.buys + WW.program.sells)} trades.
+          </li>
+          <li>
+            Trading is hard: the tracked wallet is a net loser at{" "}
+            <b>{fmt(WW.traderStats.winRate, 1)}% win rate</b> - claims rarely
+            outrun bets.
+          </li>
+        </ul>
+      </Panel>
+
       {/* battles & trades (decoded instructions) */}
       <Panel label="BATTLES & TRADES (DECODED ON-CHAIN)">
         <div
@@ -155,21 +179,23 @@ export default function PlatformAnalytics() {
       </Panel>
 
       {/* daily activity */}
-      <Panel label="DAILY ACTIVITY (TXS)">
+      <Panel label="DAILY ACTIVITY - TXS (BARS) vs UNIQUE TRADERS (LINE)">
         <div style={{ height: 280 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dailyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <ComposedChart data={dailyData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="date" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={48} />
-              <YAxis tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={40} />
+              <YAxis yAxisId="l" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={40} />
+              <YAxis yAxisId="r" orientation="right" tick={{ fill: C.good, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={28} />
               <Tooltip
                 cursor={{ fill: "rgba(255,194,75,0.08)" }}
                 contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                 labelStyle={{ color: C.dim }}
                 formatter={(v: number | string, n) => [fmt(Number(v)), n === "txs" ? "txs" : "traders"]}
               />
-              <Bar dataKey="txs" fill={C.accent} fillOpacity={0.8} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
-            </BarChart>
+              <Bar yAxisId="l" dataKey="txs" fill={C.accent} fillOpacity={0.8} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
+              <Line yAxisId="r" type="monotone" dataKey="traders" stroke={C.good} strokeWidth={1.5} dot={false} isAnimationActive={!reduced} />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </Panel>
