@@ -175,6 +175,16 @@ export default function TraderScorecard() {
         <Tile label="BATTLES (STATS APP)">{TRADER.battles.toLocaleString()}</Tile>
       </div>
 
+      {WW.volume.total > 0 && (
+        <p style={{ margin: 0, fontFamily: C.mono, fontSize: 12, color: C.dim, lineHeight: 1.5 }}>
+          Platform footprint: your {fmt(ts.solBet)} ◎ committed is{" "}
+          <span style={{ color: C.accent }}>
+            {fmt((ts.solBet / WW.volume.total) * 100, 1)}%
+          </span>{" "}
+          of all {fmt(WW.volume.total)} ◎ WaveWarZ buy volume.
+        </p>
+      )}
+
       {/* cumulative PnL chart */}
       <section
         aria-label="Cumulative realized PnL over battles"

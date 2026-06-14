@@ -95,6 +95,23 @@ export default function AboutWaveWarZ() {
         </ul>
       </Section>
 
+      {/* ecosystem */}
+      <Section label="ECOSYSTEM">
+        <p style={{ margin: "0 0 8px", color: C.text, lineHeight: 1.6 }}>
+          WaveWarZ is the music-battle application layer of <b>BCZ -&gt; The ZAO -&gt;
+          WaveWarZ</b> - The ZAO being a web3 music/creator collective. Related
+          surfaces in the ecosystem:
+        </p>
+        <ul style={listStyle}>
+          <li><b>ZABAL</b> - streaming + coordination engine across the ecosystem.</li>
+          <li><b>SongJam</b> (SANG) - leaderboard + Web2-to-Farcaster infra.</li>
+          <li><b>ZAO Fractals</b> - weekly community governance ritual.</li>
+        </ul>
+        <p style={{ ...metaLabel, fontSize: 11 }}>
+          Live programming: battles stream Mon-Fri ~8:30 PM EST on X Spaces / YouTube.
+        </p>
+      </Section>
+
       {/* links */}
       <Section label="OFFICIAL LINKS">
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
