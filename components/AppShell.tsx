@@ -1,0 +1,69 @@
+"use client";
+
+import { useState } from "react";
+import { C } from "@/lib/theme";
+import BalanceDashboard from "./BalanceDashboard";
+import TraderScorecard from "./TraderScorecard";
+
+type View = "platform" | "trader";
+
+export default function AppShell() {
+  const [view, setView] = useState<View>("platform");
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <nav
+        role="tablist"
+        aria-label="Dashboard view"
+        style={{
+          display: "flex",
+          gap: 6,
+          background: C.panel,
+          border: `1px solid ${C.grid}`,
+          borderRadius: 12,
+          padding: 6,
+          alignSelf: "flex-start",
+          maxWidth: "100%",
+        }}
+      >
+        <Tab active={view === "platform"} onClick={() => setView("platform")} label="PLATFORM FLOOR" />
+        <Tab active={view === "trader"} onClick={() => setView("trader")} label="MY TRADES" />
+      </nav>
+
+      {view === "platform" ? <BalanceDashboard /> : <TraderScorecard />}
+    </div>
+  );
+}
+
+function Tab({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      style={{
+        fontFamily: C.mono,
+        fontSize: 12,
+        letterSpacing: "0.06em",
+        padding: "9px 16px",
+        borderRadius: 8,
+        cursor: "pointer",
+        border: "none",
+        background: active ? C.accent : "transparent",
+        color: active ? "#1a1206" : C.text,
+        fontWeight: active ? 600 : 400,
+      }}
+    >
+      {label}
+    </button>
+  );
+}

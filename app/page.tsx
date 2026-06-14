@@ -1,4 +1,4 @@
-import BalanceDashboard from "@/components/BalanceDashboard";
+import AppShell from "@/components/AppShell";
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
         margin: "0 auto",
       }}
     >
-      <BalanceDashboard />
+      <AppShell />
     </main>
   );
 }

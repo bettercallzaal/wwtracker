@@ -1,0 +1,264 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { C, metaLabel } from "@/lib/theme";
+import { sampleTraderPnl } from "@/lib/traderSample";
+
+// ---------------------------------------------------------------------------
+// Known trader figures (from the WaveWarZ stats app). These are seeded until
+// the live Dune query for this wallet's battle trades is wired in.
+// ---------------------------------------------------------------------------
+
+const TRADER = {
+  wallet: "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk",
+  program: "9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo",
+  netPnlSol: -1.6493,
+  netPnlUsd: -111.36,
+  roiPct: -30.67,
+  battles: 1000,
+  rank: 1,
+  solUsd: 67.52,
+} as const;
+
+const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
+
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return reduced;
+}
+
+export default function TraderScorecard() {
+  const reducedMotion = useReducedMotion();
+  const data = useMemo(() => sampleTraderPnl(120, TRADER.netPnlSol), []);
+
+  const fmt = (n: number, dp = 2) =>
+    n.toLocaleString(undefined, {
+      minimumFractionDigits: dp,
+      maximumFractionDigits: dp,
+    });
+
+  const down = TRADER.netPnlSol < 0;
+  const pnlColor = down ? C.danger : C.good;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <h1
+          style={{
+            margin: 0,
+            fontSize: "clamp(20px, 4vw, 28px)",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          WaveWarZ<span style={{ color: C.dim, fontWeight: 400 }}> / my trades</span>
+        </h1>
+        <span
+          title={TRADER.wallet}
+          style={{
+            fontFamily: C.mono,
+            fontSize: 11,
+            letterSpacing: "0.06em",
+            padding: "4px 10px",
+            borderRadius: 999,
+            background: C.elev,
+            color: C.dim,
+          }}
+        >
+          {short(TRADER.wallet)}
+        </span>
+      </div>
+
+      {/* hero: net realized PnL */}
+      <section
+        style={{
+          background: `linear-gradient(135deg, ${C.panel}, ${C.elev})`,
+          border: `1px solid ${C.grid}`,
+          borderRadius: 16,
+          padding: "clamp(18px, 4vw, 32px)",
+        }}
+      >
+        <p style={metaLabel}>NET REALIZED PnL (SAMPLE CURVE, KNOWN TOTAL)</p>
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontSize: "clamp(34px, 9vw, 64px)",
+            fontWeight: 700,
+            lineHeight: 1,
+            color: pnlColor,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {down ? "" : "+"}
+          {fmt(TRADER.netPnlSol)}
+          <span style={{ fontSize: "0.4em", color: C.text, marginLeft: 10 }}>◎</span>
+        </p>
+        <p
+          style={{
+            margin: "10px 0 0",
+            fontFamily: C.mono,
+            fontSize: 13,
+            color: C.dim,
+          }}
+        >
+          {down ? "-" : "+"}${fmt(Math.abs(TRADER.netPnlUsd))} - ROI{" "}
+          <span style={{ color: pnlColor }}>
+            {down ? "" : "+"}
+            {fmt(TRADER.roiPct, 2)}%
+          </span>{" "}
+          across {TRADER.battles.toLocaleString()} battles
+        </p>
+      </section>
+
+      {/* tiles */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          gap: 12,
+        }}
+      >
+        <Tile label="ROI">
+          <span style={{ color: pnlColor }}>
+            {down ? "" : "+"}
+            {fmt(TRADER.roiPct, 2)}%
+          </span>
+        </Tile>
+        <Tile label="BATTLES">{TRADER.battles.toLocaleString()}</Tile>
+        <Tile label="LEADERBOARD RANK">#{TRADER.rank}</Tile>
+        <Tile label="TOTAL VOLUME">
+          <span style={{ color: C.dim }}>pending</span>
+        </Tile>
+      </div>
+
+      {/* cumulative PnL chart */}
+      <section
+        aria-label="Cumulative realized PnL over battles"
+        style={{
+          background: C.panel,
+          border: `1px solid ${C.grid}`,
+          borderRadius: 16,
+          padding: "16px 8px 8px",
+        }}
+      >
+        <div style={{ padding: "0 8px 12px" }}>
+          <span style={metaLabel}>CUMULATIVE PnL OVER BATTLES (SAMPLE)</span>
+        </div>
+        <div style={{ height: 320 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="pnlFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={C.danger} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={C.danger} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="battle"
+                tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }}
+                tickLine={false}
+                axisLine={{ stroke: C.grid }}
+                minTickGap={48}
+              />
+              <YAxis
+                tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }}
+                tickLine={false}
+                axisLine={false}
+                width={56}
+                tickFormatter={(v: number) => fmt(v, 1)}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: C.bg,
+                  border: `1px solid ${C.grid}`,
+                  borderRadius: 10,
+                  fontFamily: C.mono,
+                  fontSize: 12,
+                }}
+                labelStyle={{ color: C.dim }}
+                itemStyle={{ color: C.danger }}
+                labelFormatter={(l) => `battle ${l}`}
+                formatter={(v: number | string) => [`${fmt(Number(v))} ◎`, "cum PnL"]}
+              />
+              <ReferenceLine y={0} stroke={C.dim} strokeDasharray="4 4" />
+              <Area
+                type="monotone"
+                dataKey="cumPnl"
+                stroke={C.danger}
+                strokeWidth={2}
+                fill="url(#pnlFill)"
+                isAnimationActive={!reducedMotion}
+                dot={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+
+      {/* data-source note */}
+      <p
+        style={{
+          margin: 0,
+          fontFamily: C.mono,
+          fontSize: 12,
+          color: C.dim,
+          lineHeight: 1.5,
+        }}
+      >
+        Totals are your real WaveWarZ stats; the curve + volume are placeholders
+        until the live Dune query for program{" "}
+        <span style={{ color: C.text }}>{short(TRADER.program)}</span> is wired.
+        Next: per-battle PnL, win rate, biggest-loss list, daily volume.
+      </p>
+    </div>
+  );
+}
+
+function Tile({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: C.panel,
+        border: `1px solid ${C.grid}`,
+        borderRadius: 12,
+        padding: 16,
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+      }}
+    >
+      <span style={metaLabel}>{label}</span>
+      <span
+        style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}
+      >
+        {children}
+      </span>
+    </div>
+  );
+}
