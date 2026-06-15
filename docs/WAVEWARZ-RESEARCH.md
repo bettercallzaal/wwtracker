@@ -191,6 +191,29 @@ Figures live in `lib/wwData.ts` and the app's Analytics + My Trades tabs.
 All figures are a point-in-time snapshot (`lib/wwData.ts.generatedAt`); refresh
 with `scripts/ww-research.sh` then `scripts/ww-gen.py`.
 
+## 6c. Audius integration (music side)
+
+WaveWarZ artists publish on **Audius** (free public API, no key, CORS-ok). The
+app pulls live followers / tracks / play counts / artwork from
+`https://api.audius.co` (resolve a discovery node from `/`, then
+`/v1/users/{id}`, `/v1/users/{id}/tracks`, `/v1/tracks?id=...`,
+`/v1/tracks/search`, `/v1/users/search` with `app_name=wwtracker`).
+
+Verified artist -> Audius id (handle + catalog match):
+- GodclouD -> `Vg1rWzQ`
+- BennyJ504WaveWarz -> `RGyPJRg`
+- RoCkY2GriMeY -> `aNYwwmo`
+- _0xQuan -> no confident match (excluded)
+
+Verified charting-song -> Audius track:
+- "Fuck yo feelingZ" -> `0X6BQ99` (/GodclouD/fuck-yo-feelingz)
+- "What the: Unreleased" -> `dY4Q23y` (/BennyJ504WaveWarz/what-the-unreleased)
+- "EAZE OF MIND" -> `mE6RMV5` (/GodclouD/eaze-of-mind)
+- "High Frequency with PKMN" -> `mWpBmxQ` (/RoCkY2GriMeY/high-frequency-with-pkmn)
+- "ACCELERATE" -> no confident match (excluded)
+
+Rule: never display an Audius match that isn't confirmed by handle+title.
+
 ## 7. Open questions / next
 
 - Decode buyShares vs claimShares per battle for true per-battle PnL + win rate.

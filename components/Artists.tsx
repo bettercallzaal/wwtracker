@@ -84,6 +84,23 @@ export default function Artists() {
         <p style={{ color: C.danger, fontFamily: C.mono, fontSize: 13 }}>{error}</p>
       )}
 
+      {cards && cards.some((c) => c.user) && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
+          {(() => {
+            const live = cards.filter((c) => c.user);
+            const followers = live.reduce((s, c) => s + (c.user?.follower_count ?? 0), 0);
+            const tracks = live.reduce((s, c) => s + (c.user?.track_count ?? 0), 0);
+            return (
+              <>
+                <Foot label="ARTISTS ON AUDIUS" value={fmt(live.length)} />
+                <Foot label="COMBINED FOLLOWERS" value={fmt(followers)} />
+                <Foot label="COMBINED TRACKS" value={fmt(tracks)} />
+              </>
+            );
+          })()}
+        </div>
+      )}
+
       {cards === null && !error ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {ARTISTS.map((a) => (
@@ -138,6 +155,15 @@ export default function Artists() {
         Live from the Audius API (api.audius.co). Only artists with a confirmed
         Audius match are shown. Not affiliated with Audius or WaveWarZ.
       </p>
+    </div>
+  );
+}
+
+function Foot({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 12, padding: 14, display: "flex", flexDirection: "column", gap: 4 }}>
+      <span style={{ ...metaLabel, fontSize: 10 }}>{label}</span>
+      <span style={{ fontSize: 20, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{value}</span>
     </div>
   );
 }
