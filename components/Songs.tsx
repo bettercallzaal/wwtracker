@@ -81,6 +81,24 @@ export default function Songs() {
         </p>
       </header>
 
+      {/* featured player - the #1 charting song, playable inline */}
+      {SONGS[0]?.audius && (
+        <section style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 16 }}>
+          <div style={{ marginBottom: 10 }}>
+            <span style={metaLabel}>#1 SONG - NOW PLAYING</span>
+          </div>
+          <iframe
+            title={SONGS[0].song}
+            src={`https://audius.co/embed/track/${SONGS[0].audius.id}?flavor=compact`}
+            width="100%"
+            height={120}
+            loading="lazy"
+            allow="encrypted-media"
+            style={{ border: "none", borderRadius: 8 }}
+          />
+        </section>
+      )}
+
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {SONGS.map((s) => {
           const st = s.audius ? stats[s.audius.id] : undefined;
