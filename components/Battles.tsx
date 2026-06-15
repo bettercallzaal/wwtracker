@@ -70,6 +70,12 @@ export default function Battles() {
   const prior = perNightAll[perNightAll.length - 2];
   const battleDelta = latest && prior ? latest.battles - prior.battles : 0;
   const skipDelta = latest && prior ? latest.skips - prior.skips : 0;
+  const totals = useMemo(() => {
+    const totalSkips = Object.values(skips).reduce((s, v) => s + v.skips, 0);
+    const skipRevenue = Object.values(skips).reduce((s, v) => s + v.sol, 0);
+    const totalQueue = Object.values(queue).reduce((s, v) => s + v, 0);
+    return { totalSkips, skipRevenue, totalQueue };
+  }, [skips, queue]);
 
   const filtered = useMemo(() => {
     if (!all) return [];
@@ -135,6 +141,27 @@ export default function Battles() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+          {(totals.totalSkips > 0 || totals.totalQueue > 0) && (
+            <>
+              <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 10, fontFamily: C.mono, fontSize: 12, color: C.dim }}>
+                <span>total skips: <b style={{ color: C.good }}>{fmt(totals.totalSkips)}</b> ({fmt(totals.skipRevenue, 2)} ◎)</span>
+                <span>total queue: <b style={{ color: C.text }}>{fmt(totals.totalQueue)}</b></span>
+              </div>
+              <div style={{ height: 160, marginBottom: 14 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={perNightAll.slice(-40)} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="short" tick={{ fill: C.dim, fontSize: 10, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={28} />
+                    <YAxis tick={{ fill: C.dim, fontSize: 10, fontFamily: C.mono }} tickLine={false} axisLine={false} width={26} allowDecimals={false} />
+                    <Tooltip cursor={{ fill: "rgba(255,194,75,0.08)" }} contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }} labelStyle={{ color: C.dim }} />
+                    <Bar dataKey="skips" name="skips" fill={C.good} fillOpacity={0.85} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="queue" name="queue" fill={C.accentDim} fillOpacity={0.85} radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ ...metaLabel, fontSize: 10, marginBottom: 10 }}>skips (green) + queue (amber) per night</div>
+            </>
+          )}
           <div style={{ marginBottom: 12 }}><span style={metaLabel}>PER NIGHT (LAST 14 ACTIVE DATES)</span></div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 12, minWidth: 360 }}>
