@@ -31,11 +31,13 @@ const isView = (v: string | null): v is View =>
 
 export default function AppShell() {
   const [view, setView] = useState<View>("about");
+  const [navOpen, setNavOpen] = useState(true);
 
   // Sync the active tab with ?tab= so a specific view is shareable.
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
     if (isView(t)) setView(t);
+    if (window.innerWidth < 640) setNavOpen(false);
   }, []);
 
   const go = (v: View) => {
@@ -43,10 +45,27 @@ export default function AppShell() {
     const u = new URL(window.location.href);
     u.searchParams.set("tab", v);
     window.history.replaceState({}, "", u);
+    if (window.innerWidth < 640) setNavOpen(false);
   };
+
+  const currentLabel = GROUPS.flatMap((g) => g.tabs).find(([v]) => v === view)?.[1] ?? "";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <button
+          type="button"
+          onClick={() => setNavOpen((o) => !o)}
+          aria-expanded={navOpen}
+          aria-label="Toggle navigation"
+          style={{ fontFamily: C.mono, fontSize: 12, padding: "8px 12px", borderRadius: 9, border: `1px solid ${C.grid}`, background: C.panel, color: C.text, cursor: "pointer" }}
+        >
+          {navOpen ? "close menu" : "menu"}
+        </button>
+        <span style={{ fontFamily: C.mono, fontSize: 12, color: C.dim }}>{currentLabel}</span>
+      </div>
+
+      {navOpen && (
       <nav
         aria-label="Dashboard view"
         style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-start" }}
@@ -65,6 +84,7 @@ export default function AppShell() {
           </div>
         ))}
       </nav>
+      )}
 
       <div role="tabpanel" aria-label={`${view} view`}>
         {view === "about" ? (
