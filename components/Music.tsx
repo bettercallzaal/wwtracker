@@ -17,6 +17,8 @@ interface Track {
   title: string;
   play_count: number;
   favorite_count: number;
+  repost_count: number;
+  release_date?: string;
   genre?: string;
   permalink: string;
   artist: string;
@@ -40,7 +42,17 @@ export default function Music() {
           Object.entries(ARTISTS).map(async ([handle, id]) => {
             const r = await fetch(`${host}/v1/users/${id}/tracks?app_name=${APP}&limit=100`).then((x) => x.json());
             for (const t of r?.data ?? []) {
-              all.push({ id: t.id, title: t.title, play_count: t.play_count ?? 0, favorite_count: t.favorite_count ?? 0, genre: t.genre ?? "Unknown", permalink: t.permalink, artist: handle });
+              all.push({
+                id: t.id,
+                title: t.title,
+                play_count: t.play_count ?? 0,
+                favorite_count: t.favorite_count ?? 0,
+                repost_count: t.repost_count ?? 0,
+                release_date: typeof t.release_date === "string" ? t.release_date.slice(0, 10) : undefined,
+                genre: t.genre ?? "Unknown",
+                permalink: t.permalink,
+                artist: handle,
+              });
             }
           }),
         );
@@ -61,6 +73,11 @@ export default function Music() {
     const genres = new Map<string, number>();
     for (const t of tracks) genres.set(t.genre || "Unknown", (genres.get(t.genre || "Unknown") ?? 0) + 1);
     const top = [...tracks].sort((a, b) => b.play_count - a.play_count).slice(0, 12);
+    const reposted = [...tracks].sort((a, b) => b.repost_count - a.repost_count).slice(0, 6);
+    const newest = [...tracks]
+      .filter((t) => t.release_date)
+      .sort((a, b) => (a.release_date! < b.release_date! ? 1 : -1))
+      .slice(0, 6);
     return {
       tracks: tracks.length,
       plays,
@@ -68,6 +85,8 @@ export default function Music() {
       artists: Object.keys(ARTISTS).length,
       genres: [...genres.entries()].sort((a, b) => b[1] - a[1]),
       top,
+      reposted,
+      newest,
     };
   }, [tracks]);
 
@@ -131,6 +150,29 @@ export default function Music() {
               ))}
             </div>
           </Panel>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+            <Panel label="NEWEST RELEASES">
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {agg.newest.map((t) => (
+                  <a key={t.id} href={`https://audius.co${t.permalink}`} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "space-between", gap: 10, fontFamily: C.mono, fontSize: 12, color: C.text, textDecoration: "none" }}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title} <span style={{ color: C.dim }}>@{t.artist}</span></span>
+                    <span style={{ color: C.dim, flexShrink: 0 }}>{t.release_date}</span>
+                  </a>
+                ))}
+              </div>
+            </Panel>
+            <Panel label="MOST REPOSTED">
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {agg.reposted.map((t) => (
+                  <a key={t.id} href={`https://audius.co${t.permalink}`} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "space-between", gap: 10, fontFamily: C.mono, fontSize: 12, color: C.text, textDecoration: "none" }}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title} <span style={{ color: C.dim }}>@{t.artist}</span></span>
+                    <span style={{ color: C.dim, flexShrink: 0 }}>{fmt(t.repost_count)} reposts</span>
+                  </a>
+                ))}
+              </div>
+            </Panel>
+          </div>
         </>
       ) : null}
 

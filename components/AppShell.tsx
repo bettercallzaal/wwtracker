@@ -17,6 +17,13 @@ import Faq from "./Faq";
 
 type View = "about" | "how" | "events" | "songs" | "artists" | "music" | "ecosystem" | "platform" | "analytics" | "trader" | "faq";
 
+const GROUPS: { label: string; tabs: [View, string][] }[] = [
+  { label: "INFO", tabs: [["about", "ABOUT"], ["how", "HOW IT WORKS"], ["events", "EVENTS"], ["faq", "FAQ"]] },
+  { label: "MUSIC", tabs: [["songs", "SONGS"], ["artists", "ARTISTS"], ["music", "MUSIC"]] },
+  { label: "ON-CHAIN", tabs: [["platform", "PLATFORM FLOOR"], ["analytics", "ANALYTICS"], ["trader", "MY TRADES"]] },
+  { label: "ZAO", tabs: [["ecosystem", "ECOSYSTEM"]] },
+];
+
 const isView = (v: string | null): v is View =>
   v === "about" || v === "how" || v === "events" || v === "songs" ||
   v === "artists" || v === "music" || v === "ecosystem" || v === "platform" ||
@@ -41,31 +48,22 @@ export default function AppShell() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <nav
-        role="tablist"
         aria-label="Dashboard view"
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 6,
-          background: C.panel,
-          border: `1px solid ${C.grid}`,
-          borderRadius: 12,
-          padding: 6,
-          alignSelf: "flex-start",
-          maxWidth: "100%",
-        }}
+        style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-start" }}
       >
-        <Tab active={view === "about"} onClick={() => go("about")} label="ABOUT" />
-        <Tab active={view === "how"} onClick={() => go("how")} label="HOW IT WORKS" />
-        <Tab active={view === "events"} onClick={() => go("events")} label="EVENTS" />
-        <Tab active={view === "songs"} onClick={() => go("songs")} label="SONGS" />
-        <Tab active={view === "artists"} onClick={() => go("artists")} label="ARTISTS" />
-        <Tab active={view === "music"} onClick={() => go("music")} label="MUSIC" />
-        <Tab active={view === "ecosystem"} onClick={() => go("ecosystem")} label="ECOSYSTEM" />
-        <Tab active={view === "platform"} onClick={() => go("platform")} label="PLATFORM FLOOR" />
-        <Tab active={view === "analytics"} onClick={() => go("analytics")} label="ANALYTICS" />
-        <Tab active={view === "trader"} onClick={() => go("trader")} label="MY TRADES" />
-        <Tab active={view === "faq"} onClick={() => go("faq")} label="FAQ" />
+        {GROUPS.map((g) => (
+          <div
+            key={g.label}
+            style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 12, padding: 6, display: "flex", flexDirection: "column", gap: 4 }}
+          >
+            <span style={{ fontFamily: C.mono, fontSize: 9, letterSpacing: "0.1em", color: C.dim, padding: "2px 8px" }}>{g.label}</span>
+            <div role="tablist" aria-label={g.label} style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              {g.tabs.map(([v, label]) => (
+                <Tab key={v} active={view === v} onClick={() => go(v)} label={label} />
+              ))}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div role="tabpanel" aria-label={`${view} view`}>
