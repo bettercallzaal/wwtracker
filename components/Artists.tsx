@@ -50,7 +50,7 @@ export default function Artists() {
             try {
               const [u, t] = await Promise.all([
                 fetch(`${host}/v1/users/${a.audiusId}?app_name=${APP}`).then((r) => r.json()),
-                fetch(`${host}/v1/users/${a.audiusId}/tracks?app_name=${APP}&limit=3`).then((r) => r.json()),
+                fetch(`${host}/v1/users/${a.audiusId}/tracks?app_name=${APP}&limit=5&sort=plays`).then((r) => r.json()),
               ]);
               return { ww: a, user: u?.data ?? null, tracks: (t?.data ?? []) as Track[] };
             } catch {
@@ -124,7 +124,7 @@ export default function Artists() {
                   {tracks.map((t) => (
                     <a key={t.permalink} href={`https://audius.co${t.permalink}`} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "space-between", gap: 12, color: C.text, textDecoration: "none", fontFamily: C.mono, fontSize: 12 }}>
                       <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
-                      <span style={{ color: C.dim, flexShrink: 0 }}>{fmt(t.play_count)} plays</span>
+                      <span style={{ color: C.dim, flexShrink: 0 }}>{fmt(t.play_count)} plays - {fmt(t.favorite_count)} favs</span>
                     </a>
                   ))}
                 </div>
