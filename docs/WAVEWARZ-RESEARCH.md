@@ -212,6 +212,13 @@ Verified charting-song -> Audius track:
 - "High Frequency with PKMN" -> `mWpBmxQ` (/RoCkY2GriMeY/high-frequency-with-pkmn)
 - "ACCELERATE" -> no confident match (excluded)
 
+Also confirmed: Hurric4n3Ike (founder, `lzq2G`, 48 tracks), NDA_WaveWarz
+(`oGZ6o3J`). Combined across the 5 confirmed artists (live): ~106 tracks, ~1,666
+plays, ~1,002 favs; genres Hip-Hop/Rap 82, R&B/Soul 20, Latin 2, Rock 2. The
+founder's "...Wavez x Hurric4n3Ike" series tops plays (CreWavez 93). The Music
+tab computes this live; held PKMN/IamThanos/Nessy (RoCkY collaborators, not
+confirmed WaveWarZ battlers).
+
 Rule: never display an Audius match that isn't confirmed by handle+title.
 
 ## 7. Open questions / next
