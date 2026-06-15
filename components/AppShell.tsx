@@ -7,11 +7,14 @@ import BalanceDashboard from "./BalanceDashboard";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
 import AboutWaveWarZ from "./AboutWaveWarZ";
+import HowItWorks from "./HowItWorks";
+import Ecosystem from "./Ecosystem";
 
-type View = "about" | "platform" | "analytics" | "trader";
+type View = "about" | "how" | "ecosystem" | "platform" | "analytics" | "trader";
 
 const isView = (v: string | null): v is View =>
-  v === "about" || v === "platform" || v === "analytics" || v === "trader";
+  v === "about" || v === "how" || v === "ecosystem" || v === "platform" ||
+  v === "analytics" || v === "trader";
 
 export default function AppShell() {
   const [view, setView] = useState<View>("about");
@@ -47,6 +50,8 @@ export default function AppShell() {
         }}
       >
         <Tab active={view === "about"} onClick={() => go("about")} label="ABOUT" />
+        <Tab active={view === "how"} onClick={() => go("how")} label="HOW IT WORKS" />
+        <Tab active={view === "ecosystem"} onClick={() => go("ecosystem")} label="ECOSYSTEM" />
         <Tab active={view === "platform"} onClick={() => go("platform")} label="PLATFORM FLOOR" />
         <Tab active={view === "analytics"} onClick={() => go("analytics")} label="ANALYTICS" />
         <Tab active={view === "trader"} onClick={() => go("trader")} label="MY TRADES" />
@@ -55,6 +60,10 @@ export default function AppShell() {
       <div role="tabpanel" aria-label={`${view} view`}>
         {view === "about" ? (
           <AboutWaveWarZ />
+        ) : view === "how" ? (
+          <HowItWorks />
+        ) : view === "ecosystem" ? (
+          <Ecosystem />
         ) : view === "platform" ? (
           <BalanceDashboard />
         ) : view === "analytics" ? (
