@@ -9,12 +9,13 @@ import PlatformAnalytics from "./PlatformAnalytics";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
 import Ecosystem from "./Ecosystem";
+import Events from "./Events";
 
-type View = "about" | "how" | "ecosystem" | "platform" | "analytics" | "trader";
+type View = "about" | "how" | "events" | "ecosystem" | "platform" | "analytics" | "trader";
 
 const isView = (v: string | null): v is View =>
-  v === "about" || v === "how" || v === "ecosystem" || v === "platform" ||
-  v === "analytics" || v === "trader";
+  v === "about" || v === "how" || v === "events" || v === "ecosystem" ||
+  v === "platform" || v === "analytics" || v === "trader";
 
 export default function AppShell() {
   const [view, setView] = useState<View>("about");
@@ -51,6 +52,7 @@ export default function AppShell() {
       >
         <Tab active={view === "about"} onClick={() => go("about")} label="ABOUT" />
         <Tab active={view === "how"} onClick={() => go("how")} label="HOW IT WORKS" />
+        <Tab active={view === "events"} onClick={() => go("events")} label="EVENTS" />
         <Tab active={view === "ecosystem"} onClick={() => go("ecosystem")} label="ECOSYSTEM" />
         <Tab active={view === "platform"} onClick={() => go("platform")} label="PLATFORM FLOOR" />
         <Tab active={view === "analytics"} onClick={() => go("analytics")} label="ANALYTICS" />
@@ -62,6 +64,8 @@ export default function AppShell() {
           <AboutWaveWarZ />
         ) : view === "how" ? (
           <HowItWorks />
+        ) : view === "events" ? (
+          <Events />
         ) : view === "ecosystem" ? (
           <Ecosystem />
         ) : view === "platform" ? (

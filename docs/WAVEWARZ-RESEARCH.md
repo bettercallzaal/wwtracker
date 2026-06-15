@@ -25,6 +25,16 @@ will win and claim winnings after settlement.
 Part of the **BCZ -> ZAO -> WaveWarZ** ecosystem (WaveWarZ is the music-battle
 application layer of The ZAO).
 
+Programming & tournaments (verified, wavewarz.info): Quick Battles weeknights
+~8:30 PM EST (30-second final trading window); Community AMAs Mon-Fri ~11 AM EST;
+on X Spaces + YouTube. Two brackets: a 16-artist single-elimination Artist
+Tournament (instant SOL payouts per round) and an AI Artist Tournament
+(AI-generated tracks, community-voted). All-time battle types: **886 quick
+battles + 152 main-event battles across 48 tournaments** (vs 1,127 on-chain
+initializeBattle - different definitions). Verified artist: XTinct (Alejandro
+Estrella). NOTE: dopestilo/"No Regrets", Ramone/"Stupid MFs", Visionz vs Rome
+were NOT verifiable - left out of the app.
+
 ## 2. Team
 
 - **Ikechi Nwachukwu (hurric4n3ike)** - founder / lead developer (the on-chain
