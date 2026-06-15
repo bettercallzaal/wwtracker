@@ -18,6 +18,7 @@ import { C, metaLabel } from "@/lib/theme";
 import { sampleTraderPnl } from "@/lib/traderSample";
 import { WW } from "@/lib/wwData";
 import { usd } from "@/lib/price";
+import { TRADERS, ME_WALLET } from "@/lib/traders";
 
 // ---------------------------------------------------------------------------
 // Known trader figures (from the WaveWarZ stats app). These are seeded until
@@ -64,6 +65,7 @@ export default function TraderScorecard() {
 
   const onChainNet = live ? WW.pnl[WW.pnl.length - 1].cum : TRADER.netPnlSol;
   const ts = WW.traderStats;
+  const official = TRADERS.find((t) => t.wallet === ME_WALLET);
 
   const fmt = (n: number, dp = 2) =>
     n.toLocaleString(undefined, {
@@ -153,6 +155,33 @@ export default function TraderScorecard() {
           {fmt(TRADER.roiPct, 2)}% over {TRADER.battles.toLocaleString()} battles
           (the gap is open/unclaimed positions + methodology).
         </p>
+      </section>
+
+      {/* PnL three ways - reconcile the different figures */}
+      <section style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 16 }}>
+        <span style={metaLabel}>NET PnL - THREE WAYS (THEY MEASURE DIFFERENT THINGS)</span>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginTop: 12 }}>
+          {official && (
+            <PnlCard
+              value={`${official.pnl >= 0 ? "+" : ""}${fmt(official.pnl)} ◎`}
+              label="OFFICIAL (wavewarz.info)"
+              note={`payout received - SOL invested. Rank #${official.rank}/${TRADERS.length}, ${official.win}% win (${official.rec}).`}
+              color={official.pnl >= 0 ? C.good : C.danger}
+            />
+          )}
+          <PnlCard
+            value={`${fmt(onChainNet)} ◎`}
+            label="ON-CHAIN FLOW"
+            note="net SOL across all your WaveWarZ txs (includes fees + gas). The curve below."
+            color={onChainNet >= 0 ? C.good : C.danger}
+          />
+          <PnlCard
+            value={`${fmt(TRADER.netPnlSol)} ◎`}
+            label="STATS-APP REALIZED"
+            note={`-${fmt(Math.abs(TRADER.roiPct), 2)}% ROI over ${TRADER.battles.toLocaleString()} battles (per the leaderboard widget).`}
+            color={C.danger}
+          />
+        </div>
       </section>
 
       {/* tiles - real on-chain trade stats */}
@@ -326,6 +355,16 @@ export default function TraderScorecard() {
         Aug 2025 - Jun 2026). Volume + win rate are next, via buyShares/sellShares
         instruction decode. See docs/WAVEWARZ-RESEARCH.md.
       </p>
+    </div>
+  );
+}
+
+function PnlCard({ value, label, note, color }: { value: string; label: string; note: string; color: string }) {
+  return (
+    <div style={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 12, padding: 14, display: "flex", flexDirection: "column", gap: 4 }}>
+      <span style={{ ...metaLabel, fontSize: 10 }}>{label}</span>
+      <span style={{ fontSize: 24, fontWeight: 700, color, fontVariantNumeric: "tabular-nums" }}>{value}</span>
+      <span style={{ color: C.dim, fontFamily: C.mono, fontSize: 11, lineHeight: 1.5 }}>{note}</span>
     </div>
   );
 }

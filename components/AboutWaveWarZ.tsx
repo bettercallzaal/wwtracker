@@ -87,6 +87,11 @@ export default function AboutWaveWarZ() {
       <Section label="KEY ADDRESSES">
         <AddrRow label="Program" addr={PROGRAM} />
         <AddrRow label="Treasury / dev wallet" addr={TREASURY} />
+        <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>
+          Note: the treasury wallet (FNj) is also attributed to Hurric4n3Ike on the
+          WaveWarZ artist + traders leaderboards (it&apos;s the #5 trader). Likely
+          the founder&apos;s wallet doubling as treasury - unconfirmed, flagged.
+        </p>
       </Section>
 
       {/* team */}
