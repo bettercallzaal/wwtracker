@@ -12,13 +12,14 @@ import Ecosystem from "./Ecosystem";
 import Events from "./Events";
 import Songs from "./Songs";
 import Artists from "./Artists";
+import Music from "./Music";
 import Faq from "./Faq";
 
-type View = "about" | "how" | "events" | "songs" | "artists" | "ecosystem" | "platform" | "analytics" | "trader" | "faq";
+type View = "about" | "how" | "events" | "songs" | "artists" | "music" | "ecosystem" | "platform" | "analytics" | "trader" | "faq";
 
 const isView = (v: string | null): v is View =>
   v === "about" || v === "how" || v === "events" || v === "songs" ||
-  v === "artists" || v === "ecosystem" || v === "platform" ||
+  v === "artists" || v === "music" || v === "ecosystem" || v === "platform" ||
   v === "analytics" || v === "trader" || v === "faq";
 
 export default function AppShell() {
@@ -59,6 +60,7 @@ export default function AppShell() {
         <Tab active={view === "events"} onClick={() => go("events")} label="EVENTS" />
         <Tab active={view === "songs"} onClick={() => go("songs")} label="SONGS" />
         <Tab active={view === "artists"} onClick={() => go("artists")} label="ARTISTS" />
+        <Tab active={view === "music"} onClick={() => go("music")} label="MUSIC" />
         <Tab active={view === "ecosystem"} onClick={() => go("ecosystem")} label="ECOSYSTEM" />
         <Tab active={view === "platform"} onClick={() => go("platform")} label="PLATFORM FLOOR" />
         <Tab active={view === "analytics"} onClick={() => go("analytics")} label="ANALYTICS" />
@@ -77,6 +79,8 @@ export default function AppShell() {
           <Songs />
         ) : view === "artists" ? (
           <Artists />
+        ) : view === "music" ? (
+          <Music />
         ) : view === "ecosystem" ? (
           <Ecosystem />
         ) : view === "platform" ? (
