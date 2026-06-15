@@ -8,6 +8,7 @@ const APP = "wwtracker";
 // WaveWarZ artists with a CONFIRMED Audius profile (verified by handle/track
 // match). _0xQuan had no confident Audius match, so it's left out.
 const ARTISTS: { handle: string; audiusId: string; note: string }[] = [
+  { handle: "Hurric4n3Ike", audiusId: "lzq2G", note: "WaveWarZ founder & artist" },
   { handle: "GodclouD", audiusId: "Vg1rWzQ", note: '#1 song "Fuck yo feelingZ" (100/100 heat)' },
   { handle: "BennyJ504WaveWarz", audiusId: "RGyPJRg", note: '"What the: Unreleased"' },
   { handle: "RoCkY2GriMeY", audiusId: "aNYwwmo", note: '"High Frequency with PKMN"' },
@@ -15,10 +16,12 @@ const ARTISTS: { handle: string; audiusId: string; note: string }[] = [
 ];
 
 interface Track {
+  id: string;
   title: string;
   play_count: number;
   favorite_count: number;
   permalink: string;
+  genre?: string;
   artwork?: { ["150x150"]?: string } | null;
 }
 interface AudiusUser {
@@ -39,6 +42,7 @@ const fmt = (n: number) => (n ?? 0).toLocaleString();
 export default function Artists() {
   const [cards, setCards] = useState<Card[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [playing, setPlaying] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -140,10 +144,32 @@ export default function Artists() {
               {tracks.length > 0 && (
                 <div style={{ marginTop: 12, borderTop: `1px solid ${C.grid}`, paddingTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
                   {tracks.map((t) => (
-                    <a key={t.permalink} href={`https://audius.co${t.permalink}`} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "space-between", gap: 12, color: C.text, textDecoration: "none", fontFamily: C.mono, fontSize: 12 }}>
-                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</span>
-                      <span style={{ color: C.dim, flexShrink: 0 }}>{fmt(t.play_count)} plays - {fmt(t.favorite_count)} favs</span>
-                    </a>
+                    <div key={t.id}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, fontFamily: C.mono, fontSize: 12, alignItems: "center" }}>
+                        <a href={`https://audius.co${t.permalink}`} target="_blank" rel="noreferrer" style={{ color: C.text, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                          {t.title}
+                        </a>
+                        <span style={{ color: C.dim, flexShrink: 0 }}>{fmt(t.play_count)} plays</span>
+                        <button
+                          type="button"
+                          onClick={() => setPlaying(playing === t.id ? null : t.id)}
+                          style={{ background: "none", border: "none", color: C.accent, fontFamily: C.mono, fontSize: 12, cursor: "pointer", padding: 0, flexShrink: 0 }}
+                        >
+                          {playing === t.id ? "close" : "play"}
+                        </button>
+                      </div>
+                      {playing === t.id && (
+                        <iframe
+                          title={t.title}
+                          src={`https://audius.co/embed/track/${t.id}?flavor=compact`}
+                          width="100%"
+                          height={120}
+                          loading="lazy"
+                          allow="encrypted-media"
+                          style={{ border: "none", borderRadius: 8, marginTop: 8 }}
+                        />
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
