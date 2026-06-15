@@ -15,21 +15,22 @@ import Artists from "./Artists";
 import Music from "./Music";
 import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
+import Battles from "./Battles";
 import Faq from "./Faq";
 
-type View = "about" | "how" | "events" | "songs" | "artists" | "music" | "leaderboard" | "ecosystem" | "platform" | "analytics" | "trader" | "traders" | "faq";
+type View = "about" | "how" | "events" | "songs" | "artists" | "music" | "leaderboard" | "ecosystem" | "platform" | "analytics" | "trader" | "traders" | "battles" | "faq";
 
 const GROUPS: { label: string; tabs: [View, string][] }[] = [
   { label: "INFO", tabs: [["about", "ABOUT"], ["how", "HOW IT WORKS"], ["events", "EVENTS"], ["faq", "FAQ"]] },
   { label: "MUSIC", tabs: [["songs", "SONGS"], ["artists", "ARTISTS"], ["music", "MUSIC"], ["leaderboard", "LEADERBOARD"]] },
-  { label: "ON-CHAIN", tabs: [["platform", "PLATFORM FLOOR"], ["analytics", "ANALYTICS"], ["trader", "MY TRADES"], ["traders", "TRADERS"]] },
+  { label: "ON-CHAIN", tabs: [["platform", "PLATFORM FLOOR"], ["analytics", "ANALYTICS"], ["battles", "BATTLES"], ["trader", "MY TRADES"], ["traders", "TRADERS"]] },
   { label: "ZAO", tabs: [["ecosystem", "ECOSYSTEM"]] },
 ];
 
 const isView = (v: string | null): v is View =>
   v === "about" || v === "how" || v === "events" || v === "songs" ||
   v === "artists" || v === "music" || v === "leaderboard" || v === "ecosystem" ||
-  v === "platform" || v === "analytics" || v === "trader" || v === "traders" || v === "faq";
+  v === "platform" || v === "analytics" || v === "trader" || v === "traders" || v === "battles" || v === "faq";
 
 export default function AppShell() {
   const [view, setView] = useState<View>("about");
@@ -113,6 +114,8 @@ export default function AppShell() {
           <TraderScorecard />
         ) : view === "traders" ? (
           <Traders />
+        ) : view === "battles" ? (
+          <Battles />
         ) : (
           <Faq />
         )}
