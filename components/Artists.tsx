@@ -43,13 +43,34 @@ export default function Artists() {
   const [cards, setCards] = useState<Card[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
+  const [host, setHost] = useState<string>("https://discoveryprovider.audius.co");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [full, setFull] = useState<Record<string, Track[]>>({});
+
+  const expand = async (id: string) => {
+    if (expanded === id) {
+      setExpanded(null);
+      return;
+    }
+    setExpanded(id);
+    if (!full[id]) {
+      try {
+        const r = await fetch(`${host}/v1/users/${id}/tracks?app_name=${APP}&limit=100&sort=plays`).then((x) => x.json());
+        setFull((prev) => ({ ...prev, [id]: (r?.data ?? []) as Track[] }));
+      } catch {
+        /* ignore */
+      }
+    }
+  };
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
         const hosts = await fetch("https://api.audius.co").then((r) => r.json());
-        const host: string = hosts?.data?.[0] || "https://discoveryprovider.audius.co";
+        const h: string = hosts?.data?.[0] || "https://discoveryprovider.audius.co";
+        if (alive) setHost(h);
+        const host = h;
         const out = await Promise.all(
           ARTISTS.map(async (a) => {
             try {
@@ -143,7 +164,7 @@ export default function Artists() {
               </div>
               {tracks.length > 0 && (
                 <div style={{ marginTop: 12, borderTop: `1px solid ${C.grid}`, paddingTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-                  {tracks.map((t) => (
+                  {(expanded === ww.audiusId && full[ww.audiusId] ? full[ww.audiusId]! : tracks).map((t) => (
                     <div key={t.id}>
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, fontFamily: C.mono, fontSize: 12, alignItems: "center" }}>
                         <a href={`https://audius.co${t.permalink}`} target="_blank" rel="noreferrer" style={{ color: C.text, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
@@ -171,6 +192,15 @@ export default function Artists() {
                       )}
                     </div>
                   ))}
+                  {user && user.track_count > 5 && (
+                    <button
+                      type="button"
+                      onClick={() => expand(ww.audiusId)}
+                      style={{ marginTop: 4, alignSelf: "flex-start", background: "none", border: "none", color: C.accent, fontFamily: C.mono, fontSize: 12, cursor: "pointer", padding: 0 }}
+                    >
+                      {expanded === ww.audiusId ? "show less" : `show all ${user.track_count} tracks`}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

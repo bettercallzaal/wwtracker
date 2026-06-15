@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 
 const APP = "wwtracker";
@@ -78,6 +79,13 @@ export default function Music() {
       .filter((t) => t.release_date)
       .sort((a, b) => (a.release_date! < b.release_date! ? 1 : -1))
       .slice(0, 6);
+    const months = new Map<string, number>();
+    for (const t of tracks) {
+      if (!t.release_date) continue;
+      const m = t.release_date.slice(0, 7);
+      months.set(m, (months.get(m) ?? 0) + 1);
+    }
+    const byMonth = [...months.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([month, count]) => ({ month, count }));
     return {
       tracks: tracks.length,
       plays,
@@ -87,6 +95,7 @@ export default function Music() {
       top,
       reposted,
       newest,
+      byMonth,
     };
   }, [tracks]);
 
@@ -114,6 +123,22 @@ export default function Music() {
             <Tile label="TOTAL PLAYS" value={fmt(agg.plays)} />
             <Tile label="TOTAL FAVS" value={fmt(agg.favs)} />
           </div>
+
+          {agg.byMonth.length > 1 && (
+            <Panel label="RELEASE ACTIVITY (TRACKS / MONTH)">
+              <div style={{ height: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={agg.byMonth} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={24} />
+                    <YAxis tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
+                    <Tooltip cursor={{ fill: "rgba(255,194,75,0.08)" }} contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }} labelStyle={{ color: C.dim }} formatter={(v: number | string) => [v, "tracks"]} />
+                    <Bar dataKey="count" fill={C.accent} fillOpacity={0.8} radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Panel>
+          )}
 
           <Panel label="GENRE BREAKDOWN">
             {agg.genres.map(([g, n]) => (
