@@ -22,6 +22,7 @@ type Filter = "ALL" | "QUICK" | "MAIN" | "COMMUNITY";
 export default function Battles() {
   const [all, setAll] = useState<Battle[] | null>(null);
   const [skips, setSkips] = useState<Record<string, { skips: number; sol: number }>>({});
+  const [queue, setQueue] = useState<Record<string, number>>({});
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("ALL");
   const [limit, setLimit] = useState(40);
@@ -35,6 +36,10 @@ export default function Battles() {
     fetch("/ww-skips.json")
       .then((r) => r.json())
       .then((d) => { if (alive) setSkips(d as Record<string, { skips: number; sol: number }>); })
+      .catch(() => {});
+    fetch("/ww-queue.json")
+      .then((r) => r.json())
+      .then((d) => { if (alive) setQueue(d as Record<string, number>); })
       .catch(() => {});
     return () => { alive = false; };
   }, []);
@@ -55,10 +60,10 @@ export default function Battles() {
       .map(([date, v]) => {
         const d = new Date(Date.parse(date));
         const iso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-        return { date, short: date.replace(/, \d{4}$/, ""), battles: v.battles, songs: v.songs.size, skips: skips[iso]?.skips ?? 0, ts: Date.parse(date) };
+        return { date, short: date.replace(/, \d{4}$/, ""), battles: v.battles, songs: v.songs.size, skips: skips[iso]?.skips ?? 0, queue: queue[iso] ?? 0, ts: Date.parse(date) };
       })
       .sort((a, b) => a.ts - b.ts);
-  }, [all, skips]);
+  }, [all, skips, queue]);
 
   const perNight = useMemo(() => [...perNightAll].reverse().slice(0, 14), [perNightAll]);
   const latest = perNightAll[perNightAll.length - 1];
@@ -138,6 +143,7 @@ export default function Battles() {
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>BATTLES</th>
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>SONGS</th>
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>SKIPS</th>
+                <th style={{ padding: "6px 10px", textAlign: "right" }}>QUEUE</th>
               </tr></thead>
               <tbody>
                 {perNight.map((n) => (
@@ -146,12 +152,13 @@ export default function Battles() {
                     <td style={{ padding: "6px 10px", textAlign: "right", color: C.accent }}>{n.battles}</td>
                     <td style={{ padding: "6px 10px", textAlign: "right" }}>{n.songs}</td>
                     <td style={{ padding: "6px 10px", textAlign: "right", color: C.good }}>{n.skips || "-"}</td>
+                    <td style={{ padding: "6px 10px", textAlign: "right", color: C.dim }}>{n.queue || "-"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>Songs = distinct quick-battle titles that night. Skips = direct transfers to the platform wallet on the escalating skip ladder (0.02 SOL, +0.01 each concurrent skip), from Dune. Queue + DJ Wavy counts pending (the 0.005 SOL action - tell me which it is).</p>
+          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>Songs = distinct quick-battle titles that night. Skips = direct transfers to the platform wallet on the escalating skip ladder (0.02 SOL, +0.01 each concurrent skip), from Dune. Queue = 0.005 SOL direct transfers (mostly queue entries; DJ Wavy may overlap - pending confirmation on how to split).</p>
         </section>
       )}
 
