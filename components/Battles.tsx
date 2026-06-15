@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { BATTLE_STATS as S } from "@/lib/battles";
 
@@ -35,7 +36,7 @@ export default function Battles() {
 
   // Battles + songs per night (from the dates). Songs = distinct titles in quick
   // battles that night; battles = all battle types that night.
-  const perNight = useMemo(() => {
+  const perNightAll = useMemo(() => {
     if (!all) return [];
     const map = new Map<string, { battles: number; songs: Set<string> }>();
     for (const b of all) {
@@ -45,10 +46,14 @@ export default function Battles() {
       map.set(b.date, e);
     }
     return [...map.entries()]
-      .map(([date, v]) => ({ date, battles: v.battles, songs: v.songs.size, ts: Date.parse(date) }))
-      .sort((a, b) => b.ts - a.ts)
-      .slice(0, 14);
+      .map(([date, v]) => ({ date, short: date.replace(/, \d{4}$/, ""), battles: v.battles, songs: v.songs.size, ts: Date.parse(date) }))
+      .sort((a, b) => a.ts - b.ts);
   }, [all]);
+
+  const perNight = useMemo(() => [...perNightAll].reverse().slice(0, 14), [perNightAll]);
+  const latest = perNightAll[perNightAll.length - 1];
+  const prior = perNightAll[perNightAll.length - 2];
+  const battleDelta = latest && prior ? latest.battles - prior.battles : 0;
 
   const filtered = useMemo(() => {
     if (!all) return [];
@@ -83,6 +88,36 @@ export default function Battles() {
       {/* per night */}
       {perNight.length > 0 && (
         <section style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 16 }}>
+          {latest && prior && (
+            <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 14 }}>
+              <div>
+                <span style={{ ...metaLabel, fontSize: 10 }}>LATEST NIGHT ({latest.short})</span>
+                <div style={{ fontSize: 22, fontWeight: 700 }}>
+                  {latest.battles} battles{" "}
+                  <span style={{ fontSize: 13, color: battleDelta >= 0 ? C.good : C.danger, fontFamily: C.mono }}>
+                    {battleDelta >= 0 ? "+" : ""}{battleDelta} vs prior
+                  </span>
+                </div>
+                <span style={{ color: C.dim, fontFamily: C.mono, fontSize: 12 }}>{latest.songs} songs</span>
+              </div>
+              <div>
+                <span style={{ ...metaLabel, fontSize: 10 }}>NIGHT BEFORE ({prior.short})</span>
+                <div style={{ fontSize: 22, fontWeight: 700 }}>{prior.battles} battles</div>
+                <span style={{ color: C.dim, fontFamily: C.mono, fontSize: 12 }}>{prior.songs} songs</span>
+              </div>
+            </div>
+          )}
+          <div style={{ height: 180, marginBottom: 14 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={perNightAll.slice(-40)} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="short" tick={{ fill: C.dim, fontSize: 10, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={28} />
+                <YAxis tick={{ fill: C.dim, fontSize: 10, fontFamily: C.mono }} tickLine={false} axisLine={false} width={26} allowDecimals={false} />
+                <Tooltip cursor={{ fill: "rgba(255,194,75,0.08)" }} contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }} labelStyle={{ color: C.dim }} formatter={(v: number | string, n) => [v, n]} />
+                <Bar dataKey="battles" fill={C.accent} fillOpacity={0.8} radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
           <div style={{ marginBottom: 12 }}><span style={metaLabel}>PER NIGHT (LAST 14 ACTIVE DATES)</span></div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 12, minWidth: 360 }}>
