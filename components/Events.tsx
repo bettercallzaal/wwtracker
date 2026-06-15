@@ -59,6 +59,22 @@ export default function Events() {
         </div>
       </Section>
 
+      <Section label="OFFICIAL ON AUDIUS">
+        <p style={{ margin: "0 0 10px", color: C.text, lineHeight: 1.6, fontSize: 14 }}>
+          The official <a href="https://audius.co/WaveWarZ" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>@WaveWarZ</a> Audius
+          account - featuring a VeggieWavez x Hurric4n3Ike (founder) track.
+        </p>
+        <iframe
+          title="VeggieWavez x Hurric4n3Ike"
+          src="https://audius.co/embed/track/MpMJygj?flavor=compact"
+          width="100%"
+          height={120}
+          loading="lazy"
+          allow="encrypted-media"
+          style={{ border: "none", borderRadius: 8 }}
+        />
+      </Section>
+
       <Section label="RECENT">
         <ul style={listStyle}>
           <li>Mar 2026 - roadmap update from the WaveWarZ X account.</li>
