@@ -21,6 +21,7 @@ type Filter = "ALL" | "QUICK" | "MAIN" | "COMMUNITY";
 
 export default function Battles() {
   const [all, setAll] = useState<Battle[] | null>(null);
+  const [skips, setSkips] = useState<Record<string, { skips: number; sol: number }>>({});
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("ALL");
   const [limit, setLimit] = useState(40);
@@ -31,6 +32,10 @@ export default function Battles() {
       .then((r) => r.json())
       .then((d) => { if (alive) setAll(d as Battle[]); })
       .catch(() => { if (alive) setAll([]); });
+    fetch("/ww-skips.json")
+      .then((r) => r.json())
+      .then((d) => { if (alive) setSkips(d as Record<string, { skips: number; sol: number }>); })
+      .catch(() => {});
     return () => { alive = false; };
   }, []);
 
@@ -45,15 +50,21 @@ export default function Battles() {
       if (b.type === "QUICK") { e.songs.add(b.a); e.songs.add(b.b); }
       map.set(b.date, e);
     }
+    const pad = (n: number) => String(n).padStart(2, "0");
     return [...map.entries()]
-      .map(([date, v]) => ({ date, short: date.replace(/, \d{4}$/, ""), battles: v.battles, songs: v.songs.size, ts: Date.parse(date) }))
+      .map(([date, v]) => {
+        const d = new Date(Date.parse(date));
+        const iso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        return { date, short: date.replace(/, \d{4}$/, ""), battles: v.battles, songs: v.songs.size, skips: skips[iso]?.skips ?? 0, ts: Date.parse(date) };
+      })
       .sort((a, b) => a.ts - b.ts);
-  }, [all]);
+  }, [all, skips]);
 
   const perNight = useMemo(() => [...perNightAll].reverse().slice(0, 14), [perNightAll]);
   const latest = perNightAll[perNightAll.length - 1];
   const prior = perNightAll[perNightAll.length - 2];
   const battleDelta = latest && prior ? latest.battles - prior.battles : 0;
+  const skipDelta = latest && prior ? latest.skips - prior.skips : 0;
 
   const filtered = useMemo(() => {
     if (!all) return [];
@@ -98,12 +109,13 @@ export default function Battles() {
                     {battleDelta >= 0 ? "+" : ""}{battleDelta} vs prior
                   </span>
                 </div>
-                <span style={{ color: C.dim, fontFamily: C.mono, fontSize: 12 }}>{latest.songs} songs</span>
+                <span style={{ color: C.dim, fontFamily: C.mono, fontSize: 12 }}>{latest.songs} songs - {latest.skips} skips </span>
+                <span style={{ fontSize: 11, color: skipDelta >= 0 ? C.good : C.danger, fontFamily: C.mono }}>({skipDelta >= 0 ? "+" : ""}{skipDelta})</span>
               </div>
               <div>
                 <span style={{ ...metaLabel, fontSize: 10 }}>NIGHT BEFORE ({prior.short})</span>
                 <div style={{ fontSize: 22, fontWeight: 700 }}>{prior.battles} battles</div>
-                <span style={{ color: C.dim, fontFamily: C.mono, fontSize: 12 }}>{prior.songs} songs</span>
+                <span style={{ color: C.dim, fontFamily: C.mono, fontSize: 12 }}>{prior.songs} songs - {prior.skips} skips</span>
               </div>
             </div>
           )}
@@ -125,6 +137,7 @@ export default function Battles() {
                 <th style={{ padding: "6px 10px" }}>NIGHT</th>
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>BATTLES</th>
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>SONGS</th>
+                <th style={{ padding: "6px 10px", textAlign: "right" }}>SKIPS</th>
               </tr></thead>
               <tbody>
                 {perNight.map((n) => (
@@ -132,12 +145,13 @@ export default function Battles() {
                     <td style={{ padding: "6px 10px" }}>{n.date}</td>
                     <td style={{ padding: "6px 10px", textAlign: "right", color: C.accent }}>{n.battles}</td>
                     <td style={{ padding: "6px 10px", textAlign: "right" }}>{n.songs}</td>
+                    <td style={{ padding: "6px 10px", textAlign: "right", color: C.good }}>{n.skips || "-"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>Songs = distinct titles in quick battles that night. Skips/queue/DJ-Wavy counts coming - need the per-action SOL prices.</p>
+          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>Songs = distinct quick-battle titles that night. Skips = direct transfers to the platform wallet on the escalating skip ladder (0.02 SOL, +0.01 each concurrent skip), from Dune. Queue + DJ Wavy counts pending (the 0.005 SOL action - tell me which it is).</p>
         </section>
       )}
 
