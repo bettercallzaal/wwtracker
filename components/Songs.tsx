@@ -33,10 +33,13 @@ const fmt = (n: number) => (n ?? 0).toLocaleString();
 interface AudiusStat {
   play_count: number;
   favorite_count: number;
+  genre?: string;
+  release_date?: string;
 }
 
 export default function Songs() {
   const [stats, setStats] = useState<Record<string, AudiusStat>>({});
+  const [playing, setPlaying] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -49,7 +52,12 @@ export default function Songs() {
         const res = await fetch(`${host}/v1/tracks?${qs}&app_name=wwtracker`).then((r) => r.json());
         const map: Record<string, AudiusStat> = {};
         for (const t of res?.data ?? []) {
-          map[t.id] = { play_count: t.play_count ?? 0, favorite_count: t.favorite_count ?? 0 };
+          map[t.id] = {
+            play_count: t.play_count ?? 0,
+            favorite_count: t.favorite_count ?? 0,
+            genre: t.genre ?? undefined,
+            release_date: typeof t.release_date === "string" ? t.release_date.slice(0, 10) : undefined,
+          };
         }
         if (alive) setStats(map);
       } catch {
@@ -95,14 +103,38 @@ export default function Songs() {
                 <div style={{ width: `${s.heat}%`, height: "100%", background: tierColor(s.tier) }} />
               </div>
               {s.audius && (
-                <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", fontFamily: C.mono, fontSize: 12 }}>
-                  <span style={{ color: C.dim }}>
-                    Audius: {st ? `${fmt(st.play_count)} plays - ${fmt(st.favorite_count)} favs` : "loading..."}
-                  </span>
-                  <a href={`https://audius.co${s.audius.permalink}`} target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
-                    Stream on Audius &#8599;
-                  </a>
-                </div>
+                <>
+                  <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", fontFamily: C.mono, fontSize: 12 }}>
+                    <span style={{ color: C.dim }}>
+                      Audius: {st ? `${fmt(st.play_count)} plays - ${fmt(st.favorite_count)} favs` : "loading..."}
+                      {st?.genre ? ` - ${st.genre}` : ""}
+                      {st?.release_date ? ` - ${st.release_date}` : ""}
+                    </span>
+                    <span style={{ display: "flex", gap: 12 }}>
+                      <button
+                        type="button"
+                        onClick={() => setPlaying(playing === s.audius!.id ? null : s.audius!.id)}
+                        style={{ background: "none", border: "none", color: C.accent, fontFamily: C.mono, fontSize: 12, cursor: "pointer", padding: 0 }}
+                      >
+                        {playing === s.audius.id ? "close" : "play"}
+                      </button>
+                      <a href={`https://audius.co${s.audius.permalink}`} target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
+                        Audius &#8599;
+                      </a>
+                    </span>
+                  </div>
+                  {playing === s.audius.id && (
+                    <iframe
+                      title={s.song}
+                      src={`https://audius.co/embed/track/${s.audius.id}?flavor=compact`}
+                      width="100%"
+                      height={120}
+                      loading="lazy"
+                      allow="encrypted-media"
+                      style={{ border: "none", borderRadius: 8, marginTop: 10 }}
+                    />
+                  )}
+                </>
               )}
             </div>
           );

@@ -11,6 +11,7 @@ const ARTISTS: { handle: string; audiusId: string; note: string }[] = [
   { handle: "GodclouD", audiusId: "Vg1rWzQ", note: '#1 song "Fuck yo feelingZ" (100/100 heat)' },
   { handle: "BennyJ504WaveWarz", audiusId: "RGyPJRg", note: '"What the: Unreleased"' },
   { handle: "RoCkY2GriMeY", audiusId: "aNYwwmo", note: '"High Frequency with PKMN"' },
+  { handle: "NDA_WaveWarz", audiusId: "oGZ6o3J", note: "WaveWarZ-tagged artist (NDA)" },
 ];
 
 interface Track {
