@@ -3,6 +3,15 @@
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
 
+// Verified WaveWarZ YouTube uploads (titles via oEmbed).
+const VIDEOS: { id: string; title: string }[] = [
+  { id: "cH-ehQhkCqo", title: "WaveWarZ Demo - Colosseum Frontier Hackathon (Solana)" },
+  { id: "ODeO-Mi0bpk", title: "WaveWarZ Colosseum Frontier Hackathon Pitch" },
+  { id: "VJUaD1s1ziU", title: "Colosseum by @r3plic4nt206 - music video (made with Claude Code by candy)" },
+  { id: "FBsmFSA9TFg", title: "If Your Fans Aren't Spending Money, This is Why" },
+  { id: "1gyD0NVSljE", title: "There's Always a Moment the Outcome is Obvious" },
+];
+
 export default function Events() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -56,6 +65,53 @@ export default function Events() {
         </p>
         <div style={{ marginTop: 8 }}>
           <Link href="https://www.youtube.com/watch?v=FmrzjYtdF6A" label="Watch the interview" />
+        </div>
+      </Section>
+
+      <Section label="CHARITY / BENEFIT BATTLES">
+        <p style={{ margin: "0 0 10px", color: C.text, lineHeight: 1.6, fontSize: 14 }}>
+          The crowd is the fundraiser - trades, votes, and SOL move from the arena
+          to the cause, platform fees waived. Across <b>10 benefit battles</b>:
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+          <Stat label="ONCHAIN REDIRECTED" value="0.079 ◎" sub="fees + settlement" />
+          <Stat label="VOLUME REDIRECTED" value="7.99 ◎" sub="across benefit battles" />
+          <Stat label="FIAT RAISED" value="~$1,491" sub="cc / PayPal / Apple Pay" />
+          <Stat label="GRAND TOTAL" value="~$1,497" sub="onchain + fiat" />
+        </div>
+        <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
+          Case study: the PolyRaiders Holiday Music Battle raised ~$270 in TradFi
+          payments. IndieZ vs ClassicZ benefit series ran Feb 2026.
+        </p>
+      </Section>
+
+      <Section label="WATCH (YOUTUBE)">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
+          {VIDEOS.slice(0, 2).map((v) => (
+            <div key={v.id}>
+              <div style={{ position: "relative", paddingTop: "56.25%", borderRadius: 10, overflow: "hidden", border: `1px solid ${C.grid}` }}>
+                <iframe
+                  title={v.title}
+                  src={`https://www.youtube.com/embed/${v.id}`}
+                  loading="lazy"
+                  allow="encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
+                />
+              </div>
+              <p style={{ margin: "6px 0 0", fontFamily: C.mono, fontSize: 12, color: C.dim, lineHeight: 1.4 }}>{v.title}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+          {VIDEOS.slice(2).map((v) => (
+            <a key={v.id} href={`https://www.youtube.com/watch?v=${v.id}`} target="_blank" rel="noreferrer" style={{ color: C.text, fontFamily: C.mono, fontSize: 12, textDecoration: "none" }}>
+              &#8226; {v.title} <span style={{ color: C.accent }}>&#8599;</span>
+            </a>
+          ))}
+        </div>
+        <div style={{ marginTop: 10 }}>
+          <Link href="https://www.youtube.com/@WaveWarZ" label="More on YouTube" />
         </div>
       </Section>
 
