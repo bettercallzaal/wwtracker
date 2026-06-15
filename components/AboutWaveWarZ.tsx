@@ -88,9 +88,10 @@ export default function AboutWaveWarZ() {
         <AddrRow label="Program" addr={PROGRAM} />
         <AddrRow label="Treasury / dev wallet" addr={TREASURY} />
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>
-          Note: the treasury wallet (FNj) is also attributed to Hurric4n3Ike on the
-          WaveWarZ artist + traders leaderboards (it&apos;s the #5 trader). Likely
-          the founder&apos;s wallet doubling as treasury - unconfirmed, flagged.
+          FNj is the platform / team operations wallet - the team launches battles
+          and trades with it, which is why it&apos;s the top program signer and
+          shows up as the #5 &quot;trader&quot; (448W-154L) on the leaderboard. So
+          its activity mixes platform ops with real trades. (Confirmed by the team.)
         </p>
       </Section>
 

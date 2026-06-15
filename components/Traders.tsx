@@ -66,7 +66,7 @@ export default function Traders() {
                     <a href={`https://solscan.io/account/${t.wallet}`} target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "none" }}>
                       {short(t.wallet)}
                     </a>
-                    {mine ? " (you)" : treasury ? " (treasury)" : ""}
+                    {mine ? " (you)" : treasury ? " (platform ops)" : ""}
                   </td>
                   <td style={{ ...td, textAlign: "right" }}>{t.rec}</td>
                   <td style={{ ...td, textAlign: "right" }}>{t.win}%</td>

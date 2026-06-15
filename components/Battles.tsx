@@ -145,7 +145,7 @@ export default function Battles() {
             <>
               <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 10, fontFamily: C.mono, fontSize: 12, color: C.dim }}>
                 <span>total skips: <b style={{ color: C.good }}>{fmt(totals.totalSkips)}</b> ({fmt(totals.skipRevenue, 2)} ◎)</span>
-                <span>total queue: <b style={{ color: C.text }}>{fmt(totals.totalQueue)}</b></span>
+                <span>total queue+wavy: <b style={{ color: C.text }}>{fmt(totals.totalQueue)}</b></span>
               </div>
               <div style={{ height: 160, marginBottom: 14 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -159,7 +159,7 @@ export default function Battles() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div style={{ ...metaLabel, fontSize: 10, marginBottom: 10 }}>skips (green) + queue (amber) per night</div>
+              <div style={{ ...metaLabel, fontSize: 10, marginBottom: 10 }}>skips (green) + queue/wavy (amber) per night</div>
             </>
           )}
           <div style={{ marginBottom: 12 }}><span style={metaLabel}>PER NIGHT (LAST 14 ACTIVE DATES)</span></div>
@@ -170,7 +170,7 @@ export default function Battles() {
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>BATTLES</th>
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>SONGS</th>
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>SKIPS</th>
-                <th style={{ padding: "6px 10px", textAlign: "right" }}>QUEUE</th>
+                <th style={{ padding: "6px 10px", textAlign: "right" }}>Q+WAVY</th>
               </tr></thead>
               <tbody>
                 {perNight.map((n) => (
@@ -185,7 +185,7 @@ export default function Battles() {
               </tbody>
             </table>
           </div>
-          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>Songs = distinct quick-battle titles that night. Skips = direct transfers to the platform wallet on the escalating skip ladder (0.02 SOL, +0.01 each concurrent skip), from Dune. Queue = 0.005 SOL direct transfers (mostly queue entries; DJ Wavy may overlap - pending confirmation on how to split).</p>
+          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>Songs = distinct quick-battle titles that night. Skips = direct transfers to the platform wallet on the escalating skip ladder (0.02 SOL, +0.01 each concurrent skip), from Dune. Queue/Wavy = 0.005 SOL direct transfers to the platform wallet. Queue entries and DJ Wavy requests cost the SAME amount, so they can&apos;t be split by price. Some DJ Wavy comparisons pay a different artist&apos;s wallet instead and aren&apos;t counted here.</p>
         </section>
       )}
 
