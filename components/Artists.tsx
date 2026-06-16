@@ -156,8 +156,8 @@ export default function Artists() {
                   <div style={{ width: 56, height: 56, borderRadius: 12, background: C.elev }} />
                 )}
                 <div style={{ flex: 1, minWidth: 160 }}>
-                  <a href={`https://audius.co/${user?.handle ?? ww.handle}`} target="_blank" rel="noreferrer" style={{ fontSize: 17, fontWeight: 700, color: C.text, textDecoration: "none" }}>
-                    {user?.name ?? ww.handle}
+                  <a href={`/artist/${ww.handle}`} style={{ fontSize: 17, fontWeight: 700, color: C.text, textDecoration: "none" }}>
+                    {user?.name ?? ww.handle} &#8594;
                   </a>
                   <div style={{ fontFamily: C.mono, fontSize: 12, color: C.dim }}>@{user?.handle ?? ww.handle}</div>
                   <div style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, marginTop: 2 }}>{ww.note}</div>

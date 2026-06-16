@@ -115,7 +115,7 @@ export default function Songs() {
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {SONGS.map((s) => {
           const onAudius = AUDIUS_HANDLES.has(s.artist);
-          const href = onAudius ? `https://audius.co/${s.artist}` : `https://x.com/${s.artist}`;
+          const href = onAudius ? `/artist/${s.artist}` : `https://x.com/${s.artist}`;
           return (
             <div key={s.rank} style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 12, padding: "12px 14px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
