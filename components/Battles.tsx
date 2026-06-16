@@ -23,6 +23,7 @@ export default function Battles() {
   const [all, setAll] = useState<Battle[] | null>(null);
   const [skips, setSkips] = useState<Record<string, { skips: number; sol: number }>>({});
   const [queue, setQueue] = useState<Record<string, number>>({});
+  const [wavySplit, setWavySplit] = useState<Record<string, { queue: number; wavy: number }>>({});
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("ALL");
   const [limit, setLimit] = useState(40);
@@ -40,6 +41,10 @@ export default function Battles() {
     fetch("/ww-queue.json")
       .then((r) => r.json())
       .then((d) => { if (alive) setQueue(d as Record<string, number>); })
+      .catch(() => {});
+    fetch("/ww-wavysplit.json")
+      .then((r) => r.json())
+      .then((d) => { if (alive) setWavySplit(d as Record<string, { queue: number; wavy: number }>); })
       .catch(() => {});
     return () => { alive = false; };
   }, []);
@@ -60,10 +65,23 @@ export default function Battles() {
       .map(([date, v]) => {
         const d = new Date(Date.parse(date));
         const iso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-        return { date, short: date.replace(/, \d{4}$/, ""), battles: v.battles, songs: v.songs.size, skips: skips[iso]?.skips ?? 0, queue: queue[iso] ?? 0, ts: Date.parse(date) };
+        const sp = wavySplit[iso];
+        const combined = queue[iso] ?? 0; // total 0.005 inflows = queue + DJ Wavy
+        return {
+          date,
+          short: date.replace(/, \d{4}$/, ""),
+          battles: v.battles,
+          songs: v.songs.size,
+          skips: skips[iso]?.skips ?? 0,
+          queue: sp ? sp.queue : combined, // when split known, just queue; else combined
+          djwavy: sp ? sp.wavy : null, // null = not yet classified for this night
+          ts: Date.parse(date),
+        };
       })
       .sort((a, b) => a.ts - b.ts);
-  }, [all, skips, queue]);
+  }, [all, skips, queue, wavySplit]);
+
+  const hasSplit = useMemo(() => Object.keys(wavySplit).length > 0, [wavySplit]);
 
   const perNight = useMemo(() => [...perNightAll].reverse().slice(0, 14), [perNightAll]);
   const latest = perNightAll[perNightAll.length - 1];
@@ -74,8 +92,10 @@ export default function Battles() {
     const totalSkips = Object.values(skips).reduce((s, v) => s + v.skips, 0);
     const skipRevenue = Object.values(skips).reduce((s, v) => s + v.sol, 0);
     const totalQueue = Object.values(queue).reduce((s, v) => s + v, 0);
-    return { totalSkips, skipRevenue, totalQueue };
-  }, [skips, queue]);
+    const splitQueue = Object.values(wavySplit).reduce((s, v) => s + v.queue, 0);
+    const splitWavy = Object.values(wavySplit).reduce((s, v) => s + v.wavy, 0);
+    return { totalSkips, skipRevenue, totalQueue, splitQueue, splitWavy };
+  }, [skips, queue, wavySplit]);
 
   const filtered = useMemo(() => {
     if (!all) return [];
@@ -145,7 +165,14 @@ export default function Battles() {
             <>
               <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 10, fontFamily: C.mono, fontSize: 12, color: C.dim }}>
                 <span>total skips: <b style={{ color: C.good }}>{fmt(totals.totalSkips)}</b> ({fmt(totals.skipRevenue, 2)} ◎)</span>
-                <span>total queue+wavy: <b style={{ color: C.text }}>{fmt(totals.totalQueue)}</b></span>
+                {hasSplit ? (
+                  <>
+                    <span>queue: <b style={{ color: C.text }}>{fmt(totals.splitQueue)}</b></span>
+                    <span>DJ Wavy: <b style={{ color: C.accent }}>{fmt(totals.splitWavy)}</b> <span style={{ fontSize: 10 }}>(last 45d)</span></span>
+                  </>
+                ) : (
+                  <span>total queue+wavy: <b style={{ color: C.text }}>{fmt(totals.totalQueue)}</b></span>
+                )}
               </div>
               <div style={{ height: 160, marginBottom: 14 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -156,10 +183,13 @@ export default function Battles() {
                     <Tooltip cursor={{ fill: "rgba(255,194,75,0.08)" }} contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }} labelStyle={{ color: C.dim }} />
                     <Bar dataKey="skips" name="skips" fill={C.good} fillOpacity={0.85} radius={[2, 2, 0, 0]} />
                     <Bar dataKey="queue" name="queue" fill={C.accentDim} fillOpacity={0.85} radius={[2, 2, 0, 0]} />
+                    {hasSplit && <Bar dataKey="djwavy" name="DJ Wavy" fill={C.accent} fillOpacity={0.9} radius={[2, 2, 0, 0]} />}
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div style={{ ...metaLabel, fontSize: 10, marginBottom: 10 }}>skips (green) + queue/wavy (amber) per night</div>
+              <div style={{ ...metaLabel, fontSize: 10, marginBottom: 10 }}>
+                {hasSplit ? "skips (green) + queue (dim) + DJ Wavy (amber) per night" : "skips (green) + queue/wavy (amber) per night"}
+              </div>
             </>
           )}
           <div style={{ marginBottom: 12 }}><span style={metaLabel}>PER NIGHT (LAST 14 ACTIVE DATES)</span></div>
@@ -170,7 +200,14 @@ export default function Battles() {
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>BATTLES</th>
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>SONGS</th>
                 <th style={{ padding: "6px 10px", textAlign: "right" }}>SKIPS</th>
-                <th style={{ padding: "6px 10px", textAlign: "right" }}>Q+WAVY</th>
+                {hasSplit ? (
+                  <>
+                    <th style={{ padding: "6px 10px", textAlign: "right" }}>QUEUE</th>
+                    <th style={{ padding: "6px 10px", textAlign: "right" }}>DJ WAVY</th>
+                  </>
+                ) : (
+                  <th style={{ padding: "6px 10px", textAlign: "right" }}>Q+WAVY</th>
+                )}
               </tr></thead>
               <tbody>
                 {perNight.map((n) => (
@@ -179,13 +216,20 @@ export default function Battles() {
                     <td style={{ padding: "6px 10px", textAlign: "right", color: C.accent }}>{n.battles}</td>
                     <td style={{ padding: "6px 10px", textAlign: "right" }}>{n.songs}</td>
                     <td style={{ padding: "6px 10px", textAlign: "right", color: C.good }}>{n.skips || "-"}</td>
-                    <td style={{ padding: "6px 10px", textAlign: "right", color: C.dim }}>{n.queue || "-"}</td>
+                    {hasSplit ? (
+                      <>
+                        <td style={{ padding: "6px 10px", textAlign: "right", color: C.dim }}>{n.queue || "-"}</td>
+                        <td style={{ padding: "6px 10px", textAlign: "right", color: n.djwavy == null ? C.dim : C.accent }}>{n.djwavy == null ? "·" : n.djwavy || "-"}</td>
+                      </>
+                    ) : (
+                      <td style={{ padding: "6px 10px", textAlign: "right", color: C.dim }}>{n.queue || "-"}</td>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>Songs = distinct quick-battle titles that night. Skips = direct transfers to the platform wallet on the escalating skip ladder (0.02 SOL, +0.01 each concurrent skip), from Dune. Queue/Wavy = 0.005 SOL direct transfers to the platform wallet. Queue entries and DJ Wavy requests cost the SAME amount, so they can&apos;t be split by price. Some DJ Wavy comparisons pay a different artist&apos;s wallet instead and aren&apos;t counted here.</p>
+          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>Songs = distinct quick-battle titles that night. Skips = direct transfers to the platform wallet on the escalating skip ladder (0.02 SOL, +0.01 each concurrent skip), from Dune. Queue + DJ Wavy are both 0.005 SOL to the platform wallet, so price can&apos;t tell them apart - {hasSplit ? "but a DJ Wavy tx ALSO sends a second transfer to another wallet, so they're split here on that signal (last 45 days; · = nights before classification)." : "they're shown combined until the on-chain split lands."} From Dune.</p>
         </section>
       )}
 
