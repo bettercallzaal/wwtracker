@@ -36,8 +36,44 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 
+interface ActivityDay {
+  date: string;
+  buys: number;
+  sells: number;
+  battles: number;
+  settled: number;
+  claims: number;
+  mints: number;
+}
+interface VolRow {
+  trader: string;
+  sol: number;
+  buys: number;
+}
+interface VolBoard {
+  meta: { window_days: number; as_of: string; note: string };
+  rows: VolRow[];
+}
+
 export default function PlatformAnalytics() {
   const reduced = useReducedMotion();
+  const [activity, setActivity] = useState<ActivityDay[] | null>(null);
+  const [volboard, setVolboard] = useState<VolBoard | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/ww-activity.json")
+      .then((r) => r.json())
+      .then((d: ActivityDay[]) => alive && setActivity([...d].reverse().slice(-30)))
+      .catch(() => {});
+    fetch("/ww-volboard.json")
+      .then((r) => r.json())
+      .then((d: VolBoard) => alive && setVolboard(d))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const summary = useMemo(() => {
     const totalTxs = WW.daily.reduce((s, d) => s + d.txs, 0);
@@ -132,6 +168,73 @@ export default function PlatformAnalytics() {
           </span>
         </Tile>
       </div>
+
+      {/* LIVE - last 30 days, fetched fresh from Dune */}
+      {activity && activity.length > 0 && (
+        <Panel label={`LIVE - DAILY ACTIVITY, LAST 30 DAYS (battles / buys / sells / claims)`}>
+          <div style={{ height: 280 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={activity} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={36} />
+                <YAxis yAxisId="l" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={32} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fill: C.good, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={24} />
+                <Tooltip
+                  cursor={{ fill: "rgba(255,194,75,0.08)" }}
+                  contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
+                  labelStyle={{ color: C.dim }}
+                  formatter={(v: number | string, n) => [fmt(Number(v)), n]}
+                />
+                <Bar yAxisId="l" dataKey="buys" stackId="t" fill={C.accent} fillOpacity={0.85} isAnimationActive={!reduced} />
+                <Bar yAxisId="l" dataKey="sells" stackId="t" fill={C.danger} fillOpacity={0.7} isAnimationActive={!reduced} />
+                <Bar yAxisId="l" dataKey="claims" stackId="t" fill={C.dim} fillOpacity={0.6} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
+                <Line yAxisId="r" type="monotone" dataKey="battles" stroke={C.good} strokeWidth={1.6} dot={false} isAnimationActive={!reduced} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>
+            Bars = trades (buys gold, sells red, claims grey, stacked); line = battles
+            opened. Decoded from program 9TUf instruction calls, refreshed from Dune.
+          </p>
+        </Panel>
+      )}
+
+      {volboard && volboard.rows.length > 0 && (
+        <Panel label={`LIVE - TOP BUYERS BY SOL VOLUME, LAST ${volboard.meta.window_days} DAYS`}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 13 }}>
+              <thead>
+                <tr style={{ color: C.dim, textAlign: "left" }}>
+                  <th style={th}>#</th>
+                  <th style={th}>WALLET</th>
+                  <th style={{ ...th, textAlign: "right" }}>VOLUME ◎</th>
+                  <th style={{ ...th, textAlign: "right" }}>BUYS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {volboard.rows
+                  .filter((t) => t.trader !== TREASURY)
+                  .slice(0, 15)
+                  .map((t, i) => {
+                    const mine = t.trader === ME;
+                    return (
+                      <tr key={t.trader} style={{ borderTop: `1px solid ${C.grid}`, color: mine ? C.accent : C.text }}>
+                        <td style={td}>{i + 1}</td>
+                        <td style={td} title={t.trader}>{short(t.trader)}{mine ? "  (you)" : ""}</td>
+                        <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(t.sol, 2)}</td>
+                        <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(t.buys)}</td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>
+            Buy-side SOL committed per wallet over the last {volboard.meta.window_days} days
+            (as of {volboard.meta.as_of}). FNj (platform ops) excluded. Live from Dune.
+          </p>
+        </Panel>
+      )}
 
       {/* what the data says */}
       <Panel label="WHAT THE DATA SAYS">
