@@ -1,14 +1,25 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
-import { TRADERS, ME_WALLET, TREASURY_WALLET } from "@/lib/traders";
+import { TRADERS, ME_WALLET, TREASURY_WALLET, type Trader } from "@/lib/traders";
 
 const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 const fmt = (n: number, dp = 2) => n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
 
 export default function Traders() {
-  const me = TRADERS.find((t) => t.wallet === ME_WALLET);
+  const me = TRADERS.find((t) => t.wallet === ME_WALLET) ?? null;
   const top = TRADERS.slice(0, 40);
+
+  const [query, setQuery] = useState("");
+  const looked = useMemo<Trader | null>(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 3) return null;
+    return TRADERS.find((t) => t.wallet.toLowerCase().includes(q)) ?? null;
+  }, [query]);
+
+  const shown = looked ?? me;
+  const noMatch = query.trim().length >= 3 && !looked;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -18,27 +29,42 @@ export default function Traders() {
         </h1>
         <p style={{ margin: "8px 0 0", color: C.text, lineHeight: 1.6, maxWidth: 720 }}>
           All <b>{TRADERS.length} traders</b> ranked by SOL volume. Net P&amp;L =
-          payout received minus SOL invested (official). Top traders run negative -
-          the house edge is real.
+          payout received minus SOL invested (official). Search any wallet below.
         </p>
       </header>
 
-      {me && (
+      {/* wallet lookup */}
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="paste any wallet address to look it up..."
+        aria-label="Look up a trader wallet"
+        style={{ fontFamily: C.mono, fontSize: 13, padding: "11px 14px", borderRadius: 10, border: `1px solid ${looked ? C.accent : C.grid}`, background: C.bg, color: C.text }}
+      />
+
+      {noMatch && (
+        <p style={{ fontFamily: C.mono, fontSize: 13, color: C.dim }}>
+          That wallet isn&apos;t in the top {TRADERS.length} traders (or no match yet).
+        </p>
+      )}
+
+      {shown && (
         <section style={{ background: `linear-gradient(135deg, ${C.panel}, ${C.elev})`, border: `1px solid ${C.accent}`, borderRadius: 16, padding: "clamp(16px,4vw,24px)" }}>
-          <p style={metaLabel}>YOUR WALLET - RANK #{me.rank} OF {TRADERS.length}</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12, marginTop: 10 }}>
-            <Cell label="NET P&L" value={`${me.pnl >= 0 ? "+" : ""}${fmt(me.pnl)} ◎`} color={me.pnl >= 0 ? C.good : C.danger} />
-            <Cell label="RECORD" value={me.rec} />
-            <Cell label="WIN RATE" value={`${me.win}%`} />
-            <Cell label="VOLUME" value={`${fmt(me.vol)} ◎`} />
-            <Cell label="TRADES" value={`${me.trades}`} />
-            <Cell label="BATTLES" value={`${me.battles}`} />
-          </div>
-          <p style={{ ...metaLabel, fontSize: 11, marginTop: 10 }}>
-            Official WaveWarZ figure. The My Trades tab&apos;s -2.96 ◎ is raw net
-            SOL flow on-chain; this -{fmt(Math.abs(me.pnl))} ◎ nets settled payouts
-            vs invested (the platform&apos;s own calc).
+          <p style={metaLabel}>
+            {shown.wallet === ME_WALLET ? "YOUR WALLET" : "TRADER"} - RANK #{shown.rank} OF {TRADERS.length}
+            {shown.wallet === TREASURY_WALLET ? " (platform ops)" : ""}
           </p>
+          <a href={`https://solscan.io/account/${shown.wallet}`} target="_blank" rel="noreferrer" style={{ fontFamily: C.mono, fontSize: 12, color: C.dim, textDecoration: "none" }}>
+            {short(shown.wallet)} &#8599;
+          </a>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12, marginTop: 12 }}>
+            <Cell label="NET P&L" value={`${shown.pnl >= 0 ? "+" : ""}${fmt(shown.pnl)} ◎`} color={shown.pnl >= 0 ? C.good : C.danger} />
+            <Cell label="RECORD" value={shown.rec} />
+            <Cell label="WIN RATE" value={`${shown.win}%`} />
+            <Cell label="VOLUME" value={`${fmt(shown.vol)} ◎`} />
+            <Cell label="TRADES" value={`${shown.trades}`} />
+            <Cell label="BATTLES" value={`${shown.battles}`} />
+          </div>
         </section>
       )}
 
@@ -46,8 +72,7 @@ export default function Traders() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 12, minWidth: 560 }}>
           <thead>
             <tr style={{ color: C.dim, textAlign: "left" }}>
-              <th style={th}>#</th>
-              <th style={th}>WALLET</th>
+              <th style={th}>#</th><th style={th}>WALLET</th>
               <th style={{ ...th, textAlign: "right" }}>REC</th>
               <th style={{ ...th, textAlign: "right" }}>WIN%</th>
               <th style={{ ...th, textAlign: "right" }}>VOL ◎</th>
@@ -59,13 +84,12 @@ export default function Traders() {
             {top.map((t) => {
               const mine = t.wallet === ME_WALLET;
               const treasury = t.wallet === TREASURY_WALLET;
+              const hit = looked && t.wallet === looked.wallet;
               return (
-                <tr key={t.wallet} style={{ borderTop: `1px solid ${C.grid}`, color: mine ? C.accent : C.text, background: mine ? "rgba(255,194,75,0.06)" : "transparent" }}>
+                <tr key={t.wallet} style={{ borderTop: `1px solid ${C.grid}`, color: mine ? C.accent : C.text, background: hit || mine ? "rgba(255,194,75,0.06)" : "transparent" }}>
                   <td style={td}>{t.rank}</td>
                   <td style={td} title={t.wallet}>
-                    <a href={`https://solscan.io/account/${t.wallet}`} target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "none" }}>
-                      {short(t.wallet)}
-                    </a>
+                    <a href={`https://solscan.io/account/${t.wallet}`} target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "none" }}>{short(t.wallet)}</a>
                     {mine ? " (you)" : treasury ? " (platform ops)" : ""}
                   </td>
                   <td style={{ ...td, textAlign: "right" }}>{t.rec}</td>
@@ -81,8 +105,7 @@ export default function Traders() {
       </section>
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        Top 40 of {TRADERS.length} shown. Wallets link to Solscan. Snapshot from
-        wavewarz.info (2026-06-15).
+        Top 40 of {TRADERS.length} shown; search covers all {TRADERS.length}. Wallets link to Solscan. Snapshot 2026-06-15.
       </p>
     </div>
   );
