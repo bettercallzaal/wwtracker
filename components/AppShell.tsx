@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { C } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
+import { DATA_AS_OF } from "@/lib/freshness";
 import BalanceDashboard from "./BalanceDashboard";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
@@ -133,7 +134,7 @@ export default function AppShell() {
         }}
       >
         On-chain analytics from Dune over program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo.
-        Treasury balance is live; analytics snapshot {WW.generatedAt || "pending"}.
+        Treasury balance + Audius are live; baked data as of {DATA_AS_OF}.
         Unofficial community tool - not financial advice.{" "}
         <a href="https://github.com/bettercallzaal/wwtracker" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
           source
