@@ -5,6 +5,7 @@ import { C } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
 import { DATA_AS_OF } from "@/lib/freshness";
 import BalanceDashboard from "./BalanceDashboard";
+import PlatformGrowth from "./PlatformGrowth";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
 import AboutWaveWarZ from "./AboutWaveWarZ";
@@ -19,22 +20,23 @@ import Traders from "./Traders";
 import Battles from "./Battles";
 import Faq from "./Faq";
 
-type View = "about" | "how" | "events" | "songs" | "artists" | "music" | "leaderboard" | "ecosystem" | "platform" | "analytics" | "trader" | "traders" | "battles" | "faq";
+type View = "growth" | "about" | "how" | "events" | "songs" | "artists" | "music" | "leaderboard" | "ecosystem" | "platform" | "analytics" | "trader" | "traders" | "battles" | "faq";
 
 const GROUPS: { label: string; tabs: [View, string][] }[] = [
+  { label: "PLATFORM", tabs: [["growth", "GROWTH"], ["analytics", "ANALYTICS"], ["battles", "BATTLES"]] },
   { label: "INFO", tabs: [["about", "ABOUT"], ["how", "HOW IT WORKS"], ["events", "EVENTS"], ["faq", "FAQ"]] },
   { label: "MUSIC", tabs: [["songs", "SONGS"], ["artists", "ARTISTS"], ["music", "MUSIC"], ["leaderboard", "LEADERBOARD"]] },
-  { label: "ON-CHAIN", tabs: [["platform", "PLATFORM FLOOR"], ["analytics", "ANALYTICS"], ["battles", "BATTLES"], ["trader", "MY TRADES"], ["traders", "TRADERS"]] },
+  { label: "WALLETS", tabs: [["platform", "DEV WALLET"], ["trader", "MY TRADES"], ["traders", "TRADERS"]] },
   { label: "ZAO", tabs: [["ecosystem", "ECOSYSTEM"]] },
 ];
 
 const isView = (v: string | null): v is View =>
-  v === "about" || v === "how" || v === "events" || v === "songs" ||
+  v === "growth" || v === "about" || v === "how" || v === "events" || v === "songs" ||
   v === "artists" || v === "music" || v === "leaderboard" || v === "ecosystem" ||
   v === "platform" || v === "analytics" || v === "trader" || v === "traders" || v === "battles" || v === "faq";
 
 export default function AppShell() {
-  const [view, setView] = useState<View>("about");
+  const [view, setView] = useState<View>("growth");
   const [navOpen, setNavOpen] = useState(true);
 
   // Sync the active tab with ?tab= so a specific view is shareable.
@@ -91,7 +93,9 @@ export default function AppShell() {
       )}
 
       <div role="tabpanel" aria-label={`${view} view`}>
-        {view === "about" ? (
+        {view === "growth" ? (
+          <PlatformGrowth />
+        ) : view === "about" ? (
           <AboutWaveWarZ />
         ) : view === "how" ? (
           <HowItWorks />
