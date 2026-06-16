@@ -3,26 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
+import { AUDIUS_ID_BY_HANDLE as ARTISTS } from "@/lib/artists";
 
 const APP = "wwtracker";
-const ARTISTS: Record<string, string> = {
-  Hurric4n3Ike: "lzq2G",
-  GodclouD: "Vg1rWzQ",
-  shawnsporter: "E7gJo",
-  Stormbourne: "Wgq5qO0",
-  luiwrites: "BJzwPMj",
-  XTincT_official: "8043XGp",
-  dopestilo: "6aW9G",
-  CannonJones973: "mEjV46v",
-  AporkALYPSE78: "XBBWXMa",
-  geekmyth: "zZR8pvZ",
-  PKMNCTO: "ZOOMN24",
-  RoCkY2GriMeY: "aNYwwmo",
-  BennyJ504WaveWarz: "RGyPJRg",
-  TuckNuisance: "AM1VdZq",
-  hoodrats: "wQKydRp",
-  NDA_WaveWarz: "oGZ6o3J",
-};
 
 interface Track {
   id: string;
