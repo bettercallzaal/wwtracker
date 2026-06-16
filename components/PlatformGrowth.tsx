@@ -40,14 +40,21 @@ export default function PlatformGrowth() {
     };
   }, []);
 
-  const hasSell = useMemo(() => !!days && days.some((d) => d.sell > 0), [days]);
-  const effBasis: Basis = hasSell ? basis : "buy";
+  // Sell-side per-day volume can't be pulled all-time on free-tier Dune (the
+  // sellShares -> account_activity join exceeds the 2-min execution cap). When
+  // real per-day sell data is absent we estimate both-sides by scaling buy-side
+  // to the platform's reported buy:sell split (~324 buy : ~160 sell = 0.49).
+  const SELL_RATIO = 0.49;
+  const hasRealSell = useMemo(() => !!days && days.some((d) => d.sell > 0), [days]);
+  const effBasis = basis;
+  const estimated = basis === "both" && !hasRealSell;
 
   const data = useMemo(() => {
     if (!days) return null;
     let cum = 0;
     const series = days.map((d) => {
-      const daily = effBasis === "buy" ? d.buy : d.buy + d.sell;
+      const daily =
+        effBasis === "buy" ? d.buy : hasRealSell ? d.buy + d.sell : d.buy * (1 + SELL_RATIO);
       cum += daily;
       return { date: d.date, daily: Math.round(daily * 1000) / 1000, cum: Math.round(cum * 1000) / 1000 };
     });
@@ -57,7 +64,7 @@ export default function PlatformGrowth() {
     const first = series[0]?.date ?? "-";
     const last = series[series.length - 1]?.date ?? "-";
     return { series, total, peak, activeDays, first, last };
-  }, [days, effBasis]);
+  }, [days, effBasis, hasRealSell]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -73,13 +80,8 @@ export default function PlatformGrowth() {
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <span style={{ ...metaLabel, fontSize: 11 }}>VOLUME BASIS</span>
-        <Toggle active={effBasis === "both"} onClick={() => setBasis("both")} label="BOTH SIDES" />
+        <Toggle active={effBasis === "both"} onClick={() => setBasis("both")} label={estimated ? "BOTH SIDES (EST.)" : "BOTH SIDES"} />
         <Toggle active={effBasis === "buy"} onClick={() => setBasis("buy")} label="BUY-SIDE" />
-        {days && !hasSell && (
-          <span style={{ fontFamily: C.mono, fontSize: 11, color: C.dim }}>
-            sell-side backfilling - buy-side shown
-          </span>
-        )}
       </div>
 
       {error && <p style={{ color: C.danger, fontFamily: C.mono, fontSize: 13 }}>{error}</p>}
@@ -89,7 +91,7 @@ export default function PlatformGrowth() {
       ) : data ? (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
-            <Tile label={effBasis === "buy" ? "TOTAL BUY VOLUME" : "TOTAL VOLUME (BUY+SELL)"}>
+            <Tile label={effBasis === "buy" ? "TOTAL BUY VOLUME" : estimated ? "TOTAL VOLUME (EST. BUY+SELL)" : "TOTAL VOLUME (BUY+SELL)"}>
               <span style={{ color: C.accent }}>{fmt(data.total, 1)} ◎</span>
             </Tile>
             <Tile label="ACTIVE DAYS">{fmt(data.activeDays)}</Tile>
@@ -145,8 +147,10 @@ export default function PlatformGrowth() {
 
           <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
             {effBasis === "buy"
-              ? "Buy-side: SOL committed on buyShares txs (includes ~1.5% fees + gas)."
-              : "Both-sides: buyShares SOL committed + sellShares SOL returned - the full traded volume the platform reports."}{" "}
+              ? "Buy-side: SOL committed on buyShares txs (includes ~1.5% fees + gas) - fully on-chain, exact."
+              : estimated
+                ? "Both-sides (estimated): buy-side scaled to the platform's reported buy:sell split (~0.49 sell per buy). Exact per-day sell-side needs a paid Dune tier - the sellShares join exceeds the free 2-min execution cap. Toggle to BUY-SIDE for the exact on-chain series."
+                : "Both-sides: buyShares SOL committed + sellShares SOL returned - the full traded volume the platform reports."}{" "}
             On-chain via Dune over program 9TUf. Range {data.first} to {data.last}.
           </p>
         </>
