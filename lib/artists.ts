@@ -24,6 +24,25 @@ export const ROSTER: RosterArtist[] = [
   { handle: "TuckNuisance", audiusId: "AM1VdZq", note: '"I Know This Kid"' },
   { handle: "hoodrats", audiusId: "wQKydRp", note: '"Cipher Confession"' },
   { handle: "NDA_WaveWarz", audiusId: "oGZ6o3J", note: "WaveWarZ-tagged (NDA)" },
+  // Added from the official wavewarz.info roster (every Audius artist linked on
+  // the site, resolved to live Audius IDs). 2026-06-16.
+  { handle: "bettercallzaal", audiusId: "xQYZWyj", note: "BetterCallZaal - ZAO head of ecosystem" },
+  { handle: "_0xQuan", audiusId: "7O66BZ7", note: "0xQUAN - Ride the Wave WarZ, accelerate" },
+  { handle: "ace1yoda", audiusId: "vYZmbGm", note: "One Yoda" },
+  { handle: "DCoopOfficial", audiusId: "8a8vv", note: "DCoop" },
+  { handle: "GESD1", audiusId: "rbR8RRG", note: "Gesd1" },
+  { handle: "ItsMoneyMiller", audiusId: "vJ1lyRz", note: "Money Miller" },
+  { handle: "Kata7yst", audiusId: "G2wYPPx", note: "Kata7yst" },
+  { handle: "MetaVerseSlim", audiusId: "AAN58Vg", note: "DeCentralized Sounds" },
+  { handle: "NemesisLadyRyn", audiusId: "1AykB73", note: "Nemesis vs Ladyryn" },
+  { handle: "NFTWonderfull", audiusId: "AAXN3", note: "ItzWonderfull" },
+  { handle: "ozthecryptogoat", audiusId: "YZy8zOJ", note: "ozthecryptogoat" },
+  { handle: "Retrospect", audiusId: "rAZ6JN", note: "Retrospect" },
+  { handle: "Sicariobaby", audiusId: "wGmVJRk", note: "Sicario Baby" },
+  { handle: "srchappell", audiusId: "WQOwMz9", note: "srchappell" },
+  { handle: "sweetbiddi", audiusId: "1jAZg9W", note: "SweetBiddiMcGee" },
+  { handle: "zKeyz", audiusId: "dMg3E5", note: "Production is the bag!" },
+  { handle: "BennyJ504", audiusId: "bVgyk", note: "BennyJ504 - main account" },
 ];
 
 export const AUDIUS_ID_BY_HANDLE: Record<string, string> = Object.fromEntries(

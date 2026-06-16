@@ -196,7 +196,7 @@ export default function Music() {
       ) : null}
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        Live from the Audius API across the 5 confirmed WaveWarZ artists. Not
+        Live from the Audius API across the confirmed WaveWarZ artist roster. Not
         affiliated with Audius or WaveWarZ.
       </p>
     </div>
