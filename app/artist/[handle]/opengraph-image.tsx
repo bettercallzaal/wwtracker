@@ -3,7 +3,6 @@ import { LEADERBOARD } from "@/lib/leaderboard";
 import { songsByArtist } from "@/lib/songs";
 import { AUDIUS_ID_BY_HANDLE } from "@/lib/artists";
 
-export const runtime = "edge";
 export const alt = "WaveWarZ artist";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
