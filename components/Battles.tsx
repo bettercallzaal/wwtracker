@@ -168,7 +168,7 @@ export default function Battles() {
                 {hasSplit ? (
                   <>
                     <span>queue: <b style={{ color: C.text }}>{fmt(totals.splitQueue)}</b></span>
-                    <span>DJ Wavy: <b style={{ color: C.accent }}>{fmt(totals.splitWavy)}</b> <span style={{ fontSize: 10 }}>(last 45d)</span></span>
+                    <span>DJ Wavy: <b style={{ color: C.accent }}>{fmt(totals.splitWavy)}</b> <span style={{ fontSize: 10 }}>(classified nights)</span></span>
                   </>
                 ) : (
                   <span>total queue+wavy: <b style={{ color: C.text }}>{fmt(totals.totalQueue)}</b></span>
@@ -229,7 +229,7 @@ export default function Battles() {
               </tbody>
             </table>
           </div>
-          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>Songs = distinct quick-battle titles that night. Skips = direct transfers to the platform wallet on the escalating skip ladder (0.02 SOL, +0.01 each concurrent skip), from Dune. Queue + DJ Wavy are both 0.005 SOL to the platform wallet, so price can&apos;t tell them apart - {hasSplit ? "but a DJ Wavy tx ALSO sends a second transfer to another wallet, so they're split here on that signal (last 45 days; · = nights before classification)." : "they're shown combined until the on-chain split lands."} From Dune.</p>
+          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>Songs = distinct quick-battle titles that night. Skips = direct transfers to the platform wallet on the escalating skip ladder (0.02 SOL, +0.01 each concurrent skip), from Dune. Queue + DJ Wavy are both 0.005 SOL to the platform wallet, so price can&apos;t tell them apart - {hasSplit ? "but a DJ Wavy tx ALSO sends a second transfer to another wallet (the compared artist), so they're split here on that signal. The 0.005 feature began ~Nov 2025; some Feb-Apr 2026 nights are unclassified (· ) pending more Dune credits." : "they're shown combined until the on-chain split lands."} From Dune.</p>
         </section>
       )}
 
