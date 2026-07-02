@@ -19,6 +19,28 @@ interface Battle {
 const fmt = (n: number, dp = 0) => n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
 type Filter = "ALL" | "QUICK" | "MAIN" | "COMMUNITY";
 
+function battlesCsv(rows: Battle[]): string {
+  const esc = (v: string | number) => {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const head = ["id", "type", "date", "a", "b", "winner", "margin", "vol"];
+  const lines = rows.map((b) =>
+    [b.id, b.type, b.date, b.a, b.b, b.winner, b.margin ?? "", b.vol].map(esc).join(",")
+  );
+  return [head.join(","), ...lines].join("\n");
+}
+
+function downloadBattlesCsv(rows: Battle[]) {
+  const blob = new Blob([battlesCsv(rows)], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "wavewarz-battles.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function Battles() {
   const [all, setAll] = useState<Battle[] | null>(null);
   const [skips, setSkips] = useState<Record<string, { skips: number; sol: number }>>({});
@@ -250,7 +272,18 @@ export default function Battles() {
         ))}
       </div>
 
-      <div style={{ ...metaLabel, fontSize: 11 }}>{fmt(filtered.length)} battles{q ? ` matching "${q}"` : ""}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ ...metaLabel, fontSize: 11 }}>{fmt(filtered.length)} battles{q ? ` matching "${q}"` : ""}</span>
+        {filtered.length > 0 && (
+          <button
+            type="button"
+            onClick={() => downloadBattlesCsv(filtered)}
+            style={{ marginLeft: "auto", fontFamily: C.mono, fontSize: 11, padding: "6px 12px", borderRadius: 8, cursor: "pointer", border: `1px solid ${C.grid}`, background: C.panel, color: C.text }}
+          >
+            download CSV
+          </button>
+        )}
+      </div>
 
       {all === null ? (
         <div className="skeleton-shimmer" style={{ height: 300, borderRadius: 16 }} />
