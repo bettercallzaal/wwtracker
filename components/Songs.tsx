@@ -11,6 +11,14 @@ const fmt = (n: number) => (n ?? 0).toLocaleString();
 export default function Songs() {
   const [plays, setPlays] = useState<Record<string, number>>({});
   const [playing, setPlaying] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+
+  const query = q.trim().toLowerCase();
+  const filtered = query
+    ? SONGS.filter((s) =>
+        `${s.song} ${s.artist} ${s.genre}`.toLowerCase().includes(query)
+      )
+    : SONGS;
 
   useEffect(() => {
     let alive = true;
@@ -53,8 +61,26 @@ export default function Songs() {
         </section>
       )}
 
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="filter by song, artist, or genre"
+        style={{
+          background: C.bg,
+          border: `1px solid ${C.grid}`,
+          color: C.text,
+          borderRadius: 8,
+          padding: "9px 12px",
+          fontFamily: C.mono,
+          fontSize: 13,
+        }}
+      />
+
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {SONGS.map((s) => {
+        {filtered.length === 0 && (
+          <p style={{ ...metaLabel, fontSize: 12 }}>no songs match &quot;{q}&quot;.</p>
+        )}
+        {filtered.map((s) => {
           const onAudius = AUDIUS_HANDLES.has(s.artist);
           const href = onAudius ? `/artist/${s.artist}` : `https://x.com/${s.artist}`;
           return (
