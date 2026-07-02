@@ -8,6 +8,7 @@ import BalanceDashboard from "./BalanceDashboard";
 import PlatformGrowth from "./PlatformGrowth";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
+import Profitability from "./Profitability";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
 import Ecosystem from "./Ecosystem";
@@ -20,10 +21,10 @@ import Traders from "./Traders";
 import Battles from "./Battles";
 import Faq from "./Faq";
 
-type View = "growth" | "about" | "how" | "events" | "songs" | "artists" | "music" | "leaderboard" | "ecosystem" | "platform" | "analytics" | "trader" | "traders" | "battles" | "faq";
+type View = "growth" | "about" | "how" | "events" | "songs" | "artists" | "music" | "leaderboard" | "ecosystem" | "platform" | "analytics" | "profitability" | "trader" | "traders" | "battles" | "faq";
 
 const GROUPS: { label: string; tabs: [View, string][] }[] = [
-  { label: "PLATFORM", tabs: [["growth", "GROWTH"], ["analytics", "ANALYTICS"], ["battles", "BATTLES"]] },
+  { label: "PLATFORM", tabs: [["growth", "GROWTH"], ["analytics", "ANALYTICS"], ["profitability", "PROFITABILITY"], ["battles", "BATTLES"]] },
   { label: "INFO", tabs: [["about", "ABOUT"], ["how", "HOW IT WORKS"], ["events", "EVENTS"], ["faq", "FAQ"]] },
   { label: "MUSIC", tabs: [["songs", "SONGS"], ["artists", "ARTISTS"], ["music", "MUSIC"], ["leaderboard", "LEADERBOARD"]] },
   { label: "WALLETS", tabs: [["platform", "DEV WALLET"], ["trader", "MY TRADES"], ["traders", "TRADERS"]] },
@@ -33,7 +34,7 @@ const GROUPS: { label: string; tabs: [View, string][] }[] = [
 const isView = (v: string | null): v is View =>
   v === "growth" || v === "about" || v === "how" || v === "events" || v === "songs" ||
   v === "artists" || v === "music" || v === "leaderboard" || v === "ecosystem" ||
-  v === "platform" || v === "analytics" || v === "trader" || v === "traders" || v === "battles" || v === "faq";
+  v === "platform" || v === "analytics" || v === "profitability" || v === "trader" || v === "traders" || v === "battles" || v === "faq";
 
 export default function AppShell() {
   const [view, setView] = useState<View>("growth");
@@ -115,6 +116,8 @@ export default function AppShell() {
           <BalanceDashboard />
         ) : view === "analytics" ? (
           <PlatformAnalytics />
+        ) : view === "profitability" ? (
+          <Profitability />
         ) : view === "trader" ? (
           <TraderScorecard />
         ) : view === "traders" ? (
