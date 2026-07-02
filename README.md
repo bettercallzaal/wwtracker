@@ -25,6 +25,18 @@ in [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
 - **My Trades** - a trader wallet's WaveWarZ PnL. Cumulative SOL PnL is live from
   on-chain (net -2.96 SOL across 518 txs), with SOL bet/returned, win rate, and
   biggest win/loss. Shown alongside the stats-app realized figure.
+- **Profitability** - the floor model made visible: the 3.5 SOL operating floor,
+  the distribution split (33% operations, 22% each to Hurricane / Candy / Zaal),
+  a split pie, recipient cards (Solscan links when wallets are set), and a
+  distribution history table. Config in `lib/distributions.ts`; rows show TBD
+  until the real distribution dates/amounts + wallets are filled in.
+- **Leaderboard / Songs / Traders / Battles / Artists** - the data views. Artist
+  leaderboard, the song charts (Audius play counts + inline play), the trader
+  table, the full battle history, and the Audius-backed artist roster.
+
+Table features across those views: client-side search/filter (songs, traders,
+artists, battles), sortable columns (traders), and CSV export (leaderboard,
+traders, battles) via the reusable `lib/csv.ts`.
 
 ## Docs
 
@@ -68,6 +80,8 @@ npm run build
 ## Status / next
 
 Done: multi-tab dashboard, live treasury balance with intraday highs, program
-analytics, live trader PnL, full research doc. Next: per-battle PnL + win rate
-via buyShares/sellShares instruction decode; artist-payout tracing; ops-budget
-wallet + weekly-skim quantification.
+analytics, live trader PnL, full research doc, profitability tab (floor +
+distribution split), table search/sort, CSV export across the data tables. Next:
+fill the distribution history + recipient wallets in `lib/distributions.ts` to
+make the Profitability tab real; per-battle PnL + win rate via
+buyShares/sellShares instruction decode; artist-payout tracing.
