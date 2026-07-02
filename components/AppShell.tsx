@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { C } from "@/lib/theme";
-import { WW } from "@/lib/wwData";
 import { DATA_AS_OF } from "@/lib/freshness";
 import BalanceDashboard from "./BalanceDashboard";
 import PlatformGrowth from "./PlatformGrowth";
@@ -21,117 +20,236 @@ import Traders from "./Traders";
 import Battles from "./Battles";
 import Faq from "./Faq";
 
-type View = "growth" | "about" | "how" | "events" | "songs" | "artists" | "music" | "leaderboard" | "ecosystem" | "platform" | "analytics" | "profitability" | "trader" | "traders" | "battles" | "faq";
+// The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
+// gets deeper the further you scroll - explainer, then the treasury floor, then
+// the money model, then the full on-chain data, then the people and the music.
+type Section = {
+  id: string;
+  n: string;
+  title: string;
+  intro: string;
+  render: () => ReactNode;
+};
 
-const GROUPS: { label: string; tabs: [View, string][] }[] = [
-  { label: "PLATFORM", tabs: [["growth", "GROWTH"], ["analytics", "ANALYTICS"], ["profitability", "PROFITABILITY"], ["battles", "BATTLES"]] },
-  { label: "INFO", tabs: [["about", "ABOUT"], ["how", "HOW IT WORKS"], ["events", "EVENTS"], ["faq", "FAQ"]] },
-  { label: "MUSIC", tabs: [["songs", "SONGS"], ["artists", "ARTISTS"], ["music", "MUSIC"], ["leaderboard", "LEADERBOARD"]] },
-  { label: "WALLETS", tabs: [["platform", "DEV WALLET"], ["trader", "MY TRADES"], ["traders", "TRADERS"]] },
-  { label: "ZAO", tabs: [["ecosystem", "ECOSYSTEM"]] },
+const SECTIONS: Section[] = [
+  {
+    id: "what",
+    n: "01",
+    title: "What WaveWarZ is",
+    intro: "start here. what the platform is, and how a single song-vs-song battle actually plays out on-chain.",
+    render: () => (
+      <>
+        <AboutWaveWarZ />
+        <div style={{ height: 24 }} />
+        <HowItWorks />
+      </>
+    ),
+  },
+  {
+    id: "floor",
+    n: "02",
+    title: "The treasury floor",
+    intro: "the headline. the platform wallet's daily balance held against a 3.5 SOL operating floor - live from Dune.",
+    render: () => <BalanceDashboard />,
+  },
+  {
+    id: "growth",
+    n: "03",
+    title: "Growth over time",
+    intro: "how the platform has grown since it launched - the shape of the last stretch, not just today's number.",
+    render: () => <PlatformGrowth />,
+  },
+  {
+    id: "profitability",
+    n: "04",
+    title: "Profitability + the split",
+    intro: "once the wallet is past the floor, the excess distributes: 33% operations, 22% each to Hurricane / Candy / Zaal.",
+    render: () => <Profitability />,
+  },
+  {
+    id: "analytics",
+    n: "05",
+    title: "Platform analytics",
+    intro: "the full on-chain picture now - battles, trades, and traders decoded straight from the program.",
+    render: () => <PlatformAnalytics />,
+  },
+  {
+    id: "battles",
+    n: "06",
+    title: "The battles",
+    intro: "every battle on record. search it, sort it, export it.",
+    render: () => <Battles />,
+  },
+  {
+    id: "traders",
+    n: "07",
+    title: "Who's trading",
+    intro: "the leaderboard, the full trader table, and a lookup for any wallet's own PnL.",
+    render: () => (
+      <>
+        <Leaderboard />
+        <div style={{ height: 24 }} />
+        <Traders />
+        <div style={{ height: 24 }} />
+        <TraderScorecard />
+      </>
+    ),
+  },
+  {
+    id: "music",
+    n: "08",
+    title: "The music",
+    intro: "the songs and artists the battles are built on - Audius play counts and inline play.",
+    render: () => (
+      <>
+        <Songs />
+        <div style={{ height: 24 }} />
+        <Artists />
+        <div style={{ height: 24 }} />
+        <Music />
+      </>
+    ),
+  },
+  {
+    id: "ecosystem",
+    n: "09",
+    title: "In the ZAO ecosystem",
+    intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
+    render: () => (
+      <>
+        <Ecosystem />
+        <div style={{ height: 24 }} />
+        <Events />
+        <div style={{ height: 24 }} />
+        <Faq />
+      </>
+    ),
+  },
 ];
 
-const isView = (v: string | null): v is View =>
-  v === "growth" || v === "about" || v === "how" || v === "events" || v === "songs" ||
-  v === "artists" || v === "music" || v === "leaderboard" || v === "ecosystem" ||
-  v === "platform" || v === "analytics" || v === "profitability" || v === "trader" || v === "traders" || v === "battles" || v === "faq";
+// Old ?tab= deep links keep working - map each legacy tab to its new section.
+const LEGACY_TAB: Record<string, string> = {
+  about: "what", how: "what",
+  platform: "floor",
+  growth: "growth",
+  profitability: "profitability",
+  analytics: "analytics",
+  battles: "battles",
+  leaderboard: "traders", traders: "traders", trader: "traders",
+  songs: "music", artists: "music", music: "music",
+  ecosystem: "ecosystem", events: "ecosystem", faq: "ecosystem",
+};
 
 export default function AppShell() {
-  const [view, setView] = useState<View>("growth");
-  const [navOpen, setNavOpen] = useState(true);
+  const [active, setActive] = useState<string>(SECTIONS[0].id);
 
-  // Sync the active tab with ?tab= so a specific view is shareable.
+  // Jump to the section named by ?tab= or #hash on first load.
   useEffect(() => {
-    const t = new URLSearchParams(window.location.search).get("tab");
-    if (isView(t)) setView(t);
-    if (window.innerWidth < 640) setNavOpen(false);
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    const hash = window.location.hash.replace("#", "");
+    const target = (tab && LEGACY_TAB[tab]) || (hash && SECTIONS.some((s) => s.id === hash) ? hash : "");
+    if (target) {
+      const el = document.getElementById(target);
+      if (el) window.requestAnimationFrame(() => el.scrollIntoView({ behavior: "auto", block: "start" }));
+    }
   }, []);
 
-  const go = (v: View) => {
-    setView(v);
+  // Track which section is in view to highlight the jump-nav.
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const vis = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (vis) setActive(vis.target.id);
+      },
+      { rootMargin: "-45% 0px -50% 0px", threshold: 0 }
+    );
+    for (const s of SECTIONS) {
+      const el = document.getElementById(s.id);
+      if (el) obs.observe(el);
+    }
+    return () => obs.disconnect();
+  }, []);
+
+  const jump = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     const u = new URL(window.location.href);
-    u.searchParams.set("tab", v);
+    u.hash = id;
     window.history.replaceState({}, "", u);
-    if (window.innerWidth < 640) setNavOpen(false);
   };
 
-  const currentLabel = GROUPS.flatMap((g) => g.tabs).find(([v]) => v === view)?.[1] ?? "";
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <button
-          type="button"
-          onClick={() => setNavOpen((o) => !o)}
-          aria-expanded={navOpen}
-          aria-label="Toggle navigation"
-          style={{ fontFamily: C.mono, fontSize: 12, padding: "8px 12px", borderRadius: 9, border: `1px solid ${C.grid}`, background: C.panel, color: C.text, cursor: "pointer" }}
-        >
-          {navOpen ? "close menu" : "menu"}
-        </button>
-        <span style={{ fontFamily: C.mono, fontSize: 12, color: C.dim }}>{currentLabel}</span>
-      </div>
-
-      {navOpen && (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <nav
-        aria-label="Dashboard view"
-        style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-start" }}
+        aria-label="Jump to section"
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 20,
+          display: "flex",
+          gap: 6,
+          overflowX: "auto",
+          padding: "10px 2px",
+          margin: "0 -2px",
+          background: `${C.bg}f2`,
+          backdropFilter: "blur(6px)",
+          borderBottom: `1px solid ${C.grid}`,
+          WebkitOverflowScrolling: "touch",
+        }}
       >
-        {GROUPS.map((g) => (
-          <div
-            key={g.label}
-            style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 12, padding: 6, display: "flex", flexDirection: "column", gap: 4 }}
+        {SECTIONS.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => jump(s.id)}
+            aria-current={active === s.id}
+            style={{
+              flex: "0 0 auto",
+              fontFamily: C.mono,
+              fontSize: 11,
+              letterSpacing: "0.04em",
+              padding: "7px 12px",
+              borderRadius: 8,
+              cursor: "pointer",
+              border: `1px solid ${active === s.id ? C.accent : C.grid}`,
+              background: active === s.id ? C.accent : "transparent",
+              color: active === s.id ? "#1a1206" : C.dim,
+              fontWeight: active === s.id ? 600 : 400,
+              whiteSpace: "nowrap",
+            }}
           >
-            <span style={{ fontFamily: C.mono, fontSize: 9, letterSpacing: "0.1em", color: C.dim, padding: "2px 8px" }}>{g.label}</span>
-            <div role="tablist" aria-label={g.label} style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-              {g.tabs.map(([v, label]) => (
-                <Tab key={v} active={view === v} onClick={() => go(v)} label={label} />
-              ))}
-            </div>
-          </div>
+            <span style={{ opacity: 0.6, marginRight: 6 }}>{s.n}</span>
+            {s.title}
+          </button>
         ))}
       </nav>
-      )}
 
-      <div role="tabpanel" aria-label={`${view} view`}>
-        {view === "growth" ? (
-          <PlatformGrowth />
-        ) : view === "about" ? (
-          <AboutWaveWarZ />
-        ) : view === "how" ? (
-          <HowItWorks />
-        ) : view === "events" ? (
-          <Events />
-        ) : view === "songs" ? (
-          <Songs />
-        ) : view === "artists" ? (
-          <Artists />
-        ) : view === "music" ? (
-          <Music />
-        ) : view === "leaderboard" ? (
-          <Leaderboard />
-        ) : view === "ecosystem" ? (
-          <Ecosystem />
-        ) : view === "platform" ? (
-          <BalanceDashboard />
-        ) : view === "analytics" ? (
-          <PlatformAnalytics />
-        ) : view === "profitability" ? (
-          <Profitability />
-        ) : view === "trader" ? (
-          <TraderScorecard />
-        ) : view === "traders" ? (
-          <Traders />
-        ) : view === "battles" ? (
-          <Battles />
-        ) : (
-          <Faq />
-        )}
-      </div>
+      {SECTIONS.map((s, i) => (
+        <section
+          key={s.id}
+          id={s.id}
+          aria-labelledby={`${s.id}-h`}
+          style={{ scrollMarginTop: 64, paddingTop: i === 0 ? 8 : 40 }}
+        >
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 6 }}>
+            <span style={{ fontFamily: C.mono, fontSize: 13, color: C.accent, fontWeight: 700 }}>{s.n}</span>
+            <h2 id={`${s.id}-h`} style={{ margin: 0, fontSize: 20, color: C.text, fontWeight: 700 }}>
+              {s.title}
+            </h2>
+          </div>
+          <p style={{ margin: "0 0 18px", color: C.dim, fontSize: 13, lineHeight: 1.6, maxWidth: 640 }}>
+            {s.intro}
+          </p>
+          <Reveal eager={i < 2}>{s.render()}</Reveal>
+        </section>
+      ))}
 
       <footer
         style={{
-          marginTop: 8,
+          marginTop: 32,
           paddingTop: 16,
           borderTop: `1px solid ${C.grid}`,
           color: C.dim,
@@ -151,35 +269,38 @@ export default function AppShell() {
   );
 }
 
-function Tab({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
+// Mounts its children only once they scroll near the viewport, so the page stays
+// light on load and each chapter fills in as you reach it. The first sections
+// render eagerly so the top of the page is never blank.
+function Reveal({ eager, children }: { eager: boolean; children: ReactNode }) {
+  const [shown, setShown] = useState(eager);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (shown) return;
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setShown(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShown(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: "300px 0px" }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [shown]);
+
+  if (shown) return <>{children}</>;
   return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      style={{
-        fontFamily: C.mono,
-        fontSize: 12,
-        letterSpacing: "0.06em",
-        padding: "9px 16px",
-        borderRadius: 8,
-        cursor: "pointer",
-        border: "none",
-        background: active ? C.accent : "transparent",
-        color: active ? "#1a1206" : C.text,
-        fontWeight: active ? 600 : 400,
-      }}
-    >
-      {label}
-    </button>
+    <div ref={ref} aria-hidden style={{ minHeight: 240, display: "grid", placeItems: "center", color: C.dim, fontFamily: C.mono, fontSize: 12 }}>
+      loading...
+    </div>
   );
 }
