@@ -7,9 +7,25 @@ import { TRADERS, ME_WALLET, TREASURY_WALLET, type Trader } from "@/lib/traders"
 const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 const fmt = (n: number, dp = 2) => n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
 
+type SortKey = "rank" | "win" | "vol" | "trades" | "pnl";
+
 export default function Traders() {
   const me = TRADERS.find((t) => t.wallet === ME_WALLET) ?? null;
-  const top = TRADERS.slice(0, 40);
+
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "rank", dir: 1 });
+  const top = useMemo(() => {
+    const arr = [...TRADERS].sort(
+      (a, b) => ((a[sort.key] as number) - (b[sort.key] as number)) * sort.dir
+    );
+    return arr.slice(0, 40);
+  }, [sort]);
+  const toggleSort = (key: SortKey) =>
+    setSort((s) =>
+      s.key === key
+        ? { key, dir: (s.dir === 1 ? -1 : 1) as 1 | -1 }
+        : { key, dir: key === "rank" ? 1 : -1 }
+    );
+  const caret = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? " ^" : " v") : "");
 
   const [query, setQuery] = useState("");
   const looked = useMemo<Trader | null>(() => {
@@ -72,12 +88,13 @@ export default function Traders() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 12, minWidth: 560 }}>
           <thead>
             <tr style={{ color: C.dim, textAlign: "left" }}>
-              <th style={th}>#</th><th style={th}>WALLET</th>
+              <th style={sortTh} onClick={() => toggleSort("rank")}>#{caret("rank")}</th>
+              <th style={th}>WALLET</th>
               <th style={{ ...th, textAlign: "right" }}>REC</th>
-              <th style={{ ...th, textAlign: "right" }}>WIN%</th>
-              <th style={{ ...th, textAlign: "right" }}>VOL ◎</th>
-              <th style={{ ...th, textAlign: "right" }}>TRADES</th>
-              <th style={{ ...th, textAlign: "right" }}>NET P&L ◎</th>
+              <th style={{ ...sortTh, textAlign: "right" }} onClick={() => toggleSort("win")}>WIN%{caret("win")}</th>
+              <th style={{ ...sortTh, textAlign: "right" }} onClick={() => toggleSort("vol")}>VOL ◎{caret("vol")}</th>
+              <th style={{ ...sortTh, textAlign: "right" }} onClick={() => toggleSort("trades")}>TRADES{caret("trades")}</th>
+              <th style={{ ...sortTh, textAlign: "right" }} onClick={() => toggleSort("pnl")}>NET P&L ◎{caret("pnl")}</th>
             </tr>
           </thead>
           <tbody>
@@ -121,4 +138,5 @@ function Cell({ label, value, color }: { label: string; value: string; color?: s
 }
 
 const th: React.CSSProperties = { padding: "8px 10px", fontSize: 10, letterSpacing: "0.06em", fontWeight: 400 };
+const sortTh: React.CSSProperties = { ...th, cursor: "pointer", userSelect: "none" };
 const td: React.CSSProperties = { padding: "8px 10px" };
