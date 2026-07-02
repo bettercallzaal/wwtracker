@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
 import { TRADERS, ME_WALLET, TREASURY_WALLET, type Trader } from "@/lib/traders";
+import { toCsv, downloadCsv } from "@/lib/csv";
 
 const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 const fmt = (n: number, dp = 2) => n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -26,6 +27,14 @@ export default function Traders() {
         : { key, dir: key === "rank" ? 1 : -1 }
     );
   const caret = (key: SortKey) => (sort.key === key ? (sort.dir === 1 ? " ^" : " v") : "");
+
+  const exportCsv = () => {
+    const csv = toCsv(
+      ["rank", "wallet", "record", "win_pct", "vol_sol", "trades", "battles", "net_pnl_sol"],
+      [...TRADERS].map((t) => [t.rank, t.wallet, t.rec, t.win, t.vol, t.trades, t.battles, t.pnl])
+    );
+    downloadCsv("wavewarz-traders.csv", csv);
+  };
 
   const [query, setQuery] = useState("");
   const looked = useMemo<Trader | null>(() => {
@@ -83,6 +92,15 @@ export default function Traders() {
           </div>
         </section>
       )}
+
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          onClick={exportCsv}
+          style={{ background: C.panel, border: `1px solid ${C.grid}`, color: C.text, borderRadius: 8, padding: "6px 12px", fontFamily: C.mono, fontSize: 12, cursor: "pointer" }}
+        >
+          download CSV
+        </button>
+      </div>
 
       <section style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: "8px 4px", overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 12, minWidth: 560 }}>
