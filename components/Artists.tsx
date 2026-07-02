@@ -37,6 +37,7 @@ export default function Artists() {
   const [host, setHost] = useState<string>("https://discoveryprovider.audius.co");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [full, setFull] = useState<Record<string, Track[]>>({});
+  const [q, setQ] = useState("");
 
   const expand = async (id: string) => {
     if (expanded === id) {
@@ -85,6 +86,15 @@ export default function Artists() {
     };
   }, []);
 
+  const query = q.trim().toLowerCase();
+  const visible = (cards ?? []).filter(
+    (c) =>
+      !query ||
+      `${c.ww.handle} ${c.user?.name ?? ""} ${c.user?.handle ?? ""}`
+        .toLowerCase()
+        .includes(query)
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <header>
@@ -126,7 +136,17 @@ export default function Artists() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {(cards ?? []).map(({ ww, user, tracks }) => (
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="filter artists by name or handle"
+            aria-label="Filter artists"
+            style={{ fontFamily: C.mono, fontSize: 13, padding: "10px 12px", borderRadius: 10, border: `1px solid ${C.grid}`, background: C.bg, color: C.text }}
+          />
+          {visible.length === 0 && (
+            <p style={{ ...metaLabel, fontSize: 12 }}>no artists match &quot;{q}&quot;.</p>
+          )}
+          {visible.map(({ ww, user, tracks }) => (
             <div key={ww.handle} style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 14, padding: 16 }}>
               <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                 {user?.profile_picture?.["150x150"] ? (
