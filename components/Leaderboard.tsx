@@ -2,6 +2,7 @@
 
 import { C, metaLabel } from "@/lib/theme";
 import { LEADERBOARD } from "@/lib/leaderboard";
+import { toCsv, downloadCsv } from "@/lib/csv";
 
 // Artists with a confirmed Audius profile -> link the row to Audius.
 const AUDIUS = new Set([
@@ -15,6 +16,14 @@ const fmt = (n: number, dp = 2) => n.toLocaleString(undefined, { minimumFraction
 export default function Leaderboard() {
   const totalVol = LEADERBOARD.reduce((s, a) => s + a.vol, 0);
   const totalEarn = LEADERBOARD.reduce((s, a) => s + a.earn, 0);
+
+  const exportCsv = () => {
+    const csv = toCsv(
+      ["rank", "name", "handle", "record", "win_pct", "vol_sol", "earn_sol"],
+      LEADERBOARD.map((a) => [a.rank, a.name, a.handle, a.rec, a.win, a.vol, a.earn])
+    );
+    downloadCsv("wavewarz-leaderboard.csv", csv);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -33,6 +42,24 @@ export default function Leaderboard() {
         <Tile label="ARTISTS" value={`${LEADERBOARD.length}`} />
         <Tile label="TOTAL VOLUME" value={`${fmt(totalVol, 1)} ◎`} />
         <Tile label="TOTAL EARNINGS" value={`${fmt(totalEarn, 2)} ◎`} />
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          onClick={exportCsv}
+          style={{
+            background: C.panel,
+            border: `1px solid ${C.grid}`,
+            color: C.text,
+            borderRadius: 8,
+            padding: "6px 12px",
+            fontFamily: C.mono,
+            fontSize: 12,
+            cursor: "pointer",
+          }}
+        >
+          download CSV
+        </button>
       </div>
 
       <section style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: "8px 4px", overflowX: "auto" }}>
