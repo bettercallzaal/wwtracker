@@ -68,3 +68,8 @@ body {
     background-position: -200% 0;
   }
 }
+
+/* On-chain overview: collapse cofounder PnL card on narrow screens */
+@media (max-width: 620px) {
+  .proof-trader { grid-template-columns: 1fr !important; }
+}
