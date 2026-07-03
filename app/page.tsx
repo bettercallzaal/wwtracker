@@ -1,4 +1,5 @@
 import AppShell from "@/components/AppShell";
+import FreshnessBanner from "@/components/FreshnessBanner";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
         margin: "0 auto",
       }}
     >
+      <FreshnessBanner />
       <AppShell />
     </main>
   );
