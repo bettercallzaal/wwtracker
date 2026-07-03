@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -279,6 +282,59 @@ export default function OnChainProof() {
         </ResponsiveContainer>
       </div>
 
+      <ScaleCard
+        title="Volume, from zero"
+        note="cumulative SOL traded across every battle - the line only climbs."
+      >
+        <ResponsiveContainer width="100%" height={260}>
+          <AreaChart data={rows} margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
+            <defs>
+              <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={C.accent} stopOpacity={0.32} />
+                <stop offset="100%" stopColor={C.accent} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke={C.grid} vertical={false} />
+            <XAxis dataKey="date" tickFormatter={shortDate} minTickGap={44} tick={{ fill: C.dim, fontFamily: C.mono, fontSize: 11 }} stroke={C.grid} />
+            <YAxis tickFormatter={(v) => fmt(v, 0)} tick={{ fill: C.dim, fontFamily: C.mono, fontSize: 11 }} stroke={C.grid} width={44} />
+            <Tooltip
+              contentStyle={{ background: C.elev, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
+              labelStyle={{ color: C.dim }}
+              itemStyle={{ color: C.text }}
+              formatter={(v: number) => [`${fmt(v, 1)} SOL`, "Volume"]}
+            />
+            <Area type="monotone" dataKey="vol" stroke={C.accent} strokeWidth={2.2} fill="url(#volFill)" dot={false} isAnimationActive={false} connectNulls />
+          </AreaChart>
+        </ResponsiveContainer>
+      </ScaleCard>
+
+      <ScaleCard
+        title="The treasury, holding the floor"
+        note={`0.5% of every trade + 3% of every loser pool. peaked at ${fmt(peaks.bal, 2)} SOL; sits above the 3.5 operating floor.`}
+      >
+        <ResponsiveContainer width="100%" height={260}>
+          <AreaChart data={rows} margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
+            <defs>
+              <linearGradient id="balFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#7ee0a0" stopOpacity={0.28} />
+                <stop offset="100%" stopColor="#7ee0a0" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke={C.grid} vertical={false} />
+            <XAxis dataKey="date" tickFormatter={shortDate} minTickGap={44} tick={{ fill: C.dim, fontFamily: C.mono, fontSize: 11 }} stroke={C.grid} />
+            <YAxis domain={[0, "auto"]} tickFormatter={(v) => fmt(v, 1)} tick={{ fill: C.dim, fontFamily: C.mono, fontSize: 11 }} stroke={C.grid} width={44} />
+            <Tooltip
+              contentStyle={{ background: C.elev, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
+              labelStyle={{ color: C.dim }}
+              itemStyle={{ color: C.text }}
+              formatter={(v: number) => [`${fmt(v, 2)} SOL`, "Treasury"]}
+            />
+            <ReferenceLine y={3.5} stroke={C.accent} strokeDasharray="5 4" label={{ value: "3.5 floor", position: "insideTopRight", fill: C.accent, fontFamily: C.mono, fontSize: 11 }} />
+            <Area type="monotone" dataKey="bal" stroke="#7ee0a0" strokeWidth={2.2} fill="url(#balFill)" dot={false} isAnimationActive={false} connectNulls />
+          </AreaChart>
+        </ResponsiveContainer>
+      </ScaleCard>
+
       <div
         style={{
           background: C.panel,
@@ -313,6 +369,18 @@ export default function OnChainProof() {
         {balLive ? "treasury live from Solana." : "treasury on sample data (API unset)."} volume, battles and
         trades from the baked Dune snapshot. indexed chart, not dual-axis - see the DEV WALLET and BATTLES tabs for full-scale views.
       </p>
+    </div>
+  );
+}
+
+function ScaleCard({ title, note, children }: { title: string; note: string; children: ReactNode }) {
+  return (
+    <div style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: "16px 8px 12px" }}>
+      <div style={{ padding: "0 8px 10px" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{title}</div>
+        <div style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, marginTop: 3 }}>{note}</div>
+      </div>
+      {children}
     </div>
   );
 }
