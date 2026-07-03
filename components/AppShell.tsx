@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { C } from "@/lib/theme";
 import { DATA_AS_OF } from "@/lib/freshness";
 import BalanceDashboard from "./BalanceDashboard";
+import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
@@ -32,6 +33,13 @@ type Section = {
 };
 
 const SECTIONS: Section[] = [
+  {
+    id: "overview",
+    n: "00",
+    title: "The whole run, at a glance",
+    intro: "every on-chain series in one place - volume, treasury, battles, trades. each line is scaled to its own peak so they share one axis; toggle any of them and hover for the real number.",
+    render: () => <OnChainProof />,
+  },
   {
     id: "what",
     n: "01",
@@ -129,6 +137,7 @@ const SECTIONS: Section[] = [
 
 // Old ?tab= deep links keep working - map each legacy tab to its new section.
 const LEGACY_TAB: Record<string, string> = {
+  overview: "overview",
   about: "what", how: "what",
   platform: "floor",
   growth: "growth",

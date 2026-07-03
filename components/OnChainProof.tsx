@@ -1,0 +1,372 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { C, metaLabel } from "@/lib/theme";
+import { WW } from "@/lib/wwData";
+
+// The overview overlays four on-chain series that live on wildly different
+// scales (325 SOL of volume vs a ~3.5 SOL treasury vs thousands of trades).
+// Putting them on one axis honestly means indexing each to its own peak = 100%,
+// then showing the real number in the tooltip. One shared time axis, no dual-y.
+
+interface BalanceRow {
+  block_date: string;
+  eod_sol_balance: number;
+  day_high?: number;
+}
+
+interface SeriesDef {
+  id: "vol" | "bal" | "btl" | "trd";
+  name: string;
+  color: string;
+  unit: string;
+  dp: number;
+}
+
+const SERIES: SeriesDef[] = [
+  { id: "vol", name: "Volume", color: C.accent, unit: " SOL", dp: 1 },
+  { id: "bal", name: "Treasury", color: "#7ee0a0", unit: " SOL", dp: 2 },
+  { id: "btl", name: "Battles", color: "#8ab4ff", unit: "", dp: 0 },
+  { id: "trd", name: "Trades", color: "#c9a3ff", unit: "", dp: 0 },
+];
+
+const START = "2025-08-01";
+
+interface Row {
+  date: string;
+  volPct: number | null;
+  balPct: number | null;
+  btlPct: number | null;
+  trdPct: number | null;
+  vol: number | null;
+  bal: number | null;
+  btl: number | null;
+  trd: number | null;
+}
+
+const fmt = (n: number, dp = 0) =>
+  n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+
+const shortDate = (d: string) => {
+  const [y, m] = d.split("-");
+  const mn = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(m)];
+  return m === "01" ? `${mn} '${y.slice(2)}` : mn;
+};
+
+export default function OnChainProof() {
+  const [bal, setBal] = useState<BalanceRow[] | null>(null);
+  const [balLive, setBalLive] = useState(false);
+  const [active, setActive] = useState<Set<SeriesDef["id"]>>(new Set(["vol", "bal", "btl", "trd"]));
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/balance", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { rows?: BalanceRow[]; source?: string }) => {
+        if (!alive) return;
+        setBal(d.rows ?? []);
+        setBalLive(d.source !== "sample");
+      })
+      .catch(() => alive && setBal([]));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const { rows, peaks, latest } = useMemo(() => {
+    // cumulative volume by date
+    const volMap = new Map<string, number>();
+    let cv = 0;
+    for (const p of WW.volume.series) {
+      cv += p.vol;
+      volMap.set(p.block_date, cv);
+    }
+    // cumulative battles + trades by date
+    const btlMap = new Map<string, number>();
+    const trdMap = new Map<string, number>();
+    let cb = 0;
+    let ct = 0;
+    for (const p of WW.timeline) {
+      cb += p.battles;
+      ct += p.trades;
+      btlMap.set(p.block_date, cb);
+      trdMap.set(p.block_date, ct);
+    }
+    const balMap = new Map<string, number>();
+    for (const b of bal ?? []) balMap.set(b.block_date, b.eod_sol_balance);
+
+    const dates = Array.from(
+      new Set([...volMap.keys(), ...btlMap.keys(), ...trdMap.keys(), ...balMap.keys()]),
+    )
+      .filter((d) => d >= START)
+      .sort();
+
+    const peak = {
+      vol: Math.max(0, ...volMap.values()),
+      bal: Math.max(0, ...[...balMap.entries()].filter(([d]) => d >= START).map(([, v]) => v)),
+      btl: Math.max(0, ...btlMap.values()),
+      trd: Math.max(0, ...trdMap.values()),
+    };
+
+    // carry-forward last known value so step series stay continuous
+    let lv = 0;
+    let lb: number | null = null;
+    let lbt = 0;
+    let lt = 0;
+    const out: Row[] = dates.map((date) => {
+      if (volMap.has(date)) lv = volMap.get(date)!;
+      if (balMap.has(date)) lb = balMap.get(date)!;
+      if (btlMap.has(date)) lbt = btlMap.get(date)!;
+      if (trdMap.has(date)) lt = trdMap.get(date)!;
+      return {
+        date,
+        vol: lv || null,
+        bal: lb,
+        btl: lbt || null,
+        trd: lt || null,
+        volPct: peak.vol ? (lv / peak.vol) * 100 : null,
+        balPct: lb != null && peak.bal ? (lb / peak.bal) * 100 : null,
+        btlPct: peak.btl ? (lbt / peak.btl) * 100 : null,
+        trdPct: peak.trd ? (lt / peak.trd) * 100 : null,
+      };
+    });
+
+    const last = out[out.length - 1];
+    return { rows: out, peaks: peak, latest: last };
+  }, [bal]);
+
+  const toggle = (id: SeriesDef["id"]) =>
+    setActive((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const tot = WW.platformStats;
+  const prog = WW.program;
+  const ts = WW.traderStats;
+
+  const tiles = [
+    { k: "Total volume", v: fmt(peaks.vol, 1), u: "SOL", s: "decoded buy volume" },
+    {
+      k: "Treasury now",
+      v: latest?.bal != null ? fmt(latest.bal, 2) : "-",
+      u: "SOL",
+      s: `floor 3.5 / peak ${fmt(peaks.bal, 2)}`,
+    },
+    { k: "Battles", v: fmt(prog.battlesCreated), u: "", s: `${fmt(prog.battlesSettled)} settled` },
+    { k: "Trades", v: fmt(prog.buys + prog.sells), u: "", s: `${fmt(prog.buys)} buys / ${fmt(prog.sells)} sells` },
+    { k: "Traders", v: "122", u: "", s: "unique wallets" },
+    { k: "Active days", v: fmt(tot.activeDays), u: "", s: `since ${tot.firstDay}` },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <header>
+        <h1 style={{ margin: 0, fontSize: "clamp(22px, 5vw, 34px)", letterSpacing: "-0.02em" }}>
+          WaveWarZ<span style={{ color: C.dim, fontWeight: 400 }}> / on-chain overview</span>
+        </h1>
+        <p style={{ margin: "8px 0 0", color: C.text, lineHeight: 1.6, maxWidth: 720 }}>
+          Every pool, fee, and payout settles on-chain, so here is the whole run in one
+          place - volume, treasury, battles, trades - decoded from program 9TUf via Dune.
+          Each line is scaled to its own peak so they share one axis; hover for the real number.
+        </p>
+      </header>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+          gap: 10,
+        }}
+      >
+        {tiles.map((t) => (
+          <div
+            key={t.k}
+            style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 12, padding: "14px 14px 12px" }}
+          >
+            <div style={{ ...metaLabel, fontSize: 10 }}>{t.k.toUpperCase()}</div>
+            <div style={{ fontSize: 26, fontWeight: 700, marginTop: 6, fontVariantNumeric: "tabular-nums" }}>
+              {t.v}
+              {t.u && <span style={{ fontSize: 12, color: C.dim, fontWeight: 600, marginLeft: 3 }}>{t.u}</span>}
+            </div>
+            <div style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, marginTop: 4 }}>{t.s}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ ...metaLabel, fontSize: 11 }}>TOGGLE LINES</span>
+        {SERIES.map((s) => {
+          const on = active.has(s.id);
+          const peakVal = peaks[s.id];
+          return (
+            <button
+              key={s.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => toggle(s.id)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                fontFamily: C.mono,
+                fontSize: 12,
+                padding: "7px 13px",
+                borderRadius: 999,
+                border: `1px solid ${on ? s.color : C.grid}`,
+                background: C.panel,
+                color: on ? C.text : C.dim,
+                cursor: "pointer",
+                opacity: on ? 1 : 0.5,
+              }}
+            >
+              <span style={{ width: 11, height: 11, borderRadius: 3, background: s.color, display: "inline-block" }} />
+              {s.name}
+              <b style={{ color: C.text, fontWeight: 600 }}>
+                {fmt(peakVal, s.dp)}
+                {s.unit}
+              </b>
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: "16px 8px 8px" }}>
+        <ResponsiveContainer width="100%" height={360}>
+          <LineChart data={rows} margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
+            <CartesianGrid stroke={C.grid} strokeDasharray="0" vertical={false} />
+            <XAxis
+              dataKey="date"
+              tickFormatter={shortDate}
+              minTickGap={44}
+              tick={{ fill: C.dim, fontFamily: C.mono, fontSize: 11 }}
+              stroke={C.grid}
+            />
+            <YAxis
+              domain={[0, 100]}
+              ticks={[0, 25, 50, 75, 100]}
+              tickFormatter={(v) => `${v}%`}
+              tick={{ fill: C.dim, fontFamily: C.mono, fontSize: 11 }}
+              stroke={C.grid}
+              width={44}
+            />
+            <Tooltip content={<ProofTooltip active2={active} />} />
+            {SERIES.map((s) => (
+              <Line
+                key={s.id}
+                type="monotone"
+                dataKey={`${s.id}Pct`}
+                name={s.id}
+                stroke={s.color}
+                strokeWidth={2.4}
+                dot={false}
+                hide={!active.has(s.id)}
+                isAnimationActive={false}
+                connectNulls
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div
+        style={{
+          background: C.panel,
+          border: `1px solid ${C.grid}`,
+          borderRadius: 16,
+          padding: "18px 20px",
+          display: "grid",
+          gridTemplateColumns: "1.1fr 1fr",
+          gap: 16,
+        }}
+        className="proof-trader"
+      >
+        <div>
+          <div style={{ ...metaLabel, fontSize: 10 }}>THE PART NOBODY SHOWS YOU - COFOUNDER PNL</div>
+          <div style={{ fontSize: 40, fontWeight: 800, color: C.danger, marginTop: 6, fontVariantNumeric: "tabular-nums" }}>
+            {fmt(ts.net, 2)} SOL
+          </div>
+          <p style={{ color: C.dim, fontSize: 14, margin: "10px 0 0", maxWidth: 380, lineHeight: 1.55 }}>
+            {fmt(ts.txs)} trades. bet {fmt(ts.solBet, 1)} SOL, got {fmt(ts.solReturned, 1)} back. net
+            negative, on-chain, in public - because that is the whole point.
+          </p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 10px", alignContent: "center" }}>
+          <Metric n={`${fmt(ts.winRate, 1)}%`} l="win rate" />
+          <Metric n={`${fmt(ts.winTxs)}/${fmt(ts.lossTxs)}`} l="wins / losses" />
+          <Metric n={`+${fmt(ts.biggestWin, 2)}`} l="biggest win (SOL)" />
+          <Metric n={`${fmt(ts.biggestLoss, 2)}`} l="biggest loss (SOL)" />
+        </div>
+      </div>
+
+      <p style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, margin: 0 }}>
+        {balLive ? "treasury live from Solana." : "treasury on sample data (API unset)."} volume, battles and
+        trades from the baked Dune snapshot. indexed chart, not dual-axis - see the DEV WALLET and BATTLES tabs for full-scale views.
+      </p>
+    </div>
+  );
+}
+
+function Metric({ n, l }: { n: string; l: string }) {
+  return (
+    <div>
+      <div style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{n}</div>
+      <div style={{ fontFamily: C.mono, fontSize: 11, color: C.dim }}>{l}</div>
+    </div>
+  );
+}
+
+interface TooltipEntry {
+  payload: Row;
+}
+
+function ProofTooltip({
+  active,
+  payload,
+  active2,
+}: {
+  active?: boolean;
+  payload?: TooltipEntry[];
+  active2: Set<SeriesDef["id"]>;
+}) {
+  if (!active || !payload || payload.length === 0) return null;
+  const row = payload[0].payload;
+  return (
+    <div
+      style={{
+        background: C.elev,
+        border: `1px solid ${C.grid}`,
+        borderRadius: 10,
+        padding: "9px 11px",
+        fontFamily: C.mono,
+        fontSize: 12,
+      }}
+    >
+      <div style={{ color: C.dim, fontSize: 11, marginBottom: 5 }}>{row.date}</div>
+      {SERIES.filter((s) => active2.has(s.id)).map((s) => {
+        const raw = row[s.id];
+        return (
+          <div key={s.id} style={{ display: "flex", justifyContent: "space-between", gap: 16, lineHeight: 1.7 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: C.text }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color, display: "inline-block" }} />
+              {s.name}
+            </span>
+            <span style={{ color: C.text, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+              {raw == null ? "-" : `${fmt(raw, s.dp)}${s.unit}`}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

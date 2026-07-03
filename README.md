@@ -11,6 +11,13 @@ in [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
 
 ## Tabs
 
+- **Overview** - the landing view. Every on-chain series in one place: stat tiles
+  (volume, treasury, battles, trades, traders, active days) and a single master
+  chart overlaying volume / treasury / battles / trades. They live on different
+  scales, so each line is indexed to its own peak (= 100%) to share one axis - no
+  dual-y - with the real number in the tooltip and per-line toggles. Closes with
+  the cofounder's live net-negative trading PnL. Full-scale views live on the DEV
+  WALLET and BATTLES tabs.
 - **About** - the WaveWarZ hub: what it is, how a battle works
   (buyShares/sellShares/endBattle/claimShares, 2-of-3 judging), the fee model, a
   live on-chain snapshot, key addresses (Solscan links), team, and official links.
