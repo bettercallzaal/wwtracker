@@ -1,0 +1,7 @@
+{
+  "lifetime_sol": 500,
+  "as_of": "2026-07-02",
+  "since": "2025-05",
+  "source": "doc 950 (Ohnahji strat sesh, verified) - refresh via scripts/ww-research.sh lifetime query",
+  "approx": true
+}
