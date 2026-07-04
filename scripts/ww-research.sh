@@ -32,3 +32,6 @@ run traders "SELECT tx_signer AS trader, count(distinct tx_id) AS txs FROM solan
 run pnl "WITH ww AS (SELECT distinct tx_id FROM solana.instruction_calls WHERE executing_account='$PROG' AND tx_signer='$TRADER' AND block_date >= date '2025-08-01') SELECT aa.block_time, aa.balance_change/1e9 AS sol_delta FROM solana.account_activity aa JOIN ww ON aa.tx_id = ww.tx_id WHERE aa.address='$TRADER' ORDER BY aa.block_time"
 run devflow "SELECT block_date, sum(case when balance_change>0 then balance_change else 0 end)/1e9 AS inflow, sum(case when balance_change<0 then -balance_change else 0 end)/1e9 AS outflow, sum(balance_change)/1e9 AS net FROM solana.account_activity WHERE address='$DEV' GROUP BY 1 ORDER BY 1"
 echo "done - now regenerate lib/wwData.ts from /tmp/ww-*.json" >&2
+
+# lifetime buy-side SOL volume (updates public/ww-lifetime.json - run from a Dune plan with raw Solana datasets)
+run lifetime "WITH ww AS (SELECT DISTINCT tx_id FROM solana.instruction_calls WHERE executing_account='$PROG' AND block_date >= date '2025-05-01') SELECT SUM(CASE WHEN aa.balance_change<0 THEN -aa.balance_change ELSE 0 END)/1e9 AS lifetime_sol FROM solana.account_activity aa JOIN ww ON aa.tx_id=ww.tx_id WHERE aa.tx_signer=aa.address"
