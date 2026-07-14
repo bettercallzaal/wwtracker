@@ -9,8 +9,20 @@ export interface RecapContext {
   activity: DayActivityEntry[];
 }
 
+/** Stable identity for grouping/counting - handle when captured, else the
+ * title. Two battles by the same handle always group together regardless of
+ * which song each one used. */
+function artistIdentity(handle: string | null, title: string): string {
+  return handle ?? title.trim();
+}
+
+/** Display form for prose: "Title (Handle)" when a handle is captured, else
+ * just the title. Showing both matters for self-battles (an artist entering
+ * two of their own songs against each other) - handle alone collapses both
+ * sides to the same string and reads as nonsense. */
 function battleName(handle: string | null, title: string): string {
-  return handle ?? title;
+  const cleanTitle = title.trim();
+  return handle ? `${cleanTitle} (${handle})` : cleanTitle;
 }
 
 function winnerSide(battle: StoredBattle): "a" | "b" | null {
@@ -107,8 +119,10 @@ export function buildWeeklyRecap(
 
   const artistCounts = new Map<string, number>();
   for (const b of battles) {
-    artistCounts.set(battleName(b.aHandle, b.a), (artistCounts.get(battleName(b.aHandle, b.a)) ?? 0) + 1);
-    artistCounts.set(battleName(b.bHandle, b.b), (artistCounts.get(battleName(b.bHandle, b.b)) ?? 0) + 1);
+    const aId = artistIdentity(b.aHandle, b.a);
+    const bId = artistIdentity(b.bHandle, b.b);
+    artistCounts.set(aId, (artistCounts.get(aId) ?? 0) + 1);
+    artistCounts.set(bId, (artistCounts.get(bId) ?? 0) + 1);
   }
   const mostActive = [...artistCounts.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
 

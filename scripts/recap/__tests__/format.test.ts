@@ -88,8 +88,22 @@ describe("buildShowRecap", () => {
       winner: "Geek Myth", vol: 10.5, margin: null,
     };
     const draft = buildShowRecap("2026-06-15", [battleWithWinnerHandle], null, context);
-    // topLine should contain the handle "GeEkMyTh_ETH" for the winner, not the raw title "Geek Myth"
-    expect(draft.farcaster).toContain("GeEkMyTh_ETH vs Opponent (GeEkMyTh_ETH won");
+    // topLine should show "Title (Handle)" consistently for both the participant and the winner
+    expect(draft.farcaster).toContain("Geek Myth (GeEkMyTh_ETH) vs Opponent (Geek Myth (GeEkMyTh_ETH) won");
+  });
+
+  it("keeps a self-battle (same handle, different songs) distinguishable", () => {
+    // Real case found via live data: one artist entering two of their own songs
+    // against each other. Handle-only display would collapse both sides to the
+    // same string ("BennyJ504WaveWarz vs BennyJ504WaveWarz") - meaningless.
+    const selfBattle: StoredBattle = {
+      id: "1783995355", type: "QUICK", date: "2026-06-15",
+      a: "Modern Love", b: "Saturday in La Featuring DopeStilo",
+      aHandle: "BennyJ504WaveWarz", bHandle: "BennyJ504WaveWarz",
+      winner: "Saturday in La Featuring DopeStilo", vol: 1.1327, margin: 91,
+    };
+    const draft = buildShowRecap("2026-06-15", [selfBattle], null, context);
+    expect(draft.farcaster).toContain("Modern Love (BennyJ504WaveWarz) vs Saturday in La Featuring DopeStilo (BennyJ504WaveWarz)");
   });
 });
 
@@ -103,6 +117,22 @@ describe("buildWeeklyRecap", () => {
   it("flags leaderboard movement as not included", () => {
     const draft = buildWeeklyRecap([mainEvent], "2026-06-09", "2026-06-15", context);
     expect(draft.notIncluded.some((l) => l.includes("Leaderboard movement"))).toBe(true);
+  });
+
+  it("aggregates 'most active artist' by handle across different-titled battles", () => {
+    // Same artist (handle "BennyJ504WaveWarz"), two different songs across two
+    // different battles - must count as 2 appearances for that ONE artist, not
+    // as two separate one-off entries keyed by the "Title (Handle)" display string.
+    const battleOne: StoredBattle = {
+      id: "1", type: "QUICK", date: "Jun 10, 2026", a: "Modern Love", b: "Filler",
+      aHandle: "BennyJ504WaveWarz", bHandle: null, winner: "Modern Love", vol: 1, margin: 90,
+    };
+    const battleTwo: StoredBattle = {
+      id: "2", type: "QUICK", date: "Jun 11, 2026", a: "Filler2", b: "On Repeat",
+      aHandle: null, bHandle: "BennyJ504WaveWarz", winner: "On Repeat", vol: 1, margin: 90,
+    };
+    const draft = buildWeeklyRecap([battleOne, battleTwo], "2026-06-09", "2026-06-15", context);
+    expect(draft.dataUsed.some((l) => l.includes("Most active artist: BennyJ504WaveWarz, 2 battle(s)"))).toBe(true);
   });
 });
 
