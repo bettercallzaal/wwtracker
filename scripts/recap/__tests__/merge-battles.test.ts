@@ -42,6 +42,18 @@ describe("scrapedToStored", () => {
   it("returns null (skips) if the date is missing", () => {
     expect(scrapedToStored(scraped({ date: null }))).toBeNull();
   });
+
+  it("returns null (skips) if winnerTitle is missing", () => {
+    expect(scrapedToStored(scraped({ winnerTitle: null }))).toBeNull();
+  });
+
+  it("returns null (skips) if song1Title is missing", () => {
+    expect(scrapedToStored(scraped({ song1Title: null }))).toBeNull();
+  });
+
+  it("returns null (skips) if song2Title is missing", () => {
+    expect(scrapedToStored(scraped({ song2Title: null }))).toBeNull();
+  });
 });
 
 describe("mergeBattles", () => {
@@ -69,9 +81,12 @@ describe("mergeBattles", () => {
   it("keeps the existing record's type/handles untouched on a known id", () => {
     const { merged } = mergeBattles(
       [existingBattle],
-      [scraped({ battleId: 1781481083, marginPct: 50 })],
+      [scraped({ battleId: 1781481083, marginPct: 50, totalVolumeSol: 10.5 })],
     );
-    expect(merged.find((b) => b.id === "1781481083")?.type).toBe("MAIN");
+    const existing = merged.find((b) => b.id === "1781481083");
+    expect(existing?.type).toBe("MAIN");
+    expect(existing?.vol).toBe(3.4257);
+    expect(existing?.margin).toBeNull();
   });
 
   it("sorts merged battles newest-first by id", () => {
