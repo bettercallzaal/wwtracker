@@ -3,9 +3,7 @@
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
 import { usd } from "@/lib/price";
-
-const PROGRAM = "9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo";
-const TREASURY = "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37";
+import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY } from "@/lib/config";
 
 const fmt = (n: number, dp = 0) =>
   n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });

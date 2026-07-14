@@ -9,47 +9,52 @@ WaveWarZ is a Solana music-battle platform: fans trade SOL on song-vs-song
 battles. Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`. Full research
 in [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
 
-## Tabs
+## Sections
 
-- **Overview** - the landing view. Every on-chain series in one place: stat tiles
-  (volume, treasury, battles, trades, traders, active days), a master chart
-  overlaying volume / treasury / battles / trades (indexed to each line's own peak
-  = 100% so they share one axis - no dual-y - with real numbers in the tooltip and
-  per-line toggles), then two true-scale SOL charts - cumulative volume from zero,
-  and treasury balance against the 3.5 floor. Closes with the cofounder's live
-  net-negative trading PnL.
-- **About** - the WaveWarZ hub: what it is, how a battle works
+Not tabs - one scrolling page, numbered 00-09, with a sticky jump-nav
+(`components/AppShell.tsx`). Old `?tab=` links from before the redesign still
+resolve to the right section.
+
+- **00 Overview** - the landing view. Stat tiles (volume, treasury, battles,
+  trades, traders, active days) plus a master chart overlaying volume /
+  treasury / battles / trades (indexed to each line's own peak = 100% so they
+  share one axis - no dual-y - with real numbers in the tooltip and per-line
+  toggles).
+- **01 What** - the WaveWarZ hub: what it is, how a battle works
   (buyShares/sellShares/endBattle/claimShares, 2-of-3 judging), the fee model, a
   live on-chain snapshot, key addresses (Solscan links), team, and official links.
-- **Platform Floor** - the treasury/dev wallet `FNj...` daily end-of-day SOL
+- **02 Floor** - the treasury/dev wallet `FNj...` daily end-of-day SOL
   balance vs the 3.5 SOL operating floor. Bars = daily close; the line = intraday
   high (peaks that get skimmed before close - e.g. the wallet hit **4.65 SOL**
   intraday on 2026-06-13 but closed at 3.51). DAY / WEEK toggle. Live from Dune.
-- **Analytics** - WaveWarZ program-wide on-chain: 1,127 battles / 9,045 trades /
+- **03 Growth** - true-scale cumulative SOL volume since launch, not indexed
+  like the Overview chart - the actual shape of the platform's growth curve.
+- **04 Profitability** - the floor model made visible: the 3.5 SOL operating
+  floor, the distribution split (33% operations, 22% each to Hurricane / Candy /
+  Zaal), a split pie, recipient cards (Solscan links when wallets are set), and a
+  distribution history table. Config in `lib/distributions.ts`; rows show TBD
+  until the real distribution dates/amounts + wallets are filled in.
+- **05 Analytics** - WaveWarZ program-wide on-chain: 1,127 battles / 9,045 trades /
   122 traders (decoded instructions), battles-vs-trades timeline, daily activity
   (14,681 txs over 230 days since Aug 2025), treasury daily flow (lifetime net
   +3.51 SOL = the floor), and a top-traders leaderboard. Snapshot in `lib/wwData.ts`.
-- **My Trades** - a trader wallet's WaveWarZ PnL. Cumulative SOL PnL is live from
-  on-chain (net -2.96 SOL across 518 txs), with SOL bet/returned, win rate, and
-  biggest win/loss. Shown alongside the stats-app realized figure.
-- **Profitability** - the floor model made visible: the 3.5 SOL operating floor,
-  the distribution split (33% operations, 22% each to Hurricane / Candy / Zaal),
-  a split pie, recipient cards (Solscan links when wallets are set), and a
-  distribution history table. Config in `lib/distributions.ts`; rows show TBD
-  until the real distribution dates/amounts + wallets are filled in.
-- **Leaderboard / Songs / Traders / Battles / Artists** - the data views. Artist
-  leaderboard, the song charts (Audius play counts + inline play), the trader
-  table, the full battle history, and the Audius-backed artist roster.
+- **06 Battles** - the full battle history: search, filter by type, CSV export.
+- **07 Traders** - the artist leaderboard, the full trader table, and a
+  lookup for any wallet's own PnL (cumulative SOL, live from on-chain, win
+  rate, biggest win/loss - shown alongside the stats-app's realized figure).
+- **08 Music** - the songs and artists the battles are built on: song charts
+  with Audius play counts + inline play, and the artist roster.
+- **09 Ecosystem** - where WaveWarZ sits in the ZAO ecosystem, events, and FAQ.
 
-Table features across those views: client-side search/filter (songs, traders,
+Table features across those sections: client-side search/filter (songs, traders,
 artists, battles), sortable columns (traders), and CSV export (leaderboard,
 traders, battles) via the reusable `lib/csv.ts`.
 
 ## Docs
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - how it's built: data paths, the
-  tabs, every metric's methodology, the Dune queries, deploy/env/security, and how
-  to refresh the data.
+  sections, every metric's methodology, the Dune queries, deploy/env/security, and
+  how to refresh the data.
 - [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md) - WaveWarZ domain
   research: program model, instruction discriminators, fee/settlement formulas,
   team, ecosystem, and on-chain findings.
@@ -108,9 +113,11 @@ npm run build
 
 ## Status / next
 
-Done: multi-tab dashboard, live treasury balance with intraday highs, program
-analytics, live trader PnL, full research doc, profitability tab (floor +
-distribution split), table search/sort, CSV export across the data tables. Next:
-fill the distribution history + recipient wallets in `lib/distributions.ts` to
-make the Profitability tab real; per-battle PnL + win rate via
-buyShares/sellShares instruction decode; artist-payout tracing.
+Done: scrolling-section dashboard, live treasury balance with intraday highs,
+program analytics, live trader PnL, full research doc, profitability section
+(floor + distribution split), table search/sort, CSV export across the data
+tables, and a recap pipeline (fetch + Main Event/show/weekly draft generation).
+Next: fill the distribution history + recipient wallets in
+`lib/distributions.ts` to make the Profitability section real; per-battle PnL
++ win rate via buyShares/sellShares instruction decode; artist-payout tracing;
+the X Spaces speaker log (Phase B of the recap pipeline).

@@ -13,25 +13,31 @@ refresh. After any refresh: bump `DATA_AS_OF` in `lib/freshness.ts`, run
 | Songs (37) | wavewarz.info/leaderboards/songs | lib/songs.ts | snapshot |
 | Artist leaderboard (48) | .../leaderboards/artists | lib/leaderboard.ts | snapshot |
 | Trader leaderboard (101) | .../leaderboards/traders | lib/traders.ts | snapshot |
-| Battles (949) | .../battles?page=N | public/ww-battles.json | snapshot |
+| Battles | wavewarz-intelligence.vercel.app/battles?page=N | public/ww-battles.json | snapshot - `npm run fetch:battles` automates this now, see below |
 | Skips / queue per night | Dune (FNj inflows) | public/ww-skips.json, ww-queue.json | snapshot |
 | On-chain analytics | Dune | lib/wwData.ts | snapshot |
 | Artists / Music / per-artist | Audius API | - | live |
 | YouTube | oEmbed + channel | components/Events.tsx | snapshot ids |
 
-## A. Scrape wavewarz.info (songs / leaderboards / battles)
+## A. Scrape wavewarz.info (songs / leaderboards)
+
+**Battles no longer need this** - run `npm run fetch:battles` instead. It
+pages `wavewarz-intelligence.vercel.app/battles` directly (no browser
+needed), merges only new battles into `public/ww-battles.json`, and fails
+loud (throws, writes nothing) on any HTTP/parse error rather than risking a
+stale or partial write. See `docs/superpowers/specs/2026-07-14-recap-pipeline-design.md`
+for the full design. The manual scrape below is still how songs/leaderboards
+get refreshed.
 
 The site renders client-side, so use the gstack browse skill. KEY RULE: the
 flattened page text bleeds between rows - read **per cell** via `$B eval` JS that
-maps each `<td>.innerText` (table pages) or per-card text (battles).
+maps each `<td>.innerText` (table pages).
 
 ```bash
 B=~/.claude/skills/gstack/browse/dist/browse
 # leaderboards (tables): goto the page, wait, eval a td-per-cell extractor -> JSON
 $B goto "https://wavewarz.info/leaderboards/traders"; $B wait --networkidle; sleep 1
 $B eval /tmp/extract-traders.js   # querySelectorAll('tr') -> TD innerText; full wallets from row hrefs /trader/{addr}
-# battles: paginated via ?page=N (NOT infinite scroll). Loop 1..~48 until first id repeats.
-for p in $(seq 1 55); do $B goto "https://wavewarz.info/battles?page=$p"; $B wait --networkidle; sleep 0.7; $B eval /tmp/card-extract.js >> /tmp/ww-battles-raw.jsonl; done
 $B stop
 ```
 

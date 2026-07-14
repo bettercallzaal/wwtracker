@@ -28,24 +28,46 @@ app/
   globals.css           palette vars, reduced-motion, focus, skeleton shimmer
   api/balance/route.ts  GET endpoint: treasury daily balance (live, server-side)
 components/
-  AppShell.tsx          tab switcher (About / Platform Floor / Analytics / My Trades) + footer
-  AboutWaveWarZ.tsx     the hub: what it is, mechanics, fees, snapshot, addresses, team, links
-  BalanceDashboard.tsx  Platform Floor: close bars + intraday-high line vs 3.5 floor
-  PlatformAnalytics.tsx Analytics: decoded instruction mix, timeline, activity, treasury flow, volume, leaderboard
-  TraderScorecard.tsx   My Trades: live PnL, win rate, monthly PnL, biggest moves, footprint
+  AppShell.tsx          renders the 10 numbered sections (see §4) as one scrolling
+                        page with sticky jump-nav; legacy ?tab= deep links still work
+  AboutWaveWarZ.tsx / HowItWorks.tsx    what it is, mechanics, fees, snapshot, addresses, team, links
+  BalanceDashboard.tsx  the treasury floor: close bars + intraday-high line vs 3.5 floor
+  PlatformGrowth.tsx    cumulative SOL volume timeline
+  Profitability.tsx     floor model + distribution split
+  PlatformAnalytics.tsx decoded instruction mix, timeline, activity, treasury flow, volume, leaderboard
+  Battles.tsx           full battle history: search/filter/CSV export
+  Leaderboard.tsx / Traders.tsx / TraderScorecard.tsx   artist leaderboard, trader table, wallet PnL lookup
+  Songs.tsx / Artists.tsx / Music.tsx   song charts + artist roster, Audius-backed
+  Ecosystem.tsx / Events.tsx / Faq.tsx  ecosystem context, events, FAQ
 lib/
   dune.ts               server-only Dune client (live reads + execute path)
   solana.ts             base58 address validation
-  theme.ts              shared palette + label style
+  theme.ts              shared palette + label style - every component should import
+                        `{ C, metaLabel }` from here, never redefine its own copy
+  config.ts             single source of truth for PROGRAM_ID / TREASURY_WALLET /
+                        TRACKED_TRADER_WALLET - import these, don't hardcode addresses
   wwData.ts             GENERATED on-chain analytics snapshot (do not hand-edit)
   sampleData.ts         deterministic fallback balance series
   traderSample.ts       deterministic fallback PnL curve
+public/
+  ww-battles.json           per-battle records (id/type/date/artists/winner/vol/margin) - Battles.tsx
+  ww-activity.json          daily buys/sells/battles/settled/claims - PlatformAnalytics.tsx
+  ww-volboard.json          30d buy-side SOL volume per trader - PlatformAnalytics.tsx
+  ww-platform-volume.json   daily buy/sell volume timeseries - PlatformGrowth.tsx
+  ww-lifetime.json          lifetime volume snapshot (approx, sourced) - OnChainProof.tsx
+  ww-queue.json / ww-skips.json / ww-wavysplit.json   per-night queue/skip/DJ-Wavy counts - Battles.tsx
 scripts/
   ww-research.sh        run the core Dune queries -> /tmp/ww-*.json (needs DUNE_API_KEY)
   ww-gen.py             read /tmp/ww-*.json -> regenerate lib/wwData.ts
+  validate.mjs          prebuild sanity checks on the snapshots above (run via `npm run validate`)
+  recap/                the recap pipeline's internals (parser, merge, state, format) - see §7
+  ww-battles-fetch.ts   refreshes public/ww-battles.json from the live feed (`npm run fetch:battles`)
+  ww-recap.ts           generates recap drafts (`npm run recap`) - see §7
+recaps/                 generated recap drafts (gitignored content aside from .gitkeep + STATE.json)
 docs/
   WAVEWARZ-RESEARCH.md  domain research (program model, fees, team, findings)
   ARCHITECTURE.md       this file
+  REFRESH.md            runbook for refreshing every snapshot
 vercel.json             framework pin + daily cron warming /api/balance
 ```
 
@@ -70,14 +92,24 @@ always fast, zero per-view credit cost. `WW.generatedAt` stamps the snapshot.
 Why two paths: the treasury balance should be current (live cached read is cheap);
 the analytics are expensive Solana scans, so we snapshot them and refresh on demand.
 
-## 4. The tabs
+## 4. The sections
 
-| Tab | File | Shows | Source |
-|-----|------|-------|--------|
-| About | AboutWaveWarZ.tsx | What WaveWarZ is, battle flow, fee table, live snapshot, addresses, team, ecosystem, links | WW + static |
-| Platform Floor | BalanceDashboard.tsx | Treasury daily close (bars) + intraday high (line) vs 3.5 floor; Day/Week; ATH/30d/days tiles | live /api/balance |
-| Analytics | PlatformAnalytics.tsx | Decoded battles/trades/claims/traders, battles-vs-trades timeline, daily activity, treasury flow, buy-volume chart, tx-count leaderboard | WW |
-| My Trades | TraderScorecard.tsx | Live cumulative SOL PnL, win rate, SOL bet/returned, biggest moves, monthly PnL, platform footprint | WW |
+Not tabs - `AppShell.tsx` renders one scrolling page, numbered 00-09, with a
+sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
+`AppShell.tsx`'s `LEGACY_TAB` table) since that's how the app used to work.
+
+| # | Section | Component(s) | Shows | Source |
+|---|---------|--------------|-------|--------|
+| 00 | Overview | OnChainProof.tsx | Master chart overlaying volume/treasury/battles/trades (each indexed to its own peak) + stat tiles | WW |
+| 01 | What | AboutWaveWarZ.tsx, HowItWorks.tsx | What WaveWarZ is, battle flow, fee table, live snapshot, addresses, team, ecosystem, links | WW + static |
+| 02 | Floor | BalanceDashboard.tsx | Treasury daily close (bars) + intraday high (line) vs 3.5 floor; Day/Week; ATH/30d/days tiles | live /api/balance |
+| 03 | Growth | PlatformGrowth.tsx | Cumulative SOL volume timeline since launch | public/ww-platform-volume.json |
+| 04 | Profitability | Profitability.tsx | Floor model, 33/22/22/22 distribution split, recipient cards, distribution history (TBD until real data) | lib/distributions.ts |
+| 05 | Analytics | PlatformAnalytics.tsx | Decoded battles/trades/claims/traders, battles-vs-trades timeline, daily activity, treasury flow, buy-volume chart, tx-count leaderboard | WW + public/ww-activity.json, ww-volboard.json |
+| 06 | Battles | Battles.tsx | Full battle history, search/filter/CSV export | public/ww-battles.json + ww-queue/skips/wavysplit.json |
+| 07 | Traders | Leaderboard.tsx, Traders.tsx, TraderScorecard.tsx | Artist leaderboard, full trader table, per-wallet PnL lookup | lib/leaderboard.ts, lib/traders.ts, WW |
+| 08 | Music | Songs.tsx, Artists.tsx, Music.tsx | Song charts + artist roster, Audius play counts and inline play | lib/songs.ts, lib/artists.ts + live Audius API |
+| 09 | Ecosystem | Ecosystem.tsx, Events.tsx, Faq.tsx | ZAO ecosystem context, events, FAQ | static |
 
 ## 5. Metrics & methodology
 
@@ -167,6 +199,19 @@ npm run build                  # verify
 
 For the live treasury balance, re-run Dune query `7717935` (manually or via the
 cron) so its cached results update; the app reads them no-store.
+
+### Battles + recap drafts
+
+`public/ww-battles.json` no longer needs the manual gstack-browse scrape in
+`REFRESH.md` §A - `npm run fetch:battles` (`scripts/ww-battles-fetch.ts`)
+pages the live WaveWarZ Intelligence feed itself, merges only genuinely new
+battles in, and fails loud (throws, writes nothing) on any fetch/parse error
+rather than risking a stale or partial write. `npm run recap` generates
+Farcaster/X draft recap posts (per Main Event, per show, or a trailing-week
+rollup) into `recaps/` - every number cites its source file, nothing is
+invented. Full design/rationale:
+`docs/superpowers/specs/2026-07-14-recap-pipeline-design.md`; command
+reference in the top-level `README.md`'s "Recaps" section.
 
 ## 8. Environment, deploy, security
 

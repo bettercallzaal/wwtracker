@@ -15,10 +15,7 @@ import {
 } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
-
-// Known non-trader signers to exclude from the trader leaderboard.
-const TREASURY = "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37";
-const ME = "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk";
+import { TREASURY_WALLET as TREASURY, TRACKED_TRADER_WALLET as ME } from "@/lib/config";
 
 const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 const fmt = (n: number, dp = 0) =>
