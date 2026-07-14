@@ -54,6 +54,28 @@ traders, battles) via the reusable `lib/csv.ts`.
   research: program model, instruction discriminators, fee/settlement formulas,
   team, ecosystem, and on-chain findings.
 
+## Recaps
+
+Draft recap posts (Farcaster/X) for WaveWarZ battles - never auto-posted,
+always human-reviewed.
+
+- `npm run fetch:battles` - refreshes `public/ww-battles.json` from the live
+  WaveWarZ Intelligence feed. Fails loud on any fetch/parse error rather than
+  writing stale data.
+- `npm run recap -- --battle <id> --type main-event` - drafts a recap for a
+  specific Main Event battle (manually triggered - see
+  `docs/superpowers/specs/2026-07-14-recap-pipeline-design.md` for why this
+  can't be auto-detected).
+- `npm run recap -- --show <space-url> --date <YYYY-MM-DD>` - drafts a recap
+  for one of the 11 weekly shows (weekday 11am EST AMAs, 8:30pm EST Quick
+  Battle nights).
+- `npm run recap -- --weekly` - rolls up the trailing week into one recap.
+
+Output lands in `recaps/battles/`, `recaps/shows/`, `recaps/weekly/` as
+markdown files with a "Data used" section citing the exact source for every
+number, and a "Not included" section for anything that can't be verified at
+that granularity (no per-battle payout/trade data exists).
+
 ## How it works
 
 - `lib/dune.ts` - server-only Dune client. `getLatestBalances()` reads cached
