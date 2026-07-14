@@ -28,7 +28,7 @@ const quickBattle: StoredBattle = {
 describe("buildMainEventRecap", () => {
   it("names the winner and cites the source", () => {
     const draft = buildMainEventRecap(mainEvent, context);
-    expect(draft.farcaster).toContain("Geek Myth");
+    expect(draft.farcaster).toContain("GeEkMyTh_ETH");
     expect(draft.dataUsed.some((l) => l.includes("public/ww-battles.json") && l.includes("1781140240"))).toBe(true);
   });
 

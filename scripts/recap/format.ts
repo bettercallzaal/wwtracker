@@ -10,7 +10,7 @@ export interface RecapContext {
 }
 
 function battleName(handle: string | null, title: string): string {
-  return title ?? handle;
+  return handle ?? title;
 }
 
 function winnerSide(battle: StoredBattle): "a" | "b" | null {
