@@ -71,8 +71,10 @@ export function buildShowRecap(
   }
 
   const top = battles.slice().sort((a, b) => b.vol - a.vol)[0] ?? null;
+  const topWinnerSide = top ? winnerSide(top) : null;
+  const topWinnerName = topWinnerSide === "a" ? battleName(top!.aHandle, top!.a) : topWinnerSide === "b" ? battleName(top!.bHandle, top!.b) : top?.winner;
   const topLine = top
-    ? `${battleName(top.aHandle, top.a)} vs ${battleName(top.bHandle, top.b)} (${top.winner} won, ${top.vol.toFixed(2)} SOL)`
+    ? `${battleName(top.aHandle, top.a)} vs ${battleName(top.bHandle, top.b)} (${topWinnerName} won, ${top.vol.toFixed(2)} SOL)`
     : "no battles logged";
 
   let quoteSuffix = "";

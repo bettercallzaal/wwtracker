@@ -79,6 +79,18 @@ describe("buildShowRecap", () => {
     expect(withLog.dataUsed.some((l) => l.includes("Stream quote"))).toBe(true);
     expect(withLog.farcaster).toContain("02:05");
   });
+
+  it("normalizes the top battle's winner name via battleName (handle-first)", () => {
+    // Regression test: winner should be shown by handle if available, not raw title
+    const battleWithWinnerHandle: StoredBattle = {
+      id: "1781140240", type: "MAIN", date: "Jun 11, 2026",
+      a: "Geek Myth", b: "Opponent", aHandle: "GeEkMyTh_ETH", bHandle: null,
+      winner: "Geek Myth", vol: 10.5, margin: null,
+    };
+    const draft = buildShowRecap("2026-06-15", [battleWithWinnerHandle], null, context);
+    // topLine should contain the handle "GeEkMyTh_ETH" for the winner, not the raw title "Geek Myth"
+    expect(draft.farcaster).toContain("GeEkMyTh_ETH vs Opponent (GeEkMyTh_ETH won");
+  });
 });
 
 describe("buildWeeklyRecap", () => {
