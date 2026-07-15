@@ -7,7 +7,7 @@ import type { BalanceRow } from "./dune";
  */
 export function sampleBalances(days = 560): BalanceRow[] {
   const rows: BalanceRow[] = [];
-  const startEpochDay = 20059; // 2024-12-01
+  const startEpochDay = 20059; // 2024-12-02 (verified: 20059 days after the Unix epoch)
 
   for (let i = 0; i < days; i++) {
     const t = i / days; // 0 -> 1 progress through the series
