@@ -8,10 +8,11 @@ import { DATA_AS_OF } from "@/lib/freshness";
 // snapshots are regenerated and DATA_AS_OF is bumped, this hides itself.
 const STALE_AFTER_DAYS = 2;
 
-function daysSince(iso: string): number {
+/** `now` defaults to Date.now() at call time; injectable so this stays testable
+ * without mocking global time (matches lib/sampleData.ts's determinism rule). */
+export function daysSince(iso: string, now: number = Date.now()): number {
   const then = Date.parse(`${iso}T00:00:00Z`);
   if (Number.isNaN(then)) return 0;
-  const now = Date.now();
   return Math.floor((now - then) / 86_400_000);
 }
 
