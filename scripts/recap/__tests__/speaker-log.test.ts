@@ -3,8 +3,10 @@ import {
   parseCaptionLine,
   textSimilarity,
   resolveSpeakerNames,
+  buildSpeakerLog,
   type CaptionEvent,
   type DiarizedUtterance,
+  type SpeakerMatch,
 } from "@/scripts/recap/speaker-log";
 
 describe("parseCaptionLine", () => {
@@ -156,5 +158,45 @@ describe("resolveSpeakerNames", () => {
     expect(result).toEqual([
       { speaker: "speaker_0", name: "Kata", handle: "kata", confidence: 1, matchedCaptionCount: 1 },
     ]);
+  });
+});
+
+describe("buildSpeakerLog", () => {
+  const utterances: DiarizedUtterance[] = [
+    { speaker: "speaker_0", startSec: 10, endSec: 12, text: "yo whats good" },
+    { speaker: "speaker_1", startSec: 20, endSec: 22, text: "this beat go hard" },
+    { speaker: "speaker_9", startSec: 30, endSec: 32, text: "unresolved voice here" },
+  ];
+
+  it("substitutes resolved real names for confident matches", () => {
+    const matches: SpeakerMatch[] = [
+      { speaker: "speaker_0", name: "Hurric4n3Ike", handle: "hurric4n3ike", confidence: 1, matchedCaptionCount: 2 },
+      { speaker: "speaker_1", name: "Dutchess", handle: null, confidence: 0.9, matchedCaptionCount: 3 },
+    ];
+    expect(buildSpeakerLog(utterances, matches)).toEqual([
+      { timestampSec: 10, speaker: "Hurric4n3Ike", captionText: "yo whats good" },
+      { timestampSec: 20, speaker: "Dutchess", captionText: "this beat go hard" },
+      { timestampSec: 30, speaker: "speaker_9", captionText: "unresolved voice here" },
+    ]);
+  });
+
+  it("keeps the anonymous label when confidence is below the threshold", () => {
+    const matches: SpeakerMatch[] = [
+      { speaker: "speaker_0", name: "Hurric4n3Ike", handle: "hurric4n3ike", confidence: 0.4, matchedCaptionCount: 2 },
+    ];
+    const result = buildSpeakerLog(utterances, matches);
+    expect(result[0]).toEqual({ timestampSec: 10, speaker: "speaker_0", captionText: "yo whats good" });
+  });
+
+  it("respects a custom minConfidence", () => {
+    const matches: SpeakerMatch[] = [
+      { speaker: "speaker_0", name: "Hurric4n3Ike", handle: "hurric4n3ike", confidence: 0.4, matchedCaptionCount: 2 },
+    ];
+    const result = buildSpeakerLog(utterances, matches, { minConfidence: 0.3 });
+    expect(result[0].speaker).toBe("Hurric4n3Ike");
+  });
+
+  it("returns an empty array for no utterances", () => {
+    expect(buildSpeakerLog([], [])).toEqual([]);
   });
 });

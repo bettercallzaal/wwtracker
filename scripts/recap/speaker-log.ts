@@ -9,6 +9,8 @@
  * module is the automatable part: turning what a human captured into data.
  */
 
+import type { SpeakerLogEntry } from "./types";
+
 export interface CaptionEvent {
   timestampSec: number;
   name: string;
@@ -162,4 +164,40 @@ export function resolveSpeakerNames(
   }
 
   return results.sort((a, b) => a.speaker.localeCompare(b.speaker));
+}
+
+export interface BuildSpeakerLogOptions {
+  /** Minimum SpeakerMatch.confidence to trust the resolved name. Below this, the
+   * speaker's anonymous diarization label is kept instead of guessing. Default 0.5. */
+  minConfidence?: number;
+}
+
+/**
+ * Converts diarized utterances into the SpeakerLogEntry[] shape the recap
+ * formatter consumes, substituting each speaker's resolved real name (from
+ * resolveSpeakerNames) wherever confidence clears the threshold. Utterances
+ * for a speaker with no resolved match, or a match too low-confidence to
+ * trust, keep their original anonymous label (e.g. "speaker_3") rather than
+ * a guessed name - an unattributed quote beats a wrongly-attributed one.
+ */
+export function buildSpeakerLog(
+  utterances: DiarizedUtterance[],
+  matches: SpeakerMatch[],
+  opts: BuildSpeakerLogOptions = {},
+): SpeakerLogEntry[] {
+  const minConfidence = opts.minConfidence ?? 0.5;
+
+  const trusted = new Map<string, SpeakerMatch>();
+  for (const match of matches) {
+    if (match.confidence >= minConfidence) trusted.set(match.speaker, match);
+  }
+
+  return utterances.map((utt) => {
+    const match = trusted.get(utt.speaker);
+    return {
+      timestampSec: utt.startSec,
+      speaker: match ? match.name : utt.speaker,
+      captionText: utt.text,
+    };
+  });
 }
