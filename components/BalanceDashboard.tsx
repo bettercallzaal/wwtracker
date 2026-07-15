@@ -16,13 +16,7 @@ import {
 import { sampleBalances } from "@/lib/sampleData";
 import { usd } from "@/lib/price";
 import { C, metaLabel } from "@/lib/theme";
-
-// ---------------------------------------------------------------------------
-// Config
-// ---------------------------------------------------------------------------
-
-/** Operating floor: founders skim the excess above this back to ~3.5 SOL. */
-const FLOOR = 3.5;
+import { FLOOR_SOL as FLOOR } from "@/lib/config";
 
 interface BalanceRow {
   block_date: string;
