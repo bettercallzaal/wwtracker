@@ -4,6 +4,7 @@ import {
   textSimilarity,
   resolveSpeakerNames,
   buildSpeakerLog,
+  parseCaptionsFile,
   type CaptionEvent,
   type DiarizedUtterance,
   type SpeakerMatch,
@@ -198,5 +199,39 @@ describe("buildSpeakerLog", () => {
 
   it("returns an empty array for no utterances", () => {
     expect(buildSpeakerLog([], [])).toEqual([]);
+  });
+});
+
+describe("parseCaptionsFile", () => {
+  it("parses multiple timestamped lines", () => {
+    const content = [
+      "12.5 Hurric4n3Ike @hurric4n3ike: yo whats good",
+      "40 Dutchess: this beat go hard",
+    ].join("\n");
+    expect(parseCaptionsFile(content)).toEqual([
+      { timestampSec: 12.5, name: "Hurric4n3Ike", handle: "hurric4n3ike", text: "yo whats good" },
+      { timestampSec: 40, name: "Dutchess", handle: null, text: "this beat go hard" },
+    ]);
+  });
+
+  it("skips blank lines and lines without a leading numeric timestamp", () => {
+    const content = [
+      "12.5 Hurric4n3Ike @hurric4n3ike: yo whats good",
+      "",
+      "   ",
+      "not a timestamp line",
+    ].join("\n");
+    expect(parseCaptionsFile(content)).toEqual([
+      { timestampSec: 12.5, name: "Hurric4n3Ike", handle: "hurric4n3ike", text: "yo whats good" },
+    ]);
+  });
+
+  it("skips a line whose remainder doesn't parse as a caption", () => {
+    const content = "5 just noise with no colon separator";
+    expect(parseCaptionsFile(content)).toEqual([]);
+  });
+
+  it("returns an empty array for empty input", () => {
+    expect(parseCaptionsFile("")).toEqual([]);
   });
 });
