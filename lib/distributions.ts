@@ -1,7 +1,8 @@
 // WaveWarZ profit distribution configuration
 // Treasury runs to a 3.5 SOL operating floor; excess is distributed then returned to floor
 
-export const FLOOR_SOL = 3.5;
+import { FLOOR_SOL } from "./config";
+export { FLOOR_SOL };
 
 export interface Recipient {
   name: string;
