@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { BATTLE_STATS as S } from "@/lib/battles";
+import { toCsv, downloadCsv } from "@/lib/csv";
 
 interface Battle {
   id: string;
@@ -19,26 +20,10 @@ interface Battle {
 const fmt = (n: number, dp = 0) => n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
 type Filter = "ALL" | "QUICK" | "MAIN" | "COMMUNITY";
 
-function battlesCsv(rows: Battle[]): string {
-  const esc = (v: string | number) => {
-    const s = String(v ?? "");
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  const head = ["id", "type", "date", "a", "b", "winner", "margin", "vol"];
-  const lines = rows.map((b) =>
-    [b.id, b.type, b.date, b.a, b.b, b.winner, b.margin ?? "", b.vol].map(esc).join(",")
-  );
-  return [head.join(","), ...lines].join("\n");
-}
-
 function downloadBattlesCsv(rows: Battle[]) {
-  const blob = new Blob([battlesCsv(rows)], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "wavewarz-battles.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  const head = ["id", "type", "date", "a", "b", "winner", "margin", "vol"];
+  const lines = rows.map((b) => [b.id, b.type, b.date, b.a, b.b, b.winner, b.margin ?? "", b.vol]);
+  downloadCsv("wavewarz-battles.csv", toCsv(head, lines));
 }
 
 export default function Battles() {
