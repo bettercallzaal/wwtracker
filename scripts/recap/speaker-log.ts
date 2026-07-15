@@ -201,3 +201,27 @@ export function buildSpeakerLog(
     };
   });
 }
+
+/**
+ * Parses a manually-captured caption log file: one caption per line, each
+ * prefixed with the timestamp (in seconds) it appeared at, e.g.
+ *   12.5 Hurric4n3Ike @hurric4n3ike: yo whats good everybody
+ *   40 Dutchess: this beat go hard
+ * Blank lines and lines that don't start with a numeric timestamp are
+ * skipped, as are lines whose remainder doesn't parse (see parseCaptionLine).
+ */
+export function parseCaptionsFile(content: string): CaptionEvent[] {
+  const events: CaptionEvent[] = [];
+  for (const rawLine of content.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    const match = line.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+    if (!match) continue;
+    const [, timestampStr, rest] = match;
+
+    const event = parseCaptionLine(rest, Number(timestampStr));
+    if (event) events.push(event);
+  }
+  return events;
+}
