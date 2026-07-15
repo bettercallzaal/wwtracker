@@ -213,6 +213,38 @@ invented. Full design/rationale:
 `docs/superpowers/specs/2026-07-14-recap-pipeline-design.md`; command
 reference in the top-level `README.md`'s "Recaps" section.
 
+### Phase B: X Spaces speaker log
+
+`scripts/recap/speaker-log.ts` turns a diarized show transcript (speaker_0,
+speaker_1... anonymous labels, e.g. from Deepgram) plus a manually-captured
+caption log ("Name @handle: text" lines noted with timestamps while watching
+the live Space) into the `SpeakerLogEntry[]` shape `buildShowRecap` already
+consumes, with real names substituted for the anonymous labels:
+
+- `parseCaptionLine(raw, timestampSec)` - parses one caption line into a
+  `CaptionEvent`.
+- `textSimilarity(a, b)` - Jaccard overlap of non-stopword tokens; the match
+  primitive (word-order and cross-source tokenization drift insensitive).
+- `resolveSpeakerNames(utterances, captions, opts?)` - matches each utterance
+  to its best-overlapping caption within a time window (default 3s slack),
+  then majority-votes per speaker so one bad match can't flip an otherwise
+  well-identified speaker. Speakers with no match above the similarity
+  threshold are simply omitted.
+- `buildSpeakerLog(utterances, matches, opts?)` - substitutes resolved names
+  only where `confidence` clears the threshold (default 0.5); otherwise keeps
+  the original anonymous label. An unattributed quote beats a wrongly
+  attributed one.
+
+This is the automatable core. What still isn't (per
+`~/.claude/skills/identifying-speakers-in-recordings`, confirmed by direct
+testing): X's Spaces seek slider resists all programmatic seeking (click,
+drag, keyboard, synthetic pointer events all fail), so producing the caption
+log itself is still a human watching the recording and noting `Name @handle:
+text` + timestamp as it happens - there's no code path yet that drives the
+browser through a full Space unattended. There's also no CLI wrapper yet
+tying diarization output + a caption-log file into one `npm run` command;
+today the three functions above are called directly.
+
 ## 8. Environment, deploy, security
 
 - Env (`.env.local`, gitignored; also set in Vercel Production): `DUNE_API_KEY`
