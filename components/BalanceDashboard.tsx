@@ -53,7 +53,7 @@ function useReducedMotion(): boolean {
 // Aggregation: collapse daily rows to weekly closing balance (last day of week).
 // ---------------------------------------------------------------------------
 
-function toWeekly(rows: BalanceRow[]): BalanceRow[] {
+export function toWeekly(rows: BalanceRow[]): BalanceRow[] {
   const byWeek = new Map<string, BalanceRow>();
   for (const r of rows) {
     const d = new Date(`${r.block_date}T00:00:00Z`);
