@@ -29,9 +29,9 @@ Programming & tournaments (verified, wavewarz.info): Quick Battles weeknights
 ~8:30 PM EST (30-second final trading window); Community AMAs Mon-Fri ~11 AM EST;
 on X Spaces + YouTube. Two brackets: a 16-artist single-elimination Artist
 Tournament (instant SOL payouts per round) and an AI Artist Tournament
-(AI-generated tracks, community-voted). All-time battle types: **886 quick
-battles + 152 main-event battles across 48 tournaments** (vs 1,127 on-chain
-initializeBattle - different definitions). Verified artist: XTinct (Alejandro
+(AI-generated tracks, community-voted). All-time battle types: **1,042 quick
+battles + 162 main-event battles across 50 tournaments** (vs 1,127+ on-chain
+initializeBattle - different definitions). Snapshot 2026-07-16. Verified artist: XTinct (Alejandro
 Estrella). NOTE: dopestilo/"No Regrets", Ramone/"Stupid MFs", Visionz vs Rome
 were NOT verifiable - left out of the app.
 
@@ -44,9 +44,9 @@ were NOT verifiable - left out of the app.
 - **candy / CandyToyBox (Samantha Kinney)** - design, promo, marketing; built the
   reference analytics apps.
 
-## 3. Traction (reported, ~Jun 2026)
+## 3. Traction (reported, Jul 2026)
 
-- ~483.88 SOL total volume (~$32.5k), ~1,073 battles, ~8.65 SOL artist payouts.
+- ~521.74 SOL total volume, 1,240 battles (1,042 quick + 162 main-event + 36 community), ~9.05 SOL artist payouts.
 - On-chain (Dune, this project): program active since **2025-08-01**; see section 6.
 
 ---
