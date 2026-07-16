@@ -32,10 +32,27 @@ GET https://wavewarz.info/api/public/stats
     "last7dSol": 11.93         // rolling 7 d volume
   },
 
-  // null when no battle is live; object when a battle is in progress
+  // null when no battle is live; non-null object during an active trading window.
+  // Live detection = pure timer math (created_at + battle_duration > now),
+  // NOT winner_decided/status flags (those can be stale post-settlement).
   "liveBattle": null | {
-    // shape confirmed when a battle is live — fields TBD by Hurricane
-    // safe guard: always null-check before rendering
+    "battleId": 1784123456,       // Supabase battle_id (integer)
+    "type": "quick",              // "quick" | "main" | "community"
+    "artist1": {
+      "name": "GodclouD",         // display name from wavewarz.com
+      "wallet": "4xK9...",        // Solana wallet (artist payout destination)
+      "poolSol": 1.2345,          // current SOL pool size (4 dp)
+      "volumeSol": 2.3456         // trading volume so far (4 dp)
+    },
+    "artist2": {
+      "name": "Kata7yst",
+      "wallet": "7zR2...",
+      "poolSol": 0.8765,
+      "volumeSol": 1.7654
+    },
+    "startedAt": "2026-07-17T00:31:00.000Z",   // ISO — battle opened
+    "endsAt":    "2026-07-17T00:51:00.000Z",   // ISO — computed from startedAt + battle_duration
+    "url": "https://wavewarz.info/battles/1784123456"
   },
 
   "artistPayouts": {
@@ -72,7 +89,7 @@ GET https://wavewarz.info/api/public/stats
 |---|---|---|
 | `updatedAt` | server | Use this to drive a "last updated X ago" freshness badge |
 | `solPriceUsd` | live oracle | All `*Usd` values are derived from this — don't use a separate oracle |
-| `liveBattle` | live chain | `null` most of the time; non-null only during an active trading window (~8:30 PM EST weeknights) |
+| `liveBattle` | live chain | `null` most of the time; non-null only during an active battle window. Live = `startedAt + battle_duration > now` (timer math, not status flag). Fields: `battleId`, `type`, `artist1/2.{name,wallet,poolSol,volumeSol}`, `startedAt`, `endsAt`, `url`. |
 | `volume.totalSol` | cumulative | All-time, not settled-only; includes open + settled battles |
 | `traderClaims.withdrawalCount` | claimShares count | Each withdrawal is one on-chain tx; one trader may have many |
 | `battles.total` | all types | = mainBattles + quickBattles + communityBattles (mainEvents is a grouping, not additive) |
@@ -89,11 +106,26 @@ Drop this into your front-page JS/TS. It handles caching, SOL price, the live-ba
 
 const STATS_URL = "https://wavewarz.info/api/public/stats";
 
+interface LiveBattleArtist {
+  name: string | null;
+  wallet: string | null;
+  poolSol: number;    // current SOL pool (4 dp)
+  volumeSol: number;  // trading volume so far (4 dp)
+}
+interface LiveBattle {
+  battleId: number;
+  type: "quick" | "main" | "community";
+  artist1: LiveBattleArtist;
+  artist2: LiveBattleArtist;
+  startedAt: string;  // ISO — battle opened
+  endsAt: string;     // ISO — startedAt + battle_duration
+  url: string;        // https://wavewarz.info/battles/{battleId}
+}
 interface WaveWarZStats {
   updatedAt: string;
   solPriceUsd: number;
   volume: { totalSol: number; totalUsd: number; last24hSol: number; last7dSol: number };
-  liveBattle: Record<string, unknown> | null;
+  liveBattle: LiveBattle | null;
   artistPayouts: { totalSol: number; totalUsd: number };
   traderClaims: { totalSol: number; totalUsd: number; withdrawalCount: number };
   platformRevenue: { totalSol: number; totalUsd: number };
@@ -128,13 +160,20 @@ export function renderStatsTicker(stats: WaveWarZStats) {
 }
 
 // --- Live-battle pin ---
-// Renders a "LIVE NOW" banner when a battle is in progress.
+// Renders structured data for a "LIVE NOW" banner (null = nothing to show).
 // liveBattle is null outside trading windows; non-null during ~8:30 PM EST battles.
+// Live detection is pure timer math (startedAt + duration > now) — not status flags.
 export function renderLiveBattlePin(liveBattle: WaveWarZStats["liveBattle"]) {
-  if (!liveBattle) return null;   // nothing to show
-  // TODO: destructure liveBattle fields once Hurricane confirms the shape
-  // e.g. const { artistA, artistB, endsAt } = liveBattle as { artistA: string; artistB: string; endsAt: string }
-  return liveBattle;
+  if (!liveBattle) return null;
+  const { artist1, artist2, type, endsAt, url } = liveBattle;
+  const secsLeft = Math.max(0, Math.round((new Date(endsAt).getTime() - Date.now()) / 1000));
+  return {
+    label: `⚡ LIVE ${type.toUpperCase()} BATTLE`,
+    matchup: `${artist1.name ?? "?"} vs ${artist2.name ?? "?"}`,
+    poolsDisplay: `${artist1.poolSol.toFixed(2)} ◎ vs ${artist2.poolSol.toFixed(2)} ◎`,
+    secsLeft,
+    url,
+  };
 }
 
 // --- Usage example (React / Next.js) ---
@@ -144,7 +183,7 @@ import { fetchStats, renderStatsTicker, renderLiveBattlePin } from "./wavewarSta
 
 export function HeroStats() {
   const [ticker, setTicker] = useState<ReturnType<typeof renderStatsTicker> | null>(null);
-  const [liveBattle, setLiveBattle] = useState<Record<string, unknown> | null>(null);
+  const [liveBattle, setLiveBattle] = useState<ReturnType<typeof renderLiveBattlePin>>(null);
 
   useEffect(() => {
     async function load() {
