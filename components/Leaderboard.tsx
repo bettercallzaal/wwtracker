@@ -4,12 +4,27 @@ import { C, metaLabel } from "@/lib/theme";
 import { LEADERBOARD } from "@/lib/leaderboard";
 import { toCsv, downloadCsv } from "@/lib/csv";
 
-// Artists with a confirmed Audius profile -> link the row to Audius.
-const AUDIUS = new Set([
-  "GodclouD", "BennyJ504WaveWarz", "RoCkY2GriMeY", "shawnsporter", "Stormbourne",
-  "geekmyth", "XTincT_official", "dopestilo", "PKMNCTO", "luiwrites",
-  "AporkALYPSE78", "CannonJones973", "TuckNuisance", "hoodrats", "Hurric4n3Ike",
-]);
+// Maps leaderboard X/Twitter handle -> Audius handle for confirmed artists.
+// Leaderboard uses X handles; Audius handles often differ. 15 confirmed pairs.
+const AUDIUS_MAP: Record<string, string> = {
+  // Exact matches (X handle = Audius handle)
+  AporkALYPSE78:  "AporkALYPSE78",
+  MetaVerseSlim:  "MetaVerseSlim",
+  Hurric4n3Ike:   "Hurric4n3Ike",
+  NFTWonderfull:  "NFTWonderfull",
+  DCoopOfficial:  "DCoopOfficial",
+  ItsMoneyMiller: "ItsMoneyMiller",
+  PKMNCTO:        "PKMNCTO",
+  // Different handles across platforms (confirmed per lib/artists.ts)
+  cannonjones973:    "CannonJones973",
+  kata7yst:          "Kata7yst",
+  bennyj504:         "BennyJ504",
+  "RoCkY2GriMeY__":  "RoCkY2GriMeY",
+  therealgodcloud:   "GodclouD",
+  GeEkMyTh_ETH:      "geekmyth",
+  XTincT_io:         "XTincT_official",
+  Stormiunleashed:   "Stormbourne",
+};
 
 const fmt = (n: number, dp = 2) => n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
 
@@ -76,14 +91,14 @@ export default function Leaderboard() {
           </thead>
           <tbody>
             {LEADERBOARD.map((a) => {
-              const onAudius = AUDIUS.has(a.handle);
-              const href = onAudius ? `https://audius.co/${a.handle}` : `https://x.com/${a.handle}`;
+              const audiusHandle = AUDIUS_MAP[a.handle];
+              const href = audiusHandle ? `https://audius.co/${audiusHandle}` : `https://x.com/${a.handle}`;
               return (
                 <tr key={`${a.rank}-${a.handle}`} style={{ borderTop: `1px solid ${C.grid}` }}>
                   <td style={td}>{a.rank}</td>
                   <td style={td}>
                     <a href={href} target="_blank" rel="noreferrer" style={{ color: C.text, textDecoration: "none" }}>
-                      {a.name} <span style={{ color: C.dim }}>@{a.handle}</span>{onAudius ? " ♪" : ""}
+                      {a.name} <span style={{ color: C.dim }}>@{a.handle}</span>{audiusHandle ? " ♪" : ""}
                     </a>
                   </td>
                   <td style={{ ...td, textAlign: "right", color: a.win >= 50 ? C.good : C.dim }}>{a.rec}</td>
