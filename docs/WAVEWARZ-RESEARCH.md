@@ -15,8 +15,10 @@ WaveWarZ platform token. Each battle spins up two ephemeral per-artist SPL token
 mints (Artist A / Artist B) on a bonding curve; traders buy the side they think
 will win and claim winnings after settlement.
 
-- Winner = best 2 of 3: **Poll** (community vote) + **Charts** (SOL volume) +
-  **DJ Wavy** (AI judge).
+- **Winner (V2, since Mar 10, 2026):** best 2 of 3: **Poll** (community vote) +
+  **Charts** (SOL volume) + **DJ Wavy** (AI judge). Prior to March 10, 2026:
+  **V1 = Charts Only** (larger SOL pool wins outright). Feed data: 445 V1
+  battles (avg 0.52 SOL/battle) vs 644 V2 battles (avg 0.22 SOL/battle).
 - Formats: **Quick Battles** (nightly) and **Main Events** (catalog vs catalog,
   tournament brackets).
 - Trader winnings are **claimed manually**; artist payouts settle automatically.
@@ -44,9 +46,11 @@ were NOT verifiable - left out of the app.
 - **candy / CandyToyBox (Samantha Kinney)** - design, promo, marketing; built the
   reference analytics apps.
 
-## 3. Traction (reported, ~Jun 2026)
+## 3. Traction (live API, 2026-07-16)
 
-- ~483.88 SOL total volume (~$32.5k), ~1,073 battles, ~8.65 SOL artist payouts.
+- **521.74 SOL total volume**, 1,240 battles (50 main events, 1,042 quick, 36 community),
+  9.05 SOL artist payouts, 17.37 SOL platform revenue.
+- Source: `GET https://wavewarz.info/api/public/stats` (no auth, 60s cache).
 - On-chain (Dune, this project): program active since **2025-08-01**; see section 6.
 
 ---
