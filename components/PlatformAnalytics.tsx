@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
+import { BATTLE_STATS as S } from "@/lib/battles";
 import { TREASURY_WALLET as TREASURY, TRACKED_TRADER_WALLET as ME } from "@/lib/config";
 
 const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
@@ -433,9 +434,9 @@ export default function PlatformAnalytics() {
 
       <Panel label="HOW THESE COMPARE TO OTHER TABS">
         <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 13 }}>
-          <li><b>Battles</b>: {fmt(WW.program.battlesCreated)} here = on-chain <i>initializeBattle</i> calls; the Battles tab&apos;s 958 is the site&apos;s battle count (it groups multi-song main events and excludes test battles).</li>
+          <li><b>Battles</b>: {fmt(WW.program.battlesCreated)} here = on-chain <i>initializeBattle</i> calls; the Battles tab&apos;s {fmt(S.totalShown)} is the site&apos;s battle count (it groups multi-song main events and excludes test battles).</li>
           <li><b>Traders</b>: {fmt(WW.program.uniqueTraders)} here = unique <i>buyShares</i> signers on-chain; the Traders tab shows the site&apos;s top 101 leaderboard.</li>
-          <li><b>Volume</b>: {fmt(WW.volume.total, 0)} ◎ here is buy-side only (SOL committed on buys); the site reports ~484 ◎ counting both buy and sell sides.</li>
+          <li><b>Volume</b>: {fmt(WW.volume.total, 0)} ◎ here is buy-side only (SOL committed on buys); the site reports ~{fmt(S.totalVolumeSol, 0)} ◎ counting both buy and sell sides.</li>
         </ul>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>Different measures, all from-chain - not contradictions.</p>
       </Panel>

@@ -2,6 +2,7 @@
 
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
+import { BATTLE_STATS as S } from "@/lib/battles";
 import { usd } from "@/lib/price";
 import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY } from "@/lib/config";
 
@@ -43,8 +44,8 @@ export default function AboutWaveWarZ() {
         </Grid>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
           since {ps.firstDay} - snapshot {WW.generatedAt}. On-chain vs the
-          wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~1,073);
-          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ buy volume (app 483.88 ◎, both sides).` : ""}
+          wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~{fmt(S.totalShown)});
+          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ buy volume (app ${fmt(S.totalVolumeSol, 2)} ◎, both sides).` : ""}
         </p>
       </Section>
 
