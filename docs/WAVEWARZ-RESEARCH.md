@@ -237,32 +237,41 @@ app pulls live followers / tracks / play counts / artwork from
 `/v1/users/{id}`, `/v1/users/{id}/tracks`, `/v1/tracks?id=...`,
 `/v1/tracks/search`, `/v1/users/search` with `app_name=wwtracker`).
 
-Roster: **33 artists** confirmed with Audius IDs in `lib/artists.ts`
-(2026-07-16). Sourced from the official wavewarz.info Audius artist links and
-manually verified. The Music tab (`components/Music.tsx`) pulls all 33 artists
-live; the Artists tab shows them with followers, tracks, and play counts.
+Verified artist -> Audius id (handle + catalog match):
+- GodclouD -> `Vg1rWzQ`
+- BennyJ504WaveWarz -> `RGyPJRg`
+- RoCkY2GriMeY -> `aNYwwmo`
+- _0xQuan -> no confident match (excluded)
 
-Key confirmed artist -> Audius id mappings (see full list in `lib/artists.ts`):
-- GodclouD -> `Vg1rWzQ` | shawnsporter -> `E7gJo` | luiwrites -> `BJzwPMj`
-- _0xQuan -> `7O66BZ7` | Stormbourne -> `Wgq5qO0` | geekmyth -> `zZR8pvZ`
-- PKMNCTO -> `ZOOMN24` | Kata7yst -> `G2wYPPx` | XTincT_official -> `8043XGp`
-- Hurric4n3Ike (founder) -> `lzq2G` (48 tracks)
+Verified charting-song -> Audius track:
+- "Fuck yo feelingZ" -> `0X6BQ99` (/GodclouD/fuck-yo-feelingz)
+- "What the: Unreleased" -> `dY4Q23y` (/BennyJ504WaveWarz/what-the-unreleased)
+- "EAZE OF MIND" -> `mE6RMV5` (/GodclouD/eaze-of-mind)
+- "High Frequency with PKMN" -> `mWpBmxQ` (/RoCkY2GriMeY/high-frequency-with-pkmn)
+- "ACCELERATE" -> no confident match (excluded)
 
-Charting-song -> Audius track: **31 of 37 songs** now have verified Audius
-track IDs in `lib/songs.ts` (updated 2026-07-16 via API lookup). Source of
-truth is the `audiusTrack` field in that file. 6 songs have no Audius publish:
-Trippy (shawnsporter), Bad Decisions (Stormbourne), ACCELERATE (_0xQuan),
-I'll Aim Guns At You (RoCkY2GriMeY), Rich Made (luiwrites), I Got It
-(AporkALYPSE78).
-
-How song identity works in the Supabase battles table (from
-`wavewarz-intelligence/src/lib/song-identity.ts`, 2026-07-16): quick battles
-store the **song title** in `artist1_name`/`artist2_name` (hand-entered,
-inconsistent). The stable identity is the `artist1_music_link` Audius URL path
-(`handle/slug`) — unique per track, survives title typos. The intelligence app
-uses `canonicalSongKey(musicLink, title)` to group songs across battles.
+Also confirmed: Hurric4n3Ike (founder, `lzq2G`, 48 tracks), NDA_WaveWarz
+(`oGZ6o3J`). Combined across the 5 confirmed artists (live): ~106 tracks, ~1,666
+plays, ~1,002 favs; genres Hip-Hop/Rap 82, R&B/Soul 20, Latin 2, Rock 2. The
+founder's "...Wavez x Hurric4n3Ike" series tops plays (CreWavez 93). The Music
+tab computes this live; held PKMN/IamThanos/Nessy (RoCkY collaborators, not
+confirmed WaveWarZ battlers).
 
 Rule: never display an Audius match that isn't confirmed by handle+title.
+
+Full roster (2026-07-16): **33 artists** with Audius IDs are in `lib/artists.ts`
+(sourced from wavewarz.info + manual verification). **31 of 37** charting songs
+have `audiusTrack` IDs in `lib/songs.ts` (updated 2026-07-16 via API lookup).
+6 songs have no Audius publish: Trippy (shawnsporter), Bad Decisions
+(Stormbourne), ACCELERATE (_0xQuan), I'll Aim Guns At You (RoCkY2GriMeY),
+Rich Made (luiwrites), I Got It (AporkALYPSE78).
+
+How song identity works in Supabase (from `wavewarz-intelligence/src/lib/
+song-identity.ts`, 2026-07-16): quick battles store the song title in
+`artist1_name`/`artist2_name` (hand-entered, inconsistent). Stable identity =
+`artist1_music_link` Audius URL path (`handle/slug`) — unique per track, survives
+title typos. The intelligence app uses `canonicalSongKey(musicLink, title)` to
+group songs across battles by track permalink rather than title string.
 
 ## 7. Open questions / next
 
