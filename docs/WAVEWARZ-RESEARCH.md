@@ -1,7 +1,7 @@
 # WaveWarZ - Research & On-Chain Analytics
 
 Living research doc for the wwtracker project. Product/qualitative notes plus
-on-chain findings from Dune. Last updated: 2026-06-14.
+on-chain findings from Dune. Last updated: 2026-07-16.
 
 Spelling is always **WaveWarZ** (capital W, capital Z).
 
