@@ -2,6 +2,8 @@
 
 One line per hourly run: what was tried, and whether it worked or got stuck.
 
+2026-07-16 18:10 UTC - Follow-up resolution run. WebFetch unblocked (verified via api.audius.co + wavewarz.info). Resolved: Kata7yst confirmed on Audius (ID 847467862, bio "WaveWarZ", battle track "Limit Breaker Ft Cannon Jones" `3AkrXjM`, fought PKMNCTO today). Charity battle tweet confirmed as real (still X-auth-gated, snippet sufficient). New unverified lead: PKMNCTO. Updated WAVEWARZ-RESEARCH.md §6c + §1 + Sources. See 2026-07-16-community-followup.md.
+
 2026-07-15 09:05 UTC - Tried community events/charity-initiatives/Discord-Telegram angle via WebSearch+WebFetch - stuck-because-WebFetch returned 403 on every URL this run (including unrelated control domains like en.wikipedia.org), so no page could be fetched/verified; only WebSearch snippets were available. Wrote up snippet-only leads under Unverified and flagged the tooling outage as the real blocker for future runs.
 
 # WaveWarZ community research - run log

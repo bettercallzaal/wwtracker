@@ -23,7 +23,13 @@ will win and claim winnings after settlement.
 - Live programming: streams Mon-Fri ~8:30 PM EST on X Spaces / YouTube.
 
 Part of the **BCZ -> ZAO -> WaveWarZ** ecosystem (WaveWarZ is the music-battle
-application layer of The ZAO).
+application layer of The ZAO). **The ZAO** is a 188-member decentralized music
+community on Base, governed by ORDAO (on-chain reputation DAO with Nouns Builder
+Governor + Snapshot + Supabase community proposals). Community hubs: thezao.com,
+thezao.xyz (action tracker), Farcaster-first with XMTP messaging. A sibling repo
+`bettercallzaal/ZAOOS` runs an independent WaveWarZ integration (43-artist roster,
+nightly syncs, Farcaster share). No standalone WaveWarZ Discord or Telegram
+confirmed — community coordination flows through ZAO's infrastructure.
 
 Programming & tournaments (verified, wavewarz.info): Quick Battles weeknights
 ~8:30 PM EST (30-second final trading window); Community AMAs Mon-Fri ~11 AM EST;
@@ -203,6 +209,7 @@ Verified artist -> Audius id (handle + catalog match):
 - GodclouD -> `Vg1rWzQ`
 - BennyJ504WaveWarz -> `RGyPJRg`
 - RoCkY2GriMeY -> `aNYwwmo`
+- Kata7yst -> `847467862` (bio: "WaveWarZ"; verified 2026-07-16)
 - _0xQuan -> no confident match (excluded)
 
 Verified charting-song -> Audius track:
@@ -210,14 +217,14 @@ Verified charting-song -> Audius track:
 - "What the: Unreleased" -> `dY4Q23y` (/BennyJ504WaveWarz/what-the-unreleased)
 - "EAZE OF MIND" -> `mE6RMV5` (/GodclouD/eaze-of-mind)
 - "High Frequency with PKMN" -> `mWpBmxQ` (/RoCkY2GriMeY/high-frequency-with-pkmn)
+- "Limit Breaker Ft Cannon Jones" -> `3AkrXjM` (/kata7yst; 58 plays; battle track 2026-07-16)
 - "ACCELERATE" -> no confident match (excluded)
 
 Also confirmed: Hurric4n3Ike (founder, `lzq2G`, 48 tracks), NDA_WaveWarz
-(`oGZ6o3J`). Combined across the 5 confirmed artists (live): ~106 tracks, ~1,666
-plays, ~1,002 favs; genres Hip-Hop/Rap 82, R&B/Soul 20, Latin 2, Rock 2. The
-founder's "...Wavez x Hurric4n3Ike" series tops plays (CreWavez 93). The Music
-tab computes this live; held PKMN/IamThanos/Nessy (RoCkY collaborators, not
-confirmed WaveWarZ battlers).
+(`oGZ6o3J`). Combined across the 6 confirmed artists (live): ~127+ tracks;
+Kata7yst 21 tracks / 31 followers. The Music tab computes this live; held
+PKMN/IamThanos/Nessy (RoCkY collaborators, not confirmed WaveWarZ battlers).
+PKMNCTO (new lead from 2026-07-16 battles) — Audius match pending.
 
 Rule: never display an Audius match that isn't confirmed by handle+title.
 
@@ -233,4 +240,6 @@ Rule: never display an Audius match that isn't confirmed by handle+title.
 - wavewarz.com, wavewarz.info, x.com/WaveWarZ, youtube.com/@WaveWarZ
 - Program: github.com/hurric4n3ike/wavewagerz (IDL); apps:
   github.com/CandyToyBox/wavewarz-intelligence, /analytics-wave-warz
+- The ZAO: thezao.com, thezao.xyz, github.com/bettercallzaal/ZAOOS
 - Dune (this project), Solscan.
+- Community research docs: docs/research/wavewarz/ (2026-07-15 run + 2026-07-16 follow-up)
