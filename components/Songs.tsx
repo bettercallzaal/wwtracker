@@ -120,8 +120,10 @@ export default function Songs() {
       </div>
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        Full 37-song chart from wavewarz.info (snapshot 2026-06-15). V2 judging:
-        Poll + Charts (SOL) + DJ Wavy, 2 of 3. Play counts live from Audius.
+        Full 37-song chart from wavewarz.info (rankings snapshot 2026-06-15;
+        Audius track IDs updated 2026-07-16 — 31/37 songs play inline). V2
+        judging: Poll + Charts (SOL) + DJ Wavy, 2 of 3. Play counts live from
+        Audius.
       </p>
     </div>
   );
