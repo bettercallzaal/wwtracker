@@ -1,3 +1,5 @@
+2026-07-15 06:05 UTC - researched community-run initiatives angle (WaveWarZ x PolyRaiders charity battle, Dec 2025; checked for Discord/Telegram/Reddit/Farcaster presence; noted "Kata7yst" artist-interview lead) - worked, but WebFetch was blocked (403) for every URL this run including control URLs, so findings are WebSearch-snippet-sourced rather than direct-fetch-verified; flagged in the doc. Remaining open community angles for future runs: active/notable community members roster, sentiment/complaints/praise, artist roster growth over time, AMA/Spaces content specifics, fan content/community-run content beyond the one charity battle found.
+
 # WaveWarZ community research log
 
 One line per hourly run: what was tried, and whether it worked or got stuck.
