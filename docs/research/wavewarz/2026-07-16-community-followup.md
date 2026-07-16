@@ -66,12 +66,29 @@ The verified ZAO connection documented in `2026-07-15-zao-community-link.md` sta
 
 ---
 
+### PKMNCTO — confirmed WaveWarZ artist (Audius verified, 2026-07-16)
+
+**Status: VERIFIED** (direct Audius API fetch, 2026-07-16)
+
+- **Audius handle:** `pkmncto` — **Audius ID:** `340717612`
+- **Name:** PKMN CTO
+- **Bio:** "PKMN (Play • Keep • Master • Network) • Dev builds • Tess is the Voice • Together we're connecting music, technology, and community through emotional storytelling, digital innovation, and immersive world-building"
+- **Track count:** 17 — **Followers:** 16
+- **Battle track (confirmed via wavewarz.info feed):** "Dead Already" — battled Kata7yst's "Limit Breaker Ft Cannon Jones" on 2026-07-16; won (0.028 SOL volume)
+- **Audius track ID for "Dead Already":** not yet searched; handle+battle-match is enough to confirm roster membership per the existing rule
+
+Note: "PKMN" in the bio and name is the same artist referenced in RoCkY2GriMeY's already-verified track "High Frequency with PKMN" (`mWpBmxQ`) — PKMNCTO is the full entity behind that collaboration.
+
+**Action:** Add `pkmncto` → `340717612` to `docs/WAVEWARZ-RESEARCH.md` §6c in a follow-on PR (chore/refresh-snapshot-2026-07-16 or next).
+
+---
+
 ## Items still unverified
 
 | Item | Why still unverified | Next action |
 |---|---|---|
-| PKMNCTO Audius match | Not searched this run | Search Audius `/v1/users/search?query=PKMNCTO` |
-| Kata7yst win/loss history beyond today's battle | Not fully fetched | `wavewarz.info/artist` page didn't load; try `wavewarz.info/battles?search=kata7yst` with pagination |
+| "Dead Already" Audius track ID | Not searched | `/v1/tracks/search?query=Dead+Already&app_name=wwtracker` filtered by pkmncto |
+| Kata7yst win/loss history beyond today's battle | One battle in feed | `wavewarz.info/battles?search=kata7yst` pagination when more data accumulates |
 | Charity battle exact SOL amount per side | X requires auth | Accept $270+ / ~0.14 SOL as search-verified enough for display; exact breakdown is secondary |
 | Let's Talk About Web3 (pods.media episodes) | pods.media still 403 | Not blocking anything in the app currently |
 | ZAO-CHELLA (zaofestivals.com) | Not fetched this run | Low priority — no direct wwtracker app implication |
