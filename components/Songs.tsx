@@ -26,7 +26,7 @@ export default function Songs() {
     (async () => {
       try {
         const hosts = await fetch("https://api.audius.co").then((r) => r.json());
-        const host: string = hosts?.data?.[0] || "https://discoveryprovider.audius.co";
+        const host: string = hosts?.data?.[0] || "https://api.audius.co";
         const ids = SONGS.map((s) => s.audiusTrack).filter(Boolean) as string[];
         const res = await fetch(`${host}/v1/tracks?${ids.map((id) => `id=${id}`).join("&")}&app_name=wwtracker`).then((r) => r.json());
         const m: Record<string, number> = {};
