@@ -34,7 +34,7 @@ export default function Artists() {
   const [cards, setCards] = useState<Card[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
-  const [host, setHost] = useState<string>("https://discoveryprovider.audius.co");
+  const [host, setHost] = useState<string>("https://api.audius.co");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [full, setFull] = useState<Record<string, Track[]>>({});
   const [q, setQ] = useState("");
@@ -60,7 +60,7 @@ export default function Artists() {
     (async () => {
       try {
         const hosts = await fetch("https://api.audius.co").then((r) => r.json());
-        const h: string = hosts?.data?.[0] || "https://discoveryprovider.audius.co";
+        const h: string = hosts?.data?.[0] || "https://api.audius.co";
         if (alive) setHost(h);
         const host = h;
         const out = await Promise.all(
