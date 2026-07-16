@@ -50,6 +50,15 @@ Table features across those sections: client-side search/filter (songs, traders,
 artists, battles), sortable columns (traders), and CSV export (leaderboard,
 traders, battles) via the reusable `lib/csv.ts`.
 
+## Streaming Overlay
+
+- **[/overlay.html](/overlay.html)** - lower-third browser-source overlay for
+  Restream / OBS. Shows live WaveWarZ data: 30-day volume, total battles, and
+  today's transaction count. Values refresh automatically from the tracker's own
+  snapshots every 90 seconds. Artist names via `?left=ARTIST1&right=ARTIST2&sub=TAGLINE`
+  query params. Transparent background, reduced-motion safe, optimized for
+  compositing over video.
+
 ## Docs
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - how it's built: data paths, the
