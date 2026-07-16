@@ -7,6 +7,7 @@ import { AUDIUS_HANDLES } from "@/lib/artists";
 
 const heatColor = (h: number) => (h >= 66 ? C.danger : h >= 33 ? C.accent : C.dim);
 const fmt = (n: number) => (n ?? 0).toLocaleString();
+const songsWithAudius = SONGS.filter((s) => s.audiusTrack).length;
 
 export default function Songs() {
   const [plays, setPlays] = useState<Record<string, number>>({});
@@ -47,7 +48,7 @@ export default function Songs() {
           WaveWarZ<span style={{ color: C.dim, fontWeight: 400 }}> / song charts</span>
         </h1>
         <p style={{ margin: "8px 0 0", color: C.text, lineHeight: 1.6, maxWidth: 720 }}>
-          All <b>37 songs</b> on the WaveWarZ quick-battle charts - record, win %,
+          All <b>{SONGS.length} songs</b> on the WaveWarZ quick-battle charts - record, win %,
           SOL volume, and heat. Confirmed songs play inline from Audius.
         </p>
       </header>
@@ -120,8 +121,8 @@ export default function Songs() {
       </div>
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        Full 37-song chart from wavewarz.info (rankings snapshot 2026-06-15;
-        Audius track IDs updated 2026-07-16 — 31/37 songs play inline). V2
+        Full {SONGS.length}-song chart from wavewarz.info (rankings snapshot 2026-06-15;
+        Audius track IDs updated 2026-07-16 — {songsWithAudius}/{SONGS.length} songs play inline). V2
         judging: Poll + Charts (SOL) + DJ Wavy, 2 of 3. Play counts live from
         Audius.
       </p>
