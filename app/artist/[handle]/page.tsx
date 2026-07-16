@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { C, metaLabel } from "@/lib/theme";
-import { AUDIUS_ID_BY_HANDLE } from "@/lib/artists";
+import { AUDIUS_ID_BY_HANDLE, X_TO_AUDIUS_HANDLE, AUDIUS_TO_X_HANDLE } from "@/lib/artists";
 import { songsByArtist } from "@/lib/songs";
 import { LEADERBOARD } from "@/lib/leaderboard";
 
@@ -16,15 +16,31 @@ export default function ArtistPage() {
   const params = useParams<{ handle: string }>();
   const handle = decodeURIComponent(params.handle || "");
 
-  const audiusId = useMemo(() => {
-    const k = Object.keys(AUDIUS_ID_BY_HANDLE).find((h) => h.toLowerCase() === handle.toLowerCase());
-    return k ? AUDIUS_ID_BY_HANDLE[k] : null;
+  // Resolve Audius handle: handle may be an X/Twitter handle or an Audius handle.
+  const audiusHandle = useMemo(() => {
+    const lower = handle.toLowerCase();
+    // Direct Audius handle match
+    const direct = Object.keys(AUDIUS_ID_BY_HANDLE).find((h) => h.toLowerCase() === lower);
+    if (direct) return direct;
+    // X handle → Audius handle
+    const mapped = Object.entries(X_TO_AUDIUS_HANDLE).find(([x]) => x.toLowerCase() === lower);
+    return mapped ? mapped[1] : null;
   }, [handle]);
-  const songs = useMemo(() => {
-    const k = Object.keys(AUDIUS_ID_BY_HANDLE).find((h) => h.toLowerCase() === handle.toLowerCase()) || handle;
-    return songsByArtist(k);
-  }, [handle]);
-  const lb = useMemo(() => LEADERBOARD.find((a) => a.handle.toLowerCase() === handle.toLowerCase()), [handle]);
+
+  const audiusId = audiusHandle ? (AUDIUS_ID_BY_HANDLE[audiusHandle] ?? null) : null;
+
+  // Songs are keyed by Audius handle in lib/songs.ts
+  const songs = useMemo(() => songsByArtist(audiusHandle ?? handle), [handle, audiusHandle]);
+
+  // Leaderboard is keyed by X handle; handle might be an Audius handle (from Songs tab)
+  const lb = useMemo(() => {
+    const lower = handle.toLowerCase();
+    const direct = LEADERBOARD.find((a) => a.handle.toLowerCase() === lower);
+    if (direct) return direct;
+    // handle was an Audius handle — find leaderboard entry via reverse map
+    const xHandle = audiusHandle ? AUDIUS_TO_X_HANDLE[audiusHandle] : undefined;
+    return xHandle ? LEADERBOARD.find((a) => a.handle.toLowerCase() === xHandle.toLowerCase()) ?? null : null;
+  }, [handle, audiusHandle]);
 
   const [user, setUser] = useState<AudiusUser | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -35,7 +51,7 @@ export default function ArtistPage() {
     (async () => {
       try {
         const hosts = await fetch("https://api.audius.co").then((r) => r.json());
-        const host = hosts?.data?.[0] || "https://discoveryprovider.audius.co";
+        const host: string = hosts?.data?.[0] || "https://api.audius.co";
         const [u, t] = await Promise.all([
           fetch(`${host}/v1/users/${audiusId}?app_name=wwtracker`).then((r) => r.json()),
           fetch(`${host}/v1/users/${audiusId}/tracks?app_name=wwtracker&limit=8&sort=plays`).then((r) => r.json()),
