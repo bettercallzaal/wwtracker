@@ -1,7 +1,7 @@
 # WaveWarZ - Research & On-Chain Analytics
 
 Living research doc for the wwtracker project. Product/qualitative notes plus
-on-chain findings from Dune. Last updated: 2026-06-14.
+on-chain findings from Dune. Last updated: 2026-07-16.
 
 Spelling is always **WaveWarZ** (capital W, capital Z).
 
@@ -115,9 +115,47 @@ funds the dev/treasury wallet and its ~3.5 SOL operating floor.
   `api.helius.xyz` host 403s).
 - `getAccountInfo(battlePDA)` -> parse the Battle struct for pools/winner.
 - Volume from battleVault tx history filtered by buyShares/sellShares.
-- A Supabase Postgres mirror (`battles`, `trades`, `artists`, `leaderboards`)
-  backs the chain reads. Note: volume for battles settled before 2026-04-27 was
-  backfilled and may be off in early snapshots.
+- A Supabase Postgres mirror backs the chain reads. Key tables (from
+  wavewarz-intelligence source, 2026-07-16):
+  - `battles`: per-battle row. Key fields: `battle_id`, `artist1_name` /
+    `artist2_name` (= **song title** in quick battles, not the artist name),
+    `artist1_music_link` / `artist2_music_link` (Audius URL for the song,
+    used for song identity — see §4b), `is_quick_battle`, `is_main_battle`
+    (GENERATED column: NOT quick AND NOT community AND NOT test),
+    `is_community_battle`, `is_test_battle`, `event_subtype`
+    (`"charity"` | `"spotlight"` | `"prediction"` | null),
+    `winner_artist_a` (numeric: 1.0 = A wins, 0.0 = B wins, null = unsettled),
+    `winner_decided` (boolean), `status`, `artist1_pool`, `artist2_pool`,
+    `total_volume_a`, `total_volume_b`, `unique_traders`, `created_at`,
+    `battle_duration`.
+  - `artist_profiles`: `artist_id`, `primary_wallet`, `display_name`,
+    `profile_picture_url`. One row per canonical artist; handles multi-wallet
+    artists.
+  - `artist_wallets`: `artist_id`, `wallet_address`. Maps every wallet address
+    to a canonical artist profile (many-to-one with `artist_profiles`).
+  - `trades`, `leaderboards`: supporting tables; not fully mapped.
+  - Note: volume for battles settled before 2026-04-27 was backfilled and
+    may be off in early snapshots.
+
+### §4b. Supabase battle-type classification
+
+How the intelligence app classifies battles (verified from source):
+
+| Column | Meaning |
+|--------|---------|
+| `is_quick_battle` | Single song-vs-song nightly battle |
+| `is_community_battle` | Community/AMA battle |
+| `is_main_battle` | GENERATED: NOT quick AND NOT community AND NOT test |
+| `is_test_battle` | Internal test; excluded from all leaderboards |
+| `event_subtype` | `charity`, `spotlight`, `prediction`, or null |
+
+The artist leaderboard at wavewarz.info/leaderboards/artists filters out
+`charity`, `spotlight`, and `prediction` subtypes — so those events don't
+affect main-event artist rankings.
+
+Multi-round main events (within-6-hour window) are grouped as a single
+"event" by the intelligence app (`GROUP_WINDOW_MS = 6 * 60 * 60 * 1000`).
+This is why `events` (50) < `multiRound` (162) in the BATTLE_STATS.
 
 ---
 
@@ -199,25 +237,30 @@ app pulls live followers / tracks / play counts / artwork from
 `/v1/users/{id}`, `/v1/users/{id}/tracks`, `/v1/tracks?id=...`,
 `/v1/tracks/search`, `/v1/users/search` with `app_name=wwtracker`).
 
-Verified artist -> Audius id (handle + catalog match):
-- GodclouD -> `Vg1rWzQ`
-- BennyJ504WaveWarz -> `RGyPJRg`
-- RoCkY2GriMeY -> `aNYwwmo`
-- _0xQuan -> no confident match (excluded)
+Roster: **33 artists** confirmed with Audius IDs in `lib/artists.ts`
+(2026-07-16). Sourced from the official wavewarz.info Audius artist links and
+manually verified. The Music tab (`components/Music.tsx`) pulls all 33 artists
+live; the Artists tab shows them with followers, tracks, and play counts.
 
-Verified charting-song -> Audius track:
-- "Fuck yo feelingZ" -> `0X6BQ99` (/GodclouD/fuck-yo-feelingz)
-- "What the: Unreleased" -> `dY4Q23y` (/BennyJ504WaveWarz/what-the-unreleased)
-- "EAZE OF MIND" -> `mE6RMV5` (/GodclouD/eaze-of-mind)
-- "High Frequency with PKMN" -> `mWpBmxQ` (/RoCkY2GriMeY/high-frequency-with-pkmn)
-- "ACCELERATE" -> no confident match (excluded)
+Key confirmed artist -> Audius id mappings (see full list in `lib/artists.ts`):
+- GodclouD -> `Vg1rWzQ` | shawnsporter -> `E7gJo` | luiwrites -> `BJzwPMj`
+- _0xQuan -> `7O66BZ7` | Stormbourne -> `Wgq5qO0` | geekmyth -> `zZR8pvZ`
+- PKMNCTO -> `ZOOMN24` | Kata7yst -> `G2wYPPx` | XTincT_official -> `8043XGp`
+- Hurric4n3Ike (founder) -> `lzq2G` (48 tracks)
 
-Also confirmed: Hurric4n3Ike (founder, `lzq2G`, 48 tracks), NDA_WaveWarz
-(`oGZ6o3J`). Combined across the 5 confirmed artists (live): ~106 tracks, ~1,666
-plays, ~1,002 favs; genres Hip-Hop/Rap 82, R&B/Soul 20, Latin 2, Rock 2. The
-founder's "...Wavez x Hurric4n3Ike" series tops plays (CreWavez 93). The Music
-tab computes this live; held PKMN/IamThanos/Nessy (RoCkY collaborators, not
-confirmed WaveWarZ battlers).
+Charting-song -> Audius track: **31 of 37 songs** now have verified Audius
+track IDs in `lib/songs.ts` (updated 2026-07-16 via API lookup). Source of
+truth is the `audiusTrack` field in that file. 6 songs have no Audius publish:
+Trippy (shawnsporter), Bad Decisions (Stormbourne), ACCELERATE (_0xQuan),
+I'll Aim Guns At You (RoCkY2GriMeY), Rich Made (luiwrites), I Got It
+(AporkALYPSE78).
+
+How song identity works in the Supabase battles table (from
+`wavewarz-intelligence/src/lib/song-identity.ts`, 2026-07-16): quick battles
+store the **song title** in `artist1_name`/`artist2_name` (hand-entered,
+inconsistent). The stable identity is the `artist1_music_link` Audius URL path
+(`handle/slug`) — unique per track, survives title typos. The intelligence app
+uses `canonicalSongKey(musicLink, title)` to group songs across battles.
 
 Rule: never display an Audius match that isn't confirmed by handle+title.
 
@@ -226,7 +269,14 @@ Rule: never display an Audius match that isn't confirmed by handle+title.
 - Decode buyShares vs claimShares per battle for true per-battle PnL + win rate.
 - Trace artist payout flows (5%/2% + 1% per trade) to artist wallets.
 - Identify the ops-budget wallet and quantify the weekly skim off the 3.5 floor.
-- Confirm the fee/settlement percentages against a real settled battle's vault.
+- Fee/settlement percentages **CONFIRMED** via `wavewarz-math.ts` source
+  (2026-07-16): match IDL exactly. Artist: 1% trade + 5%/2% settlement.
+  Platform: 0.5% trade + 3% settlement.
+- 'prediction' event subtype found in source (filtered from leaderboards along
+  with charity/spotlight) — no prediction battles seen in our feed yet.
+- `lib/leaderboard.ts` snapshot is from 2026-06-15; refresh needs Supabase
+  access (no public API for artist rankings). Worth refreshing after next main
+  event to capture recent winners.
 
 ## Sources
 
