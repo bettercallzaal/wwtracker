@@ -210,6 +210,7 @@ Verified artist -> Audius id (handle + catalog match):
 - BennyJ504WaveWarz -> `RGyPJRg`
 - RoCkY2GriMeY -> `aNYwwmo`
 - Kata7yst -> `847467862` (bio: "WaveWarZ"; verified 2026-07-16)
+- PKMNCTO -> `ZOOMN24` (handle: PKMNCTO; 17 tracks, 16 followers; confirmed WaveWarZ battler 2026-07-16)
 - _0xQuan -> no confident match (excluded)
 
 Verified charting-song -> Audius track:
@@ -218,13 +219,14 @@ Verified charting-song -> Audius track:
 - "EAZE OF MIND" -> `mE6RMV5` (/GodclouD/eaze-of-mind)
 - "High Frequency with PKMN" -> `mWpBmxQ` (/RoCkY2GriMeY/high-frequency-with-pkmn)
 - "Limit Breaker Ft Cannon Jones" -> `3AkrXjM` (/kata7yst; 58 plays; battle track 2026-07-16)
+- "Dead Already" -> `j48qp7j` (/PKMNCTO; 21 plays; released 2026-06-02; battle track vs Kata7yst 2026-07-16)
 - "ACCELERATE" -> no confident match (excluded)
 
 Also confirmed: Hurric4n3Ike (founder, `lzq2G`, 48 tracks), NDA_WaveWarz
-(`oGZ6o3J`). Combined across the 6 confirmed artists (live): ~127+ tracks;
-Kata7yst 21 tracks / 31 followers. The Music tab computes this live; held
-PKMN/IamThanos/Nessy (RoCkY collaborators, not confirmed WaveWarZ battlers).
-PKMNCTO (new lead from 2026-07-16 battles) — Audius match pending.
+(`oGZ6o3J`). Combined across the 7 confirmed artists (live): ~144+ tracks;
+Kata7yst 21 tracks / 31 followers, PKMNCTO 17 tracks / 16 followers. The Music
+tab computes this live; held PKMN/IamThanos/Nessy (RoCkY collaborators, not
+confirmed WaveWarZ battlers).
 
 Rule: never display an Audius match that isn't confirmed by handle+title.
 
