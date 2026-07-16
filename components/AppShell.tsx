@@ -273,6 +273,10 @@ export default function AppShell() {
         <a href="https://github.com/bettercallzaal/wwtracker" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
           source
         </a>
+        {" / "}
+        <a href="/overlay.html" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
+          streaming overlay
+        </a>
       </footer>
     </div>
   );
