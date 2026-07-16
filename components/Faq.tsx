@@ -41,6 +41,14 @@ const FAQS: QA[] = [
     a: "Quick Battles run live on weeknights around 8:30 PM EST (with a 30-second final trading window), plus community AMAs Monday-Friday around 11 AM EST, mainly on X Spaces and YouTube.",
   },
   {
+    q: "What is DJ Wavy?",
+    a: "The AI judge — one of the three scoring factors in V2 (Poll + Charts + DJ Wavy, best 2 of 3). DJ Wavy evaluates each battle and casts a binding vote. The exact model and criteria are not publicly disclosed by the team.",
+  },
+  {
+    q: "What is The ZAO?",
+    a: "The DAO that incubated WaveWarZ. The ZAO is a web3 music and creator collective — 100+ consecutive Fractal weeks of onchain governance, Respect-based contribution scores, and ZAO Improvement Proposals (ZIPs). WaveWarZ is the music-battle application layer at the top of the BCZ → The ZAO → WaveWarZ stack.",
+  },
+  {
     q: "Where does this dashboard's data come from?",
     a: "On-chain, via Dune queries over the WaveWarZ program (9TUf...g2fYo). It's an unofficial community tool, not financial advice. See the About and How It Works tabs.",
   },
