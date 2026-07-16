@@ -35,7 +35,7 @@ export default function ArtistPage() {
     (async () => {
       try {
         const hosts = await fetch("https://api.audius.co").then((r) => r.json());
-        const host = hosts?.data?.[0] || "https://discoveryprovider.audius.co";
+        const host = hosts?.data?.[0] || "https://api.audius.co";
         const [u, t] = await Promise.all([
           fetch(`${host}/v1/users/${audiusId}?app_name=wwtracker`).then((r) => r.json()),
           fetch(`${host}/v1/users/${audiusId}/tracks?app_name=wwtracker&limit=8&sort=plays`).then((r) => r.json()),
