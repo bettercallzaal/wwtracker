@@ -47,7 +47,7 @@ export default function Leaderboard() {
           WaveWarZ<span style={{ color: C.dim, fontWeight: 400 }}> / artist leaderboard</span>
         </h1>
         <p style={{ margin: "8px 0 0", color: C.text, lineHeight: 1.6, maxWidth: 720 }}>
-          All <b>48 artists</b> ranked by Main Event wins. Each event = 2-of-3 or
+          All <b>{LEADERBOARD.length} artists</b> ranked by Main Event wins. Each event = 2-of-3 or
           3-of-5 rounds (Human Judge + X Poll + SOL Vote). Volume = SOL traded on
           that artist; earnings = est. 1% of volume + settlement bonuses.
         </p>
