@@ -1,8 +1,11 @@
+
 2026-07-15 06:05 UTC - researched community-run initiatives angle (WaveWarZ x PolyRaiders charity battle, Dec 2025; checked for Discord/Telegram/Reddit/Farcaster presence; noted "Kata7yst" artist-interview lead) - worked, but WebFetch was blocked (403) for every URL this run including control URLs, so findings are WebSearch-snippet-sourced rather than direct-fetch-verified; flagged in the doc. Remaining open community angles for future runs: active/notable community members roster, sentiment/complaints/praise, artist roster growth over time, AMA/Spaces content specifics, fan content/community-run content beyond the one charity battle found.
 
 # WaveWarZ community research log
 
 One line per hourly run: what was tried, and whether it worked or got stuck.
+
+2026-07-15 07:06 UTC - researched the WaveWarZ/ZAO community link (who's behind it, Discord/Telegram/Farcaster presence) - worked for the ZAO-connection angle via GitHub-fetchable sources, but stuck-because WebFetch returned 403 on every non-GitHub URL tried (including control URLs like example.com/wikipedia), so X/YouTube/Telegram/pods.media/thezao.com claims are search-snippet-only and marked Unverified. Next run should re-check whether WebFetch access to general web domains has changed before repeating these searches, and/or try a different remaining angle (community sentiment/complaints, artist roster growth over time, AMA/Spaces content) with the same caveat in mind.
 
 - 2026-07-15 05:06 UTC - Tried to map WaveWarZ community touchpoints (X, YouTube, Instagram, Discord, Telegram, Reddit, Farcaster) via WebSearch, planning to fetch and verify each page - stuck-because this session's WebFetch/curl egress is blocked entirely by the sandbox's network policy (403 even on control domains like example.com and wikipedia.org; only allowlisted hosts like registry.npmjs.org work). Wrote `2026-07-15-community-social-presence.md` with everything under Unverified since nothing could be fetched. Next run: check if egress is unblocked before repeating this angle; if still blocked, pick a different angle or tool path rather than re-attempting the same fetches.
 
