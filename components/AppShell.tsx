@@ -20,6 +20,7 @@ import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
 import Faq from "./Faq";
+import LiveBattleBanner from "./LiveBattleBanner";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
 // gets deeper the further you scroll - explainer, then the treasury floor, then
@@ -235,6 +236,8 @@ export default function AppShell() {
           </button>
         ))}
       </nav>
+
+      <LiveBattleBanner />
 
       {SECTIONS.map((s, i) => (
         <section
