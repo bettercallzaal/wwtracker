@@ -2,6 +2,7 @@
 
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
+import { BATTLE_STATS as S } from "@/lib/battles";
 
 // Verified WaveWarZ YouTube uploads (titles via oEmbed).
 const VIDEOS: { id: string; title: string }[] = [
@@ -46,8 +47,8 @@ export default function Events() {
 
       <Section label="BATTLE TYPES (ALL-TIME)">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
-          <Stat label="QUICK BATTLES" value="886" sub="single song vs song" />
-          <Stat label="MAIN-EVENT BATTLES" value="152" sub="across 48 tournaments" />
+          <Stat label="QUICK BATTLES" value={S.quickBattles.toLocaleString()} sub="single song vs song" />
+          <Stat label="MAIN-EVENT BATTLES" value={S.multiRound.toLocaleString()} sub={`across ${S.events} tournaments`} />
           <Stat label="ON-CHAIN BATTLES" value={WW.program.battlesCreated.toLocaleString()} sub="initializeBattle calls" />
         </div>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>

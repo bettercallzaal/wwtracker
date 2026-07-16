@@ -298,9 +298,8 @@ export default function Battles() {
       )}
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        Full feed scraped from wavewarz.info via paginated render (949/958 battles
-        parsed). Winners in green. Rows link to the battle detail. Snapshot
-        2026-06-15.
+        Full feed scraped from wavewarz.info via paginated render. Winners in
+        green. Rows link to the battle detail. Snapshot 2026-07-16.
       </p>
     </div>
   );
