@@ -132,6 +132,18 @@ describe("buildWeeklyRecap", () => {
     expect(draft.x).toContain("Geek Myth");
   });
 
+  it("includes the closest-margin battle in the Farcaster draft when one exists", () => {
+    // quickBattle has margin=96; mainEvent has margin=null — quickBattle is the closest
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.farcaster).toContain("Closest:");
+    expect(draft.farcaster).toContain("96%");
+  });
+
+  it("omits Closest line when no battles have a margin", () => {
+    const draft = buildWeeklyRecap([mainEvent], "2026-06-09", "2026-06-15", context);
+    expect(draft.farcaster).not.toContain("Closest:");
+  });
+
   it("flags leaderboard movement as not included", () => {
     const draft = buildWeeklyRecap([mainEvent], "2026-06-09", "2026-06-15", context);
     expect(draft.notIncluded.some((l) => l.includes("Leaderboard movement"))).toBe(true);
