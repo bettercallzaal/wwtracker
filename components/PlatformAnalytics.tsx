@@ -15,7 +15,9 @@ import {
 } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
-import { TREASURY_WALLET as TREASURY, TRACKED_TRADER_WALLET as ME } from "@/lib/config";
+import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY, TRACKED_TRADER_WALLET as ME, FLOOR_SOL } from "@/lib/config";
+import { BATTLE_STATS as S } from "@/lib/battles";
+import { DATA_AS_OF } from "@/lib/freshness";
 
 const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 const fmt = (n: number, dp = 0) =>
@@ -154,7 +156,7 @@ export default function PlatformAnalytics() {
             {fmt(WW.platformStats.treasuryNet, 2)} ◎
           </span>
           <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>
-            ~the 3.5 floor
+            ~the {FLOOR_SOL} floor
           </small>
         </Tile>
         <Tile label="TREASURY IN / OUT">
@@ -238,7 +240,7 @@ export default function PlatformAnalytics() {
         <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 14 }}>
           <li>
             Treasury nets <b>{fmt(WW.platformStats.treasuryNet, 2)} ◎</b> lifetime -
-            landing on the ~3.5 SOL floor, so the skim discipline holds on-chain.
+            landing on the ~{FLOOR_SOL} SOL floor, so the skim discipline holds on-chain.
           </li>
           <li>
             <b>{fmt(Math.round((WW.program.battlesSettled / Math.max(1, WW.program.battlesCreated)) * 1000) / 10)}%</b>{" "}
@@ -433,16 +435,17 @@ export default function PlatformAnalytics() {
 
       <Panel label="HOW THESE COMPARE TO OTHER TABS">
         <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 13 }}>
-          <li><b>Battles</b>: {fmt(WW.program.battlesCreated)} here = on-chain <i>initializeBattle</i> calls; the Battles tab&apos;s 958 is the site&apos;s battle count (it groups multi-song main events and excludes test battles).</li>
+          <li><b>Battles</b>: {fmt(WW.program.battlesCreated)} here = on-chain <i>initializeBattle</i> calls; the Battles tab&apos;s {S.totalShown.toLocaleString()} is the site&apos;s battle count (it groups multi-song main events and excludes test battles).</li>
           <li><b>Traders</b>: {fmt(WW.program.uniqueTraders)} here = unique <i>buyShares</i> signers on-chain; the Traders tab shows the site&apos;s top 101 leaderboard.</li>
-          <li><b>Volume</b>: {fmt(WW.volume.total, 0)} ◎ here is buy-side only (SOL committed on buys); the site reports ~484 ◎ counting both buy and sell sides.</li>
+          <li><b>Volume</b>: {fmt(WW.volume.total, 0)} ◎ here is buy-side only (SOL committed on buys); the site reports ~{S.totalVolumeSol.toFixed(0)} ◎ counting both buy and sell sides.</li>
+          <li><b>Claims</b>: {fmt(WW.program.claims)} <i>claimShares</i> instruction calls on-chain (Dune); the site reports {S.withdrawalCount} withdrawals totaling {S.traderClaimsSol.toFixed(2)} ◎ — different counting methodology, same underlying action.</li>
         </ul>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>Different measures, all from-chain - not contradictions.</p>
       </Panel>
 
       <p style={{ margin: 0, fontFamily: C.mono, fontSize: 12, color: C.dim, lineHeight: 1.5 }}>
         On-chain snapshot {WW.generatedAt || "(pending)"} from Dune over program
-        9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo (a bit older than the 2026-06-15
+        {PROGRAM} (a bit older than the {DATA_AS_OF}{" "}
         site snapshots). Treasury wallet FNj signs every battle, so it tops raw tx
         count and is excluded from the trader board. See docs/WAVEWARZ-RESEARCH.md.
       </p>

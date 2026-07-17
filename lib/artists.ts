@@ -43,6 +43,7 @@ export const ROSTER: RosterArtist[] = [
   { handle: "sweetbiddi", audiusId: "1jAZg9W", note: "SweetBiddiMcGee" },
   { handle: "zKeyz", audiusId: "dMg3E5", note: "Production is the bag!" },
   { handle: "BennyJ504", audiusId: "bVgyk", note: "BennyJ504 - main account" },
+  { handle: "frameworkfortune", audiusId: "AMNd4pg", note: "ENTERLUDE (0W-1L on wavewarz.info, 2026-07)" },
 ];
 
 export const AUDIUS_ID_BY_HANDLE: Record<string, string> = Object.fromEntries(
@@ -50,3 +51,20 @@ export const AUDIUS_ID_BY_HANDLE: Record<string, string> = Object.fromEntries(
 );
 
 export const AUDIUS_HANDLES = new Set(ROSTER.map((a) => a.handle));
+
+// Maps leaderboard X/Twitter handle → Audius handle for artists where they differ.
+export const X_TO_AUDIUS_HANDLE: Record<string, string> = {
+  therealgodcloud:   "GodclouD",
+  GeEkMyTh_ETH:     "geekmyth",
+  cannonjones973:    "CannonJones973",
+  Stormiunleashed:   "Stormbourne",
+  XTincT_io:        "XTincT_official",
+  kata7yst:          "Kata7yst",
+  bennyj504:         "BennyJ504",
+  "RoCkY2GriMeY__": "RoCkY2GriMeY",
+};
+
+// Reverse: Audius handle → leaderboard X handle.
+export const AUDIUS_TO_X_HANDLE: Record<string, string> = Object.fromEntries(
+  Object.entries(X_TO_AUDIUS_HANDLE).map(([x, a]) => [a, x]),
+);

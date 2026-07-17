@@ -3,23 +3,78 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { C } from "@/lib/theme";
 import { DATA_AS_OF } from "@/lib/freshness";
-import BalanceDashboard from "./BalanceDashboard";
+import { PROGRAM_ID as PROGRAM, FLOOR_SOL } from "@/lib/config";
+// §00
 import OnChainProof from "./OnChainProof";
-import PlatformGrowth from "./PlatformGrowth";
-import TraderScorecard from "./TraderScorecard";
-import PlatformAnalytics from "./PlatformAnalytics";
-import Profitability from "./Profitability";
+import PlatformSummary from "./PlatformSummary";
+// §01
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
-import Ecosystem from "./Ecosystem";
-import Events from "./Events";
-import Songs from "./Songs";
-import Artists from "./Artists";
-import Music from "./Music";
+import WwNow from "./WwNow";
+// §02
+import BalanceDashboard from "./BalanceDashboard";
+import RevenueFloor from "./RevenueFloor";
+// §03
+import PlatformGrowth from "./PlatformGrowth";
+import CumulativeGrowth from "./CumulativeGrowth";
+import MilestonesTimeline from "./MilestonesTimeline";
+import GrowthMomentum from "./GrowthMomentum";
+// §04
+import EconomicsBreakdown from "./EconomicsBreakdown";
+import RevenueCurve from "./RevenueCurve";
+import DistributableNow from "./DistributableNow";
+import Profitability from "./Profitability";
+// §05
+import PlatformAnalytics from "./PlatformAnalytics";
+import PlatformPulse from "./PlatformPulse";
+import BattleTempo from "./BattleTempo";
+import LiveBattleTypes from "./LiveBattleTypes";
+import LivePlatformStats from "./LivePlatformStats";
+import NailBiters from "./NailBiters";
+// §06
+import Battles from "./Battles";
+import MonthlyVolume from "./MonthlyVolume";
+import BattleTypeBreakdown from "./BattleTypeBreakdown";
+import BattleTypeEvolution from "./BattleTypeEvolution";
+import DowActivity from "./DowActivity";
+import MarginDistribution from "./MarginDistribution";
+import BattleCalendar from "./BattleCalendar";
+import BattleArena from "./BattleArena";
+import RecentStandings from "./RecentStandings";
+import ArtistEarnings from "./ArtistEarnings";
+import ArtistProfile from "./ArtistProfile";
+import HandleH2H from "./HandleH2H";
+import RivalryBoard from "./RivalryBoard";
+import BiggestBattles from "./BiggestBattles";
+// §07
+import TraderActivity from "./TraderActivity";
 import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
-import Battles from "./Battles";
+import TraderScorecard from "./TraderScorecard";
+import WinRateLeaderboard from "./WinRateLeaderboard";
+import HotStreaks from "./HotStreaks";
+import ArtistVolume from "./ArtistVolume";
+import ArtistStandings from "./ArtistStandings";
+// §08
+import Songs from "./Songs";
+import SongArena from "./SongArena";
+import Artists from "./Artists";
+import Music from "./Music";
+import SongRecords from "./SongRecords";
+import SongRematches from "./SongRematches";
+import TopRivalries from "./TopRivalries";
+// §09
+import ZaoVitals from "./ZaoVitals";
+import FractalGovernance from "./FractalGovernance";
+import ZaoIPSummary from "./ZaoIPSummary";
+import IPHighlights from "./IPHighlights";
+import WwMedia from "./WwMedia";
+import CommunityBattles from "./CommunityBattles";
+import Ecosystem from "./Ecosystem";
+import Events from "./Events";
 import Faq from "./Faq";
+// global
+import LiveBattleBanner from "./LiveBattleBanner";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
 // gets deeper the further you scroll - explainer, then the treasury floor, then
@@ -37,19 +92,27 @@ const SECTIONS: Section[] = [
     id: "overview",
     n: "00",
     title: "The whole run, at a glance",
-    intro: "every on-chain series in one place - volume, treasury, battles, trades. each line is scaled to its own peak so they share one axis; toggle any of them and hover for the real number.",
-    render: () => <OnChainProof />,
+    intro: "every on-chain series in one place - volume, treasury, battles, trades. each line is scaled to its own peak so they share one axis; toggle any of them and hover for the real number. key facts below.",
+    render: () => (
+      <>
+        <OnChainProof />
+        <div style={{ height: 24 }} />
+        <PlatformSummary />
+      </>
+    ),
   },
   {
     id: "what",
     n: "01",
     title: "What WaveWarZ is",
-    intro: "start here. what the platform is, and how a single song-vs-song battle actually plays out on-chain.",
+    intro: "start here. what the platform is, how a single song-vs-song battle plays out on-chain, and the live numbers that prove it's real.",
     render: () => (
       <>
         <AboutWaveWarZ />
         <div style={{ height: 24 }} />
         <HowItWorks />
+        <div style={{ height: 24 }} />
+        <WwNow />
       </>
     ),
   },
@@ -57,49 +120,129 @@ const SECTIONS: Section[] = [
     id: "floor",
     n: "02",
     title: "The treasury floor",
-    intro: "the headline. the platform wallet's daily balance held against a 3.5 SOL operating floor - live from Dune.",
-    render: () => <BalanceDashboard />,
+    intro: `the headline. the platform wallet's daily balance held against a ${FLOOR_SOL} SOL operating floor — plus a live read on how much revenue the platform has earned above it.`,
+    render: () => (
+      <>
+        <BalanceDashboard />
+        <div style={{ height: 24 }} />
+        <RevenueFloor />
+      </>
+    ),
   },
   {
     id: "growth",
     n: "03",
     title: "Growth over time",
-    intro: "how the platform has grown since it launched - the shape of the last stretch, not just today's number.",
-    render: () => <PlatformGrowth />,
+    intro: "how the platform has grown since it launched — the cumulative trajectory, key milestones, and a 30-day momentum check.",
+    render: () => (
+      <>
+        <PlatformGrowth />
+        <div style={{ height: 24 }} />
+        <CumulativeGrowth />
+        <div style={{ height: 24 }} />
+        <MilestonesTimeline />
+        <div style={{ height: 24 }} />
+        <GrowthMomentum />
+      </>
+    ),
   },
   {
     id: "profitability",
     n: "04",
     title: "Profitability + the split",
-    intro: "once the wallet is past the floor, the excess distributes: 33% operations, 22% each to Hurricane / Candy / Zaal.",
-    render: () => <Profitability />,
+    intro: "how the platform earns from battles — take rates, monthly revenue trajectory, what's distributable above the 3.5 SOL floor right now, and the historical distribution record.",
+    render: () => (
+      <>
+        <EconomicsBreakdown />
+        <div style={{ height: 24 }} />
+        <RevenueCurve />
+        <div style={{ height: 24 }} />
+        <DistributableNow />
+        <div style={{ height: 24 }} />
+        <Profitability />
+      </>
+    ),
   },
   {
     id: "analytics",
     n: "05",
     title: "Platform analytics",
-    intro: "the full on-chain picture now - battles, trades, and traders decoded straight from the program.",
-    render: () => <PlatformAnalytics />,
+    intro: "the full on-chain picture — baked analytics, pace trends, monthly battle tempo, live battle type breakdown, live stats, and the 10 closest battles ever fought.",
+    render: () => (
+      <>
+        <PlatformAnalytics />
+        <div style={{ height: 24 }} />
+        <PlatformPulse />
+        <div style={{ height: 24 }} />
+        <BattleTempo />
+        <div style={{ height: 24 }} />
+        <LiveBattleTypes />
+        <div style={{ height: 24 }} />
+        <LivePlatformStats />
+        <div style={{ height: 24 }} />
+        <NailBiters />
+      </>
+    ),
   },
   {
     id: "battles",
     n: "06",
     title: "The battles",
-    intro: "every battle on record. search it, sort it, export it.",
-    render: () => <Battles />,
+    intro: "every battle on record, every angle — search, sort, rankings, rivalries, profiles, calendars, type + margin breakdowns.",
+    render: () => (
+      <>
+        <Battles />
+        <div style={{ height: 24 }} />
+        <MonthlyVolume />
+        <div style={{ height: 24 }} />
+        <BattleTypeBreakdown />
+        <div style={{ height: 24 }} />
+        <BattleTypeEvolution />
+        <div style={{ height: 24 }} />
+        <DowActivity />
+        <div style={{ height: 24 }} />
+        <MarginDistribution />
+        <div style={{ height: 24 }} />
+        <BattleCalendar />
+        <div style={{ height: 24 }} />
+        <BattleArena />
+        <div style={{ height: 24 }} />
+        <RecentStandings />
+        <div style={{ height: 24 }} />
+        <ArtistEarnings />
+        <div style={{ height: 24 }} />
+        <ArtistProfile />
+        <div style={{ height: 24 }} />
+        <HandleH2H />
+        <div style={{ height: 24 }} />
+        <RivalryBoard />
+        <div style={{ height: 24 }} />
+        <BiggestBattles />
+      </>
+    ),
   },
   {
     id: "traders",
     n: "07",
     title: "Who's trading",
-    intro: "the leaderboard, the full trader table, and a lookup for any wallet's own PnL.",
+    intro: "live trading pulse, the leaderboard, the full trader table, a lookup for any wallet's own PnL, plus win-rate standings, hot streaks, SOL volume by artist, and full W/L standings for all tagged handles.",
     render: () => (
       <>
+        <TraderActivity />
+        <div style={{ height: 24 }} />
         <Leaderboard />
         <div style={{ height: 24 }} />
         <Traders />
         <div style={{ height: 24 }} />
         <TraderScorecard />
+        <div style={{ height: 24 }} />
+        <WinRateLeaderboard />
+        <div style={{ height: 24 }} />
+        <HotStreaks />
+        <div style={{ height: 24 }} />
+        <ArtistVolume />
+        <div style={{ height: 24 }} />
+        <ArtistStandings />
       </>
     ),
   },
@@ -107,14 +250,22 @@ const SECTIONS: Section[] = [
     id: "music",
     n: "08",
     title: "The music",
-    intro: "the songs and artists the battles are built on - Audius play counts and inline play.",
+    intro: "the songs and artists behind the battles — charting tracks, Audius plays, song arena rankings, battle records for tracks with 3+ fights, every rematch pair, and artist series records.",
     render: () => (
       <>
         <Songs />
         <div style={{ height: 24 }} />
+        <SongArena />
+        <div style={{ height: 24 }} />
         <Artists />
         <div style={{ height: 24 }} />
         <Music />
+        <div style={{ height: 24 }} />
+        <SongRecords />
+        <div style={{ height: 24 }} />
+        <SongRematches />
+        <div style={{ height: 24 }} />
+        <TopRivalries />
       </>
     ),
   },
@@ -122,9 +273,21 @@ const SECTIONS: Section[] = [
     id: "ecosystem",
     n: "09",
     title: "In the ZAO ecosystem",
-    intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
+    intro: "where WaveWarZ sits in the bigger picture — the ZAO DAO vitals, Fractal governance, IP arena highlights, the creative catalog, community channels, events, and FAQ.",
     render: () => (
       <>
+        <ZaoVitals />
+        <div style={{ height: 24 }} />
+        <FractalGovernance />
+        <div style={{ height: 24 }} />
+        <ZaoIPSummary />
+        <div style={{ height: 24 }} />
+        <IPHighlights />
+        <div style={{ height: 24 }} />
+        <WwMedia />
+        <div style={{ height: 24 }} />
+        <CommunityBattles />
+        <div style={{ height: 24 }} />
         <Ecosystem />
         <div style={{ height: 24 }} />
         <Events />
@@ -236,6 +399,8 @@ export default function AppShell() {
         ))}
       </nav>
 
+      <LiveBattleBanner />
+
       {SECTIONS.map((s, i) => (
         <section
           key={s.id}
@@ -267,7 +432,7 @@ export default function AppShell() {
           lineHeight: 1.6,
         }}
       >
-        On-chain analytics from Dune over program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo.
+        On-chain analytics from Dune over program {PROGRAM}.
         Treasury balance + Audius are live; baked data as of {DATA_AS_OF}.
         Unofficial community tool - not financial advice.{" "}
         <a href="https://github.com/bettercallzaal/wwtracker" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
