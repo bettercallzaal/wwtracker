@@ -66,6 +66,18 @@ const FAQS: QA[] = [
     a: "The DAO that incubated WaveWarZ. The ZAO is a web3 music and creator collective — 100+ consecutive Fractal weeks of onchain governance, Respect-based contribution scores, and ZAO Improvement Proposals (ZIPs). WaveWarZ is the music-battle application layer at the top of the BCZ → The ZAO → WaveWarZ stack.",
   },
   {
+    q: "Who founded The ZAO?",
+    a: "The ZAO was founded by Zaal Panthaki (@bettercallzaal). WaveWarZ was incubated within The ZAO by co-founders Hurricane, Candy, and Ohnahji. The full contributor roster is tracked via the ZAO's onchain Respect system — the members with the highest cumulative Respect scores are the builders who've contributed most.",
+  },
+  {
+    q: "How do I join The ZAO community?",
+    a: "Three paths: (1) Battle on WaveWarZ — artists who compete become part of the ZAO ecosystem. (2) Attend weekly Fractal governance calls (Farcaster Spaces, open to all) — active participants earn Respect over time. (3) Apply for ZABAL Gamez (the 3-month builder cohort, open enrollment 2× per year). The community directory is at thezao.com/community.",
+  },
+  {
+    q: "What is ZABAL Gamez?",
+    a: "The ZAO's 3-month builder cohort. Builders ship products or features for The ZAO community and keep earning from what they build even after the cohort ends — not a one-time hackathon, but a sustained build track. Open enrollment twice per year.",
+  },
+  {
     q: "Do WaveWarZ battles connect to ZAO governance?",
     a: "Yes. The ZAO's open-source ZAOOS platform integrates WaveWarZ: battle milestones auto-generate DAO proposal drafts, the 43-artist roster syncs nightly with win/volume stats, and results can be shared to Farcaster. WaveWarZ is not just a product of the ZAO — its battles are a source of governance inputs for it.",
   },
