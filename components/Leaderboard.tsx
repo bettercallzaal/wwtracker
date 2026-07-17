@@ -1,19 +1,40 @@
 "use client";
 
+import { useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
 import { LEADERBOARD } from "@/lib/leaderboard";
 import { toCsv, downloadCsv } from "@/lib/csv";
+import { DATA_AS_OF } from "@/lib/freshness";
 
-// Artists with a confirmed Audius profile -> link the row to Audius.
-const AUDIUS = new Set([
-  "GodclouD", "BennyJ504WaveWarz", "RoCkY2GriMeY", "shawnsporter", "Stormbourne",
-  "geekmyth", "XTincT_official", "dopestilo", "PKMNCTO", "luiwrites",
-  "AporkALYPSE78", "CannonJones973", "TuckNuisance", "hoodrats", "Hurric4n3Ike",
-]);
+// Maps leaderboard X handles to confirmed Audius handles.
+const AUDIUS_MAP: Record<string, string> = {
+  AporkALYPSE78: "AporkALYPSE78",
+  Hurric4n3Ike: "Hurric4n3Ike",
+  PKMNCTO: "PKMNCTO",
+  geekmyth: "geekmyth",
+  GodclouD: "GodclouD",
+  Stormbourne: "Stormbourne",
+  dopestilo: "dopestilo",
+  luiwrites: "luiwrites",
+  shawnsporter: "shawnsporter",
+  hoodrats: "hoodrats",
+  TuckNuisance: "TuckNuisance",
+  BennyJ504WaveWarz: "BennyJ504WaveWarz",
+  CannonJones973: "CannonJones973",
+  XTincT_official: "XTincT_official",
+  "RoCkY2GriMeY__": "RoCkY2GriMeY",
+};
 
-const fmt = (n: number, dp = 2) => n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+type SortKey = "rank" | "win" | "vol" | "earn";
+
+const fmt = (n: number, dp = 2) =>
+  n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
 
 export default function Leaderboard() {
+  const [q, setQ] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("rank");
+  const [sortAsc, setSortAsc] = useState(true);
+
   const totalVol = LEADERBOARD.reduce((s, a) => s + a.vol, 0);
   const totalEarn = LEADERBOARD.reduce((s, a) => s + a.earn, 0);
 
@@ -24,6 +45,43 @@ export default function Leaderboard() {
     );
     downloadCsv("wavewarz-leaderboard.csv", csv);
   };
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortAsc((v) => !v);
+    else { setSortKey(key); setSortAsc(key === "rank"); }
+  };
+
+  const needle = q.trim().toLowerCase();
+  const visible = LEADERBOARD.filter(
+    (a) =>
+      !needle ||
+      `${a.name} ${a.handle}`.toLowerCase().includes(needle)
+  );
+
+  const sorted = [...visible].sort((a, b) => {
+    let diff = 0;
+    if (sortKey === "rank") diff = a.rank - b.rank;
+    else if (sortKey === "win") diff = a.win - b.win;
+    else if (sortKey === "vol") diff = a.vol - b.vol;
+    else if (sortKey === "earn") diff = a.earn - b.earn;
+    return sortAsc ? diff : -diff;
+  });
+
+  const SortBtn = ({ col, label, right = true }: { col: SortKey; label: string; right?: boolean }) => (
+    <th
+      onClick={() => toggleSort(col)}
+      style={{
+        ...th,
+        textAlign: right ? "right" : "left",
+        cursor: "pointer",
+        userSelect: "none",
+        color: sortKey === col ? C.accent : C.dim,
+      }}
+    >
+      {label}
+      {sortKey === col ? (sortAsc ? " ▲" : " ▼") : ""}
+    </th>
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -44,7 +102,29 @@ export default function Leaderboard() {
         <Tile label="TOTAL EARNINGS" value={`${fmt(totalEarn, 2)} ◎`} />
       </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="filter by name or handle"
+          aria-label="Filter leaderboard"
+          style={{
+            flex: 1,
+            minWidth: 180,
+            fontFamily: C.mono,
+            fontSize: 13,
+            padding: "8px 12px",
+            borderRadius: 10,
+            border: `1px solid ${C.grid}`,
+            background: C.bg,
+            color: C.text,
+          }}
+        />
+        {q && (
+          <span style={{ fontFamily: C.mono, fontSize: 12, color: C.dim }}>
+            {sorted.length} of {LEADERBOARD.length}
+          </span>
+        )}
         <button
           onClick={exportCsv}
           style={{
@@ -62,44 +142,118 @@ export default function Leaderboard() {
         </button>
       </div>
 
-      <section style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: "8px 4px", overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 12, minWidth: 520 }}>
+      <section
+        style={{
+          background: C.panel,
+          border: `1px solid ${C.grid}`,
+          borderRadius: 16,
+          padding: "8px 4px",
+          overflowX: "auto",
+        }}
+      >
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontFamily: C.mono,
+            fontSize: 12,
+            minWidth: 520,
+          }}
+        >
           <thead>
             <tr style={{ color: C.dim, textAlign: "left" }}>
-              <th style={th}>#</th>
-              <th style={th}>ARTIST</th>
+              <SortBtn col="rank" label="#" right={false} />
+              <th style={{ ...th, textAlign: "left" }}>ARTIST</th>
               <th style={{ ...th, textAlign: "right" }}>REC</th>
-              <th style={{ ...th, textAlign: "right" }}>WIN%</th>
-              <th style={{ ...th, textAlign: "right" }}>VOL ◎</th>
-              <th style={{ ...th, textAlign: "right" }}>EARN ◎</th>
+              <SortBtn col="win" label="WIN%" />
+              <SortBtn col="vol" label="VOL ◎" />
+              <SortBtn col="earn" label="EARN ◎" />
             </tr>
           </thead>
           <tbody>
-            {LEADERBOARD.map((a) => {
-              const onAudius = AUDIUS.has(a.handle);
-              const href = onAudius ? `https://audius.co/${a.handle}` : `https://x.com/${a.handle}`;
+            {sorted.map((a) => {
+              const audiusHandle = AUDIUS_MAP[a.handle];
               return (
-                <tr key={`${a.rank}-${a.handle}`} style={{ borderTop: `1px solid ${C.grid}` }}>
+                <tr
+                  key={`${a.rank}-${a.handle}`}
+                  style={{ borderTop: `1px solid ${C.grid}` }}
+                >
                   <td style={td}>{a.rank}</td>
                   <td style={td}>
-                    <a href={href} target="_blank" rel="noreferrer" style={{ color: C.text, textDecoration: "none" }}>
-                      {a.name} <span style={{ color: C.dim }}>@{a.handle}</span>{onAudius ? " ♪" : ""}
-                    </a>
+                    <a
+                      href={`/artist/${a.handle}`}
+                      style={{ color: C.text, textDecoration: "none" }}
+                    >
+                      {a.name}
+                    </a>{" "}
+                    <span style={{ color: C.dim }}>@{a.handle}</span>
+                    {audiusHandle && (
+                      <>
+                        {" "}
+                        <a
+                          href={`https://audius.co/${audiusHandle}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color: C.accent, textDecoration: "none", fontSize: 11 }}
+                          title="Audius profile"
+                        >
+                          ♪
+                        </a>
+                      </>
+                    )}
                   </td>
-                  <td style={{ ...td, textAlign: "right", color: a.win >= 50 ? C.good : C.dim }}>{a.rec}</td>
+                  <td
+                    style={{
+                      ...td,
+                      textAlign: "right",
+                      color: a.win >= 50 ? C.good : C.dim,
+                    }}
+                  >
+                    {a.rec}
+                  </td>
                   <td style={{ ...td, textAlign: "right" }}>{a.win}%</td>
-                  <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(a.vol)}</td>
-                  <td style={{ ...td, textAlign: "right", color: C.accent, fontVariantNumeric: "tabular-nums" }}>{fmt(a.earn, 3)}</td>
+                  <td
+                    style={{
+                      ...td,
+                      textAlign: "right",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {fmt(a.vol)}
+                  </td>
+                  <td
+                    style={{
+                      ...td,
+                      textAlign: "right",
+                      color: C.accent,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {fmt(a.earn, 3)}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        {sorted.length === 0 && (
+          <p
+            style={{
+              ...metaLabel,
+              fontSize: 12,
+              padding: "16px 12px",
+              textAlign: "center",
+            }}
+          >
+            no artists match &quot;{q}&quot;
+          </p>
+        )}
       </section>
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        Snapshot from wavewarz.info (2026-06-15). ♪ = confirmed on Audius (row
-        links to their profile). Charity &amp; spotlight events excluded.
+        Snapshot from wavewarz.info ({DATA_AS_OF}). ♪ = confirmed on Audius (link to
+        profile). Artist name links to internal artist page. Click column headers
+        to sort. Charity &amp; spotlight events excluded.
       </p>
     </div>
   );
@@ -107,12 +261,29 @@ export default function Leaderboard() {
 
 function Tile({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 12, padding: 16, display: "flex", flexDirection: "column", gap: 4 }}>
+    <div
+      style={{
+        background: C.panel,
+        border: `1px solid ${C.grid}`,
+        borderRadius: 12,
+        padding: 16,
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+      }}
+    >
       <span style={{ ...metaLabel, fontSize: 10 }}>{label}</span>
-      <span style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{value}</span>
+      <span style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+        {value}
+      </span>
     </div>
   );
 }
 
-const th: React.CSSProperties = { padding: "8px 10px", fontSize: 10, letterSpacing: "0.06em", fontWeight: 400 };
+const th: React.CSSProperties = {
+  padding: "8px 10px",
+  fontSize: 10,
+  letterSpacing: "0.06em",
+  fontWeight: 400,
+};
 const td: React.CSSProperties = { padding: "8px 10px" };

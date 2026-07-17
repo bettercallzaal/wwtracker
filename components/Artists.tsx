@@ -28,7 +28,10 @@ interface Card {
   tracks: Track[];
 }
 
+interface WwStat { battles: number; wins: number; vol: number; }
+
 const fmt = (n: number) => (n ?? 0).toLocaleString();
+const fmtSol = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function Artists() {
   const [cards, setCards] = useState<Card[] | null>(null);
@@ -38,6 +41,7 @@ export default function Artists() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [full, setFull] = useState<Record<string, Track[]>>({});
   const [q, setQ] = useState("");
+  const [wwStats, setWwStats] = useState<Record<string, WwStat> | null>(null);
 
   const expand = async (id: string) => {
     if (expanded === id) {
@@ -54,6 +58,26 @@ export default function Artists() {
       }
     }
   };
+
+  useEffect(() => {
+    fetch("/ww-battles.json")
+      .then((r) => r.json())
+      .then((battles: { aHandle?: string; bHandle?: string; a?: string; b?: string; winner?: string; vol?: number }[]) => {
+        const map: Record<string, WwStat> = {};
+        for (const b of battles) {
+          for (const side of ["a", "b"] as const) {
+            const h = (b[`${side}Handle`] ?? "").toLowerCase().trim();
+            if (!h) continue;
+            if (!map[h]) map[h] = { battles: 0, wins: 0, vol: 0 };
+            map[h].battles += 1;
+            map[h].vol += b.vol ?? 0;
+            if ((b.winner ?? "").trim() === (b[side] ?? "").trim()) map[h].wins += 1;
+          }
+        }
+        setWwStats(map);
+      })
+      .catch(() => setWwStats({}));
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -173,6 +197,17 @@ export default function Artists() {
                   )}
                 </div>
               </div>
+              {wwStats && wwStats[ww.handle.toLowerCase()] && (() => {
+                const ws = wwStats[ww.handle.toLowerCase()];
+                const wr = ws.battles > 0 ? Math.round(ws.wins / ws.battles * 100) : 0;
+                return (
+                  <div style={{ marginTop: 10, fontFamily: C.mono, fontSize: 11, color: C.dim, display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    <span>WW: <b style={{ color: C.text }}>{ws.battles}</b> battles</span>
+                    <span><b style={{ color: wr >= 50 ? C.good : C.text }}>{ws.wins}W</b> ({wr}%)</span>
+                    <span><b style={{ color: C.accent }}>{fmtSol(ws.vol)} ◎</b> volume</span>
+                  </div>
+                );
+              })()}
               {tracks.length > 0 && (
                 <div style={{ marginTop: 12, borderTop: `1px solid ${C.grid}`, paddingTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
                   {(expanded === ww.audiusId && full[ww.audiusId] ? full[ww.audiusId]! : tracks).map((t) => (

@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
+import { FLOOR_SOL } from "@/lib/config";
 
 // The overview overlays four on-chain series that live on wildly different
 // scales (325 SOL of volume vs a ~3.5 SOL treasury vs thousands of trades).
@@ -164,11 +165,11 @@ export default function OnChainProof() {
       k: "Treasury now",
       v: latest?.bal != null ? fmt(latest.bal, 2) : "-",
       u: "SOL",
-      s: `floor 3.5 / peak ${fmt(peaks.bal, 2)}`,
+      s: `floor ${FLOOR_SOL} / peak ${fmt(peaks.bal, 2)}`,
     },
     { k: "Battles", v: fmt(prog.battlesCreated), u: "", s: `${fmt(prog.battlesSettled)} settled` },
     { k: "Trades", v: fmt(prog.buys + prog.sells), u: "", s: `${fmt(prog.buys)} buys / ${fmt(prog.sells)} sells` },
-    { k: "Traders", v: "122", u: "", s: "unique wallets" },
+    { k: "Traders", v: fmt(prog.uniqueTraders), u: "", s: "unique wallets" },
     { k: "Active days", v: fmt(tot.activeDays), u: "", s: `since ${tot.firstDay}` },
   ];
 
@@ -310,7 +311,7 @@ export default function OnChainProof() {
 
       <ScaleCard
         title="The treasury, holding the floor"
-        note={`0.5% of every trade + 3% of every loser pool. peaked at ${fmt(peaks.bal, 2)} SOL; sits above the 3.5 operating floor.`}
+        note={`0.5% of every trade + 3% of every loser pool. peaked at ${fmt(peaks.bal, 2)} SOL; sits above the ${FLOOR_SOL} operating floor.`}
       >
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={rows} margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
@@ -329,7 +330,7 @@ export default function OnChainProof() {
               itemStyle={{ color: C.text }}
               formatter={(v: number) => [`${fmt(v, 2)} SOL`, "Treasury"]}
             />
-            <ReferenceLine y={3.5} stroke={C.accent} strokeDasharray="5 4" label={{ value: "3.5 floor", position: "insideTopRight", fill: C.accent, fontFamily: C.mono, fontSize: 11 }} />
+            <ReferenceLine y={FLOOR_SOL} stroke={C.accent} strokeDasharray="5 4" label={{ value: `${FLOOR_SOL} floor`, position: "insideTopRight", fill: C.accent, fontFamily: C.mono, fontSize: 11 }} />
             <Area type="monotone" dataKey="bal" stroke="#7ee0a0" strokeWidth={2.2} fill="url(#balFill)" dot={false} isAnimationActive={false} connectNulls />
           </AreaChart>
         </ResponsiveContainer>
