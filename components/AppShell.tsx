@@ -11,6 +11,8 @@ import GrowthMomentum from "./GrowthMomentum";
 import MilestonesTimeline from "./MilestonesTimeline";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
+import EconomicsBreakdown from "./EconomicsBreakdown";
+import DistributableNow from "./DistributableNow";
 import Profitability from "./Profitability";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
@@ -84,8 +86,16 @@ const SECTIONS: Section[] = [
     id: "profitability",
     n: "04",
     title: "Profitability + the split",
-    intro: "once the wallet is past the floor, the excess distributes: 33% operations, 22% each to Hurricane / Candy / Zaal.",
-    render: () => <Profitability />,
+    intro: "how the platform earns from battles — take rates, accumulated revenue, what's distributable above the 3.5 SOL floor right now, and the historical distribution record.",
+    render: () => (
+      <>
+        <EconomicsBreakdown />
+        <div style={{ height: 24 }} />
+        <DistributableNow />
+        <div style={{ height: 24 }} />
+        <Profitability />
+      </>
+    ),
   },
   {
     id: "analytics",
