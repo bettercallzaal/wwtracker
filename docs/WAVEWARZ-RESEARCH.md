@@ -23,7 +23,9 @@ will win and claim winnings after settlement.
 - Live programming: streams Mon-Fri ~8:30 PM EST on X Spaces / YouTube.
 
 Part of the **BCZ -> ZAO -> WaveWarZ** ecosystem (WaveWarZ is the music-battle
-application layer of The ZAO).
+application layer of The ZAO). **ZAO = ZTalent Artist Organization** — a
+community-driven hub for musicians, artists, and technologists in web3, part of
+the ZTalent Network. (Source: thezao.com/about, verified 2026-07-16.)
 
 Programming & tournaments (verified, wavewarz.info): Quick Battles weeknights
 ~8:30 PM EST (30-second final trading window); Community AMAs Mon-Fri ~11 AM EST;
