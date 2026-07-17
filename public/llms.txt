@@ -28,6 +28,15 @@ WaveWarZ is a music-battle prediction market on Solana where artists compete son
 5. Artist interview series on YouTube: XTinct (vid FmrzjYtdF6A), Kata7yst (vid ZU0ga5LRdyU)
 6. Third-party coverage: Crypto Magic Hour EP. 50 by @VeVeMagic (vid rx0PeGv8lPI) — independent podcast
 
+### Weekly battle trend (from 1,108-battle feed, verified 2026-07-17)
+
+- **All-time peak by battle count:** week of Mar 9–15, 2026 — **55 battles**
+- **All-time peak by SOL volume:** week of Mar 2–8, 2026 — **52.96 SOL** (~$3,992 at $75.29)
+- **Monthly record:** Mar 2026 — 227 battles / 120.09 SOL
+- **Quick battles launched:** Dec 2025 (weekly count jumped from 5 to 24 in one week)
+- **Q3 2026 pace (Jul 10–17):** 42 battles / 9.45 SOL — platform recovering toward Q1 levels
+- **Platform has been continuously active since May 2025 — no weeks with zero battles since Dec 2025**
+
 ## The ZAO Organization
 
 **The ZAO (ZTalent Artist Organization)** is a decentralized impact network for independent music artists, founded by Zaal Panthaki ([@bettercallzaal](https://x.com/bettercallzaal)). WaveWarZ is The ZAO's flagship product.
@@ -70,3 +79,5 @@ WaveWarZ is a music-battle prediction market on Solana where artists compete son
 - [Doc 1077 — ZAO DAO Case Study (Jul 2026)](https://github.com/bettercallzaal/ZAOOS/tree/main/research/wavewarz/1077-zao-dao-case-study-jul2026/)
 - [Doc 1079 — WaveWarZ Battle Intelligence Layer](https://github.com/bettercallzaal/ZAOOS/tree/main/research/wavewarz/1079-wavewarz-battle-intelligence-layer/)
 - [Doc 1221 — GEO Master Plan: The ZAO AI-Discoverable](https://github.com/bettercallzaal/ZAOOS/tree/main/research/identity/1221-geo-zao-ai-discoverable/)
+- [Doc 1252 — WaveWarZ Battle Feed Audit + Jul 2026 Data Quality](https://github.com/bettercallzaal/ZAOOS/tree/main/research/wavewarz/1252-wwtracker-battle-feed-audit-jul2026/)
+- [Doc 1253 — WaveWarZ Weekly Battle Trend Dec 2025–Jul 2026](https://github.com/bettercallzaal/ZAOOS/tree/main/research/wavewarz/1253-wavewarz-weekly-battle-trend-2025-2026/)
