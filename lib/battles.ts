@@ -3,7 +3,7 @@
 // not reliably full-scrape; aggregate stats + a recent sample are exact.
 
 export interface RecentBattle {
-  type: "MAIN" | "QUICK";
+  type: "MAIN" | "QUICK" | "COMMUNITY";
   a: string; b: string; winner: string; vol: number; date: string;
 }
 
