@@ -39,7 +39,7 @@ export default function OG() {
           <Stat label="BUY VOLUME" value={`${fmt(Math.round(WW.volume.total))} SOL`} />
         </div>
         <div style={{ fontSize: 24, color: "#a596b8" }}>
-          wwtracker.vercel.app - Solana music-battle platform
+          wwtracker.vercel.app · Solana music-battle platform · The ZAO ecosystem
         </div>
       </div>
     ),
