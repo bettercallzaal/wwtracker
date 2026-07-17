@@ -21,6 +21,8 @@ export default function ZaoVitals() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 14 }}>
         <Tile label="FRACTAL WEEKS" value="100+" sub="consecutive governance cycles" />
+        <Tile label="ON-CHAIN SETTLED" value="63 wks" sub="Blockscout-verified" />
+        <Tile label="RESPECT HOLDERS" value="157" sub="on-chain (OG + ZOR)" />
         <Tile label="WW BATTLES" value={S.totalShown.toLocaleString()} sub="on WaveWarZ since launch" />
         <Tile label="TOTAL VOLUME" value={`${S.totalVolumeSol.toFixed(0)} ◎`} sub={usd(S.totalVolumeSol)} />
         <Tile label="ARTIST PAYOUTS" value={`${S.artistPayoutsSol.toFixed(2)} ◎`} sub={usd(S.artistPayoutsSol)} />
@@ -38,7 +40,9 @@ export default function ZaoVitals() {
         Battles / volume / payouts: live from wavewarz.info/api/public/stats.
         Charity: PolyRaiders Holiday Heat (Dec 2024) + Love Song Benefit (Feb 2025),
         to HuRya Empowerment Foundation. Fractals: 100+ consecutive weekly governance
-        cycles using the Respect game (same mechanism as Optimism). Source:
+        cycles using the Respect game (same mechanism as Optimism); 63 weeks with
+        verified on-chain Respect settlement (Blockscout, Optimism Mainnet). Respect
+        holders: 157 unique (OG ERC-20 + ZOR ERC-1155, verified 2026-07-17). Source:
         thezao.com / ZAOOS public record.
       </p>
     </div>
