@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { C, metaLabel } from "@/lib/theme";
-import { AUDIUS_ID_BY_HANDLE } from "@/lib/artists";
+import { AUDIUS_ID_BY_HANDLE, ROSTER } from "@/lib/artists";
 import { songsByArtist } from "@/lib/songs";
 import { LEADERBOARD } from "@/lib/leaderboard";
 
@@ -62,6 +62,7 @@ export default function ArtistPage() {
     return songsByArtist(k);
   }, [handle]);
   const lb = useMemo(() => LEADERBOARD.find((a) => a.handle.toLowerCase() === handle.toLowerCase()), [handle]);
+  const rosterNote = useMemo(() => ROSTER.find((a) => a.handle.toLowerCase() === handle.toLowerCase())?.note ?? null, [handle]);
 
   const [user, setUser] = useState<AudiusUser | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -135,6 +136,11 @@ export default function ArtistPage() {
           <div style={{ fontFamily: C.mono, fontSize: 13, color: C.dim }}>
             @{handle}{lb ? ` - leaderboard #${lb.rank}` : ""}
           </div>
+          {rosterNote && (
+            <div style={{ fontFamily: C.mono, fontSize: 12, color: C.dim, marginTop: 4, fontStyle: "italic" }}>
+              {rosterNote}
+            </div>
+          )}
         </div>
       </header>
 
