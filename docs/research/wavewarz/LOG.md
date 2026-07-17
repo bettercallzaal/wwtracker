@@ -2,6 +2,8 @@
 
 One line per hourly run: what was tried, and whether it worked or got stuck.
 
+2026-07-17 ~01:36 UTC - Verified follow-up run (WebFetch confirmed working via control fetch of wavewarz.info/api/public/stats). Confirmed: Telegram `wavewarzclipshq` (Clippers HQ submission channel, via wavewarz.info), Kata7yst Audius ID G2wYPPx, YouTube @wavewarz (8.3k subs, verified), ltaw3.thezao.com redirect (confirmed live). Stats snapshot refreshed to 2026-07-17: 521.75 SOL / 1,241 battles (1,043 quick + 162 main + 36 community) / 127.34 SOL claimed by traders (939 withdrawals). New unverified leads flagged for Zaal: "Super votes" + "sponsorship auctions" mentioned on thezao.com/about but NOT on wavewarz.info — do not add to product docs until confirmed. Wrote `2026-07-17-community-verified-follow-up.md`.
+
 2026-07-15 09:05 UTC - Tried community events/charity-initiatives/Discord-Telegram angle via WebSearch+WebFetch - stuck-because-WebFetch returned 403 on every URL this run (including unrelated control domains like en.wikipedia.org), so no page could be fetched/verified; only WebSearch snippets were available. Wrote up snippet-only leads under Unverified and flagged the tooling outage as the real blocker for future runs.
 
 # WaveWarZ community research - run log
