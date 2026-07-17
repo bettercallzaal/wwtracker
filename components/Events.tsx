@@ -131,6 +131,26 @@ export default function Events() {
         />
       </Section>
 
+      <Section label="THIRD-PARTY COVERAGE">
+        <p style={{ margin: "0 0 10px", color: C.text, lineHeight: 1.6, fontSize: 14 }}>
+          Independent media and community coverage — verified via YouTube oEmbed.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <a
+            href="https://www.youtube.com/watch?v=rx0PeGv8lPI"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: C.text, fontFamily: C.mono, fontSize: 12, textDecoration: "none" }}
+          >
+            &#8226; Crypto Magic Hour EP. 50 — @VeVeMagic (⭕️VeVeMagic🏰){" "}
+            <span style={{ color: C.accent }}>&#8599;</span>
+          </a>
+        </div>
+        <p style={{ ...metaLabel, fontSize: 11, marginTop: 10 }}>
+          Not affiliated with WaveWarZ. Independent third-party coverage. Verified 2026-07-17.
+        </p>
+      </Section>
+
       <Section label="RECENT">
         <ul style={listStyle}>
           <li>Mar 2026 - roadmap update from the WaveWarZ X account.</li>
