@@ -20,6 +20,8 @@ import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
 import Faq from "./Faq";
+import HotStreaks from "./HotStreaks";
+import WinRateLeaderboard from "./WinRateLeaderboard";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
 // gets deeper the further you scroll - explainer, then the treasury floor, then
@@ -92,7 +94,7 @@ const SECTIONS: Section[] = [
     id: "traders",
     n: "07",
     title: "Who's trading",
-    intro: "the leaderboard, the full trader table, and a lookup for any wallet's own PnL.",
+    intro: "the leaderboard, the full trader table, a lookup for any wallet's own PnL, plus win-rate standings and hot streaks from tagged battles.",
     render: () => (
       <>
         <Leaderboard />
@@ -100,6 +102,10 @@ const SECTIONS: Section[] = [
         <Traders />
         <div style={{ height: 24 }} />
         <TraderScorecard />
+        <div style={{ height: 24 }} />
+        <WinRateLeaderboard />
+        <div style={{ height: 24 }} />
+        <HotStreaks />
       </>
     ),
   },
