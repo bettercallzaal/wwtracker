@@ -6,6 +6,7 @@ import { DATA_AS_OF } from "@/lib/freshness";
 import { FLOOR_SOL } from "@/lib/config";
 import BalanceDashboard from "./BalanceDashboard";
 import RevenueFloor from "./RevenueFloor";
+import WwNow from "./WwNow";
 import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
 import TraderScorecard from "./TraderScorecard";
@@ -46,12 +47,14 @@ const SECTIONS: Section[] = [
     id: "what",
     n: "01",
     title: "What WaveWarZ is",
-    intro: "start here. what the platform is, and how a single song-vs-song battle actually plays out on-chain.",
+    intro: "start here. what the platform is, how a single song-vs-song battle plays out on-chain, and the live numbers that prove it's real.",
     render: () => (
       <>
         <AboutWaveWarZ />
         <div style={{ height: 24 }} />
         <HowItWorks />
+        <div style={{ height: 24 }} />
+        <WwNow />
       </>
     ),
   },
