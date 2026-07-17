@@ -33,6 +33,10 @@ const FAQS: QA[] = [
     a: "1% of trading volume per side on every trade, plus a settlement bonus - the winning artist gets 5% of the loser pool and the losing artist gets 2%.",
   },
   {
+    q: "How do I become a WaveWarZ artist?",
+    a: "Reach out to the team on X (@WaveWarZ) or join the live Telegram community. Artists need a track ready to battle and an Audius profile (the platform uses Audius for streaming). Selection is at the team's discretion — joining the live sessions and showing your music in the community is the fastest path in.",
+  },
+  {
     q: "What is the 3.5 SOL 'floor'?",
     a: "The treasury wallet keeps roughly 3.5 SOL as an operating floor; the founders periodically skim the excess above it. On-chain the treasury's lifetime net lands right around 3.5 SOL.",
   },
