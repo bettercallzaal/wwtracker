@@ -137,6 +137,7 @@ export default function Events() {
           <li>Apr 2026 - artist interview series (Kata7yst). <a href="https://www.youtube.com/watch?v=ZU0ga5LRdyU" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>Watch &#8599;</a></li>
           <li>Mar 2026 - artist interview series (XTinct). <a href="https://www.youtube.com/watch?v=FmrzjYtdF6A" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>Watch &#8599;</a></li>
           <li>Mar 2026 - roadmap update from the WaveWarZ X account.</li>
+          <li>Dec 2024 - ZAO-CHELLA at Art Basel, Wynwood Miami — first confirmed IRL WaveWarZ event (WaveWarZ LIVE: Hurric4n3ike vs JANGO UU rematch).</li>
         </ul>
         <p style={{ ...metaLabel, fontSize: 11 }}>
           Verified content from wavewarz.info + official channels; details evolve.
