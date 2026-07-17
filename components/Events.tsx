@@ -8,6 +8,7 @@ const VIDEOS: { id: string; title: string }[] = [
   { id: "cH-ehQhkCqo", title: "WaveWarZ Demo - Colosseum Frontier Hackathon (Solana)" },
   { id: "ODeO-Mi0bpk", title: "WaveWarZ Colosseum Frontier Hackathon Pitch" },
   { id: "VJUaD1s1ziU", title: "Colosseum by @r3plic4nt206 - music video (made with Claude Code by candy)" },
+  { id: "ZU0ga5LRdyU", title: "WaveWarZ Artist Interview: Kata7yst" },
   { id: "FBsmFSA9TFg", title: "If Your Fans Aren't Spending Money, This is Why" },
   { id: "1gyD0NVSljE", title: "There's Always a Moment the Outcome is Obvious" },
 ];
