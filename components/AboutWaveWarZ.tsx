@@ -130,6 +130,7 @@ export default function AboutWaveWarZ() {
           <Link href="https://www.youtube.com/@WaveWarZ" label="YouTube" />
           <Link href="https://www.instagram.com/wavewarz" label="Instagram" />
           <Link href="https://thezao.com" label="thezao.com" />
+          <Link href="https://warpcast.com/~/channel/zao" label="Farcaster /zao" />
         </div>
       </Section>
     </div>
