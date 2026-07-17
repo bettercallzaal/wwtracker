@@ -14,6 +14,10 @@ import HowItWorks from "./HowItWorks";
 import Ecosystem from "./Ecosystem";
 import Events from "./Events";
 import Songs from "./Songs";
+import SongArena from "./SongArena";
+import SongRecords from "./SongRecords";
+import SongRematches from "./SongRematches";
+import TopRivalries from "./TopRivalries";
 import Artists from "./Artists";
 import Music from "./Music";
 import Leaderboard from "./Leaderboard";
@@ -107,14 +111,22 @@ const SECTIONS: Section[] = [
     id: "music",
     n: "08",
     title: "The music",
-    intro: "the songs and artists the battles are built on - Audius play counts and inline play.",
+    intro: "the songs and artists behind the battles — charting tracks, Audius plays, song arena rankings, battle records for tracks with 3+ fights, every rematch pair, and artist series records.",
     render: () => (
       <>
         <Songs />
         <div style={{ height: 24 }} />
+        <SongArena />
+        <div style={{ height: 24 }} />
         <Artists />
         <div style={{ height: 24 }} />
         <Music />
+        <div style={{ height: 24 }} />
+        <SongRecords />
+        <div style={{ height: 24 }} />
+        <SongRematches />
+        <div style={{ height: 24 }} />
+        <TopRivalries />
       </>
     ),
   },
