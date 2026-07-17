@@ -20,6 +20,7 @@ import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
 import Faq from "./Faq";
+import ZaoVitals from "./ZaoVitals";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
 // gets deeper the further you scroll - explainer, then the treasury floor, then
@@ -125,6 +126,8 @@ const SECTIONS: Section[] = [
     intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
     render: () => (
       <>
+        <ZaoVitals />
+        <div style={{ height: 24 }} />
         <Ecosystem />
         <div style={{ height: 24 }} />
         <Events />
