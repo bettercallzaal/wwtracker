@@ -4,6 +4,7 @@ import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
 import { usd } from "@/lib/price";
 import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY } from "@/lib/config";
+import { BATTLE_STATS as S } from "@/lib/battles";
 
 const fmt = (n: number, dp = 0) =>
   n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -43,8 +44,8 @@ export default function AboutWaveWarZ() {
         </Grid>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
           since {ps.firstDay} - snapshot {WW.generatedAt}. On-chain vs the
-          wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~1,073);
-          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ buy volume (app 483.88 ◎, both sides).` : ""}
+          wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~{S.totalShown.toLocaleString()});
+          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ buy volume (app ${S.totalVolumeSol.toFixed(2)} ◎, both sides).` : ""}
         </p>
       </Section>
 
