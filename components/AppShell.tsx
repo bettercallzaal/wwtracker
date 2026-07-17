@@ -6,6 +6,9 @@ import { DATA_AS_OF } from "@/lib/freshness";
 import BalanceDashboard from "./BalanceDashboard";
 import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
+import { FLOOR_SOL } from "@/lib/config";
+import RevenueFloor from "./RevenueFloor";
+import WwNow from "./WwNow";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
 import Profitability from "./Profitability";
@@ -44,12 +47,14 @@ const SECTIONS: Section[] = [
     id: "what",
     n: "01",
     title: "What WaveWarZ is",
-    intro: "start here. what the platform is, and how a single song-vs-song battle actually plays out on-chain.",
+    intro: "start here. what the platform is, how a single song-vs-song battle plays out on-chain, and the live numbers that prove it's real.",
     render: () => (
       <>
         <AboutWaveWarZ />
         <div style={{ height: 24 }} />
         <HowItWorks />
+        <div style={{ height: 24 }} />
+        <WwNow />
       </>
     ),
   },
@@ -57,8 +62,14 @@ const SECTIONS: Section[] = [
     id: "floor",
     n: "02",
     title: "The treasury floor",
-    intro: "the headline. the platform wallet's daily balance held against a 3.5 SOL operating floor - live from Dune.",
-    render: () => <BalanceDashboard />,
+    intro: `the headline. the platform wallet's daily balance held against a ${FLOOR_SOL} SOL operating floor — plus a live read on how much revenue the platform has earned above it.`,
+    render: () => (
+      <>
+        <BalanceDashboard />
+        <div style={{ height: 24 }} />
+        <RevenueFloor />
+      </>
+    ),
   },
   {
     id: "growth",
