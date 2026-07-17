@@ -228,9 +228,68 @@ Rule: never display an Audius match that isn't confirmed by handle+title.
 - Identify the ops-budget wallet and quantify the weekly skim off the 3.5 floor.
 - Confirm the fee/settlement percentages against a real settled battle's vault.
 
+## 8. Community intelligence (2026-07-16)
+
+Findings from wavewarz.info direct fetch + WebSearch (X.com auth-walled, YouTube body inaccessible).
+
+### Team
+
+- **Ikechi Nwachukwu (Hurric4n3Ike)** — founder, lead developer, also a battle artist.
+- **Zaal Panthaki (BetterCallZaal)** — co-founder, head of ecosystem.
+- **Samantha Kinney (candy / CandyToyBox)** — design, promo, marketing; LinkedIn
+  profile at linkedin.com/in/wave-warz. Likely co-host for live sessions.
+
+### Live programming (VERIFIED, wavewarz.info)
+
+- **Nightly battles:** Quick Battles ~8:30 PM EST weeknights, 30-second final trading window.
+- **Daily AMA / live session:** "LIVE MUSIC & LIVE TRADING" X Spaces + YouTube simultaneous
+  stream, Mon-Fri ~11 AM EST. Recurring, not special-occasion (phrasing: "tonight's music x
+  trading sesh"). X Space archived at x.com/i/spaces/1MnGnwRXrEMJO.
+- **Artist Interviews 2026 (YouTube playlist):** XTinct (~Mar 9), Kata7yst (~Apr 12). More
+  entries likely given the playlist exists.
+- **YouTube Shorts:** tagged #founderlife #musiccommunity — covers behind-the-scenes content.
+
+### Tournaments in active recruitment (VERIFIED, wavewarz.info)
+
+- **16-artist single-elimination bracket** — instant SOL payouts per round, artists recruiting.
+- **AI Artist Tournament** — 8-16 AI-generated tracks, community-voted judging. Separate
+  format from V2 human-vs-human battles; signals the AI judging layer (DJ Wavy) is expanding.
+
+### Clippers program (VERIFIED, wavewarz.info)
+
+Formal rewards program: community members submit battle highlight clips → distributed via
+YouTube, X, and TikTok → points rewards. Submission via Telegram. This is the primary
+structured form of community content. At least one organic external clipper also found
+(@Where4ArtThouRomeo / @Sir_Cut_Em_Up, shared "Visionz vs. Rome" independently).
+
+### DJ Wavy public visibility
+
+Zero public discourse on indexed platforms (Reddit, X search, Medium, Substack) across a
+dozen search variations. No community members are publicly praising or criticizing AI judge
+decisions. Likely discussion is confined to private Discord/Telegram (no public link found).
+LinkedIn snippet confirms audiences "react to judge feedback" during battles — the verdict
+is surfaced to users, not just a back-end score.
+
+### Roster intelligence (VERIFIED via wavewarz.info, Jul 2026)
+
+Active songs at time of fetch: GodclouD ("Fuck yo feelingZ" 3W-1L, "KILLING FLOOR" 1W-1L),
+BennyJ504WaveWarz ("Saturday in LA Featuring DopeStilo" 2W-0L, "Modern Love" 0W-1L),
+frameworkfortune ("ENTERLUDE" 0W-1L — not in the top-48, a newer/lower-ranked entrant).
+
+The DopeStilo collab credit on BennyJ504's track is the first documented featured-artist
+collaboration rather than solo battle entry.
+
+### Charity battle (Dec 2025 / early 2026)
+
+Raised $270+ for @polyraiders (girl-child education, Nigeria). Format: "Indies vs. Classics"
+(original tracks vs. cover versions of known songs). Participants: MetaVerseSlim, Cryptogodlui
+("AI Lui Love"), InkSpireMusic. InkSpireMusic is a non-top-48 artist active on X, Spotify,
+Apple Music, and TIDAL.
+
 ## Sources
 
 - wavewarz.com, wavewarz.info, x.com/WaveWarZ, youtube.com/@WaveWarZ
 - Program: github.com/hurric4n3ike/wavewagerz (IDL); apps:
   github.com/CandyToyBox/wavewarz-intelligence, /analytics-wave-warz
 - Dune (this project), Solscan.
+- Community research: docs/research/wavewarz/ (2026-07-15 — 2026-07-16).
