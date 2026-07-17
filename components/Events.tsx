@@ -34,6 +34,7 @@ export default function Events() {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
           <Link href="https://x.com/WaveWarZ" label="X / @WaveWarZ" />
           <Link href="https://www.youtube.com/@WaveWarZ" label="YouTube" />
+          <Link href="https://t.me/wavewarzclipshq" label="Telegram clips" />
         </div>
       </Section>
 
