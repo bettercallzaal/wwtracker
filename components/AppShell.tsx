@@ -20,6 +20,7 @@ import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
 import ArtistEarnings from "./ArtistEarnings";
+import WwMedia from "./WwMedia";
 import Faq from "./Faq";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
@@ -132,6 +133,8 @@ const SECTIONS: Section[] = [
     intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
     render: () => (
       <>
+        <WwMedia />
+        <div style={{ height: 24 }} />
         <Ecosystem />
         <div style={{ height: 24 }} />
         <Events />
