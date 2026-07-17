@@ -21,6 +21,7 @@ import Traders from "./Traders";
 import Battles from "./Battles";
 import SongArena from "./SongArena";
 import SongRecords from "./SongRecords";
+import SongRematches from "./SongRematches";
 import Faq from "./Faq";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
@@ -109,7 +110,7 @@ const SECTIONS: Section[] = [
     id: "music",
     n: "08",
     title: "The music",
-    intro: "the songs and artists behind the battles — charting tracks, Audius plays, song arena rankings, and complete battle records for every track that has fought 3+ times.",
+    intro: "the songs and artists behind the battles — charting tracks, Audius plays, song arena rankings, battle records for tracks with 3+ fights, and every rematch pair.",
     render: () => (
       <>
         <Songs />
@@ -121,6 +122,8 @@ const SECTIONS: Section[] = [
         <Music />
         <div style={{ height: 24 }} />
         <SongRecords />
+        <div style={{ height: 24 }} />
+        <SongRematches />
       </>
     ),
   },
