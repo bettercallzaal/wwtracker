@@ -41,7 +41,7 @@ describe("RECENT_BATTLES", () => {
 
   it("every entry has the expected shape", () => {
     for (const b of RECENT_BATTLES) {
-      expect(["MAIN", "QUICK"]).toContain(b.type);
+      expect(["MAIN", "QUICK", "COMMUNITY"]).toContain(b.type);
       expect(typeof b.a).toBe("string");
       expect(typeof b.b).toBe("string");
       expect(typeof b.winner).toBe("string");
