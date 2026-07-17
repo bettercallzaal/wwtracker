@@ -20,6 +20,7 @@ import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
 import Faq from "./Faq";
+import PlatformSummary from "./PlatformSummary";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
 // gets deeper the further you scroll - explainer, then the treasury floor, then
@@ -37,8 +38,14 @@ const SECTIONS: Section[] = [
     id: "overview",
     n: "00",
     title: "The whole run, at a glance",
-    intro: "every on-chain series in one place - volume, treasury, battles, trades. each line is scaled to its own peak so they share one axis; toggle any of them and hover for the real number.",
-    render: () => <OnChainProof />,
+    intro: "every on-chain series in one place - volume, treasury, battles, trades. each line is scaled to its own peak so they share one axis; toggle any of them and hover for the real number. key facts below.",
+    render: () => (
+      <>
+        <OnChainProof />
+        <div style={{ height: 24 }} />
+        <PlatformSummary />
+      </>
+    ),
   },
   {
     id: "what",
