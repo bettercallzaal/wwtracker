@@ -132,8 +132,8 @@ tracked trader = `4aY1...`.
   bonding-curve math; differs from the stats app's per-battle realized figure.
 - **Platform buy volume** - join `account_activity` (signer's negative delta) to
   the set of `buyShares` txs by `tx_id`+`tx_signer`. Sum = SOL committed on buys
-  (324.62; includes ~1.5% fees + gas). Buy-side only; the app reports 483.88
-  both-sides.
+  (324.62; includes ~1.5% fees + gas). Buy-side only; the app reports 521.74 SOL
+  both-sides (snapshot 2026-07-16; was 483.88 at the 2026-06-14 Dune snapshot).
 - **Monthly PnL / biggest moves / footprint** - all derived from the same per-tx
   delta list.
 
