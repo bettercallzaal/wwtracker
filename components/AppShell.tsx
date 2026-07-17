@@ -16,10 +16,16 @@ import Events from "./Events";
 import Songs from "./Songs";
 import Artists from "./Artists";
 import Music from "./Music";
+import SongArena from "./SongArena";
 import SongRecords from "./SongRecords";
+import SongRematches from "./SongRematches";
+import TopRivalries from "./TopRivalries";
 import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
+import HotStreaks from "./HotStreaks";
+import WinRateLeaderboard from "./WinRateLeaderboard";
+import ArtistVolume from "./ArtistVolume";
 import ArtistStandings from "./ArtistStandings";
 import Faq from "./Faq";
 
@@ -94,7 +100,7 @@ const SECTIONS: Section[] = [
     id: "traders",
     n: "07",
     title: "Who's trading",
-    intro: "the leaderboard, the full trader table, a lookup for any wallet's own PnL, and the competitive standings across all tagged artists.",
+    intro: "the leaderboard, the full trader table, a lookup for any wallet's own PnL, plus win-rate standings, hot streaks, SOL volume by artist, and full W/L standings for all tagged handles.",
     render: () => (
       <>
         <Leaderboard />
@@ -102,6 +108,12 @@ const SECTIONS: Section[] = [
         <Traders />
         <div style={{ height: 24 }} />
         <TraderScorecard />
+        <div style={{ height: 24 }} />
+        <WinRateLeaderboard />
+        <div style={{ height: 24 }} />
+        <HotStreaks />
+        <div style={{ height: 24 }} />
+        <ArtistVolume />
         <div style={{ height: 24 }} />
         <ArtistStandings />
       </>
@@ -111,16 +123,22 @@ const SECTIONS: Section[] = [
     id: "music",
     n: "08",
     title: "The music",
-    intro: "the songs and artists the battles are built on - plus the full battle record for every track that has fought 3+ times.",
+    intro: "the songs and artists behind the battles — charting tracks, Audius plays, song arena rankings, battle records for tracks with 3+ fights, every rematch pair, and artist series records.",
     render: () => (
       <>
         <Songs />
+        <div style={{ height: 24 }} />
+        <SongArena />
         <div style={{ height: 24 }} />
         <Artists />
         <div style={{ height: 24 }} />
         <Music />
         <div style={{ height: 24 }} />
         <SongRecords />
+        <div style={{ height: 24 }} />
+        <SongRematches />
+        <div style={{ height: 24 }} />
+        <TopRivalries />
       </>
     ),
   },
