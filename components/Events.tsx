@@ -134,13 +134,16 @@ export default function Events() {
       <Section label="UPCOMING">
         <ul style={listStyle}>
           <li>
-            <b>ZAOstock</b> — Oct 3, 2026 · Ellsworth, ME.
-            The ZAO's flagship IRL event: music, art, onchain culture.{" "}
+            <b>ZAOstock</b> — Oct 3, 2026 · Franklin St Parklet, Ellsworth, Maine.
+            The ZAO&apos;s flagship IRL music festival — WaveWarZ is the music-battle layer.{" "}
             <a href="https://zaostock.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
-              zaostock.com ↗
+              zaostock.com &#8599;
             </a>
           </li>
         </ul>
+        <p style={{ ...metaLabel, fontSize: 11, marginTop: 10 }}>
+          Source: thezao.com / zaostock.com. Details subject to change.
+        </p>
       </Section>
 
       <Section label="RECENT">
