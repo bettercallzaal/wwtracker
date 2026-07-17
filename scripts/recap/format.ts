@@ -126,13 +126,22 @@ export function buildWeeklyRecap(
   }
   const mostActive = [...artistCounts.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
 
+  const topWinnerSide = topVolume ? winnerSide(topVolume) : null;
+  const topWinnerName = topVolume
+    ? (topWinnerSide === "a"
+        ? battleName(topVolume.aHandle, topVolume.a)
+        : topWinnerSide === "b"
+          ? battleName(topVolume.bHandle, topVolume.b)
+          : topVolume.winner)
+    : null;
+
   const dataUsed = [
     `Battles this week: ${battles.length} (source: public/ww-battles.json, ${weekStart} to ${weekEnd})`,
     `Total volume: ${totalVol.toFixed(2)} SOL (source: same)`,
   ];
   if (topVolume) {
     dataUsed.push(
-      `Top-volume battle: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)}, ${topVolume.vol.toFixed(2)} SOL (source: same, battle_id ${topVolume.id})`,
+      `Top-volume battle: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)}, ${topVolume.vol.toFixed(2)} SOL — ${topWinnerName} wins (source: same, battle_id ${topVolume.id})`,
     );
   }
   if (closestMargin) {
@@ -144,8 +153,8 @@ export function buildWeeklyRecap(
     dataUsed.push(`Most active artist: ${mostActive[0]}, ${mostActive[1]} battle(s) (source: same)`);
   }
 
-  const farcaster = `WaveWarZ weekly recap, ${weekStart} to ${weekEnd}. ${battles.length} battles, ${totalVol.toFixed(2)} SOL total volume.${topVolume ? ` Biggest: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)}.` : ""} ${TAG_LINE}`;
-  const x = `WaveWarZ week of ${weekStart}: ${battles.length} battles, ${totalVol.toFixed(2)} SOL. ${TAG_LINE}`;
+  const farcaster = `WaveWarZ weekly recap, ${weekStart} to ${weekEnd}. ${battles.length} battles, ${totalVol.toFixed(2)} SOL total volume.${topVolume ? ` Biggest: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)} — ${topWinnerName} wins.` : ""} ${TAG_LINE}`;
+  const x = `WaveWarZ week of ${weekStart}: ${battles.length} battles, ${totalVol.toFixed(2)} SOL.${topVolume ? ` Top: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)} — ${topWinnerName} wins.` : ""} ${TAG_LINE}`;
 
   return {
     farcaster,

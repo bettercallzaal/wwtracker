@@ -114,6 +114,24 @@ describe("buildWeeklyRecap", () => {
     expect(draft.dataUsed.some((l) => l.includes("Top-volume battle"))).toBe(true);
   });
 
+  it("includes the winner in the Farcaster and X drafts for the top-volume battle", () => {
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    // mainEvent is the top-volume battle; winner is Geek Myth (GeEkMyTh_ETH)
+    expect(draft.farcaster).toContain("Geek Myth (GeEkMyTh_ETH) wins");
+    expect(draft.x).toContain("Geek Myth (GeEkMyTh_ETH) wins");
+  });
+
+  it("includes the winner in dataUsed for the top-volume battle", () => {
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.dataUsed.some((l) => l.includes("Top-volume battle") && l.includes("Geek Myth (GeEkMyTh_ETH) wins"))).toBe(true);
+  });
+
+  it("X draft includes the top battle, not just count+vol", () => {
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.x).toContain("Top:");
+    expect(draft.x).toContain("Geek Myth");
+  });
+
   it("flags leaderboard movement as not included", () => {
     const draft = buildWeeklyRecap([mainEvent], "2026-06-09", "2026-06-15", context);
     expect(draft.notIncluded.some((l) => l.includes("Leaderboard movement"))).toBe(true);
