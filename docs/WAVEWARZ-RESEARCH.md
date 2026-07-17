@@ -258,9 +258,10 @@ Findings from wavewarz.info direct fetch + WebSearch (X.com auth-walled, YouTube
 ### Clippers program (VERIFIED, wavewarz.info)
 
 Formal rewards program: community members submit battle highlight clips → distributed via
-YouTube, X, and TikTok → points rewards. Submission via Telegram. This is the primary
-structured form of community content. At least one organic external clipper also found
-(@Where4ArtThouRomeo / @Sir_Cut_Em_Up, shared "Visionz vs. Rome" independently).
+YouTube, X, and TikTok → points rewards. Submission via Telegram channel **`wavewarzclipshq`**
+(confirmed 2026-07-17 via wavewarz.info). This is the primary structured form of community
+content. At least one organic external clipper also found (@Where4ArtThouRomeo /
+@Sir_Cut_Em_Up, shared "Visionz vs. Rome" independently).
 
 ### DJ Wavy public visibility
 
