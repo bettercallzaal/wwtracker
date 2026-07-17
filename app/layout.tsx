@@ -61,6 +61,25 @@ const jsonLd = {
   "codeRepository": "https://github.com/bettercallzaal/wwtracker",
 };
 
+const datasetLd = {
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "WaveWarZ Battle Data",
+  "description": "1,100+ on-chain music battles on Solana from May 2025 — songs, artists, SOL volume, trader P&L, and artist payouts, all settled by the WaveWarZ program (9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo). Published and maintained by The ZAO.",
+  "url": "https://wwtracker.vercel.app",
+  "creator": {
+    "@type": "Organization",
+    "name": "The ZAO",
+    "alternateName": "ZTalent Artist Organization",
+    "url": "https://thezao.com",
+  },
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "datePublished": "2025-05-01",
+  "keywords": ["music battles", "WaveWarZ", "Solana", "on-chain analytics", "artist payouts", "prediction market"],
+  "measurementTechnique": "Direct on-chain program instruction decoding via Dune Analytics + wavewarz-intelligence feed",
+  "variableMeasured": ["battle count", "SOL volume", "artist payouts", "platform revenue", "trader claims"],
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -72,6 +91,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(datasetLd) }}
         />
       </head>
       <body>{children}</body>
