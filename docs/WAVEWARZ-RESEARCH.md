@@ -148,7 +148,7 @@ Datasets (from program `9TUf`, since 2025-08-01; snapshot 2026-06-14):
 - **122 unique traders** (distinct buyShares signers) - the real trader count.
 
 **Platform buy volume:** 324.62 SOL committed by traders on buyShares txs (peak
-28.44 SOL on 2026-03-02). Buy-side only; candy's app reports 483.88 SOL total
+28.44 SOL on 2026-03-02). Buy-side only; wavewarz-intelligence reports 521.75 SOL total
 (both sides) - same ballpark. (Per-trader volume leaderboard query times out on
 the free tier - deferred.)
 
