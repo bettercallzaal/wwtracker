@@ -131,6 +131,18 @@ export default function Events() {
         />
       </Section>
 
+      <Section label="UPCOMING">
+        <ul style={listStyle}>
+          <li>
+            <b>ZAOstock</b> — Oct 3, 2026 · Ellsworth, ME.
+            The ZAO's flagship IRL event: music, art, onchain culture.{" "}
+            <a href="https://zaostock.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
+              zaostock.com ↗
+            </a>
+          </li>
+        </ul>
+      </Section>
+
       <Section label="RECENT">
         <ul style={listStyle}>
           <li>Mar 2026 - roadmap update from the WaveWarZ X account.</li>
