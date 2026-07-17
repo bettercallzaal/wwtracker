@@ -5,6 +5,7 @@ import { C } from "@/lib/theme";
 import { DATA_AS_OF } from "@/lib/freshness";
 import BalanceDashboard from "./BalanceDashboard";
 import OnChainProof from "./OnChainProof";
+import PlatformSummary from "./PlatformSummary";
 import PlatformGrowth from "./PlatformGrowth";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
@@ -37,8 +38,14 @@ const SECTIONS: Section[] = [
     id: "overview",
     n: "00",
     title: "The whole run, at a glance",
-    intro: "every on-chain series in one place - volume, treasury, battles, trades. each line is scaled to its own peak so they share one axis; toggle any of them and hover for the real number.",
-    render: () => <OnChainProof />,
+    intro: "every on-chain series in one place - volume, treasury, battles, trades. each line is scaled to its own peak so they share one axis; toggle any of them and hover for the real number. key facts below.",
+    render: () => (
+      <>
+        <OnChainProof />
+        <div style={{ height: 24 }} />
+        <PlatformSummary />
+      </>
+    ),
   },
   {
     id: "what",
