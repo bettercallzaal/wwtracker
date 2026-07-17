@@ -31,6 +31,28 @@ interface MonthStat {
   vol: number;
 }
 
+interface DayStat {
+  label: string;
+  battles: number;
+  vol: number;
+}
+
+const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function toDayStats(battles: { date?: string; vol?: number }[]): DayStat[] {
+  const acc: { battles: number; vol: number }[] = Array.from({ length: 7 }, () => ({ battles: 0, vol: 0 }));
+  for (const b of battles) {
+    if (!b.date) continue;
+    const dt = new Date(Date.parse(b.date));
+    if (isNaN(dt.getTime())) continue;
+    // getDay() returns 0=Sun, so remap to 0=Mon..6=Sun
+    const idx = (dt.getDay() + 6) % 7;
+    acc[idx].battles += 1;
+    acc[idx].vol += b.vol ?? 0;
+  }
+  return acc.map((v, i) => ({ label: DOW_LABELS[i], ...v }));
+}
+
 function toMonthStats(battles: { date?: string; vol?: number }[]): MonthStat[] {
   const map = new Map<string, { battles: number; vol: number }>();
   for (const b of battles) {
@@ -57,6 +79,7 @@ export default function PlatformGrowth() {
   const [basis, setBasis] = useState<Basis>("both");
   const [error, setError] = useState<string | null>(null);
   const [monthStats, setMonthStats] = useState<MonthStat[] | null>(null);
+  const [dayStats, setDayStats] = useState<DayStat[] | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -66,8 +89,12 @@ export default function PlatformGrowth() {
       .catch(() => alive && setError("Could not load platform volume."));
     fetch("/ww-battles.json")
       .then((r) => r.json())
-      .then((d: { date?: string; vol?: number }[]) => alive && setMonthStats(toMonthStats(d)))
-      .catch(() => alive && setMonthStats([]));
+      .then((d: { date?: string; vol?: number }[]) => {
+        if (!alive) return;
+        setMonthStats(toMonthStats(d));
+        setDayStats(toDayStats(d));
+      })
+      .catch(() => { if (alive) { setMonthStats([]); setDayStats([]); } });
     return () => {
       alive = false;
     };
@@ -177,6 +204,33 @@ export default function PlatformGrowth() {
               </ResponsiveContainer>
             </div>
           </Panel>
+
+          {dayStats && dayStats.length > 0 && (
+            <Panel label="ACTIVITY BY DAY OF WEEK">
+              <div style={{ height: 220 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dayStats} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fill: C.dim, fontSize: 12, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} />
+                    <YAxis tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={32} allowDecimals={false} />
+                    <Tooltip
+                      cursor={{ fill: "rgba(255,194,75,0.08)" }}
+                      contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
+                      labelStyle={{ color: C.dim }}
+                      formatter={(v: number | string, name: string) => [
+                        name === "battles" ? `${v} battles` : `${fmt(Number(v), 2)} ◎`,
+                        name,
+                      ]}
+                    />
+                    <Bar dataKey="battles" fill="#8ab4ff" fillOpacity={0.85} radius={[2, 2, 0, 0]} name="battles" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <p style={{ ...metaLabel, fontSize: 10, marginTop: 8, lineHeight: 1.6 }}>
+                battle count by day of week · Mon = main events day (highest avg vol per battle) · quick battles run weeknights.
+              </p>
+            </Panel>
+          )}
 
           {monthStats && monthStats.length > 0 && (
             <Panel label="BATTLES PER MONTH (from ww-battles.json)">
