@@ -20,6 +20,7 @@ import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
 import WwMedia from "./WwMedia";
+import ZaoVitals from "./ZaoVitals";
 import Faq from "./Faq";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
@@ -123,9 +124,11 @@ const SECTIONS: Section[] = [
     id: "ecosystem",
     n: "09",
     title: "In the ZAO ecosystem",
-    intro: "where WaveWarZ sits in the bigger picture - community channels, events, the ZAO connection, and the questions people ask most.",
+    intro: "where WaveWarZ sits in the bigger picture - the ZAO DAO vitals, community channels, events, and the questions people ask most.",
     render: () => (
       <>
+        <ZaoVitals />
+        <div style={{ height: 24 }} />
         <WwMedia />
         <div style={{ height: 24 }} />
         <Ecosystem />
