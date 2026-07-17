@@ -27,13 +27,14 @@ export default function Events() {
 
       <Section label="LIVE PROGRAMMING">
         <ul style={listStyle}>
-          <li><b>Quick Battles</b> - weeknights ~8:30 PM EST, with a 30-second final trading window.</li>
-          <li><b>Community AMAs</b> - Monday-Friday ~11:00 AM EST.</li>
-          <li>Primarily on <b>X Spaces</b>; also on YouTube.</li>
+          <li><b>Quick Battles</b> - weeknights ~8:30 PM EST, with a 30-second final trading window. Live on X Spaces + YouTube simulcast.</li>
+          <li><b>Community AMAs</b> - Monday-Friday ~11:00 AM EST. Founders take questions + product feedback directly.</li>
+          <li><b>WaveWarZ Clippers</b> - community battle highlight program: submit clips via Telegram, earn points, approved clips distributed to YouTube / X / TikTok.</li>
         </ul>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
           <Link href="https://x.com/WaveWarZ" label="X / @WaveWarZ" />
           <Link href="https://www.youtube.com/@WaveWarZ" label="YouTube" />
+          <Link href="https://t.me/wavewarzclipshq" label="Telegram clips" />
         </div>
       </Section>
 
@@ -129,6 +130,41 @@ export default function Events() {
           allow="encrypted-media"
           style={{ border: "none", borderRadius: 8 }}
         />
+      </Section>
+
+      <Section label="UPCOMING">
+        <ul style={listStyle}>
+          <li>
+            <b>ZAOstock</b> — Oct 3, 2026 · Franklin St Parklet, Ellsworth, Maine.
+            The ZAO&apos;s flagship IRL music festival — WaveWarZ is the music-battle layer.{" "}
+            <a href="https://zaostock.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
+              zaostock.com &#8599;
+            </a>
+          </li>
+        </ul>
+        <p style={{ ...metaLabel, fontSize: 11, marginTop: 10 }}>
+          Source: thezao.com / zaostock.com. Details subject to change.
+        </p>
+      </Section>
+
+      <Section label="THIRD-PARTY COVERAGE">
+        <p style={{ margin: "0 0 10px", color: C.text, lineHeight: 1.6, fontSize: 14 }}>
+          Independent media and community coverage — verified via YouTube oEmbed.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <a
+            href="https://www.youtube.com/watch?v=rx0PeGv8lPI"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: C.text, fontFamily: C.mono, fontSize: 12, textDecoration: "none" }}
+          >
+            &#8226; Crypto Magic Hour EP. 50 — @VeVeMagic (⭕️VeVeMagic🏰){" "}
+            <span style={{ color: C.accent }}>&#8599;</span>
+          </a>
+        </div>
+        <p style={{ ...metaLabel, fontSize: 11, marginTop: 10 }}>
+          Not affiliated with WaveWarZ. Independent third-party coverage. Verified 2026-07-17.
+        </p>
       </Section>
 
       <Section label="RECENT">
