@@ -286,6 +286,25 @@ Raised $270+ for @polyraiders (girl-child education, Nigeria). Format: "Indies v
 ("AI Lui Love"), InkSpireMusic. InkSpireMusic is a non-top-48 artist active on X, Spotify,
 Apple Music, and TIDAL.
 
+### ZAO ecosystem integration (VERIFIED, GitHub fetch 2026-07-15)
+
+WaveWarZ sits inside The ZAO's app ecosystem and is tracked at the DAO level, not just as an
+external product. From the `bettercallzaal/ZAOOS` repo (fetched 2026-07-15):
+
+- **Live WaveWarZ integration in ZAOOS**: `src/app/(auth)/wavewarz/`, `src/app/api/wavewarz/`
+  (sync, artists, random-stat endpoints), `src/lib/wavewarz/` (scraper, constants, proposals),
+  `src/components/wavewarz/` (`GeneratePostButton`).
+- **43-artist roster**, nightly synced with win/volume stats from the WaveWarZ Intelligence feed.
+- **Auto-generated DAO proposal drafts** from WaveWarZ battle milestones — battle results can
+  trigger DAO proposal language automatically, then be shared to Farcaster via the button.
+- The ZAO itself is described as "a decentralized music community of 188 members on Base,"
+  governed by ORDAO (on-chain reputation DAO), with three-tier governance: ZOUNZ on-chain
+  proposals via Nouns Builder Governor on Base, weekly Snapshot polls, and Supabase-tracked
+  community proposals with 7-day Respect-weighted voting.
+
+This integration is the concrete proof of the "BCZ → ZAO → WaveWarZ" stack: WaveWarZ battles
+are not just a product of the ZAO, they are a source of governance inputs for it.
+
 ## Sources
 
 - wavewarz.com, wavewarz.info, x.com/WaveWarZ, youtube.com/@WaveWarZ
