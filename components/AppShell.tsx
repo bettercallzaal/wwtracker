@@ -9,6 +9,7 @@ import PlatformGrowth from "./PlatformGrowth";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
 import PlatformPulse from "./PlatformPulse";
+import BattleTempo from "./BattleTempo";
 import Profitability from "./Profitability";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
@@ -79,12 +80,14 @@ const SECTIONS: Section[] = [
     id: "analytics",
     n: "05",
     title: "Platform analytics",
-    intro: "the full on-chain picture now - battles, trades, and traders decoded straight from the program.",
+    intro: "the full on-chain picture now - battles, trades, traders decoded from the program, plus monthly tempo and pace signals.",
     render: () => (
       <>
         <PlatformAnalytics />
         <div style={{ height: 24 }} />
         <PlatformPulse />
+        <div style={{ height: 24 }} />
+        <BattleTempo />
       </>
     ),
   },
