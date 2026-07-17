@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { BATTLE_STATS as S } from "@/lib/battles";
+import { DATA_AS_OF } from "@/lib/freshness";
 import { toCsv, downloadCsv } from "@/lib/csv";
 
 interface Battle {
@@ -299,7 +300,7 @@ export default function Battles() {
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
         Full feed scraped from wavewarz.info via paginated render. Winners in
-        green. Rows link to the battle detail. Snapshot 2026-07-16.
+        green. Rows link to the battle detail. Snapshot {DATA_AS_OF}.
       </p>
     </div>
   );
