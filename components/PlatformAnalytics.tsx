@@ -438,6 +438,7 @@ export default function PlatformAnalytics() {
           <li><b>Battles</b>: {fmt(WW.program.battlesCreated)} here = on-chain <i>initializeBattle</i> calls; the Battles tab&apos;s {S.totalShown.toLocaleString()} is the site&apos;s battle count (it groups multi-song main events and excludes test battles).</li>
           <li><b>Traders</b>: {fmt(WW.program.uniqueTraders)} here = unique <i>buyShares</i> signers on-chain; the Traders tab shows the site&apos;s top 101 leaderboard.</li>
           <li><b>Volume</b>: {fmt(WW.volume.total, 0)} ◎ here is buy-side only (SOL committed on buys); the site reports ~{S.totalVolumeSol.toFixed(0)} ◎ counting both buy and sell sides.</li>
+          <li><b>Claims</b>: {fmt(WW.program.claims)} <i>claimShares</i> instruction calls on-chain (Dune); the site reports {S.withdrawalCount} withdrawals totaling {S.traderClaimsSol.toFixed(2)} ◎ — different counting methodology, same underlying action.</li>
         </ul>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>Different measures, all from-chain - not contradictions.</p>
       </Panel>
