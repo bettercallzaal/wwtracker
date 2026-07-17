@@ -6,6 +6,7 @@ import { DATA_AS_OF } from "@/lib/freshness";
 import BalanceDashboard from "./BalanceDashboard";
 import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
+import MilestonesTimeline from "./MilestonesTimeline";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
 import Profitability from "./Profitability";
@@ -64,8 +65,14 @@ const SECTIONS: Section[] = [
     id: "growth",
     n: "03",
     title: "Growth over time",
-    intro: "how the platform has grown since it launched - the shape of the last stretch, not just today's number.",
-    render: () => <PlatformGrowth />,
+    intro: "how the platform has grown since it launched - the shape of the last stretch, plus a timeline of key milestones.",
+    render: () => (
+      <>
+        <PlatformGrowth />
+        <div style={{ height: 24 }} />
+        <MilestonesTimeline />
+      </>
+    ),
   },
   {
     id: "profitability",
