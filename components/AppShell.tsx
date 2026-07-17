@@ -20,6 +20,7 @@ import SongRecords from "./SongRecords";
 import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
+import ArtistStandings from "./ArtistStandings";
 import Faq from "./Faq";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
@@ -93,7 +94,7 @@ const SECTIONS: Section[] = [
     id: "traders",
     n: "07",
     title: "Who's trading",
-    intro: "the leaderboard, the full trader table, and a lookup for any wallet's own PnL.",
+    intro: "the leaderboard, the full trader table, a lookup for any wallet's own PnL, and the competitive standings across all tagged artists.",
     render: () => (
       <>
         <Leaderboard />
@@ -101,6 +102,8 @@ const SECTIONS: Section[] = [
         <Traders />
         <div style={{ height: 24 }} />
         <TraderScorecard />
+        <div style={{ height: 24 }} />
+        <ArtistStandings />
       </>
     ),
   },
