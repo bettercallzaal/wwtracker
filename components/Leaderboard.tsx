@@ -3,6 +3,7 @@
 import { C, metaLabel } from "@/lib/theme";
 import { LEADERBOARD } from "@/lib/leaderboard";
 import { toCsv, downloadCsv } from "@/lib/csv";
+import { DATA_AS_OF } from "@/lib/freshness";
 
 // Artists with a confirmed Audius profile -> link the row to Audius.
 const AUDIUS = new Set([
@@ -98,7 +99,7 @@ export default function Leaderboard() {
       </section>
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        Snapshot from wavewarz.info (2026-06-15). ♪ = confirmed on Audius (row
+        Snapshot from wavewarz.info ({DATA_AS_OF}). ♪ = confirmed on Audius (row
         links to their profile). Charity &amp; spotlight events excluded.
       </p>
     </div>
