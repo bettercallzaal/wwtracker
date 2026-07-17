@@ -16,6 +16,7 @@ import Events from "./Events";
 import Songs from "./Songs";
 import Artists from "./Artists";
 import Music from "./Music";
+import SongRematches from "./SongRematches";
 import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
@@ -107,7 +108,7 @@ const SECTIONS: Section[] = [
     id: "music",
     n: "08",
     title: "The music",
-    intro: "the songs and artists the battles are built on - Audius play counts and inline play.",
+    intro: "the songs and artists the battles are built on - Audius play counts, inline play, and the 65 song pairings with rematches.",
     render: () => (
       <>
         <Songs />
@@ -115,6 +116,8 @@ const SECTIONS: Section[] = [
         <Artists />
         <div style={{ height: 24 }} />
         <Music />
+        <div style={{ height: 24 }} />
+        <SongRematches />
       </>
     ),
   },
