@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
-import { TREASURY_WALLET as TREASURY, TRACKED_TRADER_WALLET as ME } from "@/lib/config";
+import { TREASURY_WALLET as TREASURY, TRACKED_TRADER_WALLET as ME, FLOOR_SOL } from "@/lib/config";
 import { BATTLE_STATS as S } from "@/lib/battles";
 import { DATA_AS_OF } from "@/lib/freshness";
 
@@ -240,7 +240,7 @@ export default function PlatformAnalytics() {
         <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 14 }}>
           <li>
             Treasury nets <b>{fmt(WW.platformStats.treasuryNet, 2)} ◎</b> lifetime -
-            landing on the ~3.5 SOL floor, so the skim discipline holds on-chain.
+            landing on the ~{FLOOR_SOL} SOL floor, so the skim discipline holds on-chain.
           </li>
           <li>
             <b>{fmt(Math.round((WW.program.battlesSettled / Math.max(1, WW.program.battlesCreated)) * 1000) / 10)}%</b>{" "}
