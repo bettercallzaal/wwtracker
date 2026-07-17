@@ -125,7 +125,7 @@ tracked trader = `4aY1...`.
 - **Instruction mix** - decode the 8-byte Anchor discriminator with
   `to_hex(bytearray_substring(data,1,8))` and map to IDL names. All six verified.
   Counts: 1,127 battles created / 1,110 settled, 6,914 buys + 2,131 sells, 2,299
-  claims, 122 unique traders.
+  claims, 122 unique traders (Dune snapshot 2026-06-14; see `lib/wwData.ts.generatedAt`).
 - **Trader PnL (flow-based)** - for every WaveWarZ tx the wallet signs, take its
   `balance_change` on `account_activity`. Cumulative sum = realized net SOL
   (-2.96). Win rate = share of positive-delta txs (35.7%). Independent of the
