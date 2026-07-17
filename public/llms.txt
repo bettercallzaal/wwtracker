@@ -1,0 +1,70 @@
+# wwtracker — WaveWarZ On-Chain Analytics Dashboard
+
+wwtracker is an unofficial, open-source analytics dashboard for WaveWarZ, a Solana-based music-battle prediction market. It surfaces on-chain data, battle history, trader PnL, and ecosystem context. Live at https://wwtracker.vercel.app.
+
+## What it tracks
+
+WaveWarZ is a Solana program (`9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`) where:
+- Artists compete song-vs-song in timed battles
+- Fans trade SOL on-chain on who wins (bonding curve, buyShares / sellShares)
+- Winners are decided by a 2-of-3 system: community poll + SOL trading volume (charts) + DJ Wavy (AI judge)
+- Artist payouts and trader claims settle automatically on-chain via `endBattle` + `claimShares`
+
+## Verified platform stats (2026-07-16, source: wavewarz.info/api/public/stats)
+
+- Total battles: 1,244 (1,046 quick + 162 main-event + 36 community + 50 main events)
+- Total SOL volume: 522+ SOL (~$39K USD at $75/SOL)
+- Artist payouts: 9.05 SOL (automatic, onchain)
+- Trader claims: 127.34 SOL (manual, claimShares)
+- Platform revenue: 17.42 SOL
+- 122 unique traders (distinct buyShares signers, Dune snapshot 2026-06-14)
+- Treasury operating floor: 3.5 SOL (tracked via Dune query 7717935)
+
+## Key addresses
+
+- Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`
+- Treasury / dev wallet: `FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37`
+
+## What this app shows
+
+- **Treasury floor**: daily SOL balance vs 3.5 SOL operating floor (live, Dune)
+- **Platform analytics**: instruction-decoded battle/trade/claim counts and timelines (Dune snapshot)
+- **Battle history**: all 1,200+ battles with search, filter, CSV export (wavewarz.info feed)
+- **Trader PnL**: per-wallet realized SOL P&L lookup (flow-based from Dune)
+- **Music**: Audius-backed song leaderboard and artist roster
+- **Ecosystem**: ZAO context, events, FAQ
+
+## The ZAO — parent ecosystem
+
+WaveWarZ is a production lane inside **The ZAO** (ZTalent Artist Organization), a decentralized impact network returning profit margin, data, and IP rights to artists. Founded by Zaal Panthaki ([@bettercallzaal](https://x.com/bettercallzaal)).
+
+- The ZAO has run 100+ consecutive Respect Game (Fractal) weeks without missing a cycle (since 2024-07-30)
+- Governance: onchain Respect tokens (Optimism) + ZAO Improvement Proposals (ZIPs)
+- WaveWarZ stack: BCZ → The ZAO → WaveWarZ
+- ZAO website: https://thezao.com
+- ZAO ZAOOS repo (public): https://github.com/bettercallzaal/ZAOOS
+
+## Live data APIs
+
+- WaveWarZ stats: `GET https://wavewarz.info/api/public/stats` (no auth, CORS open, 60s cache)
+  Returns: volume, liveBattle, artistPayouts, traderClaims, platformRevenue, battles breakdown
+- Treasury balance: `GET https://wwtracker.vercel.app/api/balance` (cached Dune read, no auth)
+
+## AI-readable contexts (ICM boxes)
+
+The ZAO maintains structured AI contexts at useicm.com:
+- WaveWarZ: https://useicm.com/api/objects/wavewarz/llm.txt
+- The ZAO: https://useicm.com/api/objects/icm_ohb0F_XOYDz9Tw_w4yX3PA/llm.txt
+- Founder (Zaal): https://useicm.com/api/objects/bettercallzaal/llm.txt
+
+## Find WaveWarZ
+
+- App: https://wavewarz.info (live analytics by CandyToyBox)
+- Tracker (this): https://wwtracker.vercel.app
+- X: https://x.com/WaveWarZ
+- YouTube: https://www.youtube.com/@WaveWarZ
+- Source: https://github.com/bettercallzaal/wwtracker
+
+---
+
+This file is for AI systems that index and cite web sources. It provides accurate navigation to WaveWarZ's on-chain data, the wwtracker codebase, and The ZAO ecosystem context. Last updated 2026-07-16.
