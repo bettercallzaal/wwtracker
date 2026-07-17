@@ -16,6 +16,12 @@ interface RawBattle {
   margin: number | null;
 }
 
+interface TypeStat {
+  type: string;
+  count: number;
+  vol: number;
+}
+
 const TOP_N = 25;
 const TYPE_COLOR: Record<string, string> = {
   MAIN: "#c9a0ff",
@@ -25,6 +31,7 @@ const TYPE_COLOR: Record<string, string> = {
 
 export default function BiggestBattles() {
   const [battles, setBattles] = useState<RawBattle[] | null>(null);
+  const [typeStats, setTypeStats] = useState<TypeStat[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -37,6 +44,14 @@ export default function BiggestBattles() {
           .sort((a, b) => b.vol - a.vol)
           .slice(0, TOP_N);
         setBattles(top);
+
+        const tm: Record<string, TypeStat> = {};
+        for (const b of all) {
+          if (!tm[b.type]) tm[b.type] = { type: b.type, count: 0, vol: 0 };
+          tm[b.type].count += 1;
+          tm[b.type].vol += b.vol;
+        }
+        setTypeStats(Object.values(tm).sort((a, b) => b.vol - a.vol));
       })
       .catch(() => alive && setBattles([]));
     return () => { alive = false; };
@@ -55,6 +70,22 @@ export default function BiggestBattles() {
           the highest-stakes individual battles on record · MAIN events dominate the top · volume includes both sides of trading
         </p>
       </div>
+
+      {typeStats.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+          {typeStats.map((ts) => {
+            const totalVol = typeStats.reduce((s, x) => s + x.vol, 0);
+            const pct = totalVol > 0 ? ((ts.vol / totalVol) * 100).toFixed(0) : "0";
+            return (
+              <div key={ts.type} style={{ display: "flex", flexDirection: "column", gap: 2, background: `${TYPE_COLOR[ts.type] ?? C.accent}18`, border: `1px solid ${TYPE_COLOR[ts.type] ?? C.accent}44`, borderRadius: 10, padding: "8px 14px", minWidth: 100 }}>
+                <span style={{ fontFamily: C.mono, fontSize: 10, color: TYPE_COLOR[ts.type] ?? C.accent, letterSpacing: "0.06em", fontWeight: 700 }}>{ts.type}</span>
+                <span style={{ fontFamily: C.mono, fontSize: 15, fontWeight: 700 }}>{ts.vol.toFixed(0)} ◎</span>
+                <span style={{ fontFamily: C.mono, fontSize: 11, color: C.dim }}>{ts.count} battles · {pct}% vol</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 12 }}>
           <thead>
