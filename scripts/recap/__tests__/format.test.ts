@@ -187,7 +187,22 @@ describe("buildWeeklyRecap", () => {
       aHandle: null, bHandle: "BennyJ504WaveWarz", winner: "On Repeat", vol: 1, margin: 90,
     };
     const draft = buildWeeklyRecap([battleOne, battleTwo], "2026-06-09", "2026-06-15", context);
-    expect(draft.dataUsed.some((l) => l.includes("Most active artist: BennyJ504WaveWarz, 2 battle(s)"))).toBe(true);
+    // BennyJ504WaveWarz: "Modern Love" won battle 1 (a-side wins); "On Repeat" won battle 2 (b-side wins) — 2W-0L
+    expect(draft.dataUsed.some((l) => l.includes("Most active artist: BennyJ504WaveWarz, 2W-0L (2 battles)"))).toBe(true);
+  });
+
+  it("most active artist W-L record accounts for losses", () => {
+    // BennyJ504WaveWarz appears in 2 battles, wins 1, loses 1
+    const win: StoredBattle = {
+      id: "3", type: "QUICK", date: "Jun 10, 2026", a: "Win Song", b: "Filler",
+      aHandle: "BennyJ504WaveWarz", bHandle: null, winner: "Win Song", vol: 1, margin: 80,
+    };
+    const loss: StoredBattle = {
+      id: "4", type: "QUICK", date: "Jun 11, 2026", a: "Loss Song", b: "Other",
+      aHandle: "BennyJ504WaveWarz", bHandle: null, winner: "Other", vol: 1, margin: 70,
+    };
+    const draft = buildWeeklyRecap([win, loss], "2026-06-09", "2026-06-15", context);
+    expect(draft.dataUsed.some((l) => l.includes("Most active artist: BennyJ504WaveWarz, 1W-1L (2 battles)"))).toBe(true);
   });
 });
 

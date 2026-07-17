@@ -118,11 +118,16 @@ export function buildWeeklyRecap(
   const closestMargin = withMargin.slice().sort((a, b) => a.margin - b.margin)[0] ?? null;
 
   const artistCounts = new Map<string, number>();
+  const artistWins = new Map<string, number>();
   for (const b of battles) {
     const aId = artistIdentity(b.aHandle, b.a);
     const bId = artistIdentity(b.bHandle, b.b);
     artistCounts.set(aId, (artistCounts.get(aId) ?? 0) + 1);
     artistCounts.set(bId, (artistCounts.get(bId) ?? 0) + 1);
+    const winnerId = b.winner === b.a ? aId : b.winner === b.b ? bId : null;
+    if (winnerId !== null) {
+      artistWins.set(winnerId, (artistWins.get(winnerId) ?? 0) + 1);
+    }
   }
   const mostActive = [...artistCounts.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
 
@@ -152,7 +157,9 @@ export function buildWeeklyRecap(
     );
   }
   if (mostActive) {
-    dataUsed.push(`Most active artist: ${mostActive[0]}, ${mostActive[1]} battle(s) (source: same)`);
+    const wins = artistWins.get(mostActive[0]) ?? 0;
+    const losses = mostActive[1] - wins;
+    dataUsed.push(`Most active artist: ${mostActive[0]}, ${wins}W-${losses}L (${mostActive[1]} battles) (source: same)`);
   }
 
   const mainLine = mainCount > 0
