@@ -41,6 +41,10 @@ const FAQS: QA[] = [
     a: "Quick Battles run live on weeknights around 8:30 PM EST (with a 30-second final trading window), plus community AMAs Monday-Friday around 11 AM EST, mainly on X Spaces and YouTube.",
   },
   {
+    q: "What is the Clippers program?",
+    a: "An incentive program where community members record and share battle clips to YouTube, X (Twitter), or TikTok. Submissions go through Telegram and earn reward points. It's how fans grow WaveWarZ reach and earn recognition while the platform stays focused on running battles.",
+  },
+  {
     q: "Where does this dashboard's data come from?",
     a: "On-chain, via Dune queries over the WaveWarZ program (9TUf...g2fYo). It's an unofficial community tool, not financial advice. See the About and How It Works tabs.",
   },
