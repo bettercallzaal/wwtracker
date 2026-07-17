@@ -53,9 +53,9 @@ WaveWarZ is a production lane inside **The ZAO** (ZTalent Artist Organization), 
 ## AI-readable contexts (ICM boxes)
 
 The ZAO maintains structured AI contexts at useicm.com:
-- WaveWarZ: https://useicm.com/api/objects/wavewarz/llm.txt
-- The ZAO: https://useicm.com/api/objects/icm_ohb0F_XOYDz9Tw_w4yX3PA/llm.txt
-- Founder (Zaal): https://useicm.com/api/objects/bettercallzaal/llm.txt
+- The ZAO (verified working): https://useicm.com/api/objects/icm_ohb0F_XOYDz9Tw_w4yX3PA/llm.txt
+
+Note: WaveWarZ-specific and founder ICM boxes are not yet live; reference the ZAO box and this llms.txt for machine context.
 
 ## Find WaveWarZ
 
@@ -63,6 +63,7 @@ The ZAO maintains structured AI contexts at useicm.com:
 - Tracker (this): https://wwtracker.vercel.app
 - X: https://x.com/WaveWarZ
 - YouTube: https://www.youtube.com/@WaveWarZ
+- Farcaster / The ZAO channel: https://warpcast.com/~/channel/zao
 - Source: https://github.com/bettercallzaal/wwtracker
 
 ---
