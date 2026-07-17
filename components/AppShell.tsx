@@ -22,6 +22,11 @@ import Music from "./Music";
 import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
+import TraderActivity from "./TraderActivity";
+import WinRateLeaderboard from "./WinRateLeaderboard";
+import HotStreaks from "./HotStreaks";
+import ArtistVolume from "./ArtistVolume";
+import ArtistStandings from "./ArtistStandings";
 import Faq from "./Faq";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
@@ -103,14 +108,24 @@ const SECTIONS: Section[] = [
     id: "traders",
     n: "07",
     title: "Who's trading",
-    intro: "the leaderboard, the full trader table, and a lookup for any wallet's own PnL.",
+    intro: "live trading pulse, the leaderboard, the full trader table, a lookup for any wallet's own PnL, plus win-rate standings, hot streaks, SOL volume by artist, and full W/L standings for all tagged handles.",
     render: () => (
       <>
+        <TraderActivity />
+        <div style={{ height: 24 }} />
         <Leaderboard />
         <div style={{ height: 24 }} />
         <Traders />
         <div style={{ height: 24 }} />
         <TraderScorecard />
+        <div style={{ height: 24 }} />
+        <WinRateLeaderboard />
+        <div style={{ height: 24 }} />
+        <HotStreaks />
+        <div style={{ height: 24 }} />
+        <ArtistVolume />
+        <div style={{ height: 24 }} />
+        <ArtistStandings />
       </>
     ),
   },
