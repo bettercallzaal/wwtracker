@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { C } from "@/lib/theme";
 import { DATA_AS_OF } from "@/lib/freshness";
-import { FLOOR_SOL } from "@/lib/config";
+import { PROGRAM_ID as PROGRAM, FLOOR_SOL } from "@/lib/config";
 import BalanceDashboard from "./BalanceDashboard";
 import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
@@ -268,7 +268,7 @@ export default function AppShell() {
           lineHeight: 1.6,
         }}
       >
-        On-chain analytics from Dune over program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo.
+        On-chain analytics from Dune over program {PROGRAM}.
         Treasury balance + Audius are live; baked data as of {DATA_AS_OF}.
         Unofficial community tool - not financial advice.{" "}
         <a href="https://github.com/bettercallzaal/wwtracker" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
