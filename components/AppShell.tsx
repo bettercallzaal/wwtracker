@@ -28,6 +28,7 @@ import BattleCalendar from "./BattleCalendar";
 import HandleH2H from "./HandleH2H";
 import DowActivity from "./DowActivity";
 import BattleTypeBreakdown from "./BattleTypeBreakdown";
+import BattleTypeEvolution from "./BattleTypeEvolution";
 import MarginDistribution from "./MarginDistribution";
 import MonthlyVolume from "./MonthlyVolume";
 import ArtistProfile from "./ArtistProfile";
@@ -105,6 +106,8 @@ const SECTIONS: Section[] = [
         <MonthlyVolume />
         <div style={{ height: 24 }} />
         <BattleTypeBreakdown />
+        <div style={{ height: 24 }} />
+        <BattleTypeEvolution />
         <div style={{ height: 24 }} />
         <DowActivity />
         <div style={{ height: 24 }} />
