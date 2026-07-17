@@ -311,7 +311,7 @@ export default function OnChainProof() {
 
       <ScaleCard
         title="The treasury, holding the floor"
-        note={`0.5% of every trade + 3% of every loser pool. peaked at ${fmt(peaks.bal, 2)} SOL; sits above the 3.5 operating floor.`}
+        note={`0.5% of every trade + 3% of every loser pool. peaked at ${fmt(peaks.bal, 2)} SOL; sits above the ${FLOOR_SOL} operating floor.`}
       >
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={rows} margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
