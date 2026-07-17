@@ -19,6 +19,11 @@ import Music from "./Music";
 import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
+import BattleArena from "./BattleArena";
+import RivalryBoard from "./RivalryBoard";
+import BiggestBattles from "./BiggestBattles";
+import ArtistEarnings from "./ArtistEarnings";
+import RecentStandings from "./RecentStandings";
 import Faq from "./Faq";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
@@ -85,8 +90,22 @@ const SECTIONS: Section[] = [
     id: "battles",
     n: "06",
     title: "The battles",
-    intro: "every battle on record. search it, sort it, export it.",
-    render: () => <Battles />,
+    intro: "every battle on record. search it, sort it, export it — plus handle rankings, rivalries, the biggest vol days, artist earnings, and the last 30 days of form.",
+    render: () => (
+      <>
+        <Battles />
+        <div style={{ height: 24 }} />
+        <BattleArena />
+        <div style={{ height: 24 }} />
+        <RivalryBoard />
+        <div style={{ height: 24 }} />
+        <BiggestBattles />
+        <div style={{ height: 24 }} />
+        <ArtistEarnings />
+        <div style={{ height: 24 }} />
+        <RecentStandings />
+      </>
+    ),
   },
   {
     id: "traders",
