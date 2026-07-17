@@ -4,8 +4,9 @@ import { BATTLE_STATS, RECENT_BATTLES } from "@/lib/battles";
 describe("BATTLE_STATS", () => {
   it("has all required numeric fields", () => {
     const fields: (keyof typeof BATTLE_STATS)[] = [
-      "events", "quickBattles", "multiRound", "totalShown",
+      "events", "quickBattles", "multiRound", "communityBattles", "totalShown",
       "totalVolumeSol", "artistPayoutsSol", "platformRevenueSol",
+      "traderClaimsSol", "withdrawalCount",
     ];
     for (const f of fields) {
       expect(typeof BATTLE_STATS[f], f).toBe("number");
@@ -13,10 +14,14 @@ describe("BATTLE_STATS", () => {
     }
   });
 
-  it("totalShown is at least quickBattles + multiRound", () => {
+  it("totalShown is at least quickBattles + multiRound + communityBattles", () => {
     expect(BATTLE_STATS.totalShown).toBeGreaterThanOrEqual(
-      BATTLE_STATS.quickBattles + BATTLE_STATS.multiRound
+      BATTLE_STATS.quickBattles + BATTLE_STATS.multiRound + BATTLE_STATS.communityBattles
     );
+  });
+
+  it("traderClaimsSol is less than total volume", () => {
+    expect(BATTLE_STATS.traderClaimsSol).toBeLessThan(BATTLE_STATS.totalVolumeSol);
   });
 
   it("artist payouts are less than total volume", () => {
