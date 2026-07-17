@@ -121,7 +121,7 @@ export default function Battles() {
           WaveWarZ<span style={{ color: C.dim, fontWeight: 400 }}> / battles</span>
         </h1>
         <p style={{ margin: "8px 0 0", color: C.text, lineHeight: 1.6, maxWidth: 720 }}>
-          The full battle history - {all ? fmt(all.length) : "958"} battles, all
+          The full battle history - {all ? fmt(all.length) : fmt(S.totalShown)} battles, all
           time. Search by song or artist, filter by type.
         </p>
       </header>
