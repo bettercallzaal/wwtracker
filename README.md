@@ -5,9 +5,9 @@ treasury wallet, the program's activity, and a trader's PnL - backed by Dune.
 
 **Live:** https://wwtracker.vercel.app
 
-WaveWarZ is a Solana music-battle platform: fans trade SOL on song-vs-song
-battles. Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`. Full research
-in [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
+WaveWarZ is a Solana music-battle platform in the ZAO ecosystem: fans trade SOL
+on song-vs-song battles. Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`.
+Full research in [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
 
 ## Sections
 
@@ -35,9 +35,10 @@ resolve to the right section.
   distribution history table. Config in `lib/distributions.ts`; rows show TBD
   until the real distribution dates/amounts + wallets are filled in.
 - **05 Analytics** - WaveWarZ program-wide on-chain: 1,127 battles / 9,045 trades /
-  122 traders (decoded instructions), battles-vs-trades timeline, daily activity
-  (14,681 txs over 230 days since Aug 2025), treasury daily flow (lifetime net
-  +3.51 SOL = the floor), and a top-traders leaderboard. Snapshot in `lib/wwData.ts`.
+  122 traders (decoded instructions, Dune snapshot 2026-06-14), battles-vs-trades
+  timeline, daily activity (14,681 txs over 230 days since Aug 2025), treasury daily
+  flow (lifetime net +3.51 SOL = the floor), and a top-traders leaderboard. Snapshot
+  in `lib/wwData.ts`; refresh via `scripts/ww-research.sh`.
 - **06 Battles** - the full battle history: search, filter by type, CSV export.
 - **07 Traders** - the artist leaderboard, the full trader table, and a
   lookup for any wallet's own PnL (cumulative SOL, live from on-chain, win
