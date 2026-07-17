@@ -12,7 +12,8 @@
     "validate": "node scripts/validate.mjs",
     "test": "vitest run",
     "fetch:battles": "tsx scripts/ww-battles-fetch.ts",
-    "recap": "tsx scripts/ww-recap.ts"
+    "recap": "tsx scripts/ww-recap.ts",
+    "decode:battle": "tsx scripts/ww-battle-decode.ts"
   },
   "dependencies": {
     "next": "^14.2.35",
