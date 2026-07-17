@@ -42,8 +42,23 @@ export default function ArtistPage() {
     return xHandle ? LEADERBOARD.find((a) => a.handle.toLowerCase() === xHandle.toLowerCase()) ?? null : null;
   }, [handle, audiusHandle]);
 
+  interface Battle { id: string; type: string; date: string; a: string; b: string; aHandle?: string; bHandle?: string; winner: string; vol: number; margin: number | null; }
   const [user, setUser] = useState<AudiusUser | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [battles, setBattles] = useState<Battle[] | null>(null);
+
+  useEffect(() => {
+    const lower = handle.toLowerCase();
+    fetch("/ww-battles.json")
+      .then((r) => r.json())
+      .then((all: Battle[]) => {
+        const mine = all.filter(
+          (b) => (b.aHandle ?? "").toLowerCase() === lower || (b.bHandle ?? "").toLowerCase() === lower
+        );
+        setBattles(mine);
+      })
+      .catch(() => setBattles([]));
+  }, [handle]);
 
   useEffect(() => {
     if (!audiusId) return;
@@ -94,6 +109,58 @@ export default function ArtistPage() {
           <Tile label="AUDIUS TRACKS" value={fmt(user.track_count, 0)} />
         </>}
       </div>
+
+      {/* WW battle history */}
+      {battles && battles.length > 0 && (() => {
+        const wins = battles.filter((b) => {
+          const lower = handle.toLowerCase();
+          const aWon = b.winner.trim() === b.a.trim();
+          return (aWon && (b.aHandle ?? "").toLowerCase() === lower) ||
+                 (!aWon && (b.bHandle ?? "").toLowerCase() === lower);
+        }).length;
+        const vol = battles.reduce((s, b) => s + b.vol, 0);
+        return (
+          <section style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+              <span style={metaLabel}>WW BATTLE HISTORY</span>
+              <span style={{ fontFamily: C.mono, fontSize: 11, color: C.dim }}>
+                {battles.length} battles · {wins}W-{battles.length - wins}L ({Math.round(wins / battles.length * 100)}%) · {vol.toFixed(2)} ◎
+              </span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {battles.slice(0, 20).map((b) => {
+                const lower = handle.toLowerCase();
+                const isSideA = (b.aHandle ?? "").toLowerCase() === lower;
+                const myTrack = isSideA ? b.a : b.b;
+                const oppTrack = isSideA ? b.b : b.a;
+                const won = b.winner.trim() === myTrack.trim();
+                return (
+                  <a
+                    key={b.id}
+                    href={`https://wavewarz.info/battles/${b.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ display: "flex", gap: 8, alignItems: "center", textDecoration: "none", borderTop: `1px solid ${C.grid}`, paddingTop: 5 }}
+                  >
+                    <span style={{ fontFamily: C.mono, fontSize: 10, color: won ? C.good : C.danger, minWidth: 16, fontWeight: 700 }}>{won ? "W" : "L"}</span>
+                    <span style={{ flex: 1, fontSize: 12, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <span style={{ color: won ? C.good : C.text }}>{myTrack}</span>
+                      <span style={{ color: C.dim }}> vs </span>
+                      {oppTrack}
+                    </span>
+                    <span style={{ fontFamily: C.mono, fontSize: 10, color: C.dim, flexShrink: 0 }}>
+                      {b.vol > 0 ? `${b.vol.toFixed(2)} ◎` : ""} {b.date}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+            {battles.length > 20 && (
+              <p style={{ ...metaLabel, fontSize: 10, marginTop: 8 }}>showing 20 of {battles.length} battles</p>
+            )}
+          </section>
+        );
+      })()}
 
       {/* charting songs */}
       {songs.length > 0 && (
