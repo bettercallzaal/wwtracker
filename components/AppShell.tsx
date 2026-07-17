@@ -21,6 +21,7 @@ import Traders from "./Traders";
 import Battles from "./Battles";
 import WwMedia from "./WwMedia";
 import ZaoVitals from "./ZaoVitals";
+import CommunityBattles from "./CommunityBattles";
 import Faq from "./Faq";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
@@ -130,6 +131,8 @@ const SECTIONS: Section[] = [
         <ZaoVitals />
         <div style={{ height: 24 }} />
         <WwMedia />
+        <div style={{ height: 24 }} />
+        <CommunityBattles />
         <div style={{ height: 24 }} />
         <Ecosystem />
         <div style={{ height: 24 }} />
