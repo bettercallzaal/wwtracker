@@ -20,6 +20,7 @@ import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
 import Faq from "./Faq";
+import HeadToHead from "./HeadToHead";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
 // gets deeper the further you scroll - explainer, then the treasury floor, then
@@ -85,8 +86,14 @@ const SECTIONS: Section[] = [
     id: "battles",
     n: "06",
     title: "The battles",
-    intro: "every battle on record. search it, sort it, export it.",
-    render: () => <Battles />,
+    intro: "every battle on record. search it, sort it, export it. head-to-head rivalries from handle-tagged battles below.",
+    render: () => (
+      <>
+        <Battles />
+        <div style={{ height: 24 }} />
+        <HeadToHead />
+      </>
+    ),
   },
   {
     id: "traders",
