@@ -10,6 +10,7 @@ refresh. After any refresh: bump `DATA_AS_OF` in `lib/freshness.ts`, run
 | Data | Source | File | Live? |
 |------|--------|------|-------|
 | Treasury balance + intraday high | Dune query 7717935 (cached read) | - | live |
+| Battle aggregate stats | wavewarz.info/api/public/stats | lib/battles.ts | snapshot - refresh with curl, see § A below |
 | Songs (37) | wavewarz.info/leaderboards/songs | lib/songs.ts | snapshot |
 | Artist leaderboard (48) | .../leaderboards/artists | lib/leaderboard.ts | snapshot |
 | Trader leaderboard (101) | .../leaderboards/traders | lib/traders.ts | snapshot |
@@ -19,7 +20,36 @@ refresh. After any refresh: bump `DATA_AS_OF` in `lib/freshness.ts`, run
 | Artists / Music / per-artist | Audius API | - | live |
 | YouTube | oEmbed + channel | components/Events.tsx | snapshot ids |
 
-## A. Scrape wavewarz.info (songs / leaderboards)
+## A. Refresh BATTLE_STATS (lib/battles.ts)
+
+The aggregate counts (total battles, quick/main/community split, volume, artist
+payouts, trader claims) come from the wavewarz.info public API — no auth needed.
+
+```bash
+curl -s https://wavewarz.info/api/public/stats | python3 -m json.tool
+```
+
+Copy the response values into `lib/battles.ts`:
+
+| Response field | BATTLE_STATS key |
+|---|---|
+| `battles.mainEvents` | `events` |
+| `battles.quickBattles` | `quickBattles` |
+| `battles.mainBattles` | `multiRound` |
+| `battles.communityBattles` | `communityBattles` |
+| `battles.total` | `totalShown` |
+| `volume.totalSol` | `totalVolumeSol` |
+| `artistPayouts.totalSol` | `artistPayoutsSol` |
+| `platformRevenue.totalSol` | `platformRevenueSol` |
+| `traderClaims.totalSol` | `traderClaimsSol` |
+| `traderClaims.withdrawalCount` | `withdrawalCount` |
+
+Also update the `RECENT_BATTLES` array with the 2 most recent MAIN and 2 most
+recent QUICK battles (from `public/ww-battles.json` after running
+`npm run fetch:battles`). After updating, bump `DATA_AS_OF` in
+`lib/freshness.ts` and run `npm run validate`.
+
+## B. Scrape wavewarz.info (songs / leaderboards)
 
 **Battles no longer need this** - run `npm run fetch:battles` instead. It
 pages `wavewarz-intelligence.vercel.app/battles` directly (no browser
@@ -45,7 +75,7 @@ Parse each result with the regex parsers used before (winner-anchored matchup
 split for battles; per-cell for tables) and regenerate the `lib/*.ts` /
 `public/*.json` snapshots. Then `npm run validate`.
 
-## B. Dune (treasury balance, skips, queue)
+## C. Dune (treasury balance, skips, queue)
 
 Free-tier has a monthly datapoint cap (big Solana scans exhaust it). Keep queries
 **bounded to one wallet** (FNj) - they cost ~0.0025 credits. If the cap is hit,
@@ -117,7 +147,7 @@ a fee-trimmed 0.02 skip); queue = `amt == 0.005`. Verified vs 2026-06-13 (20 ski
 / 1.1667 SOL, queue 11). Both `public/ww-skips.json` + `ww-queue.json` are
 date-keyed maps; merge new days into the existing history, newest-first.
 
-## C. Finish
+## D. Finish
 
 ```bash
 # update lib/freshness.ts DATA_AS_OF, then:
