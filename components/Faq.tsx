@@ -1,6 +1,7 @@
 "use client";
 
 import { C, metaLabel } from "@/lib/theme";
+import { FLOOR_SOL } from "@/lib/config";
 
 interface QA {
   q: string;
@@ -33,12 +34,40 @@ const FAQS: QA[] = [
     a: "1% of trading volume per side on every trade, plus a settlement bonus - the winning artist gets 5% of the loser pool and the losing artist gets 2%.",
   },
   {
-    q: "What is the 3.5 SOL 'floor'?",
-    a: "The treasury wallet keeps roughly 3.5 SOL as an operating floor; the founders periodically skim the excess above it. On-chain the treasury's lifetime net lands right around 3.5 SOL.",
+    q: "How do I become a WaveWarZ artist?",
+    a: "Reach out to the team on X (@WaveWarZ) or join the live Telegram community. Artists need a track ready to battle and an Audius profile (the platform uses Audius for streaming). Selection is at the team's discretion — joining the live sessions and showing your music in the community is the fastest path in.",
+  },
+  {
+    q: `What is the ${FLOOR_SOL} SOL 'floor'?`,
+    a: `The treasury wallet keeps roughly ${FLOOR_SOL} SOL as an operating floor; the founders periodically skim the excess above it. On-chain the treasury's lifetime net lands right around ${FLOOR_SOL} SOL.`,
   },
   {
     q: "When do battles happen?",
     a: "Quick Battles run live on weeknights around 8:30 PM EST (with a 30-second final trading window), plus community AMAs Monday-Friday around 11 AM EST, mainly on X Spaces and YouTube.",
+  },
+  {
+    q: "What is DJ Wavy?",
+    a: "The AI judge — one of the three scoring factors in V2 (Poll + Charts + DJ Wavy, best 2 of 3). DJ Wavy evaluates each battle and casts a binding vote. The exact model and criteria are not publicly disclosed by the team.",
+  },
+  {
+    q: "What is the Clippers program?",
+    a: "An incentive program where community members record and share battle clips to YouTube, X (Twitter), or TikTok. Submissions go through Telegram and earn reward points. It's how fans grow WaveWarZ reach and earn recognition while the platform stays focused on running battles.",
+  },
+  {
+    q: "What is the Artist Tournament?",
+    a: "A 16-artist single-elimination bracket where artists compete head-to-head until one champion remains. SOL payouts settle instantly after each round. Participation requires artists to be on the WaveWarZ platform roster.",
+  },
+  {
+    q: "What is the AI Artist Tournament?",
+    a: "A separate bracket featuring AI-generated tracks — 8 to 16 songs — with community voting determining the winner each round. It runs alongside the human-artist tournament and uses the same SOL trading mechanics.",
+  },
+  {
+    q: "What is The ZAO?",
+    a: "The DAO that incubated WaveWarZ. The ZAO is a web3 music and creator collective — 100+ consecutive Fractal weeks of onchain governance, Respect-based contribution scores, and ZAO Improvement Proposals (ZIPs). WaveWarZ is the music-battle application layer at the top of the BCZ → The ZAO → WaveWarZ stack.",
+  },
+  {
+    q: "Do WaveWarZ battles connect to ZAO governance?",
+    a: "Yes. The ZAO's open-source ZAOOS platform integrates WaveWarZ: battle milestones auto-generate DAO proposal drafts, the 43-artist roster syncs nightly with win/volume stats, and results can be shared to Farcaster. WaveWarZ is not just a product of the ZAO — its battles are a source of governance inputs for it.",
   },
   {
     q: "Where does this dashboard's data come from?",
