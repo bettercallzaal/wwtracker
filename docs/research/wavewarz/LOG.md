@@ -2,6 +2,8 @@
 
 One line per hourly run: what was tried, and whether it worked or got stuck.
 
+2026-07-17 (this session) - Verification run with working outbound egress (curl to wavewarz.info/api/public/stats succeeded). Verified: (1) "WaveWarZ Artist Interview: Kata7yst" (youtube.com/watch?v=ZU0ga5LRdyU) — CONFIRMED via oEmbed, official WaveWarZ channel, already in PR #137 Events.tsx. (2) "Crypto Magic Hour EP. 50" (youtube.com/watch?v=rx0PeGv8lPI) — CONFIRMED via oEmbed, @VeVeMagic channel, already in PR #138 Events.tsx. (3) Wave Warz Zm YouTube channel (UC4CTlM4Y6EZF0G9MBBAjwZQ) — NOT FOUND (oEmbed returned 404, channel may be deleted/private). Added ZAO-CHELLA (Dec 6 2024, Art Basel Miami FL, first IRL WaveWarZ event) to MilestonesTimeline — was missing from the timeline despite being in doc 1077. Also added 500 ◎ milestone (Jul 2026). All community research queue follow-ups now addressed (PRs #130, #134, #137, #138 open).
+
 2026-07-15 09:05 UTC - Tried community events/charity-initiatives/Discord-Telegram angle via WebSearch+WebFetch - stuck-because-WebFetch returned 403 on every URL this run (including unrelated control domains like en.wikipedia.org), so no page could be fetched/verified; only WebSearch snippets were available. Wrote up snippet-only leads under Unverified and flagged the tooling outage as the real blocker for future runs.
 
 # WaveWarZ community research - run log
