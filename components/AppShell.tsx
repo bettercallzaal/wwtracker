@@ -11,6 +11,7 @@ import PlatformAnalytics from "./PlatformAnalytics";
 import PlatformPulse from "./PlatformPulse";
 import BattleTempo from "./BattleTempo";
 import LivePlatformStats from "./LivePlatformStats";
+import NailBiters from "./NailBiters";
 import Profitability from "./Profitability";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
@@ -81,7 +82,7 @@ const SECTIONS: Section[] = [
     id: "analytics",
     n: "05",
     title: "Platform analytics",
-    intro: "the full on-chain picture — baked analytics, pace trends, monthly battle tempo, and live stats direct from the API.",
+    intro: "the full on-chain picture — baked analytics, pace trends, monthly battle tempo, live stats, and the 10 closest battles ever fought.",
     render: () => (
       <>
         <PlatformAnalytics />
@@ -91,6 +92,8 @@ const SECTIONS: Section[] = [
         <BattleTempo />
         <div style={{ height: 24 }} />
         <LivePlatformStats />
+        <div style={{ height: 24 }} />
+        <NailBiters />
       </>
     ),
   },
