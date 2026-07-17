@@ -8,6 +8,7 @@ interface Stat {
   battles: number;
   wins: number;
   vol: number;
+  streak: string;
 }
 
 type Sort = "battles" | "wins" | "winpct" | "vol";
@@ -31,6 +32,7 @@ export default function BattleArena() {
             b?: string;
             winner?: string;
             vol?: number;
+            date?: string;
           }[]
         ) => {
           const map: Record<string, Stat> = {};
@@ -38,13 +40,42 @@ export default function BattleArena() {
             for (const side of ["a", "b"] as const) {
               const h = (b[`${side}Handle`] ?? "").toLowerCase().trim();
               if (!h) continue;
-              if (!map[h]) map[h] = { handle: h, battles: 0, wins: 0, vol: 0 };
+              if (!map[h]) map[h] = { handle: h, battles: 0, wins: 0, vol: 0, streak: "" };
               map[h].battles += 1;
               map[h].vol += b.vol ?? 0;
               if ((b.winner ?? "").trim() === (b[side] ?? "").trim())
                 map[h].wins += 1;
             }
           }
+
+          // Compute current streak per handle (most recent to oldest)
+          const byHandle: Record<string, { won: boolean; date: string }[]> = {};
+          const sortedBattles = [...battles].sort((x, y) => {
+            const dx = x.date ? Date.parse(x.date) : 0;
+            const dy = y.date ? Date.parse(y.date) : 0;
+            return dy - dx;
+          });
+          for (const b of sortedBattles) {
+            for (const side of ["a", "b"] as const) {
+              const h = (b[`${side}Handle`] ?? "").toLowerCase().trim();
+              if (!h || !b.date) continue;
+              if (!byHandle[h]) byHandle[h] = [];
+              const won = (b.winner ?? "").trim() === (b[side] ?? "").trim();
+              byHandle[h].push({ won, date: b.date });
+            }
+          }
+          for (const h of Object.keys(map)) {
+            const results = byHandle[h] ?? [];
+            if (!results.length) { map[h].streak = ""; continue; }
+            const first = results[0].won;
+            let count = 1;
+            for (let i = 1; i < results.length; i++) {
+              if (results[i].won === first) count++;
+              else break;
+            }
+            map[h].streak = `${first ? "W" : "L"}${count}`;
+          }
+
           setStats(Object.values(map));
         }
       )
@@ -140,7 +171,7 @@ export default function BattleArena() {
         >
           <thead>
             <tr style={{ borderBottom: `1px solid ${C.grid}` }}>
-              {["#", "HANDLE", "BATTLES", "W", "L", "WIN %", "VOLUME ◎"].map(
+              {["#", "HANDLE", "BATTLES", "W", "L", "WIN %", "VOLUME ◎", "STREAK"].map(
                 (h) => (
                   <th
                     key={h}
@@ -237,6 +268,18 @@ export default function BattleArena() {
                     }}
                   >
                     {fmt(s.vol, 2)}
+                  </td>
+                  <td
+                    style={{
+                      padding: "9px 10px",
+                      textAlign: "right",
+                      fontFamily: C.mono,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: s.streak.startsWith("W") ? C.good : s.streak.startsWith("L") ? C.danger : C.dim,
+                    }}
+                  >
+                    {s.streak || "–"}
                   </td>
                 </tr>
               );
