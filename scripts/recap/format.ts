@@ -126,6 +126,8 @@ export function buildWeeklyRecap(
   }
   const mostActive = [...artistCounts.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
 
+  const mainCount = battles.filter((b) => b.type === "MAIN").length;
+
   const topWinnerSide = topVolume ? winnerSide(topVolume) : null;
   const topWinnerName = topVolume
     ? (topWinnerSide === "a"
@@ -136,7 +138,7 @@ export function buildWeeklyRecap(
     : null;
 
   const dataUsed = [
-    `Battles this week: ${battles.length} (source: public/ww-battles.json, ${weekStart} to ${weekEnd})`,
+    `Battles this week: ${battles.length} (${mainCount} MAIN, ${battles.length - mainCount} QUICK/COMMUNITY) (source: public/ww-battles.json, ${weekStart} to ${weekEnd})`,
     `Total volume: ${totalVol.toFixed(2)} SOL (source: same)`,
   ];
   if (topVolume) {
@@ -153,10 +155,13 @@ export function buildWeeklyRecap(
     dataUsed.push(`Most active artist: ${mostActive[0]}, ${mostActive[1]} battle(s) (source: same)`);
   }
 
+  const mainLine = mainCount > 0
+    ? ` Including ${mainCount} Main Event${mainCount > 1 ? "s" : ""}.`
+    : "";
   const closestLine = closestMargin
     ? ` Closest: ${battleName(closestMargin.aHandle, closestMargin.a)} vs ${battleName(closestMargin.bHandle, closestMargin.b)}, decided by ${closestMargin.margin}%.`
     : "";
-  const farcaster = `WaveWarZ weekly recap, ${weekStart} to ${weekEnd}. ${battles.length} battles, ${totalVol.toFixed(2)} SOL total volume.${topVolume ? ` Biggest: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)} — ${topWinnerName} wins.` : ""}${closestLine} ${TAG_LINE}`;
+  const farcaster = `WaveWarZ weekly recap, ${weekStart} to ${weekEnd}. ${battles.length} battles, ${totalVol.toFixed(2)} SOL total volume.${mainLine}${topVolume ? ` Biggest: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)} — ${topWinnerName} wins.` : ""}${closestLine} ${TAG_LINE}`;
   const x = `WaveWarZ week of ${weekStart}: ${battles.length} battles, ${totalVol.toFixed(2)} SOL.${topVolume ? ` Top: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)} — ${topWinnerName} wins.` : ""} ${TAG_LINE}`;
 
   return {

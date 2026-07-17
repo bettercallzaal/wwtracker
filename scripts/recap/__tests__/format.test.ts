@@ -132,6 +132,31 @@ describe("buildWeeklyRecap", () => {
     expect(draft.x).toContain("Geek Myth");
   });
 
+  it("includes 'Including N Main Event(s)' in Farcaster when week has MAIN battles", () => {
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.farcaster).toContain("Including 1 Main Event.");
+  });
+
+  it("uses plural 'Main Events' when count > 1", () => {
+    const secondMain: StoredBattle = {
+      id: "2", type: "MAIN", date: "Jun 12, 2026",
+      a: "Song X", b: "Song Y", aHandle: null, bHandle: null,
+      winner: "Song X", vol: 5, margin: null,
+    };
+    const draft = buildWeeklyRecap([mainEvent, secondMain], "2026-06-09", "2026-06-15", context);
+    expect(draft.farcaster).toContain("Including 2 Main Events.");
+  });
+
+  it("omits Main Events line when week has no MAIN battles", () => {
+    const draft = buildWeeklyRecap([quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.farcaster).not.toContain("Main Event");
+  });
+
+  it("dataUsed battle count includes MAIN vs QUICK breakdown", () => {
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.dataUsed.some((l) => l.includes("1 MAIN") && l.includes("1 QUICK/COMMUNITY"))).toBe(true);
+  });
+
   it("includes the closest-margin battle in the Farcaster draft when one exists", () => {
     // quickBattle has margin=96; mainEvent has margin=null — quickBattle is the closest
     const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
