@@ -3,7 +3,7 @@
 // `npm run fetch:battles` to refresh). Live stats: GET /api/public/stats.
 
 export interface RecentBattle {
-  type: "MAIN" | "QUICK";
+  type: "MAIN" | "QUICK" | "COMMUNITY";
   a: string; b: string; winner: string; vol: number; date: string;
 }
 
