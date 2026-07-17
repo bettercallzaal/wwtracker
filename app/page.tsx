@@ -1,5 +1,6 @@
 import AppShell from "@/components/AppShell";
 import FreshnessBanner from "@/components/FreshnessBanner";
+import RecentBattlesFeed from "@/components/RecentBattlesFeed";
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       }}
     >
       <FreshnessBanner />
+      <RecentBattlesFeed />
       <AppShell />
     </main>
   );
