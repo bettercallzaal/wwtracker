@@ -8,6 +8,7 @@ import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
+import PlatformPulse from "./PlatformPulse";
 import Profitability from "./Profitability";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
@@ -79,7 +80,13 @@ const SECTIONS: Section[] = [
     n: "05",
     title: "Platform analytics",
     intro: "the full on-chain picture now - battles, trades, and traders decoded straight from the program.",
-    render: () => <PlatformAnalytics />,
+    render: () => (
+      <>
+        <PlatformAnalytics />
+        <div style={{ height: 24 }} />
+        <PlatformPulse />
+      </>
+    ),
   },
   {
     id: "battles",
