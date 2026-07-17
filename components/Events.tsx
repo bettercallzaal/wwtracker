@@ -80,8 +80,10 @@ export default function Events() {
           <Stat label="GRAND TOTAL" value="~$1,497" sub="onchain + fiat" />
         </div>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
-          Case study: the PolyRaiders Holiday Music Battle raised ~$270 in TradFi
-          payments. IndieZ vs ClassicZ benefit series ran Feb 2026.
+          PolyRaiders × IndieZ vs ClassicZ benefit series — two rounds: Holiday
+          Heat (Dec 2024, ~$270) + Love Song Benefit (Feb 2025, ~$1,221). Total
+          ~$1,497 to HuRya Empowerment Foundation (8,500+ beneficiaries globally).
+          Platform fees waived both rounds. Source: wavewarz.info/events.
         </p>
       </Section>
 
