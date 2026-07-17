@@ -17,6 +17,7 @@ import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
 import { TREASURY_WALLET as TREASURY, TRACKED_TRADER_WALLET as ME } from "@/lib/config";
 import { BATTLE_STATS as S } from "@/lib/battles";
+import { DATA_AS_OF } from "@/lib/freshness";
 
 const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 const fmt = (n: number, dp = 0) =>
@@ -443,7 +444,7 @@ export default function PlatformAnalytics() {
 
       <p style={{ margin: 0, fontFamily: C.mono, fontSize: 12, color: C.dim, lineHeight: 1.5 }}>
         On-chain snapshot {WW.generatedAt || "(pending)"} from Dune over program
-        9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo (a bit older than the 2026-06-15
+        9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo (a bit older than the {DATA_AS_OF}{" "}
         site snapshots). Treasury wallet FNj signs every battle, so it tops raw tx
         count and is excluded from the trader board. See docs/WAVEWARZ-RESEARCH.md.
       </p>
