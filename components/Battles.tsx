@@ -134,6 +134,7 @@ export default function Battles() {
         <Tile label="COMMUNITY" value={fmt(S.communityBattles)} sub="community format" />
         <Tile label="TOTAL VOLUME" value={`${fmt(S.totalVolumeSol, 1)} ◎`} sub="SOL traded" />
         <Tile label="ARTIST PAYOUTS" value={`${fmt(S.artistPayoutsSol, 2)} ◎`} sub="to artists" />
+        <Tile label="TRADER CLAIMS" value={`${fmt(S.traderClaimsSol, 1)} ◎`} sub={`${fmt(S.withdrawalCount)} withdrawals`} />
       </div>
 
       {/* per night */}
