@@ -17,6 +17,7 @@ refresh. After any refresh: bump `DATA_AS_OF` in `lib/freshness.ts`, run
 | Battles | wavewarz-intelligence.vercel.app/battles?page=N | public/ww-battles.json | snapshot - `npm run fetch:battles` automates this now, see below |
 | Skips / queue per night | Dune (FNj inflows) | public/ww-skips.json, ww-queue.json | snapshot |
 | On-chain analytics | Dune | lib/wwData.ts | snapshot |
+| SOL/USD reference price | CoinGecko simple price | lib/price.ts | snapshot - update `SOL_USD` + `SOL_USD_AS_OF` manually |
 | Artists / Music / per-artist | Audius API | - | live |
 | YouTube | oEmbed + channel | components/Events.tsx | snapshot ids |
 
