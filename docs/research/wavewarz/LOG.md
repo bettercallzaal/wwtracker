@@ -2,6 +2,8 @@
 
 One line per hourly run: what was tried, and whether it worked or got stuck.
 
+2026-07-16 (this run) - WebFetch operational; fetched wavewarz.info/events (confirmed two-part charity series: Holiday Heat Dec 2024 ~$270 + Love Song Benefit Feb 2025 ~$1,221, total ~$1,497 for PolyRaiders/HuRya), fetched ZAOOS README (confirmed Farcaster integration via /zao channel + GeneratePostButton), fetched wavewarz.info for DJ Wavy (confirmed 2-of-3 poll+charts+AI mechanism, Quick Battle nightly format), fetched ZAO-CHELLA page (confirmed WaveWarZ LIVE at Art Basel Dec 2024). x.com tweets still 402-gated, farcaster.xyz channel pages JS-gated. Wrote 2026-07-16-community-verified-and-farcaster.md. Key new finding: charity battle is a TWO-event series (not one), combined total $1,497; date discrepancy between events page (Dec 12 2024) and tweet snowflake (Dec 13 2025) flagged unresolved. Nathan Hill/Liquid NFTs donor match not confirmed on any fetched page. No /wavewarz Farcaster channel found; Farcaster is a ZAO/ZAOOS layer feature, not in wwtracker app.
+
 2026-07-15 09:05 UTC - Tried community events/charity-initiatives/Discord-Telegram angle via WebSearch+WebFetch - stuck-because-WebFetch returned 403 on every URL this run (including unrelated control domains like en.wikipedia.org), so no page could be fetched/verified; only WebSearch snippets were available. Wrote up snippet-only leads under Unverified and flagged the tooling outage as the real blocker for future runs.
 
 # WaveWarZ community research - run log
