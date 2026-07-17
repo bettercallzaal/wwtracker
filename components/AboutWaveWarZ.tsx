@@ -45,7 +45,8 @@ export default function AboutWaveWarZ() {
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
           since {ps.firstDay} - snapshot {WW.generatedAt}. On-chain vs the
           wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~{S.totalShown.toLocaleString()});
-          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ buy volume (app ${S.totalVolumeSol.toFixed(2)} ◎, both sides).` : ""}
+          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ buy volume (app ${S.totalVolumeSol.toFixed(2)} ◎, both sides);` : ""}
+          {` app ${S.traderClaimsSol.toFixed(2)} ◎ claimed by traders (${S.withdrawalCount} withdrawals).`}
         </p>
       </Section>
 
