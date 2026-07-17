@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { C, metaLabel } from "@/lib/theme";
 import battlesRaw from "@/public/ww-battles.json";
+import { BATTLE_STATS } from "@/lib/battles";
 
 type Battle = { date: string; vol: number; type: string; a: string };
 const battles = battlesRaw as Battle[];
@@ -39,6 +40,12 @@ function buildMilestones(): Milestone[] {
 
   const raw: Milestone[] = [
     // Pre-data events (from research docs, marked unverified)
+    {
+      date: "Dec 2024",
+      label: "ZAO-CHELLA IRL event",
+      detail: "First WaveWarZ IRL event — Art Basel, Wynwood, Miami FL (Dec 6, 2024). Hurricane vs JANGO UU rematch, live audience.",
+      verified: false,
+    },
     {
       date: "Dec 2024",
       label: "PolyRaiders Holiday Heat",
@@ -95,9 +102,15 @@ function buildMilestones(): Milestone[] {
       verified: true,
     },
     {
+      date: "Jul 2026",
+      label: "500 ◎ milestone",
+      detail: "Cumulative platform volume crossed 500 SOL. Live platform total now exceeds the JSON tracker (which started May 2025).",
+      verified: false,
+    },
+    {
       date: "Oct 3, 2026",
       label: "ZAOstock IRL event",
-      detail: "First announced major IRL event for WaveWarZ + The ZAO community. Upcoming.",
+      detail: "Second confirmed IRL WaveWarZ + ZAO community event. Franklin St Parklet, Ellsworth ME. Upcoming.",
       verified: false,
     },
   ];
@@ -238,7 +251,7 @@ export default function MilestonesTimeline() {
         }}
       >
         Amber dots = verified from ww-battles.json · Dim dots = from community research docs (pre-data
-        window or future). Live platform volume (522+ ◎) exceeds JSON total because the tracker
+        window or future). Live platform volume ({Math.round(BATTLE_STATS.totalVolumeSol)}+ ◎) exceeds JSON total because the tracker
         started May 2025; pre-launch activity is not captured.
       </p>
     </div>
