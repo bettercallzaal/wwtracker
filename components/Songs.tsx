@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
 import { SONGS } from "@/lib/songs";
 import { AUDIUS_HANDLES } from "@/lib/artists";
+import { DATA_AS_OF } from "@/lib/freshness";
 
 const heatColor = (h: number) => (h >= 66 ? C.danger : h >= 33 ? C.accent : C.dim);
 const fmt = (n: number) => (n ?? 0).toLocaleString();
@@ -120,7 +121,7 @@ export default function Songs() {
       </div>
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        Full 37-song chart from wavewarz.info (snapshot 2026-06-15). V2 judging:
+        Full {SONGS.length}-song chart from wavewarz.info (snapshot {DATA_AS_OF}). V2 judging:
         Poll + Charts (SOL) + DJ Wavy, 2 of 3. Play counts live from Audius.
       </p>
     </div>

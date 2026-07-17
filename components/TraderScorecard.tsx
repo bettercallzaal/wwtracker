@@ -19,6 +19,7 @@ import { sampleTraderPnl } from "@/lib/traderSample";
 import { WW } from "@/lib/wwData";
 import { usd } from "@/lib/price";
 import { TRADERS, ME_WALLET } from "@/lib/traders";
+import { PROGRAM_ID } from "@/lib/config";
 
 // ---------------------------------------------------------------------------
 // Known trader figures (from the WaveWarZ stats app). These are seeded until
@@ -26,8 +27,8 @@ import { TRADERS, ME_WALLET } from "@/lib/traders";
 // ---------------------------------------------------------------------------
 
 const TRADER = {
-  wallet: "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk",
-  program: "9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo",
+  wallet: ME_WALLET,
+  program: PROGRAM_ID,
   netPnlSol: -1.6493,
   netPnlUsd: -111.36,
   roiPct: -30.67,
