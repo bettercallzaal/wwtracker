@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { LEADERBOARD } from "@/lib/leaderboard";
 
+export function generateStaticParams() {
+  return LEADERBOARD.map((a) => ({ handle: a.handle }));
+}
+
 export async function generateMetadata({
   params,
 }: {
