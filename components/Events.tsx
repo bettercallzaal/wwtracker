@@ -27,9 +27,9 @@ export default function Events() {
 
       <Section label="LIVE PROGRAMMING">
         <ul style={listStyle}>
-          <li><b>Quick Battles</b> - weeknights ~8:30 PM EST, with a 30-second final trading window.</li>
-          <li><b>Community AMAs</b> - Monday-Friday ~11:00 AM EST.</li>
-          <li>Primarily on <b>X Spaces</b>; also on YouTube.</li>
+          <li><b>Quick Battles</b> - weeknights ~8:30 PM EST, with a 30-second final trading window. Live on X Spaces + YouTube simulcast.</li>
+          <li><b>Community AMAs</b> - Monday-Friday ~11:00 AM EST. Founders take questions + product feedback directly.</li>
+          <li><b>WaveWarZ Clippers</b> - community battle highlight program: submit clips via Telegram, earn points, approved clips distributed to YouTube / X / TikTok.</li>
         </ul>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
           <Link href="https://x.com/WaveWarZ" label="X / @WaveWarZ" />

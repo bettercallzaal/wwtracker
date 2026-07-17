@@ -2,6 +2,8 @@
 
 One line per hourly run: what was tried, and whether it worked or got stuck.
 
+2026-07-17 12:xx UTC - WebFetch working. Fetched wavewarz.info directly. Verified: live-programming schedule (Mon–Fri 8:30 PM EST quick battles + YouTube simulcast, Mon–Fri 11 AM EST community AMA), WaveWarZ Clippers program (t.me/wavewarzclipshq, earn points, clips distributed YouTube/X/TikTok), confirmed channels (X @wavewarz, YouTube @wavewarz, Telegram @wavewarzclipshq), Discord confirmed absent. Also confirmed live stats: 1,245 battles, 524.37 SOL total volume, 9.07 SOL artist payouts. Wrote ZAOOS doc 1223 (research/wavewarz/1223-wavewarz-live-programming-community-jul2026). Amended Events.tsx LIVE PROGRAMMING section to include Clippers program description (PR feat/community-verified-follow-up).
+
 2026-07-17 04:30 UTC - WebFetch confirmed working this session (wavewarz.info returned 200). Re-checked the 2026-07-15 unverified leads. Confirmed: Telegram @wavewarzclipshq (clips channel, no Discord), YouTube @WaveWarZ exists, Kata7yst is a real active artist (4 direct battles + featured in 43 songs). X.com returns 402 (auth wall) so X-specific claims still unverified. Wrote `2026-07-17-community-verified.md`. Added Telegram link to Events.tsx (PR feat/community-verified-follow-up).
 
 2026-07-15 09:05 UTC - Tried community events/charity-initiatives/Discord-Telegram angle via WebSearch+WebFetch - stuck-because-WebFetch returned 403 on every URL this run (including unrelated control domains like en.wikipedia.org), so no page could be fetched/verified; only WebSearch snippets were available. Wrote up snippet-only leads under Unverified and flagged the tooling outage as the real blocker for future runs.
