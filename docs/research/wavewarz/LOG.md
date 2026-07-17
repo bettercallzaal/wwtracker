@@ -2,6 +2,10 @@
 
 One line per hourly run: what was tried, and whether it worked or got stuck.
 
+2026-07-17 (session) - Verification run with working outbound egress. Verified: (1) "WaveWarZ Artist Interview: Kata7yst" (ZU0ga5LRdyU) — CONFIRMED oEmbed, official WaveWarZ channel. (2) "Crypto Magic Hour EP. 50" (rx0PeGv8lPI) — CONFIRMED oEmbed, @VeVeMagic. (3) Wave Warz Zm YouTube channel — NOT FOUND (oEmbed 404). Wrote 2026-07-17-community-followup-verified.md.
+
+2026-07-17 12:xx UTC - WebFetch working. Verified live-programming schedule (Mon–Fri 8:30 PM EST quick battles + YouTube simulcast, Mon–Fri 11 AM EST AMA), WaveWarZ Clippers (t.me/wavewarzclipshq), Discord confirmed absent. Stats: 1,245 battles, 524.37 SOL, 9.07 SOL artist payouts. Wrote ZAOOS doc 1223. Amended Events.tsx. Wrote 2026-07-17-community-verified.md.
+
 2026-07-15 09:05 UTC - Tried community events/charity-initiatives/Discord-Telegram angle via WebSearch+WebFetch - stuck-because-WebFetch returned 403 on every URL this run (including unrelated control domains like en.wikipedia.org), so no page could be fetched/verified; only WebSearch snippets were available. Wrote up snippet-only leads under Unverified and flagged the tooling outage as the real blocker for future runs.
 
 # WaveWarZ community research - run log
