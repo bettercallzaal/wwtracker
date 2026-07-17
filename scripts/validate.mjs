@@ -39,6 +39,43 @@ for (const [name, lo] of [["ww-skips", 30], ["ww-queue", 30]]) {
   } else bad(`${name} not an object`);
 }
 
+// public/ww-activity.json
+const activity = json("public/ww-activity.json");
+if (Array.isArray(activity)) {
+  activity.length >= 30 ? ok(`ww-activity rows ${activity.length}`) : bad(`ww-activity rows ${activity.length} (expected >= 30)`);
+  const badRow = activity.find((r) => !r || !r.date || r.buys == null);
+  badRow ? bad(`ww-activity missing date/buys: ${JSON.stringify(badRow)}`) : ok("ww-activity rows have date+buys");
+} else bad("ww-activity.json not an array");
+
+// public/ww-platform-volume.json
+const platVol = json("public/ww-platform-volume.json");
+if (Array.isArray(platVol)) {
+  platVol.length >= 100 ? ok(`ww-platform-volume rows ${platVol.length}`) : bad(`ww-platform-volume rows ${platVol.length} (expected >= 100)`);
+  const badPv = platVol.find((r) => !r || !r.date || r.buy == null);
+  badPv ? bad(`ww-platform-volume missing date/buy: ${JSON.stringify(badPv)}`) : ok("ww-platform-volume rows have date+buy");
+} else bad("ww-platform-volume.json not an array");
+
+// public/ww-wavysplit.json
+const wavySplit = json("public/ww-wavysplit.json");
+if (wavySplit && typeof wavySplit === "object" && !Array.isArray(wavySplit)) {
+  const n = Object.keys(wavySplit).length;
+  n >= 30 ? ok(`ww-wavysplit nights ${n}`) : bad(`ww-wavysplit nights ${n} (expected >= 30)`);
+} else bad("ww-wavysplit.json not an object");
+
+// public/ww-lifetime.json
+const lifetime = json("public/ww-lifetime.json");
+if (lifetime && typeof lifetime === "object") {
+  typeof lifetime.lifetime_sol === "number" && lifetime.lifetime_sol > 0
+    ? ok(`ww-lifetime lifetime_sol ${lifetime.lifetime_sol}`)
+    : bad(`ww-lifetime.lifetime_sol invalid: ${lifetime.lifetime_sol}`);
+} else bad("ww-lifetime.json not an object");
+
+// public/ww-volboard.json
+const volboard = json("public/ww-volboard.json");
+if (volboard && typeof volboard === "object" && Array.isArray(volboard.rows)) {
+  volboard.rows.length >= 5 ? ok(`ww-volboard rows ${volboard.rows.length}`) : bad(`ww-volboard rows ${volboard.rows.length} (expected >= 5)`);
+} else bad("ww-volboard.json missing .rows array");
+
 // lib snapshots - count rows via a cheap regex so we notice if a regen empties them
 for (const [file, marker, min] of [
   ["lib/leaderboard.ts", /rank:\d+|"rank":\d+/g, 40],
