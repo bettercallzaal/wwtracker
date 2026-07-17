@@ -130,6 +130,7 @@ export default function Battles() {
         <Tile label="TOTAL BATTLES" value={fmt(S.totalShown)} sub="all time" />
         <Tile label="QUICK BATTLES" value={fmt(S.quickBattles)} sub="song vs song" />
         <Tile label="MAIN EVENTS" value={fmt(S.events)} sub={`${S.multiRound} multi-round`} />
+        <Tile label="COMMUNITY" value={fmt(S.communityBattles)} sub="community format" />
         <Tile label="TOTAL VOLUME" value={`${fmt(S.totalVolumeSol, 1)} ◎`} sub="SOL traded" />
         <Tile label="ARTIST PAYOUTS" value={`${fmt(S.artistPayoutsSol, 2)} ◎`} sub="to artists" />
       </div>
