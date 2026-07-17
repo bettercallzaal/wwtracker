@@ -41,6 +41,14 @@ const FAQS: QA[] = [
     a: "Quick Battles run live on weeknights around 8:30 PM EST (with a 30-second final trading window), plus community AMAs Monday-Friday around 11 AM EST, mainly on X Spaces and YouTube.",
   },
   {
+    q: "What is the Artist Tournament?",
+    a: "A 16-artist single-elimination bracket where artists compete head-to-head until one champion remains. SOL payouts settle instantly after each round. Participation requires artists to be on the WaveWarZ platform roster.",
+  },
+  {
+    q: "What is the AI Artist Tournament?",
+    a: "A separate bracket featuring AI-generated tracks — 8 to 16 songs — with community voting determining the winner each round. It runs alongside the human-artist tournament and uses the same SOL trading mechanics. Think of it as a proof-of-concept for AI as a creative participant on-chain.",
+  },
+  {
     q: "Where does this dashboard's data come from?",
     a: "On-chain, via Dune queries over the WaveWarZ program (9TUf...g2fYo). It's an unofficial community tool, not financial advice. See the About and How It Works tabs.",
   },
