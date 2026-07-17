@@ -41,7 +41,7 @@ const jsonLd = {
     "name": "WaveWarZ",
     "description": "Solana music-battle prediction market — artists compete, fans trade SOL on outcomes, automatic on-chain payouts.",
     "url": "https://wavewarz.info",
-    "sameAs": "https://useicm.com/api/objects/wavewarz/llm.txt",
+    "sameAs": ["https://wavewarz.com", "https://x.com/WaveWarZ"],
   },
   "isPartOf": {
     "@type": "Organization",
