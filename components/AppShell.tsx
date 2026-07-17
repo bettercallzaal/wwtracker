@@ -6,6 +6,14 @@ import { DATA_AS_OF } from "@/lib/freshness";
 import BalanceDashboard from "./BalanceDashboard";
 import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
+import { FLOOR_SOL } from "@/lib/config";
+import RevenueFloor from "./RevenueFloor";
+import WwNow from "./WwNow";
+import TraderActivity from "./TraderActivity";
+import WinRateLeaderboard from "./WinRateLeaderboard";
+import HotStreaks from "./HotStreaks";
+import ArtistVolume from "./ArtistVolume";
+import ArtistStandings from "./ArtistStandings";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
 import Profitability from "./Profitability";
@@ -44,12 +52,14 @@ const SECTIONS: Section[] = [
     id: "what",
     n: "01",
     title: "What WaveWarZ is",
-    intro: "start here. what the platform is, and how a single song-vs-song battle actually plays out on-chain.",
+    intro: "start here. what the platform is, how a single song-vs-song battle plays out on-chain, and the live numbers that prove it's real.",
     render: () => (
       <>
         <AboutWaveWarZ />
         <div style={{ height: 24 }} />
         <HowItWorks />
+        <div style={{ height: 24 }} />
+        <WwNow />
       </>
     ),
   },
@@ -57,8 +67,14 @@ const SECTIONS: Section[] = [
     id: "floor",
     n: "02",
     title: "The treasury floor",
-    intro: "the headline. the platform wallet's daily balance held against a 3.5 SOL operating floor - live from Dune.",
-    render: () => <BalanceDashboard />,
+    intro: `the headline. the platform wallet's daily balance held against a ${FLOOR_SOL} SOL operating floor — plus a live read on how much revenue the platform has earned above it.`,
+    render: () => (
+      <>
+        <BalanceDashboard />
+        <div style={{ height: 24 }} />
+        <RevenueFloor />
+      </>
+    ),
   },
   {
     id: "growth",
@@ -92,14 +108,24 @@ const SECTIONS: Section[] = [
     id: "traders",
     n: "07",
     title: "Who's trading",
-    intro: "the leaderboard, the full trader table, and a lookup for any wallet's own PnL.",
+    intro: "live trading pulse, the leaderboard, the full trader table, a lookup for any wallet's own PnL, plus win-rate standings, hot streaks, SOL volume by artist, and full W/L standings for all tagged handles.",
     render: () => (
       <>
+        <TraderActivity />
+        <div style={{ height: 24 }} />
         <Leaderboard />
         <div style={{ height: 24 }} />
         <Traders />
         <div style={{ height: 24 }} />
         <TraderScorecard />
+        <div style={{ height: 24 }} />
+        <WinRateLeaderboard />
+        <div style={{ height: 24 }} />
+        <HotStreaks />
+        <div style={{ height: 24 }} />
+        <ArtistVolume />
+        <div style={{ height: 24 }} />
+        <ArtistStandings />
       </>
     ),
   },
