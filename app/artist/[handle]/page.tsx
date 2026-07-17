@@ -93,6 +93,11 @@ export default function ArtistPage() {
           <div style={{ fontFamily: C.mono, fontSize: 13, color: C.dim }}>
             @{handle}{lb ? ` - leaderboard #${lb.rank}` : ""}
           </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
+            <a href={`https://x.com/${handle}`} target="_blank" rel="noreferrer" style={{ fontFamily: C.mono, fontSize: 11, color: C.accent, textDecoration: "none" }}>X ↗</a>
+            {user && <a href={`https://audius.co/${user.handle}`} target="_blank" rel="noreferrer" style={{ fontFamily: C.mono, fontSize: 11, color: C.accent, textDecoration: "none" }}>Audius ↗</a>}
+            <a href={`https://wavewarz.info/artists/${handle}`} target="_blank" rel="noreferrer" style={{ fontFamily: C.mono, fontSize: 11, color: C.accent, textDecoration: "none" }}>WaveWarZ ↗</a>
+          </div>
         </div>
       </header>
 
