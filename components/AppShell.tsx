@@ -19,6 +19,18 @@ import Music from "./Music";
 import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
+import BattleArena from "./BattleArena";
+import RivalryBoard from "./RivalryBoard";
+import BiggestBattles from "./BiggestBattles";
+import ArtistEarnings from "./ArtistEarnings";
+import RecentStandings from "./RecentStandings";
+import BattleCalendar from "./BattleCalendar";
+import HandleH2H from "./HandleH2H";
+import DowActivity from "./DowActivity";
+import BattleTypeBreakdown from "./BattleTypeBreakdown";
+import MarginDistribution from "./MarginDistribution";
+import MonthlyVolume from "./MonthlyVolume";
+import ArtistProfile from "./ArtistProfile";
 import Faq from "./Faq";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
@@ -85,8 +97,36 @@ const SECTIONS: Section[] = [
     id: "battles",
     n: "06",
     title: "The battles",
-    intro: "every battle on record. search it, sort it, export it.",
-    render: () => <Battles />,
+    intro: "every battle on record, every angle — search, sort, rankings, rivalries, profiles, calendars, type + margin breakdowns.",
+    render: () => (
+      <>
+        <Battles />
+        <div style={{ height: 24 }} />
+        <MonthlyVolume />
+        <div style={{ height: 24 }} />
+        <BattleTypeBreakdown />
+        <div style={{ height: 24 }} />
+        <DowActivity />
+        <div style={{ height: 24 }} />
+        <MarginDistribution />
+        <div style={{ height: 24 }} />
+        <BattleCalendar />
+        <div style={{ height: 24 }} />
+        <BattleArena />
+        <div style={{ height: 24 }} />
+        <RecentStandings />
+        <div style={{ height: 24 }} />
+        <ArtistEarnings />
+        <div style={{ height: 24 }} />
+        <ArtistProfile />
+        <div style={{ height: 24 }} />
+        <HandleH2H />
+        <div style={{ height: 24 }} />
+        <RivalryBoard />
+        <div style={{ height: 24 }} />
+        <BiggestBattles />
+      </>
+    ),
   },
   {
     id: "traders",
