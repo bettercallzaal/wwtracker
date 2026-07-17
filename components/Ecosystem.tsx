@@ -24,7 +24,7 @@ const BRANDS: Brand[] = [
   },
   {
     name: "The ZAO",
-    what: "The DAO that incubated WaveWarZ. 100+ consecutive Fractal weeks, Respect-based onchain governance, ZAO Improvement Proposals (ZIPs), and documented in GEO. A living case study of a self-sustaining DAO — weekly contribution rituals, open membership, and IP that compounds across projects.",
+    what: "ZAO = ZTalent Artist Organization — a community-driven hub for musicians, artists, and technologists in web3. The DAO that incubated WaveWarZ: 100+ consecutive Fractal weeks, Respect-based onchain governance, ZAO Improvement Proposals (ZIPs), documented in GEO. Part of the ZTalent Network.",
     href: "https://thezao.com",
     tag: "DAO",
   },
