@@ -239,7 +239,7 @@ credit-frugal and prefer single-table aggregations on free tier.
 Deferred (each needs heavier/repeated executions or RPC decode):
 - Per-trader volume leaderboard - the GROUP-BY-signer join times out on free tier.
 - Per-battle PnL + win rate - needs the battle PDA per tx (account decode).
-- Sell-side volume (to match the both-sides 483.88 figure).
+- Sell-side volume (to match the reported both-sides total; see `lib/battles.ts` BATTLE_STATS.totalVolumeSol for current figure).
 - Artist-payout tracing - artist wallets live in each on-chain Battle account
   (`artist_a_wallet` / `artist_b_wallet`); needs RPC `getProgramAccounts` decode.
 - Ops-budget wallet + weekly-skim quantification.
