@@ -11,6 +11,12 @@ import PlatformAnalytics from "./PlatformAnalytics";
 import Profitability from "./Profitability";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
+import ZaoVitals from "./ZaoVitals";
+import FractalGovernance from "./FractalGovernance";
+import ZaoIPSummary from "./ZaoIPSummary";
+import IPHighlights from "./IPHighlights";
+import WwMedia from "./WwMedia";
+import CommunityBattles from "./CommunityBattles";
 import Ecosystem from "./Ecosystem";
 import Events from "./Events";
 import Songs from "./Songs";
@@ -122,9 +128,21 @@ const SECTIONS: Section[] = [
     id: "ecosystem",
     n: "09",
     title: "In the ZAO ecosystem",
-    intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
+    intro: "where WaveWarZ sits in the bigger picture — the ZAO DAO vitals, Fractal governance, IP arena highlights, the creative catalog, community channels, events, and FAQ.",
     render: () => (
       <>
+        <ZaoVitals />
+        <div style={{ height: 24 }} />
+        <FractalGovernance />
+        <div style={{ height: 24 }} />
+        <ZaoIPSummary />
+        <div style={{ height: 24 }} />
+        <IPHighlights />
+        <div style={{ height: 24 }} />
+        <WwMedia />
+        <div style={{ height: 24 }} />
+        <CommunityBattles />
+        <div style={{ height: 24 }} />
         <Ecosystem />
         <div style={{ height: 24 }} />
         <Events />
