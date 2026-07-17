@@ -1,6 +1,5 @@
-// WaveWarZ battles - verified aggregate stats from wavewarz.info (snapshot
-// 2026-06-15). The per-battle feed is a virtualized client-side list that does
-// not reliably full-scrape; aggregate stats + a recent sample are exact.
+// WaveWarZ battles - verified aggregate stats from wavewarz.info/api/public/stats
+// Source: 2026-07-17T17:15:14Z
 
 export interface RecentBattle {
   type: "MAIN" | "QUICK";
@@ -8,13 +7,16 @@ export interface RecentBattle {
 }
 
 export const BATTLE_STATS = {
-  events: 72,
-  quickBattles: 886,
-  multiRound: 51,
-  totalShown: 958,
-  totalVolumeSol: 484.46,
-  artistPayoutsSol: 8.66,
-  platformRevenueSol: 15.3,
+  events: 50,
+  quickBattles: 1047,
+  multiRound: 162,
+  communityBattles: 36,
+  totalShown: 1245,
+  totalVolumeSol: 524.15,
+  artistPayoutsSol: 9.07,
+  platformRevenueSol: 17.44,
+  traderClaimsSol: 127.34,
+  withdrawalCount: 939,
 };
 
 export const RECENT_BATTLES: RecentBattle[] = [

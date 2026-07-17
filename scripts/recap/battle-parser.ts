@@ -18,7 +18,11 @@ function toStr(v: unknown): string | null {
 }
 
 function unescapeFlight(html: string): string {
-  return html.replace(/\\"/g, '"');
+  // Two passes: raw HTML has \\\" (3 backslashes + quote) for inner quotes
+  // (e.g. artist names like GodclouD ft Oly "Luchador"). One pass reduces
+  // that to \\" which breaks both extractJsonObjectAt and JSON.parse.
+  // Two passes: \\\" → \" (valid JSON escape) and \" → " (outer delimiter).
+  return html.replace(/\\"/g, '"').replace(/\\"/g, '"');
 }
 
 /** Extract a balanced JSON object starting at the `{` index, respecting
