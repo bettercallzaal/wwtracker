@@ -1,7 +1,7 @@
 # WaveWarZ - Research & On-Chain Analytics
 
 Living research doc for the wwtracker project. Product/qualitative notes plus
-on-chain findings from Dune. Last updated: 2026-06-14.
+on-chain findings from Dune. Last updated: 2026-07-16.
 
 Spelling is always **WaveWarZ** (capital W, capital Z).
 
@@ -29,11 +29,11 @@ Programming & tournaments (verified, wavewarz.info): Quick Battles weeknights
 ~8:30 PM EST (30-second final trading window); Community AMAs Mon-Fri ~11 AM EST;
 on X Spaces + YouTube. Two brackets: a 16-artist single-elimination Artist
 Tournament (instant SOL payouts per round) and an AI Artist Tournament
-(AI-generated tracks, community-voted). All-time battle types: **886 quick
-battles + 152 main-event battles across 48 tournaments** (vs 1,127 on-chain
-initializeBattle - different definitions). Verified artist: XTinct (Alejandro
-Estrella). NOTE: dopestilo/"No Regrets", Ramone/"Stupid MFs", Visionz vs Rome
-were NOT verifiable - left out of the app.
+(AI-generated tracks, community-voted). All-time battle types (snapshot 2026-07-16):
+**1,042 quick battles + 162 main-event battles across 50 main events = 1,240 total**
+(vs 1,127 on-chain initializeBattle - different definitions). Verified artist: XTinct
+(Alejandro Estrella). NOTE: dopestilo/"No Regrets", Ramone/"Stupid MFs", Visionz vs
+Rome were NOT verifiable - left out of the app.
 
 ## 2. Team
 
@@ -46,8 +46,8 @@ were NOT verifiable - left out of the app.
 
 ## 3. Traction (reported, ~Jun 2026)
 
-- ~483.88 SOL total volume (~$32.5k), ~1,073 battles, ~8.65 SOL artist payouts.
-- On-chain (Dune, this project): program active since **2025-08-01**; see section 6.
+- ~521.74 SOL total volume, ~1,240 battles (1,042 quick + 162 main-event), ~9.05 SOL artist payouts, ~17.37 SOL platform revenue. (snapshot 2026-07-16, wavewarz.info)
+- On-chain (Dune, this project): program active since **2025-08-01**; see section 6. (Dune snapshot 2026-06-14)
 
 ---
 
