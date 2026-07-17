@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { C } from "@/lib/theme";
 import { DATA_AS_OF } from "@/lib/freshness";
+import { FLOOR_SOL } from "@/lib/config";
 import BalanceDashboard from "./BalanceDashboard";
+import RevenueFloor from "./RevenueFloor";
 import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
 import TraderScorecard from "./TraderScorecard";
@@ -57,8 +59,14 @@ const SECTIONS: Section[] = [
     id: "floor",
     n: "02",
     title: "The treasury floor",
-    intro: "the headline. the platform wallet's daily balance held against a 3.5 SOL operating floor - live from Dune.",
-    render: () => <BalanceDashboard />,
+    intro: `the headline. the platform wallet's daily balance held against a ${FLOOR_SOL} SOL operating floor — plus a live read on how much revenue the platform has earned above it.`,
+    render: () => (
+      <>
+        <BalanceDashboard />
+        <div style={{ height: 24 }} />
+        <RevenueFloor />
+      </>
+    ),
   },
   {
     id: "growth",
