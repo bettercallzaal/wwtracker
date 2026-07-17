@@ -15,7 +15,7 @@ WaveWarZ is a music-battle prediction market on Solana where artists compete son
 - **Battles:** 1,245+ on-chain battles since May 2025
 - **Volume:** 524+ SOL cumulative trading volume (~$39K USD at ~$75/SOL)
 - **Artist payouts:** 9.07 SOL automatic onchain payments (1% of every trade, instant)
-- **Platform revenue:** 17.44 SOL (3.16% take rate on buy volume)
+- **Platform revenue:** 17.44 SOL (~3.3% take rate on buy volume)
 - **Songs:** 921 unique songs in the battle arena
 - **Artists:** 34 Audius-rostered artists with verified on-chain payouts
 
