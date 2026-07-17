@@ -34,6 +34,18 @@ interface ArtistBattle {
 
 const fmt = (n: number, dp = 2) => n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
 
+function computeStreak(battles: { won: boolean; date: string }[]): string {
+  if (!battles.length) return "";
+  const sorted = [...battles].sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+  const first = sorted[0].won;
+  let count = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i].won === first) count++;
+    else break;
+  }
+  return `${first ? "W" : "L"}${count}`;
+}
+
 interface AudiusUser { name: string; handle: string; follower_count: number; track_count: number; profile_picture?: { ["150x150"]?: string } | null; }
 interface Track { id: string; title: string; play_count: number; permalink: string; }
 
@@ -55,6 +67,11 @@ export default function ArtistPage() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [artistBattles, setArtistBattles] = useState<ArtistBattle[] | null>(null);
   const [showAllBattles, setShowAllBattles] = useState(false);
+
+  const currentStreak = useMemo(() => {
+    if (!artistBattles || !artistBattles.length) return "";
+    return computeStreak(artistBattles.map((b) => ({ won: b.won, date: b.date })));
+  }, [artistBattles]);
 
   useEffect(() => {
     if (!audiusId) return;
@@ -81,7 +98,7 @@ export default function ArtistPage() {
         if (!alive) return;
         const h = handle.toLowerCase();
         const filtered: ArtistBattle[] = all
-          .filter((b) => b.aHandle.toLowerCase() === h || b.bHandle.toLowerCase() === h)
+          .filter((b) => b.aHandle?.toLowerCase() === h || b.bHandle?.toLowerCase() === h)
           .map((b) => {
             const isA = b.aHandle.toLowerCase() === h;
             return {
@@ -132,6 +149,16 @@ export default function ArtistPage() {
         {user && <>
           <Tile label="AUDIUS FOLLOWERS" value={fmt(user.follower_count, 0)} />
           <Tile label="AUDIUS TRACKS" value={fmt(user.track_count, 0)} />
+        </>}
+        {artistBattles && artistBattles.length > 0 && <>
+          <Tile label="ALL-BATTLES RECORD" value={`${artistBattles.filter((b) => b.won).length}W–${artistBattles.filter((b) => !b.won).length}L`} />
+          {currentStreak && (
+            <Tile
+              label="CURRENT STREAK"
+              value={currentStreak}
+              valueColor={currentStreak.startsWith("W") ? C.good : C.danger}
+            />
+          )}
         </>}
       </div>
 
@@ -226,11 +253,11 @@ export default function ArtistPage() {
   );
 }
 
-function Tile({ label, value }: { label: string; value: string }) {
+function Tile({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <div style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 12, padding: 14, display: "flex", flexDirection: "column", gap: 4 }}>
       <span style={{ ...metaLabel, fontSize: 10 }}>{label}</span>
-      <span style={{ fontSize: 18, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{value}</span>
+      <span style={{ fontSize: 18, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: valueColor }}>{value}</span>
     </div>
   );
 }
