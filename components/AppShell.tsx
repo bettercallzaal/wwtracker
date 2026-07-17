@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { C } from "@/lib/theme";
 import { DATA_AS_OF } from "@/lib/freshness";
+import { PROGRAM_ID as PROGRAM, FLOOR_SOL } from "@/lib/config";
 import BalanceDashboard from "./BalanceDashboard";
 import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
@@ -20,6 +21,8 @@ import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
 import Faq from "./Faq";
+import LiveBattleBanner from "./LiveBattleBanner";
+import PlatformSummary from "./PlatformSummary";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
 // gets deeper the further you scroll - explainer, then the treasury floor, then
@@ -37,8 +40,14 @@ const SECTIONS: Section[] = [
     id: "overview",
     n: "00",
     title: "The whole run, at a glance",
-    intro: "every on-chain series in one place - volume, treasury, battles, trades. each line is scaled to its own peak so they share one axis; toggle any of them and hover for the real number.",
-    render: () => <OnChainProof />,
+    intro: "every on-chain series in one place - volume, treasury, battles, trades. each line is scaled to its own peak so they share one axis; toggle any of them and hover for the real number. key facts below.",
+    render: () => (
+      <>
+        <OnChainProof />
+        <div style={{ height: 24 }} />
+        <PlatformSummary />
+      </>
+    ),
   },
   {
     id: "what",
@@ -57,7 +66,7 @@ const SECTIONS: Section[] = [
     id: "floor",
     n: "02",
     title: "The treasury floor",
-    intro: "the headline. the platform wallet's daily balance held against a 3.5 SOL operating floor - live from Dune.",
+    intro: `the headline. the platform wallet's daily balance held against a ${FLOOR_SOL} SOL operating floor - live from Dune.`,
     render: () => <BalanceDashboard />,
   },
   {
@@ -236,6 +245,8 @@ export default function AppShell() {
         ))}
       </nav>
 
+      <LiveBattleBanner />
+
       {SECTIONS.map((s, i) => (
         <section
           key={s.id}
@@ -267,7 +278,7 @@ export default function AppShell() {
           lineHeight: 1.6,
         }}
       >
-        On-chain analytics from Dune over program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo.
+        On-chain analytics from Dune over program {PROGRAM}.
         Treasury balance + Audius are live; baked data as of {DATA_AS_OF}.
         Unofficial community tool - not financial advice.{" "}
         <a href="https://github.com/bettercallzaal/wwtracker" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
