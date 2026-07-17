@@ -8,6 +8,11 @@ import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
+import PlatformPulse from "./PlatformPulse";
+import BattleTempo from "./BattleTempo";
+import LiveBattleTypes from "./LiveBattleTypes";
+import LivePlatformStats from "./LivePlatformStats";
+import NailBiters from "./NailBiters";
 import Profitability from "./Profitability";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
@@ -78,8 +83,22 @@ const SECTIONS: Section[] = [
     id: "analytics",
     n: "05",
     title: "Platform analytics",
-    intro: "the full on-chain picture now - battles, trades, and traders decoded straight from the program.",
-    render: () => <PlatformAnalytics />,
+    intro: "the full on-chain picture — baked analytics, pace trends, monthly battle tempo, live battle type breakdown, live stats, and the 10 closest battles ever fought.",
+    render: () => (
+      <>
+        <PlatformAnalytics />
+        <div style={{ height: 24 }} />
+        <PlatformPulse />
+        <div style={{ height: 24 }} />
+        <BattleTempo />
+        <div style={{ height: 24 }} />
+        <LiveBattleTypes />
+        <div style={{ height: 24 }} />
+        <LivePlatformStats />
+        <div style={{ height: 24 }} />
+        <NailBiters />
+      </>
+    ),
   },
   {
     id: "battles",
