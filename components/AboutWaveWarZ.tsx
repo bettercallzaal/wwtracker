@@ -3,7 +3,7 @@
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
 import { usd } from "@/lib/price";
-import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY } from "@/lib/config";
+import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY, FLOOR_SOL } from "@/lib/config";
 import { BATTLE_STATS as S } from "@/lib/battles";
 
 const fmt = (n: number, dp = 0) =>
@@ -40,7 +40,7 @@ export default function AboutWaveWarZ() {
             <Stat label="BUY VOLUME" value={`${fmt(WW.volume.total)} ◎`} sub={usd(WW.volume.total)} />
           )}
           <Stat label="PROGRAM TXS" value={fmt(ps.programTxs)} sub={`${ps.activeDays} active days`} />
-          <Stat label="TREASURY NET" value={`${fmt(ps.treasuryNet, 2)} ◎`} sub={`~the 3.5 floor - ${usd(ps.treasuryNet)}`} />
+          <Stat label="TREASURY NET" value={`${fmt(ps.treasuryNet, 2)} ◎`} sub={`~the ${FLOOR_SOL} floor - ${usd(ps.treasuryNet)}`} />
         </Grid>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
           since {ps.firstDay} - snapshot {WW.generatedAt}. On-chain vs the
@@ -79,7 +79,7 @@ export default function AboutWaveWarZ() {
         </table>
         <p style={{ ...metaLabel, fontSize: 11 }}>
           Platform revenue = 0.5% of every trade + 3% of every loser pool -&gt; the
-          treasury wallet and its ~3.5 SOL operating floor.
+          treasury wallet and its ~{FLOOR_SOL} SOL operating floor.
         </p>
       </Section>
 
