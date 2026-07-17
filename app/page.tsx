@@ -1,5 +1,6 @@
 import AppShell from "@/components/AppShell";
 import FreshnessBanner from "@/components/FreshnessBanner";
+import LiveTicker from "@/components/LiveTicker";
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       }}
     >
       <FreshnessBanner />
+      <LiveTicker />
       <AppShell />
     </main>
   );
