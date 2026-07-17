@@ -1,6 +1,7 @@
 "use client";
 
 import { C, metaLabel } from "@/lib/theme";
+import { FLOOR_SOL } from "@/lib/config";
 
 interface QA {
   q: string;
@@ -33,8 +34,8 @@ const FAQS: QA[] = [
     a: "1% of trading volume per side on every trade, plus a settlement bonus - the winning artist gets 5% of the loser pool and the losing artist gets 2%.",
   },
   {
-    q: "What is the 3.5 SOL 'floor'?",
-    a: "The treasury wallet keeps roughly 3.5 SOL as an operating floor; the founders periodically skim the excess above it. On-chain the treasury's lifetime net lands right around 3.5 SOL.",
+    q: `What is the ${FLOOR_SOL} SOL 'floor'?`,
+    a: `The treasury wallet keeps roughly ${FLOOR_SOL} SOL as an operating floor; the founders periodically skim the excess above it. On-chain the treasury's lifetime net lands right around ${FLOOR_SOL} SOL.`,
   },
   {
     q: "When do battles happen?",
