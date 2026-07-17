@@ -114,6 +114,61 @@ describe("buildWeeklyRecap", () => {
     expect(draft.dataUsed.some((l) => l.includes("Top-volume battle"))).toBe(true);
   });
 
+  it("includes the winner in the Farcaster and X drafts for the top-volume battle", () => {
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    // mainEvent is the top-volume battle; winner is Geek Myth (GeEkMyTh_ETH)
+    expect(draft.farcaster).toContain("Geek Myth (GeEkMyTh_ETH) wins");
+    expect(draft.x).toContain("Geek Myth (GeEkMyTh_ETH) wins");
+  });
+
+  it("includes the winner in dataUsed for the top-volume battle", () => {
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.dataUsed.some((l) => l.includes("Top-volume battle") && l.includes("Geek Myth (GeEkMyTh_ETH) wins"))).toBe(true);
+  });
+
+  it("X draft includes the top battle, not just count+vol", () => {
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.x).toContain("Top:");
+    expect(draft.x).toContain("Geek Myth");
+  });
+
+  it("includes 'Including N Main Event(s)' in Farcaster when week has MAIN battles", () => {
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.farcaster).toContain("Including 1 Main Event.");
+  });
+
+  it("uses plural 'Main Events' when count > 1", () => {
+    const secondMain: StoredBattle = {
+      id: "2", type: "MAIN", date: "Jun 12, 2026",
+      a: "Song X", b: "Song Y", aHandle: null, bHandle: null,
+      winner: "Song X", vol: 5, margin: null,
+    };
+    const draft = buildWeeklyRecap([mainEvent, secondMain], "2026-06-09", "2026-06-15", context);
+    expect(draft.farcaster).toContain("Including 2 Main Events.");
+  });
+
+  it("omits Main Events line when week has no MAIN battles", () => {
+    const draft = buildWeeklyRecap([quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.farcaster).not.toContain("Main Event");
+  });
+
+  it("dataUsed battle count includes MAIN vs QUICK breakdown", () => {
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.dataUsed.some((l) => l.includes("1 MAIN") && l.includes("1 QUICK/COMMUNITY"))).toBe(true);
+  });
+
+  it("includes the closest-margin battle in the Farcaster draft when one exists", () => {
+    // quickBattle has margin=96; mainEvent has margin=null — quickBattle is the closest
+    const draft = buildWeeklyRecap([mainEvent, quickBattle], "2026-06-09", "2026-06-15", context);
+    expect(draft.farcaster).toContain("Closest:");
+    expect(draft.farcaster).toContain("96%");
+  });
+
+  it("omits Closest line when no battles have a margin", () => {
+    const draft = buildWeeklyRecap([mainEvent], "2026-06-09", "2026-06-15", context);
+    expect(draft.farcaster).not.toContain("Closest:");
+  });
+
   it("flags leaderboard movement as not included", () => {
     const draft = buildWeeklyRecap([mainEvent], "2026-06-09", "2026-06-15", context);
     expect(draft.notIncluded.some((l) => l.includes("Leaderboard movement"))).toBe(true);
@@ -132,7 +187,22 @@ describe("buildWeeklyRecap", () => {
       aHandle: null, bHandle: "BennyJ504WaveWarz", winner: "On Repeat", vol: 1, margin: 90,
     };
     const draft = buildWeeklyRecap([battleOne, battleTwo], "2026-06-09", "2026-06-15", context);
-    expect(draft.dataUsed.some((l) => l.includes("Most active artist: BennyJ504WaveWarz, 2 battle(s)"))).toBe(true);
+    // BennyJ504WaveWarz: "Modern Love" won battle 1 (a-side wins); "On Repeat" won battle 2 (b-side wins) — 2W-0L
+    expect(draft.dataUsed.some((l) => l.includes("Most active artist: BennyJ504WaveWarz, 2W-0L (2 battles)"))).toBe(true);
+  });
+
+  it("most active artist W-L record accounts for losses", () => {
+    // BennyJ504WaveWarz appears in 2 battles, wins 1, loses 1
+    const win: StoredBattle = {
+      id: "3", type: "QUICK", date: "Jun 10, 2026", a: "Win Song", b: "Filler",
+      aHandle: "BennyJ504WaveWarz", bHandle: null, winner: "Win Song", vol: 1, margin: 80,
+    };
+    const loss: StoredBattle = {
+      id: "4", type: "QUICK", date: "Jun 11, 2026", a: "Loss Song", b: "Other",
+      aHandle: "BennyJ504WaveWarz", bHandle: null, winner: "Other", vol: 1, margin: 70,
+    };
+    const draft = buildWeeklyRecap([win, loss], "2026-06-09", "2026-06-15", context);
+    expect(draft.dataUsed.some((l) => l.includes("Most active artist: BennyJ504WaveWarz, 1W-1L (2 battles)"))).toBe(true);
   });
 });
 

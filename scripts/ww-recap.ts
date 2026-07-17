@@ -117,7 +117,7 @@ function runShow(spaceUrl: string, dateArg: string | undefined, force: boolean) 
   writeState(STATE_PATH, markShowRecapped(state, iso));
 }
 
-function runWeekly() {
+function runWeekly(dryRun: boolean) {
   const battles = loadBattles();
   const state = readState(STATE_PATH);
   const endIso = new Date().toISOString().slice(0, 10);
@@ -129,25 +129,29 @@ function runWeekly() {
     return iso !== null && iso > startIso && iso <= endIso;
   });
   const draft = buildWeeklyRecap(weekBattles, startIso, endIso, buildContext());
-  writeRecapFile(
-    path.join(ROOT, "recaps/weekly"),
-    `${endIso}-weekly.md`,
-    renderRecapMarkdown("weekly", `${startIso} to ${endIso}`, endIso, draft),
-  );
+  const content = renderRecapMarkdown("weekly", `${startIso} to ${endIso}`, endIso, draft);
+  if (dryRun) {
+    console.log("--- DRY RUN (cursor not advanced) ---");
+    console.log(content);
+    console.log(`--- window: ${startIso} to ${endIso}, ${weekBattles.length} battles ---`);
+    return;
+  }
+  writeRecapFile(path.join(ROOT, "recaps/weekly"), `${endIso}-weekly.md`, content);
   writeState(STATE_PATH, advanceWeeklyCursor(state, endIso));
 }
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const force = args.force === true;
+  const dryRun = args["dry-run"] === true;
   if (typeof args.battle === "string" && args.type === "main-event") {
     runMainEvent(args.battle, force);
   } else if (typeof args.show === "string") {
     runShow(args.show, typeof args.date === "string" ? args.date : undefined, force);
   } else if (args.weekly === true) {
-    runWeekly();
+    runWeekly(dryRun);
   } else {
-    console.error("Usage: ww-recap --battle <id> --type main-event | --show <url> --date <YYYY-MM-DD> | --weekly");
+    console.error("Usage: ww-recap --battle <id> --type main-event | --show <url> --date <YYYY-MM-DD> | --weekly [--dry-run]");
     process.exit(1);
   }
 }
