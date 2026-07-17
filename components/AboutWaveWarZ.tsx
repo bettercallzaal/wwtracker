@@ -105,8 +105,9 @@ export default function AboutWaveWarZ() {
       {/* ecosystem */}
       <Section label="ECOSYSTEM">
         <p style={{ margin: "0 0 8px", color: C.text, lineHeight: 1.6 }}>
-          WaveWarZ is the music-battle application layer of <b>BCZ -&gt; The ZAO -&gt;
-          WaveWarZ</b> - The ZAO being a web3 music/creator collective. Related
+          WaveWarZ is the music-battle application layer of <b>BCZ -&gt;{" "}
+          <a href="https://thezao.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>The ZAO</a>
+          {" "}-&gt; WaveWarZ</b> — The ZAO is a web3 music/creator collective with 100+ consecutive Fractal governance weeks and onchain Respect scores. Related
           surfaces in the ecosystem:
         </p>
         <ul style={listStyle}>
@@ -127,6 +128,7 @@ export default function AboutWaveWarZ() {
           <Link href="https://x.com/WaveWarZ" label="X / @WaveWarZ" />
           <Link href="https://www.youtube.com/@WaveWarZ" label="YouTube" />
           <Link href="https://www.instagram.com/wavewarz" label="Instagram" />
+          <Link href="https://thezao.com" label="thezao.com" />
         </div>
       </Section>
     </div>
