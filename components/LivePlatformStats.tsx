@@ -8,12 +8,12 @@ const STATS_URL = "https://wavewarz.info/api/public/stats";
 type StatsResponse = {
   updatedAt: string;
   solPriceUsd: number;
-  volume: { sol: number; usd: number };
+  volume: { totalSol: number; totalUsd: number; last24hSol: number; last7dSol: number };
   liveBattle: { count: number; vol: number } | null;
-  artistPayouts: { sol: number; usd: number };
-  traderClaims: { sol: number; usd: number; withdrawalCount: number };
-  platformRevenue: { sol: number; usd: number };
-  battles: { total: number; quick: number; mainEvent: number; community: number };
+  artistPayouts: { totalSol: number; totalUsd: number };
+  traderClaims: { totalSol: number; totalUsd: number; withdrawalCount: number };
+  platformRevenue: { totalSol: number; totalUsd: number };
+  battles: { total: number; quickBattles: number; mainEvents: number; mainBattles: number; communityBattles: number };
 };
 
 export default function LivePlatformStats() {
@@ -50,11 +50,11 @@ export default function LivePlatformStats() {
       {data && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
-            <Tile label="TOTAL VOLUME" value={`${fmt(data.volume.sol)} ◎`} sub={`$${fmt(data.volume.usd, 0)}`} />
-            <Tile label="BATTLES" value={data.battles.total.toLocaleString()} sub={`${data.battles.quick} quick · ${data.battles.mainEvent} main`} />
-            <Tile label="ARTIST PAYOUTS" value={`${fmt(data.artistPayouts.sol)} ◎`} sub={`$${fmt(data.artistPayouts.usd, 0)}`} />
-            <Tile label="PLATFORM REVENUE" value={`${fmt(data.platformRevenue.sol)} ◎`} sub={`$${fmt(data.platformRevenue.usd, 0)}`} />
-            <Tile label="TRADER CLAIMS" value={`${fmt(data.traderClaims.sol)} ◎`} sub={`${data.traderClaims.withdrawalCount} withdrawals`} />
+            <Tile label="TOTAL VOLUME" value={`${fmt(data.volume.totalSol)} ◎`} sub={`$${fmt(data.volume.totalUsd, 0)}`} />
+            <Tile label="BATTLES" value={data.battles.total.toLocaleString()} sub={`${data.battles.quickBattles} quick · ${data.battles.mainEvents} main`} />
+            <Tile label="ARTIST PAYOUTS" value={`${fmt(data.artistPayouts.totalSol)} ◎`} sub={`$${fmt(data.artistPayouts.totalUsd, 0)}`} />
+            <Tile label="PLATFORM REVENUE" value={`${fmt(data.platformRevenue.totalSol)} ◎`} sub={`$${fmt(data.platformRevenue.totalUsd, 0)}`} />
+            <Tile label="TRADER CLAIMS" value={`${fmt(data.traderClaims.totalSol)} ◎`} sub={`${data.traderClaims.withdrawalCount} withdrawals`} />
             {data.liveBattle && (
               <Tile label="LIVE NOW" value={`${data.liveBattle.count} battle${data.liveBattle.count !== 1 ? "s" : ""}`} sub={`${fmt(data.liveBattle.vol)} ◎ at stake`} accent />
             )}
