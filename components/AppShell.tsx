@@ -19,6 +19,7 @@ import Music from "./Music";
 import Leaderboard from "./Leaderboard";
 import Traders from "./Traders";
 import Battles from "./Battles";
+import ArtistEarnings from "./ArtistEarnings";
 import Faq from "./Faq";
 
 // The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
@@ -86,7 +87,13 @@ const SECTIONS: Section[] = [
     n: "06",
     title: "The battles",
     intro: "every battle on record. search it, sort it, export it.",
-    render: () => <Battles />,
+    render: () => (
+      <>
+        <Battles />
+        <div style={{ height: 24 }} />
+        <ArtistEarnings />
+      </>
+    ),
   },
   {
     id: "traders",
