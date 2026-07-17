@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { FLOOR_SOL } from "@/lib/config";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://wwtracker.vercel.app"),
   title: "WaveWarZ - on-chain tracker",
   description:
-    "On-chain analytics for WaveWarZ — the Solana music-battle platform in The ZAO ecosystem. Treasury balance vs the 3.5 SOL floor, battles/trades/traders, and trader PnL. Backed by Dune.",
+    `On-chain analytics for WaveWarZ — the Solana music-battle platform in The ZAO ecosystem. Treasury balance vs the ${FLOOR_SOL} SOL floor, battles/trades/traders, and trader PnL. Backed by Dune.`,
   openGraph: {
     title: "WaveWarZ - on-chain tracker",
     description:
