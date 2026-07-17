@@ -23,4 +23,8 @@ describe("parseArgs", () => {
   it("returns an empty object for no args", () => {
     expect(parseArgs([])).toEqual({});
   });
+
+  it("parses --dry-run as a boolean flag", () => {
+    expect(parseArgs(["--weekly", "--dry-run"])).toEqual({ weekly: true, "dry-run": true });
+  });
 });
