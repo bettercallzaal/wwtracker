@@ -46,9 +46,9 @@ Rome were NOT verifiable - left out of the app.
 - **candy / CandyToyBox (Samantha Kinney)** - design, promo, marketing; built the
   reference analytics apps.
 
-## 3. Traction (reported, ~Jun 2026)
+## 3. Traction (reported, Jul 2026)
 
-- ~521.74 SOL total volume, ~1,240 battles (1,042 quick + 162 main-event), ~9.05 SOL artist payouts, ~17.37 SOL platform revenue. (snapshot 2026-07-16, wavewarz.info)
+- ~521.75 SOL total volume, ~1,241 battles (1,043 quick + 162 main-event + 36 community), ~9.05 SOL artist payouts, ~17.38 SOL platform revenue. **127.34 SOL claimed by traders** (939 claimShares withdrawals). (snapshot 2026-07-17, wavewarz.info/api/public/stats)
 - On-chain (Dune, this project): program active since **2025-08-01**; see section 6. (Dune snapshot 2026-06-14)
 
 ---
