@@ -156,7 +156,7 @@ export default function PlatformAnalytics() {
             {fmt(WW.platformStats.treasuryNet, 2)} ◎
           </span>
           <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>
-            ~the 3.5 floor
+            ~the {FLOOR_SOL} floor
           </small>
         </Tile>
         <Tile label="TREASURY IN / OUT">
