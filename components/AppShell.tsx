@@ -7,6 +7,7 @@ import BalanceDashboard from "./BalanceDashboard";
 import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
 import MilestonesTimeline from "./MilestonesTimeline";
+import GrowthMomentum from "./GrowthMomentum";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
 import Profitability from "./Profitability";
@@ -65,12 +66,14 @@ const SECTIONS: Section[] = [
     id: "growth",
     n: "03",
     title: "Growth over time",
-    intro: "how the platform has grown since it launched - the shape of the last stretch, plus a timeline of key milestones.",
+    intro: "how the platform has grown since it launched - the shape of the last stretch, key milestones, and a 30-day momentum check.",
     render: () => (
       <>
         <PlatformGrowth />
         <div style={{ height: 24 }} />
         <MilestonesTimeline />
+        <div style={{ height: 24 }} />
+        <GrowthMomentum />
       </>
     ),
   },
