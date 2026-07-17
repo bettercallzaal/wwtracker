@@ -43,6 +43,7 @@ export const ROSTER: RosterArtist[] = [
   { handle: "sweetbiddi", audiusId: "1jAZg9W", note: "SweetBiddiMcGee" },
   { handle: "zKeyz", audiusId: "dMg3E5", note: "Production is the bag!" },
   { handle: "BennyJ504", audiusId: "bVgyk", note: "BennyJ504 - main account" },
+  { handle: "frameworkfortune", audiusId: "AMNd4pg", note: "ENTERLUDE (0W-1L on wavewarz.info, 2026-07)" },
 ];
 
 export const AUDIUS_ID_BY_HANDLE: Record<string, string> = Object.fromEntries(
