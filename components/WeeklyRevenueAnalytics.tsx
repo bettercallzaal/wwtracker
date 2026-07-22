@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { loadWeeklyRevenueFromCsv, WeeklyTrend, WeeklyRevenue } from "@/lib/treasuryAnalytics";
+import { getPublicStats } from "@/lib/wavewarzApi";
 
 const fmt = (n: number, dp = 0) =>
   n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -26,24 +27,37 @@ interface WeeklyRevenueAnalyticsProps {
   solPrice?: number;
 }
 
-export default function WeeklyRevenueAnalytics({ solPrice = 160 }: WeeklyRevenueAnalyticsProps) {
+export default function WeeklyRevenueAnalytics({ solPrice }: WeeklyRevenueAnalyticsProps) {
   const reduced = useReducedMotion();
   const [trend, setTrend] = useState<WeeklyTrend | null>(null);
   const [loading, setLoading] = useState(true);
+  // The LIVE SOL price from the WaveWarZ API - never a hardcoded default, so USD
+  // figures are real (this tracker's "no invented numbers" rule). Falls back to
+  // the optional prop only if the API is unreachable.
+  const [price, setPrice] = useState<number>(solPrice ?? 0);
 
   useEffect(() => {
     let alive = true;
-    loadWeeklyRevenueFromCsv(solPrice)
-      .then((data) => {
+    void (async () => {
+      let livePrice = solPrice ?? 0;
+      try {
+        const stats = await getPublicStats();
+        if (stats?.solPriceUsd) livePrice = stats.solPriceUsd;
+      } catch (err) {
+        console.error("Failed to fetch live SOL price, using fallback:", err);
+      }
+      if (alive) setPrice(livePrice);
+      try {
+        const data = await loadWeeklyRevenueFromCsv(livePrice);
         if (alive) {
           setTrend(data);
           setLoading(false);
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Failed to load weekly revenue:", err);
-        setLoading(false);
-      });
+        if (alive) setLoading(false);
+      }
+    })();
     return () => {
       alive = false;
     };
@@ -95,7 +109,7 @@ export default function WeeklyRevenueAnalytics({ solPrice = 160 }: WeeklyRevenue
             {fmt(current.gross_inflow_sol, 2)} ◎
           </span>
           <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>
-            ~${usd(current.gross_inflow_sol, solPrice)}
+            ~${usd(current.gross_inflow_sol, price)}
           </small>
         </Tile>
         <Tile label="THIS WEEK NET FLOW">
@@ -108,7 +122,7 @@ export default function WeeklyRevenueAnalytics({ solPrice = 160 }: WeeklyRevenue
             {fmt(current.net_flow_sol, 2)} ◎
           </span>
           <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>
-            ~${usd(current.net_flow_sol, solPrice)}
+            ~${usd(current.net_flow_sol, price)}
           </small>
         </Tile>
         <Tile label="BATTLES THIS WEEK">
@@ -271,10 +285,10 @@ export default function WeeklyRevenueAnalytics({ solPrice = 160 }: WeeklyRevenue
       <Panel label="ALL-TIME SUMMARY">
         <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 14 }}>
           <li>
-            All-time gross revenue: <b>{fmt(trend.all_time_gross_sol, 2)} ◎</b> (~${usd(trend.all_time_gross_sol, solPrice)})
+            All-time gross revenue: <b>{fmt(trend.all_time_gross_sol, 2)} ◎</b> (~${usd(trend.all_time_gross_sol, price)})
           </li>
           <li>
-            All-time net (after distributions): <b>{fmt(trend.all_time_net_sol, 2)} ◎</b> (~${usd(trend.all_time_net_sol, solPrice)})
+            All-time net (after distributions): <b>{fmt(trend.all_time_net_sol, 2)} ◎</b> (~${usd(trend.all_time_net_sol, price)})
           </li>
           <li>
             This week accounts for ~<b>{fmt((current.gross_inflow_sol / Math.max(1, trend.all_time_gross_sol)) * 100, 1)}%</b> of lifetime
@@ -285,7 +299,7 @@ export default function WeeklyRevenueAnalytics({ solPrice = 160 }: WeeklyRevenue
 
       <p style={{ margin: 0, fontFamily: C.mono, fontSize: 12, color: C.dim, lineHeight: 1.5 }}>
         Weekly revenue analytics from on-chain treasury CSV (386 days tracked). All figures are real, sourced from the
-        fee wallet balance changes. No estimated or projected numbers. SOL price used: ${solPrice}.
+        fee wallet balance changes. No estimated or projected numbers. SOL price used: ${price.toFixed(2)}.
       </p>
     </div>
   );
