@@ -212,6 +212,15 @@ export default function OnChainProof() {
         </p>
       </header>
 
+      <p style={{ margin: 0, fontFamily: C.mono, fontSize: 12, color: C.dim }}>
+        For live battle-by-battle browsing, leaderboards, and song charts, WaveWarZ's own{" "}
+        <a href="https://wavewarz-intelligence.vercel.app" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
+          Intelligence dashboard ↗
+        </a>{" "}
+        already does that well - this tracker focuses on the treasury/financial history and
+        record-keeping side instead.
+      </p>
+
       {liveStats?.liveBattle != null && (
         <div
           style={{
