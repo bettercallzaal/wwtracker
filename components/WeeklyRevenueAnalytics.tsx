@@ -128,7 +128,7 @@ export default function WeeklyRevenueAnalytics({ solPrice }: WeeklyRevenueAnalyt
         <Tile label="BATTLES THIS WEEK">
           <span style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(current.battles_count)}</span>
           <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>
-            avg fee per battle
+            battles launched
           </small>
         </Tile>
         <Tile label="AVG FEE PER BATTLE">
