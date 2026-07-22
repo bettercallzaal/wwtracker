@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
+import { getPublicStats, type PublicStats } from "@/lib/wavewarzApi";
 
 // The overview overlays four on-chain series that live on wildly different
 // scales (325 SOL of volume vs a ~3.5 SOL treasury vs thousands of trades).
@@ -69,6 +70,7 @@ export default function OnChainProof() {
   const [bal, setBal] = useState<BalanceRow[] | null>(null);
   const [balLive, setBalLive] = useState(false);
   const [active, setActive] = useState<Set<SeriesDef["id"]>>(new Set(["vol", "bal", "btl", "trd"]));
+  const [liveStats, setLiveStats] = useState<PublicStats | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -80,6 +82,9 @@ export default function OnChainProof() {
         setBalLive(d.source !== "sample");
       })
       .catch(() => alive && setBal([]));
+    getPublicStats()
+      .then((s) => alive && setLiveStats(s))
+      .catch(() => {});
     return () => {
       alive = false;
     };
@@ -158,18 +163,40 @@ export default function OnChainProof() {
   const prog = WW.program;
   const ts = WW.traderStats;
 
+  // Volume and battle count come live from WaveWarZ's own public API
+  // (wavewarz.info/api-docs) when it responds - always current, vs. the
+  // baked Dune snapshot below which is only as fresh as its last regen.
+  // Trades/traders/active-days have no live equivalent yet, so those stay
+  // snapshot-sourced (labeled with the snapshot date in the footer).
   const tiles = [
-    { k: "Total volume", v: fmt(peaks.vol, 1), u: "SOL", s: "decoded buy volume" },
+    {
+      k: "Total volume",
+      v: liveStats ? fmt(liveStats.volume.totalSol, 1) : fmt(peaks.vol, 1),
+      u: "SOL",
+      s: liveStats ? "live from WaveWarZ API" : "decoded buy volume (snapshot)",
+    },
     {
       k: "Treasury now",
       v: latest?.bal != null ? fmt(latest.bal, 2) : "-",
       u: "SOL",
       s: `floor 3.5 / peak ${fmt(peaks.bal, 2)}`,
     },
-    { k: "Battles", v: fmt(prog.battlesCreated), u: "", s: `${fmt(prog.battlesSettled)} settled` },
+    {
+      k: "Battles",
+      v: liveStats ? fmt(liveStats.battles.total) : fmt(prog.battlesCreated),
+      u: "",
+      s: liveStats
+        ? `${fmt(liveStats.battles.quickBattles)} quick / ${fmt(liveStats.battles.mainEvents)} events`
+        : `${fmt(prog.battlesSettled)} settled (snapshot)`,
+    },
+    {
+      k: "Artist payouts",
+      v: liveStats ? fmt(liveStats.artistPayouts.totalSol, 2) : "-",
+      u: "SOL",
+      s: "live, automatic per-trade + settlement",
+    },
     { k: "Trades", v: fmt(prog.buys + prog.sells), u: "", s: `${fmt(prog.buys)} buys / ${fmt(prog.sells)} sells` },
-    { k: "Traders", v: "122", u: "", s: "unique wallets" },
-    { k: "Active days", v: fmt(tot.activeDays), u: "", s: `since ${tot.firstDay}` },
+    { k: "Traders", v: "122", u: "", s: "unique wallets (snapshot)" },
   ];
 
   return (
@@ -184,6 +211,31 @@ export default function OnChainProof() {
           Each line is scaled to its own peak so they share one axis; hover for the real number.
         </p>
       </header>
+
+      {liveStats?.liveBattle != null && (
+        <div
+          style={{
+            background: `${C.good}1a`,
+            border: `1px solid ${C.good}`,
+            borderRadius: 12,
+            padding: "10px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            fontFamily: C.mono,
+            fontSize: 12,
+          }}
+        >
+          <span
+            style={{ width: 8, height: 8, borderRadius: "50%", background: C.good, display: "inline-block", flexShrink: 0 }}
+          />
+          <span style={{ color: C.good, fontWeight: 700 }}>LIVE NOW</span>
+          <span style={{ color: C.text }}>a battle is trading right now on WaveWarZ.</span>
+          <a href="https://wavewarz.info" target="_blank" rel="noreferrer" style={{ color: C.good, marginLeft: "auto", textDecoration: "none" }}>
+            watch ↗
+          </a>
+        </div>
+      )}
 
       <div
         style={{
@@ -366,8 +418,10 @@ export default function OnChainProof() {
       </div>
 
       <p style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, margin: 0 }}>
-        {balLive ? "treasury live from Solana." : "treasury on sample data (API unset)."} volume, battles and
-        trades from the baked Dune snapshot. indexed chart, not dual-axis - see the DEV WALLET and BATTLES tabs for full-scale views.
+        {balLive ? "treasury live from Solana." : "treasury on sample data (API unset)."}{" "}
+        {liveStats ? "volume/battles/payouts live from WaveWarZ's API." : "volume and battles from the baked Dune snapshot."}{" "}
+        trades and traders are from the Dune snapshot ({fmt(tot.activeDays)} active days through {tot.lastDay},
+        generated {WW.generatedAt}). indexed chart, not dual-axis - see the DEV WALLET and BATTLES tabs for full-scale views.
       </p>
     </div>
   );

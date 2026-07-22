@@ -62,13 +62,6 @@ export interface IncomeStreamItem {
 
 export const ACTIVE_INCOME_STREAMS: IncomeStreamItem[] = [
   { name: "Sponsorship - rj", amountUsd: 50, cadence: "monthly", active: true },
-  {
-    name: "Sponsorship - Sigea",
-    amountUsd: 75,
-    cadence: "one-time",
-    active: false,
-    note: "Largest single sponsorship received to date - a one-off, not a recurring source.",
-  },
 ];
 
 /** Sum of currently-recurring monthly income streams (excludes one-time entries). */

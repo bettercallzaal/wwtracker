@@ -26,7 +26,8 @@ export interface PublicStats {
   updatedAt: string;
   solPriceUsd: number;
   volume: { totalSol: number; totalUsd: number; last24hSol: number; last7dSol: number };
-  liveBattle: string | null;
+  /** Non-null when a battle is currently live - shape not fully confirmed (only seen null in testing), treat as opaque/truthy-check only. */
+  liveBattle: unknown;
   artistPayouts: { totalSol: number; totalUsd: number; note: string };
   traderClaims: { totalSol: number; totalUsd: number; withdrawalCount: number; note: string };
   platformRevenue: { totalSol: number; totalUsd: number };

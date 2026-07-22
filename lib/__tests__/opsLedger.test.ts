@@ -61,8 +61,8 @@ describe("activeMonthlyIncomeUsd", () => {
 });
 
 describe("data sanity", () => {
-  it("ACTIVE_INCOME_STREAMS has the rj monthly sponsorship and the Sigea one-time high", () => {
-    expect(ACTIVE_INCOME_STREAMS).toHaveLength(2);
+  it("ACTIVE_INCOME_STREAMS has only the rj monthly sponsorship", () => {
+    expect(ACTIVE_INCOME_STREAMS).toHaveLength(1);
     expect(activeMonthlyIncomeUsd(ACTIVE_INCOME_STREAMS)).toBe(50);
   });
 
