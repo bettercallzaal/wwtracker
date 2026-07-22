@@ -11,7 +11,7 @@ in [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
 
 ## Sections
 
-Not tabs - one scrolling page, numbered 00-09, with a sticky jump-nav
+Not tabs - one scrolling page, numbered 00-10, with a sticky jump-nav
 (`components/AppShell.tsx`). Old `?tab=` links from before the redesign still
 resolve to the right section.
 
@@ -34,17 +34,23 @@ resolve to the right section.
   Zaal), a split pie, recipient cards (Solscan links when wallets are set), and a
   distribution history table. Config in `lib/distributions.ts`; rows show TBD
   until the real distribution dates/amounts + wallets are filled in.
-- **05 Analytics** - WaveWarZ program-wide on-chain: 1,127 battles / 9,045 trades /
+- **05 Running the business** - real-world costs and income the team tracks
+  manually (not on-chain-derivable): the fee wallet's live SOL/WARZ balance
+  (verified against Solana mainnet RPC), historical treasury snapshots, the
+  tech-stack cost table, and monthly expense/income P&L - with any figure that
+  doesn't reconcile flagged explicitly rather than smoothed over. Config in
+  `lib/opsLedger.ts`.
+- **06 Analytics** - WaveWarZ program-wide on-chain: 1,127 battles / 9,045 trades /
   122 traders (decoded instructions), battles-vs-trades timeline, daily activity
   (14,681 txs over 230 days since Aug 2025), treasury daily flow (lifetime net
   +3.51 SOL = the floor), and a top-traders leaderboard. Snapshot in `lib/wwData.ts`.
-- **06 Battles** - the full battle history: search, filter by type, CSV export.
-- **07 Traders** - the artist leaderboard, the full trader table, and a
+- **07 Battles** - the full battle history: search, filter by type, CSV export.
+- **08 Traders** - the artist leaderboard, the full trader table, and a
   lookup for any wallet's own PnL (cumulative SOL, live from on-chain, win
   rate, biggest win/loss - shown alongside the stats-app's realized figure).
-- **08 Music** - the songs and artists the battles are built on: song charts
+- **09 Music** - the songs and artists the battles are built on: song charts
   with Audius play counts + inline play, and the artist roster.
-- **09 Ecosystem** - where WaveWarZ sits in the ZAO ecosystem, events, and FAQ.
+- **10 Ecosystem** - where WaveWarZ sits in the ZAO ecosystem, events, and FAQ.
 
 Table features across those sections: client-side search/filter (songs, traders,
 artists, battles), sortable columns (traders), and CSV export (leaderboard,

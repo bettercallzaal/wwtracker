@@ -28,12 +28,13 @@ app/
   globals.css           palette vars, reduced-motion, focus, skeleton shimmer
   api/balance/route.ts  GET endpoint: treasury daily balance (live, server-side)
 components/
-  AppShell.tsx          renders the 10 numbered sections (see §4) as one scrolling
+  AppShell.tsx          renders the 11 numbered sections (see §4) as one scrolling
                         page with sticky jump-nav; legacy ?tab= deep links still work
   AboutWaveWarZ.tsx / HowItWorks.tsx    what it is, mechanics, fees, snapshot, addresses, team, links
   BalanceDashboard.tsx  the treasury floor: close bars + intraday-high line vs 3.5 floor
   PlatformGrowth.tsx    cumulative SOL volume timeline
   Profitability.tsx     floor model + distribution split
+  OpsLedger.tsx         real-world costs/income: tech stack, monthly P&L, fee wallet (lib/opsLedger.ts)
   PlatformAnalytics.tsx decoded instruction mix, timeline, activity, treasury flow, volume, leaderboard
   Battles.tsx           full battle history: search/filter/CSV export
   Leaderboard.tsx / Traders.tsx / TraderScorecard.tsx   artist leaderboard, trader table, wallet PnL lookup
@@ -94,7 +95,7 @@ the analytics are expensive Solana scans, so we snapshot them and refresh on dem
 
 ## 4. The sections
 
-Not tabs - `AppShell.tsx` renders one scrolling page, numbered 00-09, with a
+Not tabs - `AppShell.tsx` renders one scrolling page, numbered 00-10, with a
 sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
 `AppShell.tsx`'s `LEGACY_TAB` table) since that's how the app used to work.
 
@@ -105,11 +106,12 @@ sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
 | 02 | Floor | BalanceDashboard.tsx | Treasury daily close (bars) + intraday high (line) vs 3.5 floor; Day/Week; ATH/30d/days tiles | live /api/balance |
 | 03 | Growth | PlatformGrowth.tsx | Cumulative SOL volume timeline since launch | public/ww-platform-volume.json |
 | 04 | Profitability | Profitability.tsx | Floor model, 33/22/22/22 distribution split, recipient cards, distribution history (TBD until real data) | lib/distributions.ts |
-| 05 | Analytics | PlatformAnalytics.tsx | Decoded battles/trades/claims/traders, battles-vs-trades timeline, daily activity, treasury flow, buy-volume chart, tx-count leaderboard | WW + public/ww-activity.json, ww-volboard.json |
-| 06 | Battles | Battles.tsx | Full battle history, search/filter/CSV export | public/ww-battles.json + ww-queue/skips/wavysplit.json |
-| 07 | Traders | Leaderboard.tsx, Traders.tsx, TraderScorecard.tsx | Artist leaderboard, full trader table, per-wallet PnL lookup | lib/leaderboard.ts, lib/traders.ts, WW |
-| 08 | Music | Songs.tsx, Artists.tsx, Music.tsx | Song charts + artist roster, Audius play counts and inline play | lib/songs.ts, lib/artists.ts + live Audius API |
-| 09 | Ecosystem | Ecosystem.tsx, Events.tsx, Faq.tsx | ZAO ecosystem context, events, FAQ | static |
+| 05 | Running the business | OpsLedger.tsx | Fee wallet live SOL/WARZ balance, historical treasury snapshots, tech-stack cost table, monthly expense/income P&L (team-reported, unreconciled figures flagged) | lib/opsLedger.ts + live Solana RPC |
+| 06 | Analytics | PlatformAnalytics.tsx | Decoded battles/trades/claims/traders, battles-vs-trades timeline, daily activity, treasury flow, buy-volume chart, tx-count leaderboard | WW + public/ww-activity.json, ww-volboard.json |
+| 07 | Battles | Battles.tsx | Full battle history, search/filter/CSV export | public/ww-battles.json + ww-queue/skips/wavysplit.json |
+| 08 | Traders | Leaderboard.tsx, Traders.tsx, TraderScorecard.tsx | Artist leaderboard, full trader table, per-wallet PnL lookup | lib/leaderboard.ts, lib/traders.ts, WW |
+| 09 | Music | Songs.tsx, Artists.tsx, Music.tsx | Song charts + artist roster, Audius play counts and inline play | lib/songs.ts, lib/artists.ts + live Audius API |
+| 10 | Ecosystem | Ecosystem.tsx, Events.tsx, Faq.tsx | ZAO ecosystem context, events, FAQ | static |
 
 ## 5. Metrics & methodology
 

@@ -9,6 +9,7 @@ import PlatformGrowth from "./PlatformGrowth";
 import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
 import Profitability from "./Profitability";
+import OpsLedger from "./OpsLedger";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
 import Ecosystem from "./Ecosystem";
@@ -75,22 +76,29 @@ const SECTIONS: Section[] = [
     render: () => <Profitability />,
   },
   {
-    id: "analytics",
+    id: "ops",
     n: "05",
+    title: "Running the business",
+    intro: "real-world costs and income the team tracks manually - tech stack, monthly P&L, the fee wallet. not on-chain-derivable, so treat it as reported.",
+    render: () => <OpsLedger />,
+  },
+  {
+    id: "analytics",
+    n: "06",
     title: "Platform analytics",
     intro: "the full on-chain picture now - battles, trades, and traders decoded straight from the program.",
     render: () => <PlatformAnalytics />,
   },
   {
     id: "battles",
-    n: "06",
+    n: "07",
     title: "The battles",
     intro: "every battle on record. search it, sort it, export it.",
     render: () => <Battles />,
   },
   {
     id: "traders",
-    n: "07",
+    n: "08",
     title: "Who's trading",
     intro: "the leaderboard, the full trader table, and a lookup for any wallet's own PnL.",
     render: () => (
@@ -105,7 +113,7 @@ const SECTIONS: Section[] = [
   },
   {
     id: "music",
-    n: "08",
+    n: "09",
     title: "The music",
     intro: "the songs and artists the battles are built on - Audius play counts and inline play.",
     render: () => (
@@ -120,7 +128,7 @@ const SECTIONS: Section[] = [
   },
   {
     id: "ecosystem",
-    n: "09",
+    n: "10",
     title: "In the ZAO ecosystem",
     intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
     render: () => (
