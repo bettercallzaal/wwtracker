@@ -84,11 +84,6 @@ export default function PlatformAnalytics() {
     return { totalTxs, activeDays, peak, uniqueTraders, first };
   }, []);
 
-  const leaderboard = useMemo(
-    () => WW.traders.filter((t) => t.trader !== TREASURY).slice(0, 15),
-    [],
-  );
-
   const dailyData = useMemo(
     () => WW.daily.map((d) => ({ date: d.block_date, txs: d.txs, traders: d.traders })),
     [],
@@ -131,6 +126,14 @@ export default function PlatformAnalytics() {
           program 9TUf...g2fYo - since {summary.first}
         </span>
       </div>
+
+      <p style={{ margin: 0, fontFamily: C.mono, fontSize: 12, color: C.dim }}>
+        For live per-battle browsing and leaderboards, see WaveWarZ's own{" "}
+        <a href="https://wavewarz-intelligence.vercel.app" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
+          Intelligence dashboard ↗
+        </a>
+        . What's below is this tracker's own angle: trend charts and flow that dashboard doesn't show.
+      </p>
 
       {/* headline tiles */}
       <div
@@ -257,27 +260,6 @@ export default function PlatformAnalytics() {
         </ul>
       </Panel>
 
-      {/* battles & trades (decoded instructions) */}
-      <Panel label="BATTLES & TRADES (DECODED ON-CHAIN)">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-            gap: 12,
-          }}
-        >
-          <Mini label="BATTLES" value={fmt(WW.program.battlesCreated)} sub={`${fmt(WW.program.battlesSettled)} settled`} />
-          <Mini label="TRADES" value={fmt(WW.program.buys + WW.program.sells)} sub={`${fmt(WW.program.buys)} buy / ${fmt(WW.program.sells)} sell`} />
-          <Mini label="CLAIMS" value={fmt(WW.program.claims)} sub="winnings withdrawn" />
-          <Mini label="UNIQUE TRADERS" value={fmt(WW.program.uniqueTraders)} sub="distinct buyers" />
-          <Mini
-            label="SETTLEMENT RATE"
-            value={`${fmt(Math.round((WW.program.battlesSettled / Math.max(1, WW.program.battlesCreated)) * 1000) / 10)}%`}
-            sub={`${fmt(WW.program.battlesCreated - WW.program.battlesSettled)} in-flight`}
-          />
-        </div>
-      </Panel>
-
       {/* daily activity */}
       <Panel label="DAILY ACTIVITY - TXS (BARS) vs UNIQUE TRADERS (LINE)">
         <div style={{ height: 280 }}>
@@ -370,67 +352,6 @@ export default function PlatformAnalytics() {
         </Panel>
       )}
 
-      {/* top traders by volume */}
-      {WW.volume.board.length > 0 && (
-        <Panel label="TOP TRADERS BY SOL VOLUME">
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 13 }}>
-              <thead>
-                <tr style={{ color: C.dim, textAlign: "left" }}>
-                  <th style={th}>#</th>
-                  <th style={th}>WALLET</th>
-                  <th style={{ ...th, textAlign: "right" }}>VOLUME ◎</th>
-                  <th style={{ ...th, textAlign: "right" }}>BUYS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {WW.volume.board.filter((t) => t.trader !== TREASURY).slice(0, 15).map((t, i) => {
-                  const mine = t.trader === ME;
-                  return (
-                    <tr key={t.trader} style={{ borderTop: `1px solid ${C.grid}`, color: mine ? C.accent : C.text }}>
-                      <td style={td}>{i + 1}</td>
-                      <td style={td} title={t.trader}>{short(t.trader)}{mine ? "  (you)" : ""}</td>
-                      <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(t.vol, 2)}</td>
-                      <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(t.buys)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
-      )}
-
-      {/* top traders */}
-      <Panel label="TOP TRADERS BY PROGRAM TXS (TREASURY EXCLUDED)">
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 13 }}>
-            <thead>
-              <tr style={{ color: C.dim, textAlign: "left" }}>
-                <th style={th}>#</th>
-                <th style={th}>WALLET</th>
-                <th style={{ ...th, textAlign: "right" }}>TXS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaderboard.map((t, i) => {
-                const mine = t.trader === ME;
-                return (
-                  <tr key={t.trader} style={{ borderTop: `1px solid ${C.grid}`, color: mine ? C.accent : C.text }}>
-                    <td style={td}>{i + 1}</td>
-                    <td style={td} title={t.trader}>
-                      {short(t.trader)}
-                      {mine ? "  (you)" : ""}
-                    </td>
-                    <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(t.txs)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </Panel>
-
       <Panel label="HOW THESE COMPARE TO OTHER TABS">
         <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 13 }}>
           <li><b>Battles</b>: {fmt(WW.program.battlesCreated)} here = on-chain <i>initializeBattle</i> calls; the Battles tab&apos;s 958 is the site&apos;s battle count (it groups multi-song main events and excludes test battles).</li>
@@ -459,15 +380,6 @@ function Tile({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-function Mini({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <span style={{ ...metaLabel, fontSize: 10 }}>{label}</span>
-      <span style={{ fontSize: 20, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{value}</span>
-      <span style={{ color: C.dim, fontFamily: C.mono, fontSize: 11 }}>{sub}</span>
-    </div>
-  );
-}
 
 function Panel({ label, children }: { label: string; children: React.ReactNode }) {
   return (

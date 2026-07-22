@@ -1,15 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
 import {
   TECH_STACK,
+  ACTIVE_INCOME_STREAMS,
   MONTHLY_LEDGERS,
   TREASURY_SNAPSHOTS,
   LIVE_TREASURY_SNAPSHOT,
   activeMonthlyTotalUsd,
+  activeMonthlyIncomeUsd,
   sumUsd,
   type LedgerLineItem,
 } from "@/lib/opsLedger";
+import { getPublicStats, type PublicStats } from "@/lib/wavewarzApi";
 
 const usd = (n: number | null | undefined, dp = 2) =>
   n === null || n === undefined ? "-" : `$${n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp })}`;
@@ -19,6 +23,23 @@ const sol = (n: number | null | undefined, dp = 3) =>
 
 export default function OpsLedger() {
   const activeMonthly = activeMonthlyTotalUsd(TECH_STACK);
+  const activeIncome = activeMonthlyIncomeUsd(ACTIVE_INCOME_STREAMS);
+  const [stats, setStats] = useState<PublicStats | null>(null);
+  const [statsError, setStatsError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPublicStats()
+      .then((s) => {
+        if (!cancelled) setStats(s);
+      })
+      .catch(() => {
+        if (!cancelled) setStatsError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -32,6 +53,38 @@ export default function OpsLedger() {
           transcribed as reported, with anything unreconciled flagged rather than smoothed over.
         </p>
       </header>
+
+      <Panel label="LIVE PLATFORM STATS">
+        {statsError && (
+          <p style={{ color: C.dim, fontFamily: C.mono, fontSize: 13 }}>
+            WaveWarZ's public API didn't respond - showing everything else on this page as normal.
+          </p>
+        )}
+        {!statsError && !stats && (
+          <p style={{ color: C.dim, fontFamily: C.mono, fontSize: 13 }}>loading...</p>
+        )}
+        {stats && (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+              <Tile label="LIFETIME VOLUME">{sol(stats.volume.totalSol, 1)}</Tile>
+              <Tile label="ARTIST PAYOUTS">{sol(stats.artistPayouts.totalSol, 2)}</Tile>
+              <Tile label="TRADER CLAIMS">{sol(stats.traderClaims.totalSol, 1)}</Tile>
+              <Tile label="PLATFORM REVENUE">{sol(stats.platformRevenue.totalSol, 2)}</Tile>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 12, marginTop: 12 }}>
+              <Tile label="TOTAL BATTLES">{stats.battles.total}</Tile>
+              <Tile label="MAIN EVENTS">{stats.battles.mainEvents}</Tile>
+              <Tile label="QUICK BATTLES">{stats.battles.quickBattles}</Tile>
+              <Tile label="COMMUNITY">{stats.battles.communityBattles}</Tile>
+            </div>
+            <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
+              Live from WaveWarZ's own public API (wavewarz.info/api-docs), updated {new Date(stats.updatedAt).toLocaleString()}.
+              Artist payouts = {stats.artistPayouts.note.toLowerCase()}. Trader claims = {stats.traderClaims.note.toLowerCase()}
+              {" "}({stats.traderClaims.withdrawalCount.toLocaleString()} withdrawals). SOL @ ${stats.solPriceUsd}.
+            </p>
+          </>
+        )}
+      </Panel>
 
       <Panel label="LIVE FEE WALLET">
         <p style={{ margin: "0 0 12px", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>
@@ -121,6 +174,43 @@ export default function OpsLedger() {
         </div>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>
           Active services run ~{usd(activeMonthly)}/mo (weekly costs normalized to a month).
+        </p>
+      </Panel>
+
+      <Panel label="ACTIVE INCOME STREAMS">
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 13 }}>
+            <thead>
+              <tr style={{ color: C.dim, textAlign: "left" }}>
+                <th style={th}>SOURCE</th>
+                <th style={{ ...th, textAlign: "right" }}>AMOUNT</th>
+                <th style={th}>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ACTIVE_INCOME_STREAMS.map((item) => (
+                <tr key={item.name} style={{ borderTop: `1px solid ${C.grid}` }}>
+                  <td style={td}>
+                    {item.name}
+                    {item.note && (
+                      <div style={{ color: C.dim, fontSize: 11, marginTop: 2 }}>{item.note}</div>
+                    )}
+                  </td>
+                  <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums", color: C.good }}>
+                    {usd(item.amountUsd, item.amountUsd % 1 === 0 ? 0 : 2)}
+                    {item.cadence === "monthly" ? "/mo" : " one-time"}
+                  </td>
+                  <td style={{ ...td, color: item.active ? C.good : C.dim }}>
+                    {item.active ? "recurring" : "one-off (past)"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>
+          Recurring income runs ~{usd(activeIncome)}/mo against ~{usd(activeMonthly)}/mo in active costs -
+          net ~{usd(activeIncome - activeMonthly)}/mo before any per-battle fee revenue.
         </p>
       </Panel>
 

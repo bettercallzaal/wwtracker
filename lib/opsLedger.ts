@@ -51,6 +51,24 @@ export function activeMonthlyTotalUsd(items: TechStackItem[]): number {
     .reduce((sum, i) => sum + (i.cadence === "weekly" ? i.amountUsd * 4.33 : i.amountUsd), 0);
 }
 
+export interface IncomeStreamItem {
+  name: string;
+  amountUsd: number;
+  cadence: "monthly" | "one-time";
+  /** Currently recurring (true) or a one-off that already happened (false). */
+  active: boolean;
+  note?: string;
+}
+
+export const ACTIVE_INCOME_STREAMS: IncomeStreamItem[] = [
+  { name: "Sponsorship - rj", amountUsd: 50, cadence: "monthly", active: true },
+];
+
+/** Sum of currently-recurring monthly income streams (excludes one-time entries). */
+export function activeMonthlyIncomeUsd(items: IncomeStreamItem[]): number {
+  return items.filter((i) => i.active && i.cadence === "monthly").reduce((sum, i) => sum + i.amountUsd, 0);
+}
+
 export interface LedgerLineItem {
   label: string;
   amountUsd?: number | null;

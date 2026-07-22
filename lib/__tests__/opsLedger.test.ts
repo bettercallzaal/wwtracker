@@ -1,12 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
   activeMonthlyTotalUsd,
+  activeMonthlyIncomeUsd,
   sumUsd,
   TECH_STACK,
+  ACTIVE_INCOME_STREAMS,
   MONTHLY_LEDGERS,
   TREASURY_SNAPSHOTS,
   LIVE_TREASURY_SNAPSHOT,
   type TechStackItem,
+  type IncomeStreamItem,
   type LedgerLineItem,
 } from "@/lib/opsLedger";
 
@@ -42,7 +45,27 @@ describe("activeMonthlyTotalUsd", () => {
   });
 });
 
+describe("activeMonthlyIncomeUsd", () => {
+  it("includes only active monthly streams, excluding one-time entries", () => {
+    const items: IncomeStreamItem[] = [
+      { name: "a", amountUsd: 50, cadence: "monthly", active: true },
+      { name: "b", amountUsd: 75, cadence: "one-time", active: false },
+      { name: "c", amountUsd: 100, cadence: "monthly", active: false },
+    ];
+    expect(activeMonthlyIncomeUsd(items)).toBe(50);
+  });
+
+  it("is 0 when nothing is active", () => {
+    expect(activeMonthlyIncomeUsd([{ name: "a", amountUsd: 50, cadence: "monthly", active: false }])).toBe(0);
+  });
+});
+
 describe("data sanity", () => {
+  it("ACTIVE_INCOME_STREAMS has only the rj monthly sponsorship", () => {
+    expect(ACTIVE_INCOME_STREAMS).toHaveLength(1);
+    expect(activeMonthlyIncomeUsd(ACTIVE_INCOME_STREAMS)).toBe(50);
+  });
+
   it("TECH_STACK has exactly the 3 currently-active items and 2 lapsed", () => {
     expect(TECH_STACK.filter((i) => i.active)).toHaveLength(3);
     expect(TECH_STACK.filter((i) => !i.active)).toHaveLength(2);
