@@ -189,6 +189,32 @@ The Dune REST flow per query: `POST /v1/query` (create) or `PATCH /v1/query/{id}
 (update SQL) -> `POST /v1/query/{id}/execute` -> poll `GET /v1/execution/{id}/status`
 until `QUERY_STATE_COMPLETED` -> `GET /v1/execution/{id}/results`.
 
+## 6.5. Daily treasury records (`public/ww-daily-treasury.csv`)
+
+The team's own day-by-day fee-wallet tracker, cleaned up and backfilled. Not
+wired into the UI yet - this is the team's internal record, kept in the repo
+because it's real ground truth worth version-controlling.
+
+- **2026-02-09 through 2026-05-25** (`source: manual`): transcribed from the
+  team's spreadsheet (`WaveWarZ_Financial_Tracker.xlsx` - Daily BattleZ tab) -
+  daily SOL balance, day-over-day delta, battles launched that day, and notes.
+- **2026-05-26** (`source: on-chain (corrected)`): the original spreadsheet
+  showed a -3.52 SOL delta here, but that was a formula artifact (computed
+  against a blank balance cell where manual tracking had lapsed), not a real
+  distribution - the real "Paid Team" distribution is the 2026-05-16 entry.
+  Corrected using the verified on-chain closing balance for that day.
+- **2026-05-27 through today** (`source: on-chain (backfilled)`): the
+  spreadsheet stopped being filled in after 2026-05-25. Backfilled by walking
+  `getSignaturesForAddress` for the treasury wallet back to 2026-05-09,
+  finding each UTC day's last successful transaction, and reading its
+  `postBalances` entry for the wallet via `getTransaction` (same
+  last-balance-of-the-day method Dune's `account_activity` query uses, just
+  via public RPC directly since no Dune query covers this). A handful of days
+  had no transactions at all - those carry the prior day's balance forward,
+  marked `on-chain (backfilled, no activity that day)`. `battles_launched` and
+  `notes` are empty for every backfilled row - that data doesn't exist
+  on-chain and wasn't fabricated.
+
 ## 7. Refreshing the data
 
 ```bash

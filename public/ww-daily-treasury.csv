@@ -1,0 +1,164 @@
+date,day,balance_sol,delta_sol,battles_launched,notes,source
+2026-02-09,Monday,1.97,,5,Slow Day,manual
+2026-02-10,Tuesday,1.9,-0.07,5,No queues or skips,manual
+2026-02-11,Wednesday,1.2,-0.7,6,Sent 0.75 to chime +0.05 from battles,manual
+2026-02-12,Thursday,1.15,-0.05,6,,manual
+2026-02-13,Friday,1.14,-0.01,8,,manual
+2026-02-14,Saturday,1.14,0.0,,,manual
+2026-02-15,Sunday,1.14,0.0,,,manual
+2026-02-16,Monday,1.22,0.08,10,,manual
+2026-02-17,Tuesday,1.23,0.01,7,,manual
+2026-02-18,Wednesday,1.09,-0.14,15,,manual
+2026-02-19,Thursday,1.0,-0.09,7,,manual
+2026-02-20,Friday,0.89,-0.11,10,,manual
+2026-02-21,Saturday,0.89,0.0,,,manual
+2026-02-22,Sunday,0.89,0.0,3,,manual
+2026-02-23,Monday,0.92,0.03,10,,manual
+2026-02-24,Tuesday,0.85,-0.07,7,,manual
+2026-02-25,Wednesday,0.95,0.1,6,skips was why we went up,manual
+2026-02-26,Thursday,1.07,0.12,15,,manual
+2026-02-27,Friday,0.99,-0.08,6,,manual
+2026-02-28,Saturday,0.99,0.0,,,manual
+2026-03-01,Sunday,1.34,0.35,4,,manual
+2026-03-02,Monday,1.32,-0.02,6,,manual
+2026-03-03,Tuesday,1.26,-0.06,6,,manual
+2026-03-04,Wednesday,1.2,-0.06,7,,manual
+2026-03-05,Thursday,1.14,-0.06,7,,manual
+2026-03-06,Friday,1.09,-0.05,7,,manual
+2026-03-07,Saturday,1.08,-0.01,2,,manual
+2026-03-08,Sunday,1.05,-0.03,3,,manual
+2026-03-09,Monday,1.06,0.01,6,,manual
+2026-03-10,Tuesday,1.04,-0.02,6,START OF YOUTUBE LIVES,manual
+2026-03-11,Wednesday,1.0,-0.04,6,,manual
+2026-03-12,Thursday,1.1,0.1,11,,manual
+2026-03-13,Friday,1.51,0.41,13,ATH QUICK BATTLES : Lots of Skips,manual
+2026-03-14,Saturday,1.51,0.0,,,manual
+2026-03-15,Sunday,1.59,0.08,3,,manual
+2026-03-16,Monday,1.63,0.04,10,,manual
+2026-03-17,Tuesday,1.57,-0.06,6,,manual
+2026-03-18,Wednesday,1.52,-0.05,6,,manual
+2026-03-19,Thursday,1.52,0.0,7,,manual
+2026-03-20,Friday,1.58,0.06,15,,manual
+2026-03-21,Saturday,1.52,-0.06,1,Review day (sent .05 to iman),manual
+2026-03-22,Sunday,1.58,0.06,7,,manual
+2026-03-23,Monday,1.64,0.06,6,,manual
+2026-03-24,Tuesday,1.72,0.08,6,,manual
+2026-03-25,Wednesday,1.86,0.14,6,,manual
+2026-03-26,Thursday,1.8,-0.06,6,,manual
+2026-03-27,Friday,1.77,-0.03,6,,manual
+2026-03-28,Saturday,1.74,-0.03,,Sent ~0.035 to wavewarz zambia for comm battlez,manual
+2026-03-29,Sunday,1.91,0.17,3,Geek Myth vs. Aporkalypse,manual
+2026-03-30,Monday,1.87,-0.04,6,,manual
+2026-03-31,Tuesday,3.13,1.26,9,Rocky vs. Cannon Skip off,manual
+2026-04-01,Wednesday,3.36,0.23,6,,manual
+2026-04-02,Thursday,3.32,-0.04,8,,manual
+2026-04-03,Friday,3.32,0.0,10,,manual
+2026-04-04,Saturday,3.32,0.0,0,,manual
+2026-04-05,Sunday,3.32,0.0,0,Skip week (DEV weekend),manual
+2026-04-06,Monday,3.36,0.04,7,,manual
+2026-04-07,Tuesday,3.41,0.05,8,,manual
+2026-04-08,Wednesday,3.34,-0.07,7,,manual
+2026-04-09,Thursday,3.31,-0.03,6,,manual
+2026-04-10,Friday,3.31,0.0,6,,manual
+2026-04-11,Saturday,3.31,0.0,0,,manual
+2026-04-12,Sunday,3.34,0.03,5,Katalyst v Rocky,manual
+2026-04-13,Monday,3.28,-0.06,6,,manual
+2026-04-14,Tuesday,3.21,-0.07,6,,manual
+2026-04-15,Wednesday,3.18,-0.03,8,,manual
+2026-04-16,Thursday,3.11,-0.07,9,,manual
+2026-04-17,Friday,2.99,-0.12,6,,manual
+2026-04-18,Saturday,2.98,-0.01,3,Cannon X Godcloud COC,manual
+2026-04-19,Sunday,2.96,-0.02,3,Shawn X Stormie,manual
+2026-04-20,Monday,3.22,0.26,6,lots of skips,manual
+2026-04-21,Tuesday,3.31,0.09,7,,manual
+2026-04-22,Wednesday,3.42,0.11,8,,manual
+2026-04-23,Thursday,3.44,0.02,6,,manual
+2026-04-24,Friday,3.48,0.04,,,manual
+2026-04-25,Saturday,3.48,0.0,,,manual
+2026-04-26,Sunday,3.46,-0.02,,Metaverse Slim V Steve Strange,manual
+2026-04-27,Monday,3.39,-0.07,,,manual
+2026-04-28,Tuesday,3.37,-0.02,,,manual
+2026-04-29,Wednesday,3.57,0.2,,lots of skips (popping quick battles) + early buy,manual
+2026-04-30,Thursday,3.48,-0.09,,,manual
+2026-05-01,Friday,3.43,-0.05,,hurricane had more new people so lost some,manual
+2026-05-02,Saturday,3.39,-0.04,,Down for some arweave buys for wavestation,manual
+2026-05-03,Sunday,3.39,0.0,,NO BATTLE,manual
+2026-05-04,Monday,3.28,-0.11,6,,manual
+2026-05-05,Tuesday,3.25,-0.03,6,,manual
+2026-05-06,Wednesday,3.23,-0.02,4,,manual
+2026-05-07,Thursday,3.15,-0.08,4,,manual
+2026-05-08,Friday,3.12,-0.03,5,,manual
+2026-05-09,Saturday,3.11,-0.01,2,Fixing phantom bug test battles,manual
+2026-05-10,Sunday,3.11,0.0,,,manual
+2026-05-11,Monday,3.08,-0.03,4,,manual
+2026-05-12,Tuesday,3.26,0.18,7,Skips back to life,manual
+2026-05-13,Wednesday,3.54,0.28,5,,manual
+2026-05-14,Thursday,3.78,0.24,5,,manual
+2026-05-15,Friday,3.86,0.08,5,,manual
+2026-05-16,Saturday,3.585067132,-0.27,,Paid Team,manual
+2026-05-17,Sunday,3.767261604,0.18,,,manual
+2026-05-18,Monday,3.679546761,-0.09,,,manual
+2026-05-19,Tuesday,3.737274538,0.06,,,manual
+2026-05-20,Wednesday,3.830295892,0.09,,,manual
+2026-05-21,Thursday,3.834630571,0.0,,,manual
+2026-05-22,Friday,3.506597935,-0.33,,,manual
+2026-05-23,Saturday,3.506597935,0.0,,,manual
+2026-05-24,Sunday,3.506597935,0.0,,,manual
+2026-05-25,Monday,3.521142476,0.01,,,manual
+2026-05-26,Tuesday,3.556172,0.03503,,"CORRECTED: original spreadsheet showed delta -3.52 here, but that was a formula artifact from a blank balance cell, not a real distribution - verified on-chain balance shows only a small real change. The real 'Paid Team' distribution is the 5/16 entry above.",on-chain (corrected)
+2026-05-27,Wednesday,3.564319,0.008147,,,on-chain (backfilled)
+2026-05-28,Thursday,3.605381,0.041062,,,on-chain (backfilled)
+2026-05-29,Friday,3.653297,0.047916,,,on-chain (backfilled)
+2026-05-30,Saturday,3.585405,-0.067892,,,on-chain (backfilled)
+2026-05-31,Sunday,3.588918,0.003513,,,on-chain (backfilled)
+2026-06-01,Monday,3.574087,-0.014831,,,on-chain (backfilled)
+2026-06-02,Tuesday,3.604388,0.030301,,,on-chain (backfilled)
+2026-06-03,Wednesday,3.736002,0.131614,,,on-chain (backfilled)
+2026-06-04,Thursday,3.738103,0.002101,,,on-chain (backfilled)
+2026-06-05,Friday,3.732587,-0.005516,,,on-chain (backfilled)
+2026-06-06,Saturday,3.738386,0.005799,,,on-chain (backfilled)
+2026-06-07,Sunday,3.795089,0.056703,,,on-chain (backfilled)
+2026-06-08,Monday,3.5104,-0.284689,,,on-chain (backfilled)
+2026-06-09,Tuesday,3.745228,0.234828,,,on-chain (backfilled)
+2026-06-10,Wednesday,3.760616,0.015388,,,on-chain (backfilled)
+2026-06-11,Thursday,3.864482,0.103866,,,on-chain (backfilled)
+2026-06-12,Friday,3.938345,0.073862,,,on-chain (backfilled)
+2026-06-13,Saturday,3.507814,-0.430531,,,on-chain (backfilled)
+2026-06-14,Sunday,3.495838,-0.011976,,,on-chain (backfilled)
+2026-06-15,Monday,3.522175,0.026337,,,on-chain (backfilled)
+2026-06-16,Tuesday,3.645123,0.122948,,,on-chain (backfilled)
+2026-06-17,Wednesday,4.062037,0.416913,,,on-chain (backfilled)
+2026-06-18,Thursday,4.569134,0.507097,,,on-chain (backfilled)
+2026-06-19,Friday,5.109452,0.540318,,,on-chain (backfilled)
+2026-06-20,Saturday,3.432381,-1.67707,,,on-chain (backfilled)
+2026-06-21,Sunday,3.432381,0.0,,,"on-chain (backfilled, no activity that day)"
+2026-06-22,Monday,3.432381,0.0,,,"on-chain (backfilled, no activity that day)"
+2026-06-23,Tuesday,3.812628,0.380247,,,on-chain (backfilled)
+2026-06-24,Wednesday,5.177858,1.365229,,,on-chain (backfilled)
+2026-06-25,Thursday,6.22312,1.045262,,,on-chain (backfilled)
+2026-06-26,Friday,6.583695,0.360575,,,on-chain (backfilled)
+2026-06-27,Saturday,3.51067,-3.073025,,,on-chain (backfilled)
+2026-06-28,Sunday,3.51567,0.005,,,on-chain (backfilled)
+2026-06-29,Monday,3.51567,0.0,,,on-chain (backfilled)
+2026-06-30,Tuesday,3.479161,-0.036509,,,on-chain (backfilled)
+2026-07-01,Wednesday,3.657309,0.178148,,,on-chain (backfilled)
+2026-07-02,Thursday,3.680373,0.023064,,,on-chain (backfilled)
+2026-07-03,Friday,4.240164,0.559791,,,on-chain (backfilled)
+2026-07-04,Saturday,4.232492,-0.007671,,,on-chain (backfilled)
+2026-07-05,Sunday,3.557173,-0.675319,,,on-chain (backfilled)
+2026-07-06,Monday,3.557173,0.0,,,"on-chain (backfilled, no activity that day)"
+2026-07-07,Tuesday,3.769129,0.211955,,,on-chain (backfilled)
+2026-07-08,Wednesday,4.122315,0.353187,,,on-chain (backfilled)
+2026-07-09,Thursday,4.473181,0.350866,,,on-chain (backfilled)
+2026-07-10,Friday,4.710886,0.237705,,,on-chain (backfilled)
+2026-07-11,Saturday,5.077928,0.367042,,,on-chain (backfilled)
+2026-07-12,Sunday,3.506014,-1.571913,,,on-chain (backfilled)
+2026-07-13,Monday,3.513766,0.007751,,,on-chain (backfilled)
+2026-07-14,Tuesday,4.076453,0.562688,,,on-chain (backfilled)
+2026-07-15,Wednesday,4.147976,0.071523,,,on-chain (backfilled)
+2026-07-16,Thursday,4.328722,0.180746,,,on-chain (backfilled)
+2026-07-17,Friday,4.367844,0.039122,,,on-chain (backfilled)
+2026-07-18,Saturday,4.521095,0.153251,,,on-chain (backfilled)
+2026-07-19,Sunday,3.633514,-0.887581,,,on-chain (backfilled)
+2026-07-20,Monday,5.401187,1.767673,,,on-chain (backfilled)
+2026-07-21,Tuesday,5.534046,0.132859,,,on-chain (backfilled)
