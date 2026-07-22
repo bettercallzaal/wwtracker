@@ -191,10 +191,22 @@ until `QUERY_STATE_COMPLETED` -> `GET /v1/execution/{id}/results`.
 
 ## 6.5. Daily treasury records (`public/ww-daily-treasury.csv`)
 
-The team's own day-by-day fee-wallet tracker, cleaned up and backfilled. Not
+The team's own day-by-day fee-wallet tracker, cleaned up, cross-checked, and
+backfilled all the way back to the wallet's earliest on-chain activity. Not
 wired into the UI yet - this is the team's internal record, kept in the repo
-because it's real ground truth worth version-controlling.
+because it's real ground truth worth version-controlling. Covers
+**2025-07-01 through today**, 386 rows.
 
+Columns: `date, day, balance_sol, delta_sol, battles_launched,
+battles_launched_onchain, notes, source`.
+
+- **`battles_launched`** is the team's own reported count where they gave one
+  (manual period only); **`battles_launched_onchain`** is independent, derived
+  directly from every real Battle account on-chain (see below) - a cross-check,
+  not a silent replacement. The two mostly agree closely but not exactly (e.g.
+  2026-02-09: 5 and 5; 2026-03-13: manual 13 vs on-chain 11) - treat small
+  day-to-day drift as expected (manual tallying vs a machine-precise count),
+  not a bug.
 - **2026-02-09 through 2026-05-25** (`source: manual`): transcribed from the
   team's spreadsheet (`WaveWarZ_Financial_Tracker.xlsx` - Daily BattleZ tab) -
   daily SOL balance, day-over-day delta, battles launched that day, and notes.
@@ -203,17 +215,34 @@ because it's real ground truth worth version-controlling.
   against a blank balance cell where manual tracking had lapsed), not a real
   distribution - the real "Paid Team" distribution is the 2026-05-16 entry.
   Corrected using the verified on-chain closing balance for that day.
-- **2026-05-27 through today** (`source: on-chain (backfilled)`): the
-  spreadsheet stopped being filled in after 2026-05-25. Backfilled by walking
-  `getSignaturesForAddress` for the treasury wallet back to 2026-05-09,
-  finding each UTC day's last successful transaction, and reading its
-  `postBalances` entry for the wallet via `getTransaction` (same
-  last-balance-of-the-day method Dune's `account_activity` query uses, just
-  via public RPC directly since no Dune query covers this). A handful of days
+- **2025-07-01 through 2026-02-08 and 2026-05-27 through today**
+  (`source: on-chain (backfilled)`): the spreadsheet only ever covered
+  2026-02-09 through 2026-05-25. Both edges backfilled by walking
+  `getSignaturesForAddress` for the treasury wallet (paginated back to its
+  earliest activity, ~2025-06-29), finding each UTC day's last successful
+  transaction, and reading its `postBalances` entry for the wallet via
+  `getTransaction` (same last-balance-of-the-day method Dune's
+  `account_activity` query uses, just via public RPC directly since no Dune
+  query is available in this environment). A handful of days
   had no transactions at all - those carry the prior day's balance forward,
-  marked `on-chain (backfilled, no activity that day)`. `battles_launched` and
-  `notes` are empty for every backfilled row - that data doesn't exist
-  on-chain and wasn't fabricated.
+  marked `on-chain (backfilled, no activity that day)`. `notes` stays empty
+  for every backfilled row - that's the team's own commentary, not something
+  on-chain. `battles_launched` for backfilled rows is filled from the
+  on-chain count described below (there's no separate manual figure to
+  cross-check against for these days).
+
+**How `battles_launched_onchain` is derived:** each WaveWarZ battle is a PDA
+account owned by the program (`getProgramAccounts` filtered to `dataSize:
+353`, the real observed size of a Battle account - 1,404 found on-chain, vs.
+1,089 in `public/ww-battles.json`'s scraped feed, confirming the feed
+undercounts). Byte offset 8-16 of each account is `battle_id`, which turns
+out to be a Unix timestamp of the battle's creation (confirmed by deriving
+the Battle PDA for a known battle - seeds `["battle", battle_id (u64 LE)]` -
+and finding its on-chain `battle_id` matches `public/ww-battles.json`'s `id`
+field exactly). Bucketing all 1,404 `battle_id`s by America/New_York calendar
+day (not UTC - UTC bucketing didn't reconcile with the team's manual counts,
+Eastern did much better) gives a real, independent daily battle count
+straight from the chain.
 
 ## 7. Refreshing the data
 
