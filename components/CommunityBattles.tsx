@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { C, metaLabel } from "@/lib/theme";
+import { BATTLE_STATS } from "@/lib/battles";
 import battlesRaw from "@/public/ww-battles.json";
 
 type Battle = {
@@ -44,7 +45,7 @@ export default function CommunityBattles() {
 
       {/* Stat tiles */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-        <Tile label="ON-CHAIN BATTLES" value={String(rows.length)} sub="in this dataset (May 2025+)" />
+        <Tile label="ON-CHAIN BATTLES" value={BATTLE_STATS.communityBattles.toLocaleString()} sub={`per live API (${rows.length} in feed)`} />
         <Tile label="VOL GENERATED" value={`${totalVol.toFixed(2)} ◎`} sub="across all community events" />
         <Tile label="CHARITY RAISED" value="~$1,497" sub="PolyRaiders + Love Song series" />
         <Tile label="BENEFICIARY" value="HuRya" sub="HuRya Empowerment Foundation" />
