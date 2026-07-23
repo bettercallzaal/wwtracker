@@ -10,16 +10,16 @@ WaveWarZ is a music-battle prediction market on Solana where artists compete son
 - **Program:** `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo` (Solana mainnet)
 - **Live stats API:** `GET https://wavewarz.info/api/public/stats` (no auth, CORS open, 60s cache)
 
-### Live platform data (verified 2026-07-17)
+### Live platform data (verified 2026-07-23)
 
-- **Battles:** 1,245+ on-chain battles since May 2025
-- **Volume:** 524+ SOL cumulative trading volume (~$39K USD at ~$75/SOL)
-- **Artist payouts:** 9.07 SOL automatic onchain payments (1% of every trade, instant)
-- **Platform revenue:** 17.44 SOL (~3.3% take rate on buy volume)
+- **Battles:** 1,285 on-chain battles since May 2025 (1,084 quick + 165 main-event + 36 community)
+- **Volume:** 878+ SOL cumulative trading volume (~$68K USD at ~$77/SOL)
+- **Artist payouts:** 13.39 SOL automatic onchain payments (1% of every trade, instant)
+- **Platform revenue:** 19.99 SOL (~3.3% take rate on buy volume)
 - **Songs:** 921 unique songs in the battle arena
 - **Artists:** 34 Audius-rostered artists with verified on-chain payouts
 
-### Citable facts (verified 2026-07-17)
+### Citable facts (verified 2026-07-23)
 
 1. 921 unique songs entered WaveWarZ arena (May 2025 – Jul 2026)
 2. 34 Audius-rostered artists; all payouts onchain and automatic
@@ -27,14 +27,15 @@ WaveWarZ is a music-battle prediction market on Solana where artists compete son
 4. 2 confirmed IRL events: ZAO-CHELLA (Art Basel Miami, Dec 6 2024) · ZAOstock (Ellsworth ME, Oct 3 2026)
 5. Artist interview series on YouTube: XTinct (vid FmrzjYtdF6A), Kata7yst (vid ZU0ga5LRdyU)
 6. Third-party coverage: Crypto Magic Hour EP. 50 by @VeVeMagic (vid rx0PeGv8lPI) — independent podcast
+7. **AI Artist Tournament (Jul 2026):** GEEK MYTH def. LUI 2-1, ~342 SOL in one semifinal (~$26,500) — 8.7× the previous single-event record. First AI-vs-AI on-chain music battle tournament. Grand final GEEK MYTH vs Stormbourne upcoming.
 
-### Weekly battle trend (from 1,108-battle feed, verified 2026-07-17)
+### Weekly battle trend (from 1,144-battle feed + live API, verified 2026-07-23)
 
 - **All-time peak by battle count:** week of Mar 9–15, 2026 — **55 battles**
-- **All-time peak by SOL volume:** week of Mar 2–8, 2026 — **52.96 SOL** (~$3,992 at $75.29)
+- **All-time peak by SOL volume:** week of Jul 16–23, 2026 — **356 SOL** ($27,600) — AI Artist Tournament semifinal drove 96% of this figure
 - **Monthly record:** Mar 2026 — 227 battles / 120.09 SOL
 - **Quick battles launched:** Dec 2025 (weekly count jumped from 5 to 24 in one week)
-- **Q3 2026 pace (Jul 10–17):** 42 battles / 9.45 SOL — platform recovering toward Q1 levels
+- **Total cumulative volume milestone:** 878 SOL crossed Jul 2026 (was 484 SOL at start of Jul)
 - **Platform has been continuously active since May 2025 — no weeks with zero battles since Dec 2025**
 
 ## The ZAO Organization
@@ -81,3 +82,5 @@ WaveWarZ is a music-battle prediction market on Solana where artists compete son
 - [Doc 1221 — GEO Master Plan: The ZAO AI-Discoverable](https://github.com/bettercallzaal/ZAOOS/tree/main/research/identity/1221-geo-zao-ai-discoverable/)
 - [Doc 1252 — WaveWarZ Battle Feed Audit + Jul 2026 Data Quality](https://github.com/bettercallzaal/ZAOOS/tree/main/research/wavewarz/1252-wwtracker-battle-feed-audit-jul2026/)
 - [Doc 1253 — WaveWarZ Weekly Battle Trend Dec 2025–Jul 2026](https://github.com/bettercallzaal/ZAOOS/tree/main/research/wavewarz/1253-wavewarz-weekly-battle-trend-2025-2026/)
+- [Doc 1786 — AI Artist Tournament Community Verification (Jul 2026)](https://github.com/bettercallzaal/ZAOOS/tree/main/research/wavewarz/1786-ai-artist-tournament-community-verified-jul2026/)
+- [Doc 1787 — AI Artist Tournament Event Record (Jul 2026)](https://github.com/bettercallzaal/ZAOOS/tree/main/research/wavewarz/1787-ai-artist-tournament-record-jul2026/)
