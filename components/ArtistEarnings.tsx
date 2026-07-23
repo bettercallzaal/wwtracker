@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
+import { BATTLE_STATS } from "@/lib/battles";
 
 interface Battle {
   type: string;
@@ -158,7 +159,7 @@ export default function ArtistEarnings() {
       </div>
 
       <p style={{ fontFamily: C.mono, fontSize: 10, color: C.dim, margin: "12px 0 0", lineHeight: 1.6 }}>
-        Platform-confirmed total artist payouts: <strong style={{ color: C.text }}>9.05 SOL</strong> across all 1,245 battles
+        Platform-confirmed total artist payouts: <strong style={{ color: C.text }}>{BATTLE_STATS.artistPayoutsSol.toFixed(2)} SOL</strong> across all {BATTLE_STATS.totalShown.toLocaleString()} battles
         (source: wavewarz.info/api/public/stats). Earnings above cover the {handledBattles} battles with handle data only.
         Win-coloured green = positive estimated ROI vs losing the same battles; amber = losers.
       </p>

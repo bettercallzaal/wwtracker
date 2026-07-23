@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
+import { BATTLE_STATS } from "@/lib/battles";
 import battlesRaw from "@/public/ww-battles.json";
 
 type Battle = { date: string; vol: number };
@@ -198,14 +199,14 @@ export default function CumulativeGrowth() {
             <Stat label="100 ◎ reached" value={milestones.vol100 ?? "—"} />
             <Stat label="250 ◎ reached" value={milestones.vol250 ?? "—"} />
             <Stat label="TRACKER TOTAL" value={`${last?.vol.toFixed(0)} ◎`} />
-            <Stat label="LIVE TOTAL" value="524+ ◎" dim />
+            <Stat label="LIVE TOTAL" value={`${BATTLE_STATS.totalVolumeSol.toFixed(0)}+ ◎`} dim />
           </>
         ) : (
           <>
             <Stat label="500TH BATTLE" value={milestones.b500 ?? "—"} />
             <Stat label="1,000TH BATTLE" value={milestones.b1000 ?? "—"} />
             <Stat label="TRACKER TOTAL" value={(last?.battles.toLocaleString() ?? "—") + " battles"} />
-            <Stat label="LIVE TOTAL" value="1,245+ battles" dim />
+            <Stat label="LIVE TOTAL" value={`${BATTLE_STATS.totalShown.toLocaleString()}+ battles`} dim />
           </>
         )}
       </div>
