@@ -9,6 +9,7 @@ export interface RecentBattle {
 
 // Source: GET https://wavewarz.info/api/public/stats (2026-07-23T10:08Z)
 // battles: { total:1285, mainEvents:51, mainBattles:165, quickBattles:1084, communityBattles:36 }
+// traderClaims: { totalSol:381.197, withdrawalCount:1526 }
 export const BATTLE_STATS = {
   events: 51,           // mainEvents (COC-style show events) per /api/public/stats
   quickBattles: 1084,
@@ -17,6 +18,8 @@ export const BATTLE_STATS = {
   totalVolumeSol: 878.316,
   artistPayoutsSol: 13.3918,
   platformRevenueSol: 19.9867,
+  traderClaimsSol: 381.197,   // cumulative claimShares withdrawals
+  traderWithdrawals: 1526,    // distinct claimShares transactions
 };
 
 export const RECENT_BATTLES: RecentBattle[] = [
