@@ -3,7 +3,7 @@
 // `npm run fetch:battles` to refresh. Live API source of truth for all totals.
 
 export interface RecentBattle {
-  type: "MAIN" | "QUICK";
+  type: "MAIN" | "QUICK" | "COMMUNITY";
   a: string; b: string; winner: string; vol: number; date: string;
 }
 
@@ -14,12 +14,13 @@ export const BATTLE_STATS = {
   events: 51,           // mainEvents (COC-style show events) per /api/public/stats
   quickBattles: 1084,
   multiRound: 165,      // mainBattles (MAIN matches played) per /api/public/stats
+  communityBattles: 36,
   totalShown: 1285,     // total per live API (feed lags by ~141 battles)
   totalVolumeSol: 878.316,
   artistPayoutsSol: 13.3918,
   platformRevenueSol: 19.9867,
-  traderClaimsSol: 381.197,   // cumulative claimShares withdrawals
-  traderWithdrawals: 1526,    // distinct claimShares transactions
+  traderClaimsSol: 381.197,  // cumulative claimShares withdrawals
+  withdrawalCount: 1526,     // distinct claimShares transactions
 };
 
 export const RECENT_BATTLES: RecentBattle[] = [
