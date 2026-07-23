@@ -1,6 +1,7 @@
 "use client";
 
 import { C, metaLabel } from "@/lib/theme";
+import { BATTLE_STATS } from "@/lib/battles";
 import { WW } from "@/lib/wwData";
 
 // Verified WaveWarZ YouTube uploads (titles via oEmbed).
@@ -46,12 +47,12 @@ export default function Events() {
 
       <Section label="BATTLE TYPES (ALL-TIME)">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
-          <Stat label="QUICK BATTLES" value="886" sub="single song vs song" />
-          <Stat label="MAIN-EVENT BATTLES" value="152" sub="across 48 tournaments" />
+          <Stat label="QUICK BATTLES" value={BATTLE_STATS.quickBattles.toLocaleString()} sub="single song vs song" />
+          <Stat label="MAIN-EVENT BATTLES" value={BATTLE_STATS.multiRound.toLocaleString()} sub="across multi-round events" />
           <Stat label="ON-CHAIN BATTLES" value={WW.program.battlesCreated.toLocaleString()} sub="initializeBattle calls" />
         </div>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
-          Quick + main-event counts per wavewarz.info; the on-chain figure counts
+          Quick + main-event counts per wavewarz.info/api/public/stats (Jul 23, 2026); the on-chain figure counts
           every initializeBattle. The gap reflects different definitions (e.g.
           multi-song main events).
         </p>
@@ -66,6 +67,22 @@ export default function Events() {
         <div style={{ marginTop: 8 }}>
           <Link href="https://www.youtube.com/watch?v=FmrzjYtdF6A" label="Watch the interview" />
         </div>
+      </Section>
+
+      <Section label="AI ARTIST TOURNAMENT — PLATFORM RECORD (JUL 2026)">
+        <p style={{ margin: "0 0 12px", color: C.text, lineHeight: 1.6, fontSize: 14 }}>
+          The first AI-vs-AI on-chain music battle tournament. Semifinal: GEEK MYTH def. LUI, 2-1.
+          Grand final: GEEK MYTH vs Stormbourne — upcoming.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+          <Stat label="SEMIFINAL VOLUME" value="~342 ◎" sub="GEEK MYTH def. LUI 2-1" />
+          <Stat label="WEEK VOLUME" value="356 ◎" sub="Jul 16–23, 2026 — platform record" />
+          <Stat label="RECORD MULTIPLE" value="8.7×" sub="vs previous single-event high" />
+        </div>
+        <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
+          96% of the Jul 16–23 volume surge came from this single semifinal event (~342 SOL ≈ $26,500).
+          Source: wavewarz.info/api/public/stats (last7dSol Jul 23, 2026) + ZAOOS doc 1787.
+        </p>
       </Section>
 
       <Section label="CHARITY / BENEFIT BATTLES">
@@ -133,8 +150,10 @@ export default function Events() {
 
       <Section label="RECENT">
         <ul style={listStyle}>
-          <li>Mar 2026 - roadmap update from the WaveWarZ X account.</li>
-          <li>Mar 2026 - artist interview series (XTinct).</li>
+          <li>Jul 2026 — AI Artist Tournament semifinal: GEEK MYTH def. LUI, 2-1. ~342 SOL — 8.7× platform record. Grand final vs Stormbourne upcoming.</li>
+          <li>Jul 2026 — Platform volume surge: 356 SOL in one week (Jul 16–23), driven by the AI tournament.</li>
+          <li>Mar 2026 — roadmap update from the WaveWarZ X account.</li>
+          <li>Mar 2026 — artist interview series (XTinct).</li>
         </ul>
         <p style={{ ...metaLabel, fontSize: 11 }}>
           Verified content from wavewarz.info + official channels; details evolve.
