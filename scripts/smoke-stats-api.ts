@@ -1,6 +1,6 @@
 // Smoke test: verifies wavewarz.info/api/public/stats is up and returns expected shape.
 // Usage: npm run smoke:stats
-const URL = "https://wavewarz.info/api/public/stats";
+const STATS_URL = "https://wavewarz.info/api/public/stats";
 
 type AnyObj = Record<string, unknown>;
 
@@ -8,10 +8,10 @@ function num(v: unknown): v is number { return typeof v === "number" && isFinite
 function obj(v: unknown): v is AnyObj { return !!v && typeof v === "object" && !Array.isArray(v); }
 
 async function main() {
-  console.log(`GET ${URL}`);
+  console.log(`GET ${STATS_URL}`);
   let data: AnyObj;
   try {
-    const res = await fetch(URL);
+    const res = await fetch(STATS_URL);
     if (!res.ok) { console.error(`  HTTP ${res.status}`); process.exit(1); }
     data = await res.json() as AnyObj;
   } catch (e) {
