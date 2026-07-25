@@ -5,11 +5,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://wavewarz.info"),
   title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
   description:
-    "Open-source Solana analytics for WaveWarZ: 1,245+ on-chain music battles, 524+ SOL total volume, artist earnings, head-to-head records, and trader P&L. Data: wavewarz.info/api/public/stats.",
+    "Open-source Solana analytics for WaveWarZ: 1,291+ on-chain music battles, 878+ SOL total volume, artist earnings, head-to-head records, and trader P&L. Data: wavewarz.info/api/public/stats.",
   openGraph: {
     title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
     description:
-      "1,245+ battles, 524+ SOL volume, artist earnings and trader P&L for the WaveWarZ Solana music-battle platform.",
+      "1,291+ battles, 878+ SOL volume, artist earnings and trader P&L for the WaveWarZ Solana music-battle platform.",
     url: "https://wavewarz.info",
     siteName: "WaveWarZ Tracker",
     type: "website",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
     description:
-      "1,245+ on-chain music battles, 524+ SOL volume, artist earnings and trader P&L for WaveWarZ on Solana.",
+      "1,291+ on-chain music battles, 878+ SOL volume, artist earnings and trader P&L for WaveWarZ on Solana.",
   },
 };
 
@@ -27,7 +27,7 @@ const jsonLd = {
   "@type": "Dataset",
   name: "WaveWarZ Battle Data",
   description:
-    "On-chain music battle records from WaveWarZ on Solana. Includes 1,245 battles (May 2025–Jul 2026), artist win/loss records, head-to-head rivalries, trading volume (524+ SOL), and estimated artist earnings. Solana program: 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo.",
+    "On-chain music battle records from WaveWarZ on Solana. Includes 1,291 battles (May 2025–Jul 2026), artist win/loss records, head-to-head rivalries, trading volume (878+ SOL), and estimated artist earnings. Solana program: 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo.",
   url: "https://wavewarz.info",
   creator: {
     "@type": "Organization",
@@ -36,7 +36,7 @@ const jsonLd = {
   },
   license: "https://creativecommons.org/licenses/by/4.0/",
   datePublished: "2025-05-01",
-  dateModified: "2026-07-17",
+  dateModified: "2026-07-25",
   keywords: [
     "WaveWarZ",
     "Solana",
