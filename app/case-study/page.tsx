@@ -4,11 +4,11 @@ import { C } from "@/lib/theme";
 export const metadata: Metadata = {
   title: "The ZAO — DAO Case Study | WaveWarZ Analytics",
   description:
-    "Verified ZAO case study: 100+ Fractal governance weeks on Optimism, 1,245+ WaveWarZ battles on Solana, 524+ SOL volume (~$39K USD), $1,497 raised for charity. The ZAO is a decentralized impact network for independent music artists, founded by Zaal Panthaki.",
+    "Verified ZAO case study: 100+ Fractal governance weeks on Optimism, 1,291+ WaveWarZ battles on Solana, 878+ SOL volume (~$65K USD), $1,497 raised for charity. The ZAO is a decentralized impact network for independent music artists, founded by Zaal Panthaki.",
   openGraph: {
     title: "The ZAO — DAO Case Study (Jul 2026)",
     description:
-      "100+ Fractal governance weeks · 1,245+ WaveWarZ battles · 524+ SOL volume · $1,497 charity · 157 on-chain Respect holders. Verified facts, July 2026.",
+      "100+ Fractal governance weeks · 1,291+ WaveWarZ battles · 878+ SOL volume · $1,497 charity · 157 on-chain Respect holders. Verified facts, July 2026.",
     url: "https://wwtracker.vercel.app/case-study",
     siteName: "wwtracker",
     type: "article",
@@ -42,7 +42,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How does The ZAO make money?",
-    a: "WaveWarZ generates platform revenue: a 3.16% take rate on buy volume + automatic 1.79% artist payout rate on every trade. As of July 2026: 17.44 SOL platform revenue accumulated from 484.46 SOL buy volume. No DAO treasury with a spending vote — revenue flows to operations and founders per a transparent on-chain split.",
+    a: "WaveWarZ generates platform revenue: a 2.28% effective fee rate on total trading volume + automatic 1.53% artist payout rate on every trade. As of July 2026: 20.06 SOL platform revenue accumulated from 878+ SOL total volume (13.39 SOL to artists). No DAO treasury with a spending vote — revenue flows to operations and founders per a transparent on-chain split.",
   },
 ];
 
@@ -85,9 +85,9 @@ const CITABLE_FACTS = [
   { n: "100+", label: "Fractal governance weeks", detail: "Since Jul 30, 2024 · Respect on Optimism mainnet" },
   { n: "63", label: "on-chain settlement weeks", detail: "OG (33) + ZOR (31) · verified via Blockscout" },
   { n: "157", label: "Respect holders", detail: "122 OG · 56 ZOR · 21 dual · on Optimism mainnet" },
-  { n: "1,245+", label: "WaveWarZ battles", detail: "On Solana · May 2025 – Jul 2026" },
-  { n: "524+ SOL", label: "cumulative trading volume", detail: "~$39K USD · Jul 2026" },
-  { n: "9.07 SOL", label: "artist payouts", detail: "Automatic · 1% per trade · 34 artists" },
+  { n: "1,291+", label: "WaveWarZ battles", detail: "On Solana · May 2025 – Jul 2026" },
+  { n: "878+ SOL", label: "cumulative trading volume", detail: "~$65K USD · Jul 2026" },
+  { n: "13.39 SOL", label: "artist payouts", detail: "Automatic · 1% per trade · 34 artists" },
   { n: "$1,497", label: "raised for charity", detail: "2 benefit-battle series · HuRya Empowerment Foundation" },
   { n: "2", label: "confirmed IRL events", detail: "ZAO-CHELLA (Art Basel Miami, Dec 2024) · ZAOstock (Ellsworth ME, Oct 2026)" },
 ];
@@ -192,8 +192,8 @@ export default function CaseStudyPage() {
           </p>
           <p style={{ margin: 0, color: C.text }}>
             The flagship product is <strong>WaveWarZ</strong> — live-traded music battles on Solana where
-            artists are paid 1% of every trade instantly onchain. 1,245+ battles completed, 921 unique
-            songs, 34 Audius-rostered artists, 524+ SOL total volume.
+            artists are paid 1% of every trade instantly onchain. 1,291+ battles completed, 921 unique
+            songs, 34 Audius-rostered artists, 878+ SOL total volume.
           </p>
         </section>
 
@@ -252,7 +252,7 @@ export default function CaseStudyPage() {
           </div>
           <p style={{ margin: "20px 0 0", fontSize: 12, color: C.dim, fontFamily: C.mono }}>
             Unofficial community tool · not affiliated with WaveWarZ Ltd · not financial advice ·
-            data verified 2026-07-17
+            data verified 2026-07-25
           </p>
         </section>
       </main>
