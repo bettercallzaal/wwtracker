@@ -1,26 +1,26 @@
 // WaveWarZ battles - verified aggregate stats from wavewarz.info/api/public/stats
-// (snapshot 2026-07-17). The per-battle feed is a virtualized client-side list that does
-// not reliably full-scrape; aggregate stats + a recent sample are exact.
+// (snapshot 2026-07-28T06:09Z). Feed in public/ww-battles.json; run
+// `npm run fetch:battles` to refresh. Live API source of truth for all totals.
 
 export interface RecentBattle {
   type: "MAIN" | "QUICK" | "COMMUNITY";
   a: string; b: string; winner: string; vol: number; date: string;
 }
 
-// Source: GET https://wavewarz.info/api/public/stats  (2026-07-17T01:36Z)
-// battles: { total:1241, mainEvents:50, mainBattles:162, quickBattles:1043, communityBattles:36 }
-// traderClaims: { totalSol:127.34, withdrawalCount:939 }
+// Source: GET https://wavewarz.info/api/public/stats (2026-07-28T06:09Z)
+// battles: { total:1298, mainEvents:51, mainBattles:165, quickBattles:1097, communityBattles:36 }
+// traderClaims: { totalSol:381.1971, withdrawalCount:1526 }
 export const BATTLE_STATS = {
-  events: 50,              // mainEvents (main tournament series)
-  quickBattles: 1043,
-  multiRound: 162,         // mainBattles (rounds inside main events)
+  events: 51,           // mainEvents (COC-style show events) per /api/public/stats
+  quickBattles: 1097,
+  multiRound: 165,      // mainBattles (MAIN matches played) per /api/public/stats
   communityBattles: 36,
-  totalShown: 1241,
-  totalVolumeSol: 521.75,
-  artistPayoutsSol: 9.05,
-  platformRevenueSol: 17.38,
-  traderClaimsSol: 127.34, // claimShares withdrawals — real trader winnings out
-  withdrawalCount: 939,
+  totalShown: 1298,     // total per live API (feed lags)
+  totalVolumeSol: 878.6027,
+  artistPayoutsSol: 13.399,
+  platformRevenueSol: 20.146,
+  traderClaimsSol: 381.1971,  // cumulative claimShares withdrawals
+  withdrawalCount: 1526,     // distinct claimShares transactions
 };
 
 export const RECENT_BATTLES: RecentBattle[] = [
