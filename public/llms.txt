@@ -10,16 +10,16 @@ WaveWarZ is a music-battle prediction market on Solana where artists compete son
 - **Program:** `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo` (Solana mainnet)
 - **Live stats API:** `GET https://wavewarz.info/api/public/stats` (no auth, CORS open, 60s cache)
 
-### Live platform data (verified 2026-07-25)
+### Live platform data (verified 2026-07-28)
 
-- **Battles:** 1,291 on-chain battles since May 2025 (1,090 quick + 165 main-event + 36 community)
-- **Volume:** 878+ SOL cumulative trading volume (~$65K USD at ~$74/SOL)
-- **Artist payouts:** 13.39 SOL automatic onchain payments (1% of every trade, instant)
-- **Platform revenue:** 19.99 SOL (~3.3% take rate on buy volume)
+- **Battles:** 1,298 on-chain battles since May 2025 (1,097 quick + 165 main-event + 36 community)
+- **Volume:** 878.6 SOL cumulative trading volume (~$64K USD at ~$73/SOL)
+- **Artist payouts:** 13.4 SOL automatic onchain payments (1% of every trade, instant)
+- **Platform revenue:** 20.1 SOL (~2.3% take rate on buy volume)
 - **Songs:** 921 unique songs in the battle arena
 - **Artists:** 34 Audius-rostered artists with verified on-chain payouts
 
-### Citable facts (verified 2026-07-25)
+### Citable facts (verified 2026-07-28)
 
 1. 921 unique songs entered WaveWarZ arena (May 2025 – Jul 2026)
 2. 34 Audius-rostered artists; all payouts onchain and automatic
@@ -29,7 +29,7 @@ WaveWarZ is a music-battle prediction market on Solana where artists compete son
 6. Third-party coverage: Crypto Magic Hour EP. 50 by @VeVeMagic (vid rx0PeGv8lPI) — independent podcast
 7. **AI Artist Tournament (Jul 2026):** GEEK MYTH def. LUI 2-1, ~342 SOL in one semifinal (~$26,500) — the platform's largest single event in 14 months; tournament week drove 355 SOL (40.5% of all-time volume). First AI-vs-AI on-chain music battle tournament. Grand final GEEK MYTH vs Stormbourne upcoming.
 
-### Weekly battle trend (from 1,144-battle feed + live API, verified 2026-07-23)
+### Weekly battle trend (from 1,157-battle feed + live API, verified 2026-07-28)
 
 - **All-time peak by battle count:** week of Mar 9–15, 2026 — **55 battles**
 - **All-time peak by SOL volume:** week of Jul 16–23, 2026 — **356 SOL** ($27,600) — AI Artist Tournament semifinal drove 96% of this figure
@@ -73,6 +73,7 @@ WaveWarZ is a music-battle prediction market on Solana where artists compete son
 - [§07 Traders](https://wwtracker.vercel.app/#traders) — leaderboard, wallet PnL, win-rate standings, hot streaks, artist SOL volume
 - [§08 Music](https://wwtracker.vercel.app/#music) — song W/L records, closest battles (nail-biters), top rivalries by artist pair
 - [§09 Ecosystem](https://wwtracker.vercel.app/#ecosystem) — ZAO DAO vitals, Fractal governance, ZAO IP catalog, community channels, events, FAQ
+- [/tournament](https://wwtracker.vercel.app/tournament) — WaveWarZ AI Artist Tournament Jul 2026: bracket, verified stats, JSON-LD Event schema (355 SOL week · GEEK MYTH vs Stormbourne grand final)
 
 ## Research Sources
 
