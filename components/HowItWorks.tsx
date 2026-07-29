@@ -1,6 +1,7 @@
 "use client";
 
 import { C, metaLabel } from "@/lib/theme";
+import { FLOOR_SOL } from "@/lib/config";
 
 export default function HowItWorks() {
   return (
@@ -71,7 +72,7 @@ export default function HowItWorks() {
           <li><b>Vault</b> - the on-chain SOL pool for a battle (a program PDA).</li>
           <li><b>Loser pool</b> - the SOL staked on the losing side, redistributed at settlement.</li>
           <li><b>Claim</b> - manually withdrawing your winnings after a battle settles.</li>
-          <li><b>Floor</b> - the ~3.5 SOL the treasury keeps; founders skim the excess.</li>
+          <li><b>Floor</b> - the ~{FLOOR_SOL} SOL the treasury keeps; founders skim the excess.</li>
         </ul>
       </Section>
     </div>
