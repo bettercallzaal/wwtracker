@@ -99,7 +99,8 @@ export default function AboutWaveWarZ() {
       <Section label="TEAM">
         <ul style={listStyle}>
           <li><b>hurric4n3ike</b> (Ikechi Nwachukwu) - founder / lead developer. Also an artist.</li>
-          <li><b>BetterCallZaal</b> (Zaal Panthaki) - cofounder, head of ecosystem. Founder of The ZAO.</li>
+          <li><b>BetterCallZaal</b> (Zaal Panthaki) - cofounder, head of ecosystem. Founder of{" "}
+            <a href="https://thezao.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>The ZAO</a>.</li>
           <li><b>candy</b> (Samantha Kinney / CandyToyBox) - design, promo, marketing.</li>
         </ul>
       </Section>
@@ -107,8 +108,9 @@ export default function AboutWaveWarZ() {
       {/* ecosystem */}
       <Section label="ECOSYSTEM">
         <p style={{ margin: "0 0 8px", color: C.text, lineHeight: 1.6 }}>
-          WaveWarZ is the music-battle application layer of <b>BCZ -&gt; The ZAO -&gt;
-          WaveWarZ</b> - The ZAO being a web3 music/creator collective. Related
+          WaveWarZ is the music-battle application layer of <b>BCZ -&gt;{" "}
+          <a href="https://thezao.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>The ZAO</a>
+          {" "}-&gt; WaveWarZ</b> — The ZAO is a web3 music/creator collective with 100+ consecutive Fractal governance weeks and onchain Respect scores. Related
           surfaces in the ecosystem:
         </p>
         <ul style={listStyle}>
@@ -129,6 +131,8 @@ export default function AboutWaveWarZ() {
           <Link href="https://x.com/WaveWarZ" label="X / @WaveWarZ" />
           <Link href="https://www.youtube.com/@WaveWarZ" label="YouTube" />
           <Link href="https://www.instagram.com/wavewarz" label="Instagram" />
+          <Link href="https://thezao.com" label="thezao.com" />
+          <Link href="https://warpcast.com/~/channel/zao" label="Farcaster /zao" />
         </div>
       </Section>
     </div>
