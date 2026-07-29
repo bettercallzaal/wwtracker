@@ -38,7 +38,7 @@ async function main() {
     ["battles.quickBattles >= 0", obj(b) && num(b.quickBattles)],
     ["artistPayouts.totalSol >= 0", obj(ap) && num(ap.totalSol)],
     ["traderClaims.withdrawalCount >= 0", obj(tc) && num(tc.withdrawalCount)],
-    ["platformRevenue.totalSol >= 0", obj(pr) && num(pr.totalSol)],
+    ["platformRevenue (if present): totalSol >= 0", !pr || (obj(pr) && num(pr.totalSol))],
   ];
 
   let passed = 0;

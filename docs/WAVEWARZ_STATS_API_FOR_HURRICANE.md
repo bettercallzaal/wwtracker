@@ -39,10 +39,8 @@ Smoke test: `npm run smoke:stats`
     "withdrawalCount": 1526,                   // Number of distinct withdrawal transactions
     "note": "Real trader withdrawals (claimShares), parsed from onchain vault transactions"
   },
-  "platformRevenue": {
-    "totalSol": 19.986,                        // Platform fee accumulation
-    "totalUsd": 1518.94
-  },
+  // "platformRevenue" — may be absent (field removed from API as of Jul 2026)
+  // If present: { "totalSol": 19.986, "totalUsd": 1518.94 } — platform fee accumulation
   "battles": {
     "total": 1285,                             // All battles ever initiated
     "mainEvents": 51,                          // Tournament main-event groups
