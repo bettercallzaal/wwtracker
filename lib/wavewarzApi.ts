@@ -30,7 +30,7 @@ export interface PublicStats {
   liveBattle: unknown;
   artistPayouts: { totalSol: number; totalUsd: number; note: string };
   traderClaims: { totalSol: number; totalUsd: number; withdrawalCount: number; note: string };
-  platformRevenue: { totalSol: number; totalUsd: number };
+  platformRevenue?: { totalSol: number; totalUsd: number };
   battles: {
     total: number;
     mainEvents: number;
