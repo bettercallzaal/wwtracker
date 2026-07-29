@@ -20,7 +20,11 @@ describe.skipIf(process.env.CI)("stats API smoke (live network)", () => {
     expect(s.battles).toBeDefined();
     expect(s.artistPayouts).toBeDefined();
     expect(s.traderClaims).toBeDefined();
-    expect(s.platformRevenue).toBeDefined();
+    // platformRevenue removed from API as of Jul 2026 — may be absent
+    if (s.platformRevenue !== undefined) {
+      expect(typeof s.platformRevenue.totalSol).toBe("number");
+      expect(typeof s.platformRevenue.totalUsd).toBe("number");
+    }
   });
 
   it("volume object has all sub-fields", async () => {
