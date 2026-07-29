@@ -229,9 +229,76 @@ Rule: never display an Audius match that isn't confirmed by handle+title.
 - Identify the ops-budget wallet and quantify the weekly skim off the 3.5 floor.
 - Confirm the fee/settlement percentages against a real settled battle's vault.
 
+## 8. Community intelligence (2026-07-16)
+
+Findings from wavewarz.info direct fetch + WebSearch (X.com auth-walled, YouTube body inaccessible).
+
+### Team
+
+- **Ikechi Nwachukwu (Hurric4n3Ike)** — founder, lead developer, also a battle artist.
+- **Zaal Panthaki (BetterCallZaal)** — co-founder, head of ecosystem.
+- **Samantha Kinney (candy / CandyToyBox)** — design, promo, marketing; LinkedIn
+  profile at linkedin.com/in/wave-warz. Likely co-host for live sessions.
+
+### Live programming (VERIFIED, wavewarz.info)
+
+- **Nightly battles:** Quick Battles ~8:30 PM EST weeknights, 30-second final trading window.
+- **Daily AMA / live session:** "LIVE MUSIC & LIVE TRADING" X Spaces + YouTube simultaneous
+  stream, Mon-Fri ~11 AM EST. Recurring, not special-occasion.
+- **Artist Interviews 2026 (YouTube playlist):** XTinct (~Mar 9), Kata7yst (~Apr 12).
+- **YouTube Shorts:** tagged #founderlife #musiccommunity — behind-the-scenes content.
+
+### Tournaments (status as of 2026-07-29)
+
+- **16-artist single-elimination bracket** — completed Jul 2026. GEEK MYTH and Stormbourne
+  reached the grand final. Grand final PENDING as of Jul 29 (see §3 for current stats).
+- **AI Artist Tournament** — 8-16 AI-generated tracks, community-voted judging. Completed
+  semifinal Jul 17-23 (355 SOL that week); grand final GEEK MYTH vs Stormbourne pending.
+
+### Clippers program (VERIFIED, wavewarz.info)
+
+Formal rewards program: community members submit battle highlight clips → distributed via
+YouTube, X, and TikTok → points rewards. Submission via Telegram channel **`wavewarzclipshq`**
+(confirmed 2026-07-17 via wavewarz.info).
+
+### DJ Wavy public visibility
+
+Zero public discourse on indexed platforms (Reddit, X search, Medium, Substack) across a
+dozen search variations. Likely discussion is confined to private Discord/Telegram. LinkedIn
+snippet confirms audiences "react to judge feedback" during battles — the verdict is surfaced
+to users, not just a back-end score.
+
+### Roster intelligence (VERIFIED via wavewarz.info, Jul 2026)
+
+Active songs at time of fetch: GodclouD ("Fuck yo feelingZ" 3W-1L, "KILLING FLOOR" 1W-1L),
+BennyJ504WaveWarz ("Saturday in LA Featuring DopeStilo" 2W-0L, "Modern Love" 0W-1L).
+
+The DopeStilo collab credit on BennyJ504's track is the first documented featured-artist
+collaboration rather than solo battle entry.
+
+### Charity battle (Dec 2025 / early 2026)
+
+Raised $270+ for @polyraiders (girl-child education, Nigeria). Format: "Indies vs. Classics".
+Participants: MetaVerseSlim, Cryptogodlui ("AI Lui Love"), InkSpireMusic.
+
+### ZAO ecosystem integration (VERIFIED, GitHub fetch 2026-07-15)
+
+WaveWarZ sits inside The ZAO's app ecosystem and is tracked at the DAO level. From the
+`bettercallzaal/ZAOOS` repo:
+
+- **Live WaveWarZ integration in ZAOOS**: `src/app/(auth)/wavewarz/`, `src/app/api/wavewarz/`
+  (sync, artists, random-stat endpoints), `src/lib/wavewarz/` (scraper, constants, proposals).
+- **43-artist roster**, nightly synced with win/volume stats from the WaveWarZ Intelligence feed.
+- **Auto-generated DAO proposal drafts** from WaveWarZ battle milestones → shared to Farcaster.
+- The ZAO: "a decentralized music community of 188 members on Base," governed by ORDAO
+  (on-chain reputation DAO with Nouns Builder Governor + Snapshot + Supabase proposals).
+
+WaveWarZ battles are a source of governance inputs for The ZAO, not just a product of it.
+
 ## Sources
 
 - wavewarz.com, wavewarz.info, x.com/WaveWarZ, youtube.com/@WaveWarZ
 - Program: github.com/hurric4n3ike/wavewagerz (IDL); apps:
   github.com/CandyToyBox/wavewarz-intelligence, /analytics-wave-warz
 - Dune (this project), Solscan.
+- Community research: docs/research/wavewarz/ (2026-07-15 — 2026-07-16).
