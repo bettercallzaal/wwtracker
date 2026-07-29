@@ -15,8 +15,10 @@ WaveWarZ platform token. Each battle spins up two ephemeral per-artist SPL token
 mints (Artist A / Artist B) on a bonding curve; traders buy the side they think
 will win and claim winnings after settlement.
 
-- Winner = best 2 of 3: **Poll** (community vote) + **Charts** (SOL volume) +
-  **DJ Wavy** (AI judge).
+- **Winner (V2, since Mar 10, 2026):** best 2 of 3: **Poll** (community vote) +
+  **Charts** (SOL volume) + **DJ Wavy** (AI judge). Prior to Mar 10 2026:
+  **V1 = Charts Only** (larger SOL pool wins outright). Feed data (Jul-16 snapshot):
+  445 V1 battles (avg 0.52 SOL/battle) vs 644 V2 battles (avg 0.22 SOL/battle).
 - Formats: **Quick Battles** (nightly) and **Main Events** (catalog vs catalog,
   tournament brackets).
 - Trader winnings are **claimed manually**; artist payouts settle automatically.
@@ -116,9 +118,36 @@ funds the dev/treasury wallet and its ~3.5 SOL operating floor.
   `api.helius.xyz` host 403s).
 - `getAccountInfo(battlePDA)` -> parse the Battle struct for pools/winner.
 - Volume from battleVault tx history filtered by buyShares/sellShares.
-- A Supabase Postgres mirror (`battles`, `trades`, `artists`, `leaderboards`)
-  backs the chain reads. Note: volume for battles settled before 2026-04-27 was
-  backfilled and may be off in early snapshots.
+- A Supabase Postgres mirror backs the chain reads. Key tables (from
+  wavewarz-intelligence source, 2026-07-16):
+  - `battles`: `battle_id`, `artist1_name`/`artist2_name` (= **song title** in
+    quick battles), `artist1_music_link`/`artist2_music_link` (Audius URL for
+    song identity), `is_quick_battle`, `is_main_battle` (GENERATED: NOT quick
+    AND NOT community AND NOT test), `is_community_battle`, `is_test_battle`,
+    `event_subtype` (`"charity"` | `"spotlight"` | `"prediction"` | null),
+    `winner_artist_a` (1.0 = A wins, 0.0 = B wins, null = unsettled),
+    `winner_decided`, `status`, `artist1_pool`, `artist2_pool`,
+    `total_volume_a`, `total_volume_b`, `unique_traders`, `created_at`,
+    `battle_duration`.
+  - `artist_profiles`: `artist_id`, `primary_wallet`, `display_name`. One row
+    per canonical artist; handles multi-wallet artists.
+  - `artist_wallets`: maps every wallet address to a canonical `artist_id`
+    (many-to-one with `artist_profiles`).
+  - Note: volume for battles settled before 2026-04-27 was backfilled.
+
+### §4b. Battle-type classification
+
+| Column | Meaning |
+|--------|---------|
+| `is_quick_battle` | Single song-vs-song nightly battle |
+| `is_community_battle` | Community/AMA battle |
+| `is_main_battle` | GENERATED: NOT quick AND NOT community AND NOT test |
+| `is_test_battle` | Internal test; excluded from all leaderboards |
+| `event_subtype` | `charity`, `spotlight`, `prediction`, or null |
+
+Leaderboards at wavewarz.info filter out `charity`/`spotlight`/`prediction`
+subtypes. Multi-round main events within 6 hours are grouped as one "event"
+(`GROUP_WINDOW_MS = 6 * 60 * 60 * 1000`).
 
 ---
 
@@ -204,6 +233,8 @@ Verified artist -> Audius id (handle + catalog match):
 - GodclouD -> `Vg1rWzQ`
 - BennyJ504WaveWarz -> `RGyPJRg`
 - RoCkY2GriMeY -> `aNYwwmo`
+- Kata7yst -> `847467862` (bio: "WaveWarZ"; verified 2026-07-16)
+- PKMNCTO -> `ZOOMN24` (17 tracks, 16 followers; confirmed WaveWarZ battler 2026-07-16)
 - _0xQuan -> no confident match (excluded)
 
 Verified charting-song -> Audius track:
@@ -211,14 +242,14 @@ Verified charting-song -> Audius track:
 - "What the: Unreleased" -> `dY4Q23y` (/BennyJ504WaveWarz/what-the-unreleased)
 - "EAZE OF MIND" -> `mE6RMV5` (/GodclouD/eaze-of-mind)
 - "High Frequency with PKMN" -> `mWpBmxQ` (/RoCkY2GriMeY/high-frequency-with-pkmn)
+- "Limit Breaker Ft Cannon Jones" -> `3AkrXjM` (/kata7yst; battle track 2026-07-16)
+- "Dead Already" -> `j48qp7j` (/PKMNCTO; released 2026-06-02; vs Kata7yst 2026-07-16)
 - "ACCELERATE" -> no confident match (excluded)
 
 Also confirmed: Hurric4n3Ike (founder, `lzq2G`, 48 tracks), NDA_WaveWarz
-(`oGZ6o3J`). Combined across the 5 confirmed artists (live): ~106 tracks, ~1,666
-plays, ~1,002 favs; genres Hip-Hop/Rap 82, R&B/Soul 20, Latin 2, Rock 2. The
-founder's "...Wavez x Hurric4n3Ike" series tops plays (CreWavez 93). The Music
-tab computes this live; held PKMN/IamThanos/Nessy (RoCkY collaborators, not
-confirmed WaveWarZ battlers).
+(`oGZ6o3J`). Combined across 7 confirmed artists (live): ~144+ tracks; Kata7yst 21
+tracks / 31 followers, PKMNCTO 17 tracks / 16 followers. The Music tab computes this
+live; held PKMN/IamThanos/Nessy (RoCkY collaborators, not confirmed WaveWarZ battlers).
 
 Rule: never display an Audius match that isn't confirmed by handle+title.
 
