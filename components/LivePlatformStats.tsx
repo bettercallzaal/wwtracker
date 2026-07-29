@@ -12,7 +12,7 @@ type StatsResponse = {
   liveBattle: { count: number; vol: number } | null;
   artistPayouts: { totalSol: number; totalUsd: number };
   traderClaims: { totalSol: number; totalUsd: number; withdrawalCount: number };
-  platformRevenue: { totalSol: number; totalUsd: number };
+  platformRevenue?: { totalSol: number; totalUsd: number };
   battles: { total: number; quickBattles: number; mainEvents: number; mainBattles: number; communityBattles: number };
 };
 
@@ -53,7 +53,7 @@ export default function LivePlatformStats() {
             <Tile label="TOTAL VOLUME" value={`${fmt(data.volume.totalSol)} ◎`} sub={`$${fmt(data.volume.totalUsd, 0)}`} />
             <Tile label="BATTLES" value={data.battles.total.toLocaleString()} sub={`${data.battles.quickBattles} quick · ${data.battles.mainEvents} main`} />
             <Tile label="ARTIST PAYOUTS" value={`${fmt(data.artistPayouts.totalSol)} ◎`} sub={`$${fmt(data.artistPayouts.totalUsd, 0)}`} />
-            <Tile label="PLATFORM REVENUE" value={`${fmt(data.platformRevenue.totalSol)} ◎`} sub={`$${fmt(data.platformRevenue.totalUsd, 0)}`} />
+            {data.platformRevenue && <Tile label="PLATFORM REVENUE" value={`${fmt(data.platformRevenue.totalSol)} ◎`} sub={`$${fmt(data.platformRevenue.totalUsd, 0)}`} />}
             <Tile label="TRADER CLAIMS" value={`${fmt(data.traderClaims.totalSol)} ◎`} sub={`${data.traderClaims.withdrawalCount} withdrawals`} />
             {data.liveBattle && (
               <Tile label="LIVE NOW" value={`${data.liveBattle.count} battle${data.liveBattle.count !== 1 ? "s" : ""}`} sub={`${fmt(data.liveBattle.vol)} ◎ at stake`} accent />

@@ -8,7 +8,7 @@ const STATS_URL = "https://wavewarz.info/api/public/stats";
 
 type Stats = {
   solPriceUsd: number;
-  platformRevenue: { totalSol: number; totalUsd: number };
+  platformRevenue?: { totalSol: number; totalUsd: number };
   volume: { last7dSol: number };
 };
 
@@ -28,7 +28,7 @@ export default function DistributableNow() {
     return () => { alive = false; };
   }, []);
 
-  const revenue = data?.platformRevenue.totalSol ?? 0;
+  const revenue = data?.platformRevenue?.totalSol ?? 0;
   const solUsd = data?.solPriceUsd ?? 0;
   const buffer = Math.max(0, revenue - FLOOR_SOL);
   const bufferUsd = buffer * solUsd;

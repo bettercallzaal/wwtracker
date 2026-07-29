@@ -8,7 +8,7 @@ const STATS_URL = "https://wavewarz.info/api/public/stats";
 
 type Stats = {
   solPriceUsd: number;
-  platformRevenue: { totalSol: number; totalUsd: number };
+  platformRevenue?: { totalSol: number; totalUsd: number };
   artistPayouts: { totalSol: number; totalUsd: number };
 };
 
@@ -41,9 +41,9 @@ export default function RevenueFloor() {
     return () => { alive = false; };
   }, []);
 
-  const revenue = data?.platformRevenue.totalSol ?? 0;
+  const revenue = data?.platformRevenue?.totalSol ?? 0;
   const payouts = data?.artistPayouts.totalSol ?? 0;
-  const revenueUsd = data?.platformRevenue.totalUsd ?? 0;
+  const revenueUsd = data?.platformRevenue?.totalUsd ?? 0;
   const payoutsUsd = data?.artistPayouts.totalUsd ?? 0;
   const totalFees = revenue + payouts;
   const totalFeesUsd = revenueUsd + payoutsUsd;
