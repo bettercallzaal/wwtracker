@@ -31,7 +31,7 @@ export default function Music() {
     (async () => {
       try {
         const hosts = await fetch("https://api.audius.co").then((r) => r.json());
-        const host: string = hosts?.data?.[0] || "https://discoveryprovider.audius.co";
+        const host: string = hosts?.data?.[0] || "https://api.audius.co";
         const all: Track[] = [];
         await Promise.all(
           Object.entries(ARTISTS).map(async ([handle, id]) => {
