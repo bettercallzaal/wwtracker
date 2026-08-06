@@ -127,15 +127,15 @@ tracked trader = `4aY1...`.
 - **Instruction mix** - decode the 8-byte Anchor discriminator with
   `to_hex(bytearray_substring(data,1,8))` and map to IDL names. All six verified.
   Counts: 1,127 battles created / 1,110 settled, 6,914 buys + 2,131 sells, 2,299
-  claims, 122 unique traders.
+  claims, 122 unique traders (Dune snapshot 2026-06-14; see `lib/wwData.ts.generatedAt`).
 - **Trader PnL (flow-based)** - for every WaveWarZ tx the wallet signs, take its
   `balance_change` on `account_activity`. Cumulative sum = realized net SOL
   (-2.96). Win rate = share of positive-delta txs (35.7%). Independent of the
   bonding-curve math; differs from the stats app's per-battle realized figure.
 - **Platform buy volume** - join `account_activity` (signer's negative delta) to
   the set of `buyShares` txs by `tx_id`+`tx_signer`. Sum = SOL committed on buys
-  (324.62; includes ~1.5% fees + gas). Buy-side only; the app reports 483.88
-  both-sides.
+  (324.62; includes ~1.5% fees + gas). Buy-side only; the app reports 878.88 SOL
+  both-sides (wavewarz.info live, 2026-07-29; was 483.88 at 2026-06-14 Dune snapshot).
 - **Monthly PnL / biggest moves / footprint** - all derived from the same per-tx
   delta list.
 
@@ -296,7 +296,7 @@ credit-frugal and prefer single-table aggregations on free tier.
 Deferred (each needs heavier/repeated executions or RPC decode):
 - Per-trader volume leaderboard - the GROUP-BY-signer join times out on free tier.
 - Per-battle PnL + win rate - needs the battle PDA per tx (account decode).
-- Sell-side volume (to match the both-sides 483.88 figure).
+- Sell-side volume (to match the reported both-sides total; see `lib/battles.ts` BATTLE_STATS.totalVolumeSol for current figure).
 - Artist-payout tracing - artist wallets live in each on-chain Battle account
   (`artist_a_wallet` / `artist_b_wallet`); needs RPC `getProgramAccounts` decode.
 - Ops-budget wallet + weekly-skim quantification.

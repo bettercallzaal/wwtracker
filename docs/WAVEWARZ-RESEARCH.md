@@ -1,7 +1,7 @@
 # WaveWarZ - Research & On-Chain Analytics
 
 Living research doc for the wwtracker project. Product/qualitative notes plus
-on-chain findings from Dune. Last updated: 2026-06-14.
+on-chain findings from Dune. Last updated: 2026-07-29.
 
 Spelling is always **WaveWarZ** (capital W, capital Z).
 
@@ -15,8 +15,10 @@ WaveWarZ platform token. Each battle spins up two ephemeral per-artist SPL token
 mints (Artist A / Artist B) on a bonding curve; traders buy the side they think
 will win and claim winnings after settlement.
 
-- Winner = best 2 of 3: **Poll** (community vote) + **Charts** (SOL volume) +
-  **DJ Wavy** (AI judge).
+- **Winner (V2, since Mar 10, 2026):** best 2 of 3: **Poll** (community vote) +
+  **Charts** (SOL volume) + **DJ Wavy** (AI judge). Prior to Mar 10 2026:
+  **V1 = Charts Only** (larger SOL pool wins outright). Feed data (Jul-16 snapshot):
+  445 V1 battles (avg 0.52 SOL/battle) vs 644 V2 battles (avg 0.22 SOL/battle).
 - Formats: **Quick Battles** (nightly) and **Main Events** (catalog vs catalog,
   tournament brackets).
 - Trader winnings are **claimed manually**; artist payouts settle automatically.
@@ -29,9 +31,9 @@ Programming & tournaments (verified, wavewarz.info): Quick Battles weeknights
 ~8:30 PM EST (30-second final trading window); Community AMAs Mon-Fri ~11 AM EST;
 on X Spaces + YouTube. Two brackets: a 16-artist single-elimination Artist
 Tournament (instant SOL payouts per round) and an AI Artist Tournament
-(AI-generated tracks, community-voted). All-time battle types: **886 quick
-battles + 152 main-event battles across 48 tournaments** (vs 1,127 on-chain
-initializeBattle - different definitions). Verified artist: XTinct (Alejandro
+(AI-generated tracks, community-voted). All-time battle types: **1,101 quick
+battles + 165 main-event battles + 36 community battles = 1,302 total** across
+51 events (vs ~1,302 on-chain initializeBattle). Snapshot 2026-07-29. Verified artist: XTinct (Alejandro
 Estrella). NOTE: dopestilo/"No Regrets", Ramone/"Stupid MFs", Visionz vs Rome
 were NOT verifiable - left out of the app.
 
@@ -44,9 +46,10 @@ were NOT verifiable - left out of the app.
 - **candy / CandyToyBox (Samantha Kinney)** - design, promo, marketing; built the
   reference analytics apps.
 
-## 3. Traction (reported, ~Jun 2026)
+## 3. Traction (live API, 2026-07-29)
 
-- ~483.88 SOL total volume (~$32.5k), ~1,073 battles, ~8.65 SOL artist payouts.
+- **878.88 SOL** total volume (~$65K at ~$74/SOL), **1,302 battles**, **13.41 SOL artist payouts**.
+- 381.20 SOL trader claims (1,526 withdrawals). AI Tournament peak: 355 SOL in one week (Jul 14-20).
 - On-chain (Dune, this project): program active since **2025-08-01**; see section 6.
 
 ---
@@ -115,9 +118,36 @@ funds the dev/treasury wallet and its ~3.5 SOL operating floor.
   `api.helius.xyz` host 403s).
 - `getAccountInfo(battlePDA)` -> parse the Battle struct for pools/winner.
 - Volume from battleVault tx history filtered by buyShares/sellShares.
-- A Supabase Postgres mirror (`battles`, `trades`, `artists`, `leaderboards`)
-  backs the chain reads. Note: volume for battles settled before 2026-04-27 was
-  backfilled and may be off in early snapshots.
+- A Supabase Postgres mirror backs the chain reads. Key tables (from
+  wavewarz-intelligence source, 2026-07-16):
+  - `battles`: `battle_id`, `artist1_name`/`artist2_name` (= **song title** in
+    quick battles), `artist1_music_link`/`artist2_music_link` (Audius URL for
+    song identity), `is_quick_battle`, `is_main_battle` (GENERATED: NOT quick
+    AND NOT community AND NOT test), `is_community_battle`, `is_test_battle`,
+    `event_subtype` (`"charity"` | `"spotlight"` | `"prediction"` | null),
+    `winner_artist_a` (1.0 = A wins, 0.0 = B wins, null = unsettled),
+    `winner_decided`, `status`, `artist1_pool`, `artist2_pool`,
+    `total_volume_a`, `total_volume_b`, `unique_traders`, `created_at`,
+    `battle_duration`.
+  - `artist_profiles`: `artist_id`, `primary_wallet`, `display_name`. One row
+    per canonical artist; handles multi-wallet artists.
+  - `artist_wallets`: maps every wallet address to a canonical `artist_id`
+    (many-to-one with `artist_profiles`).
+  - Note: volume for battles settled before 2026-04-27 was backfilled.
+
+### §4b. Battle-type classification
+
+| Column | Meaning |
+|--------|---------|
+| `is_quick_battle` | Single song-vs-song nightly battle |
+| `is_community_battle` | Community/AMA battle |
+| `is_main_battle` | GENERATED: NOT quick AND NOT community AND NOT test |
+| `is_test_battle` | Internal test; excluded from all leaderboards |
+| `event_subtype` | `charity`, `spotlight`, `prediction`, or null |
+
+Leaderboards at wavewarz.info filter out `charity`/`spotlight`/`prediction`
+subtypes. Multi-round main events within 6 hours are grouped as one "event"
+(`GROUP_WINDOW_MS = 6 * 60 * 60 * 1000`).
 
 ---
 
@@ -203,6 +233,8 @@ Verified artist -> Audius id (handle + catalog match):
 - GodclouD -> `Vg1rWzQ`
 - BennyJ504WaveWarz -> `RGyPJRg`
 - RoCkY2GriMeY -> `aNYwwmo`
+- Kata7yst -> `847467862` (bio: "WaveWarZ"; verified 2026-07-16)
+- PKMNCTO -> `ZOOMN24` (17 tracks, 16 followers; confirmed WaveWarZ battler 2026-07-16)
 - _0xQuan -> no confident match (excluded)
 
 Verified charting-song -> Audius track:
@@ -210,14 +242,14 @@ Verified charting-song -> Audius track:
 - "What the: Unreleased" -> `dY4Q23y` (/BennyJ504WaveWarz/what-the-unreleased)
 - "EAZE OF MIND" -> `mE6RMV5` (/GodclouD/eaze-of-mind)
 - "High Frequency with PKMN" -> `mWpBmxQ` (/RoCkY2GriMeY/high-frequency-with-pkmn)
+- "Limit Breaker Ft Cannon Jones" -> `3AkrXjM` (/kata7yst; battle track 2026-07-16)
+- "Dead Already" -> `j48qp7j` (/PKMNCTO; released 2026-06-02; vs Kata7yst 2026-07-16)
 - "ACCELERATE" -> no confident match (excluded)
 
 Also confirmed: Hurric4n3Ike (founder, `lzq2G`, 48 tracks), NDA_WaveWarz
-(`oGZ6o3J`). Combined across the 5 confirmed artists (live): ~106 tracks, ~1,666
-plays, ~1,002 favs; genres Hip-Hop/Rap 82, R&B/Soul 20, Latin 2, Rock 2. The
-founder's "...Wavez x Hurric4n3Ike" series tops plays (CreWavez 93). The Music
-tab computes this live; held PKMN/IamThanos/Nessy (RoCkY collaborators, not
-confirmed WaveWarZ battlers).
+(`oGZ6o3J`). Combined across 7 confirmed artists (live): ~144+ tracks; Kata7yst 21
+tracks / 31 followers, PKMNCTO 17 tracks / 16 followers. The Music tab computes this
+live; held PKMN/IamThanos/Nessy (RoCkY collaborators, not confirmed WaveWarZ battlers).
 
 Rule: never display an Audius match that isn't confirmed by handle+title.
 
@@ -228,9 +260,76 @@ Rule: never display an Audius match that isn't confirmed by handle+title.
 - Identify the ops-budget wallet and quantify the weekly skim off the 3.5 floor.
 - Confirm the fee/settlement percentages against a real settled battle's vault.
 
+## 8. Community intelligence (2026-07-16)
+
+Findings from wavewarz.info direct fetch + WebSearch (X.com auth-walled, YouTube body inaccessible).
+
+### Team
+
+- **Ikechi Nwachukwu (Hurric4n3Ike)** — founder, lead developer, also a battle artist.
+- **Zaal Panthaki (BetterCallZaal)** — co-founder, head of ecosystem.
+- **Samantha Kinney (candy / CandyToyBox)** — design, promo, marketing; LinkedIn
+  profile at linkedin.com/in/wave-warz. Likely co-host for live sessions.
+
+### Live programming (VERIFIED, wavewarz.info)
+
+- **Nightly battles:** Quick Battles ~8:30 PM EST weeknights, 30-second final trading window.
+- **Daily AMA / live session:** "LIVE MUSIC & LIVE TRADING" X Spaces + YouTube simultaneous
+  stream, Mon-Fri ~11 AM EST. Recurring, not special-occasion.
+- **Artist Interviews 2026 (YouTube playlist):** XTinct (~Mar 9), Kata7yst (~Apr 12).
+- **YouTube Shorts:** tagged #founderlife #musiccommunity — behind-the-scenes content.
+
+### Tournaments (status as of 2026-07-29)
+
+- **16-artist single-elimination bracket** — completed Jul 2026. GEEK MYTH and Stormbourne
+  reached the grand final. Grand final PENDING as of Jul 29 (see §3 for current stats).
+- **AI Artist Tournament** — 8-16 AI-generated tracks, community-voted judging. Completed
+  semifinal Jul 17-23 (355 SOL that week); grand final GEEK MYTH vs Stormbourne pending.
+
+### Clippers program (VERIFIED, wavewarz.info)
+
+Formal rewards program: community members submit battle highlight clips → distributed via
+YouTube, X, and TikTok → points rewards. Submission via Telegram channel **`wavewarzclipshq`**
+(confirmed 2026-07-17 via wavewarz.info).
+
+### DJ Wavy public visibility
+
+Zero public discourse on indexed platforms (Reddit, X search, Medium, Substack) across a
+dozen search variations. Likely discussion is confined to private Discord/Telegram. LinkedIn
+snippet confirms audiences "react to judge feedback" during battles — the verdict is surfaced
+to users, not just a back-end score.
+
+### Roster intelligence (VERIFIED via wavewarz.info, Jul 2026)
+
+Active songs at time of fetch: GodclouD ("Fuck yo feelingZ" 3W-1L, "KILLING FLOOR" 1W-1L),
+BennyJ504WaveWarz ("Saturday in LA Featuring DopeStilo" 2W-0L, "Modern Love" 0W-1L).
+
+The DopeStilo collab credit on BennyJ504's track is the first documented featured-artist
+collaboration rather than solo battle entry.
+
+### Charity battle (Dec 2025 / early 2026)
+
+Raised $270+ for @polyraiders (girl-child education, Nigeria). Format: "Indies vs. Classics".
+Participants: MetaVerseSlim, Cryptogodlui ("AI Lui Love"), InkSpireMusic.
+
+### ZAO ecosystem integration (VERIFIED, GitHub fetch 2026-07-15)
+
+WaveWarZ sits inside The ZAO's app ecosystem and is tracked at the DAO level. From the
+`bettercallzaal/ZAOOS` repo:
+
+- **Live WaveWarZ integration in ZAOOS**: `src/app/(auth)/wavewarz/`, `src/app/api/wavewarz/`
+  (sync, artists, random-stat endpoints), `src/lib/wavewarz/` (scraper, constants, proposals).
+- **43-artist roster**, nightly synced with win/volume stats from the WaveWarZ Intelligence feed.
+- **Auto-generated DAO proposal drafts** from WaveWarZ battle milestones → shared to Farcaster.
+- The ZAO: "a decentralized music community of 188 members on Base," governed by ORDAO
+  (on-chain reputation DAO with Nouns Builder Governor + Snapshot + Supabase proposals).
+
+WaveWarZ battles are a source of governance inputs for The ZAO, not just a product of it.
+
 ## Sources
 
 - wavewarz.com, wavewarz.info, x.com/WaveWarZ, youtube.com/@WaveWarZ
 - Program: github.com/hurric4n3ike/wavewagerz (IDL); apps:
   github.com/CandyToyBox/wavewarz-intelligence, /analytics-wave-warz
 - Dune (this project), Solscan.
+- Community research: docs/research/wavewarz/ (2026-07-15 — 2026-07-16).
