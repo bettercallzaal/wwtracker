@@ -69,7 +69,7 @@ export default function OpsLedger() {
               <Tile label="LIFETIME VOLUME">{sol(stats.volume.totalSol, 1)}</Tile>
               <Tile label="ARTIST PAYOUTS">{sol(stats.artistPayouts.totalSol, 2)}</Tile>
               <Tile label="TRADER CLAIMS">{sol(stats.traderClaims.totalSol, 1)}</Tile>
-              <Tile label="PLATFORM REVENUE">{sol(stats.platformRevenue.totalSol, 2)}</Tile>
+              <Tile label="PLATFORM REVENUE">{sol(stats.platformRevenue?.totalSol, 2)}</Tile>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 12, marginTop: 12 }}>
               <Tile label="TOTAL BATTLES">{stats.battles.total}</Tile>
