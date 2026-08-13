@@ -59,6 +59,45 @@ export interface BattleArtist {
   volumeSol: number;
 }
 
+// `factors` is polymorphic - the API returns a different shape per battle type,
+// verified live 2026-08-12:
+//
+//   quick / community -> pollWinner, pollVotesArtist1, pollVotesArtist2,
+//                        djWavyWinner, djWavyReasoning
+//   main             -> humanJudgeWinner, xPollWinner, solVoteWinner, judgedAt
+//
+// This mirrors the two judging systems: Quick Battles settle on a poll plus DJ
+// Wavy (an AI judge - its reasoning text refers to "Track A"/"Track B" and is
+// machine-written), while Main Events settle on the three-point system of human
+// judge, X poll, and SOL vote.
+//
+// Every field is optional because none of them are present on both shapes.
+// Reading `factors.pollWinner` on a Main Event yields undefined, so callers must
+// handle both - see `pollWinnerOf` below.
+export interface BattleFactors {
+  /** Quick/community only. */
+  pollWinner?: string | null;
+  pollVotesArtist1?: number | null;
+  pollVotesArtist2?: number | null;
+  djWavyWinner?: string | null;
+  djWavyReasoning?: string | null;
+  /** Main only. */
+  humanJudgeWinner?: string | null;
+  xPollWinner?: string | null;
+  solVoteWinner?: string | null;
+  judgedAt?: string | null;
+}
+
+/**
+ * The audience-poll verdict for a battle, whichever shape it arrived in.
+ * Quick/community battles carry `pollWinner`; Main Events carry `xPollWinner`.
+ * Returns null when this battle has no poll verdict - never a silent default.
+ */
+export function pollWinnerOf(factors: BattleFactors | null | undefined): "artist1" | "artist2" | null {
+  const raw = factors?.pollWinner ?? factors?.xPollWinner ?? null;
+  return raw === "artist1" || raw === "artist2" ? raw : null;
+}
+
 export interface BattleSummary {
   battleId: number;
   type: "main" | "quick" | "community";
@@ -67,7 +106,7 @@ export interface BattleSummary {
   winnerSide: "artist1" | "artist2" | null;
   artist1: BattleArtist;
   artist2: BattleArtist;
-  factors: { pollWinner: string | null; djWavyWinner: string | null; djWavyReasoning: string | null };
+  factors: BattleFactors;
   imageUrl: string | null;
   createdAt: string;
   endsAt: string;
@@ -122,8 +161,15 @@ export interface EventRound {
   battleId: number;
   roundNumber: number;
   winnerSide: "artist1" | "artist2" | null;
-  poolSol: { artist1: number; artist2: number };
-  volumeSol: { artist1: number; artist2: number };
+  // Flat, not nested - verified against the live endpoint 2026-08-12. An earlier
+  // nested `poolSol: { artist1, artist2 }` shape was never what the API returns.
+  artist1PoolSol: number;
+  artist2PoolSol: number;
+  artist1VolumeSol: number;
+  artist2VolumeSol: number;
+  createdAt: string;
+  endsAt: string;
+  live: boolean;
   humanJudgeWinner: string | null;
   xPollWinner: string | null;
   solVoteWinner: string | null;

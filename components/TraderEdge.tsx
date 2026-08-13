@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
-import { getPublicBattles, type BattleSummary } from "@/lib/wavewarzApi";
+import { getPublicBattles, pollWinnerOf, type BattleSummary } from "@/lib/wavewarzApi";
 
 const fmt = (n: number, dp = 2) =>
   n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -56,6 +56,8 @@ interface EdgeStats {
   pollRight: number;
   wavyN: number;
   wavyRight: number;
+  judgeN: number;
+  judgeRight: number;
   heat: number[][]; // [day][hour] volume
   heatMax: number;
   artists: { name: string; battles: number; wins: number; vol: number }[];
@@ -81,6 +83,8 @@ function computeStats(battles: BattleSummary[]): EdgeStats {
   let pollRight = 0;
   let wavyN = 0;
   let wavyRight = 0;
+  let judgeN = 0;
+  let judgeRight = 0;
 
   for (const b of decidedBattles) {
     const p1 = b.artist1.poolSol ?? 0;
@@ -96,15 +100,26 @@ function computeStats(battles: BattleSummary[]): EdgeStats {
       buckets[idx].n += 1;
       if (won) buckets[idx].won += 1;
     }
-    const poll = b.factors?.pollWinner;
-    if (poll === "artist1" || poll === "artist2") {
+    // Poll verdicts arrive under different keys per battle type - `pollWinner` on
+    // Quick/community, `xPollWinner` on Main Events. Reading only the first key
+    // silently dropped every Main Event from this stat.
+    const poll = pollWinnerOf(b.factors);
+    if (poll) {
       pollN += 1;
       if (poll === b.winnerSide) pollRight += 1;
     }
+    // DJ Wavy (the AI judge) only exists on Quick/community battles.
     const wavy = b.factors?.djWavyWinner;
     if (wavy === "artist1" || wavy === "artist2") {
       wavyN += 1;
       if (wavy === b.winnerSide) wavyRight += 1;
+    }
+    // Human judge only exists on Main Events - a separate signal, not merged with
+    // the AI judge above.
+    const judge = b.factors?.humanJudgeWinner;
+    if (judge === "artist1" || judge === "artist2") {
+      judgeN += 1;
+      if (judge === b.winnerSide) judgeRight += 1;
     }
   }
 
@@ -154,6 +169,8 @@ function computeStats(battles: BattleSummary[]): EdgeStats {
     pollRight,
     wavyN,
     wavyRight,
+    judgeN,
+    judgeRight,
     heat,
     heatMax,
     artists,
@@ -210,6 +227,7 @@ export default function TraderEdge() {
   const favPct = pct(stats.favWon, stats.favN);
   const pollPct = pct(stats.pollRight, stats.pollN);
   const wavyPct = pct(stats.wavyRight, stats.wavyN);
+  const judgePct = pct(stats.judgeRight, stats.judgeN);
 
   const heroCards = [
     {
@@ -225,7 +243,15 @@ export default function TraderEdge() {
     {
       n: `${fmt(wavyPct, 1)}%`,
       label: "DJ Wavy pick wins",
-      detail: `${stats.wavyRight}/${stats.wavyN} - the weakest of the three signals. Fade accordingly.`,
+      detail: `${stats.wavyRight}/${stats.wavyN} Quick Battles - the AI judge, and the weakest of the signals. Fade accordingly.`,
+    },
+    {
+      n: stats.judgeN > 0 ? `${fmt(judgePct, 1)}%` : "unknown",
+      label: "human judge pick wins",
+      detail:
+        stats.judgeN > 0
+          ? `${stats.judgeRight}/${stats.judgeN} Main Events - the human leg of the three-point system`
+          : "no judged Main Events in the loaded history yet",
     },
     {
       n: "50%",

@@ -7,6 +7,7 @@ import {
   getArtistLeaderboard,
   getTraderLeaderboard,
   getSongLeaderboard,
+  pollWinnerOf,
 } from "@/lib/wavewarzApi";
 
 function mockFetchOnce(body: unknown, ok = true, status = 200) {
@@ -94,5 +95,33 @@ describe("leaderboard fetchers", () => {
     const params = new URL(fn.mock.calls[0][0] as string).searchParams;
     expect(params.get("sort")).toBe("battles");
     expect(params.get("limit")).toBe("10");
+  });
+});
+
+// The API returns a different `factors` shape per battle type - verified live
+// 2026-08-12. Quick/community carry pollWinner + djWavy*, Main Events carry
+// humanJudgeWinner/xPollWinner/solVoteWinner. Reading only the quick-battle key
+// silently dropped every Main Event from the /edge poll stat.
+describe("pollWinnerOf", () => {
+  it("reads pollWinner on a quick battle", () => {
+    expect(pollWinnerOf({ pollWinner: "artist1", djWavyWinner: "artist2" })).toBe("artist1");
+  });
+
+  it("reads xPollWinner on a main event", () => {
+    expect(
+      pollWinnerOf({ humanJudgeWinner: "artist1", xPollWinner: "artist2", solVoteWinner: "artist2" }),
+    ).toBe("artist2");
+  });
+
+  it("returns null - not a default side - when no poll verdict exists", () => {
+    expect(pollWinnerOf({ djWavyWinner: "artist1" })).toBeNull();
+    expect(pollWinnerOf({})).toBeNull();
+    expect(pollWinnerOf(null)).toBeNull();
+    expect(pollWinnerOf(undefined)).toBeNull();
+  });
+
+  it("rejects unexpected values rather than passing them through", () => {
+    expect(pollWinnerOf({ pollWinner: "tie" })).toBeNull();
+    expect(pollWinnerOf({ pollWinner: null })).toBeNull();
   });
 });
