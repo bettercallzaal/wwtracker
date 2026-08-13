@@ -123,6 +123,24 @@ function computeStats(battles: BattleSummary[]): EdgeStats {
     }
   }
 
+  // `artist.name` means different things per battle type: on a Main Event it is the
+  // artist, on a Quick Battle it is the SONG TITLE. One wallet carries 119 distinct
+  // names in the current history - that is a catalog, not aliases. Taking the
+  // first-seen name therefore labelled artists with track titles.
+  //
+  // Resolve from Main Events only, where the field really is the artist. Roughly 60%
+  // of the wallets listed below resolve; the rest fall back to a shortened wallet,
+  // which is honest, rather than to a song title, which is not.
+  const artistNameByWallet = new Map<string, string>();
+  for (const b of battles) {
+    if (b.type !== "main") continue;
+    for (const side of ["artist1", "artist2"] as const) {
+      const w = b[side].wallet;
+      const n = (b[side].name ?? "").trim();
+      if (w && n && !artistNameByWallet.has(w)) artistNameByWallet.set(w, n);
+    }
+  }
+
   // Prime-time heatmap + concentration + artist draw, over ALL battles.
   const heat: number[][] = DAYS.map(() => Array(24).fill(0));
   const vols: number[] = [];
@@ -140,7 +158,7 @@ function computeStats(battles: BattleSummary[]): EdgeStats {
       const w = b[side].wallet;
       if (!w) continue;
       const cur = byWallet.get(w) ?? {
-        name: (b[side].name ?? "").trim() || w.slice(0, 6),
+        name: artistNameByWallet.get(w) ?? `${w.slice(0, 4)}...${w.slice(-4)}`,
         battles: 0,
         wins: 0,
         vol: 0,
@@ -368,7 +386,14 @@ export default function TraderEdge() {
       {/* artist draw power */}
       <div style={panel}>
         <h3 style={h3}>Artist draw power (wallet-keyed)</h3>
-        <p style={sub}>avg SOL moved per appearance, min 3 battles - who brings the money</p>
+        <p style={sub}>
+          avg SOL moved per appearance, min 3 battles - who brings the money
+        </p>
+        <p style={{ fontSize: 11, color: C.dim, margin: "0 0 12px", lineHeight: 1.5 }}>
+          Names come from Main Events, where the API returns the artist. Wallets that have
+          only ever run Quick Battles show a shortened address, because there the API
+          returns the song title rather than the artist.
+        </p>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>

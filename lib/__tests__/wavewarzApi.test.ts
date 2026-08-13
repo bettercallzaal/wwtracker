@@ -9,6 +9,7 @@ import {
   getSongLeaderboard,
   pollWinnerOf,
   solNum,
+  cleanUrl,
 } from "@/lib/wavewarzApi";
 
 function mockFetchOnce(body: unknown, ok = true, status = 200) {
@@ -160,5 +161,22 @@ describe("pollWinnerOf", () => {
   it("rejects unexpected values rather than passing them through", () => {
     expect(pollWinnerOf({ pollWinner: "tie" })).toBeNull();
     expect(pollWinnerOf({ pollWinner: null })).toBeNull();
+  });
+});
+
+describe("cleanUrl", () => {
+  // 62 of 1,385 battles carry a musicLink with leading whitespace.
+  it("strips surrounding whitespace", () => {
+    expect(cleanUrl(" https://hyperfollow.com/r3plic4nt ")).toBe("https://hyperfollow.com/r3plic4nt");
+  });
+
+  it("leaves a clean url alone", () => {
+    expect(cleanUrl("https://audius.co/x/y")).toBe("https://audius.co/x/y");
+  });
+
+  it("returns null - not an empty string - for missing input", () => {
+    expect(cleanUrl(null)).toBeNull();
+    expect(cleanUrl(undefined)).toBeNull();
+    expect(cleanUrl("   ")).toBeNull();
   });
 });

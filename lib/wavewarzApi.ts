@@ -18,6 +18,19 @@ async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+/**
+ * Trim a URL that may carry stray whitespace from an admin paste.
+ * 62 of the 1,385 battles in the current history have a `musicLink` like
+ * " https://hyperfollow.com/...". Browsers tolerate that in an href, but it
+ * breaks equality, deduplication, and anything keying off the URL - a padded
+ * link and a clean one look like two different artists to a Set.
+ * Returns null for empty input rather than an empty string.
+ */
+export function cleanUrl(u: string | null | undefined): string | null {
+  const t = (u ?? "").trim();
+  return t === "" ? null : t;
+}
+
 // ---------------------------------------------------------------------------
 // /stats
 // ---------------------------------------------------------------------------
