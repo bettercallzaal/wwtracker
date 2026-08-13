@@ -8,6 +8,7 @@ import {
   getTraderLeaderboard,
   getSongLeaderboard,
   pollWinnerOf,
+  solNum,
 } from "@/lib/wavewarzApi";
 
 function mockFetchOnce(body: unknown, ok = true, status = 200) {
@@ -77,24 +78,60 @@ describe("getPublicEvents", () => {
 });
 
 describe("leaderboard fetchers", () => {
-  it("getArtistLeaderboard defaults limit to 100", async () => {
-    const fn = mockFetchOnce([]);
-    await getArtistLeaderboard();
+  // These endpoints return a WRAPPED object, not a bare array. The mocks below
+  // deliberately mirror the real shape - the earlier mocks returned `[]`, which
+  // made the tests pass against a shape the API never sends.
+  it("getArtistLeaderboard defaults limit to 100 and unwraps `artists`", async () => {
+    const fn = mockFetchOnce({ updatedAt: "x", count: 1, artists: [{ wallet: "w", name: "Geek Myth" }] });
+    const result = await getArtistLeaderboard();
     expect(fn).toHaveBeenCalledWith("https://wavewarz.info/api/public/leaderboards/artists?limit=100");
+    expect(Array.isArray(result)).toBe(true);
+    expect(result[0].name).toBe("Geek Myth");
   });
 
-  it("getTraderLeaderboard respects a custom limit", async () => {
-    const fn = mockFetchOnce([]);
-    await getTraderLeaderboard(10);
+  it("getTraderLeaderboard respects a custom limit and unwraps `traders`", async () => {
+    const fn = mockFetchOnce({ updatedAt: "x", solPriceUsd: 76, count: 1, traders: [{ wallet: "w" }] });
+    const result = await getTraderLeaderboard(10);
     expect(fn).toHaveBeenCalledWith("https://wavewarz.info/api/public/leaderboards/traders?limit=10");
+    expect(result).toHaveLength(1);
   });
 
-  it("getSongLeaderboard builds sort + limit params", async () => {
-    const fn = mockFetchOnce([]);
-    await getSongLeaderboard({ sort: "battles", limit: 10 });
+  it("getSongLeaderboard builds sort + limit params and unwraps `songs`", async () => {
+    const fn = mockFetchOnce({ updatedAt: "x", count: 1, songs: [{ songTitle: "Ashes" }] });
+    const result = await getSongLeaderboard({ sort: "battles", limit: 10 });
     const params = new URL(fn.mock.calls[0][0] as string).searchParams;
     expect(params.get("sort")).toBe("battles");
     expect(params.get("limit")).toBe("10");
+    expect(result[0].songTitle).toBe("Ashes");
+  });
+
+  it("returns an empty array rather than throwing when the wrapper key is absent", async () => {
+    mockFetchOnce({ updatedAt: "x", count: 0 });
+    await expect(getArtistLeaderboard()).resolves.toEqual([]);
+  });
+});
+
+describe("solNum", () => {
+  // The artists endpoint sends totalVolumeSol as "300.7357", and every *Usd
+  // field on every endpoint is a formatted string like "$22,879.97".
+  it("passes numbers through", () => {
+    expect(solNum(300.7357)).toBe(300.7357);
+  });
+
+  it("parses numeric strings", () => {
+    expect(solNum("300.7357")).toBe(300.7357);
+  });
+
+  it("strips currency formatting", () => {
+    expect(solNum("$22,879.97")).toBe(22879.97);
+  });
+
+  it("returns null - never 0 - for missing or unparseable values", () => {
+    expect(solNum(null)).toBeNull();
+    expect(solNum(undefined)).toBeNull();
+    expect(solNum("")).toBeNull();
+    expect(solNum("n/a")).toBeNull();
+    expect(solNum(NaN)).toBeNull();
   });
 });
 

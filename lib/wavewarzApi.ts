@@ -214,6 +214,45 @@ export function getPublicEvents(query: EventsQuery = {}): Promise<EventsResponse
 }
 
 // ---------------------------------------------------------------------------
+// Leaderboards
+//
+// All three leaderboard endpoints return a WRAPPED object, not a bare array -
+// verified live 2026-08-13:
+//
+//   /leaderboards/artists -> { updatedAt, count, artists: [...] }
+//   /leaderboards/traders -> { updatedAt, solPriceUsd, count, traders: [...] }
+//   /leaderboards/songs   -> { updatedAt, count, songs: [...] }
+//
+// These were previously typed as bare arrays, so calling .map() on the result
+// would have thrown at runtime. Nothing consumed them yet, which is why it went
+// unnoticed - it would have failed the moment the leaderboard pages were wired
+// to live data.
+//
+// Some numeric fields also arrive as strings: the artists endpoint sends
+// totalVolumeSol as "300.7357", and every *Usd field on every endpoint is a
+// pre-formatted display string like "$22,879.97". Use solNum() before doing
+// arithmetic on anything SOL-denominated.
+// ---------------------------------------------------------------------------
+
+/**
+ * Coerce a SOL amount that may arrive as a number or a numeric string.
+ * Returns null for anything unparseable rather than 0 - a missing value must
+ * never render as a real zero.
+ */
+export function solNum(v: number | string | null | undefined): number | null {
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === "string") {
+    // Number("") and Number("   ") are both 0, which would turn a missing value
+    // into a real-looking zero. Reject empty input before parsing.
+    const cleaned = v.replace(/[$,\s]/g, "");
+    if (cleaned === "") return null;
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // /leaderboards/artists
 // ---------------------------------------------------------------------------
 
@@ -223,18 +262,33 @@ export interface ArtistLeaderboardEntry {
   wins: number;
   losses: number;
   draws: number;
-  totalVolumeSol: number;
-  totalVolumeUsd: number;
-  totalEarningsSol: number;
-  totalEarningsUsd: number;
+  /** Numeric string on this endpoint, e.g. "300.7357". Use `solNum()`. */
+  totalVolumeSol: number | string;
+  /** Pre-formatted for display, e.g. "$22,879.97". Not arithmetic-safe. */
+  totalVolumeUsd: string;
+  /** Numeric string. Use `solNum()`. */
+  totalEarningsSol: number | string;
+  /** Pre-formatted for display. */
+  totalEarningsUsd: string;
   winRate: number;
   battles: number;
   pfpUrl: string | null;
   twitterHandle: string | null;
 }
 
-export function getArtistLeaderboard(limit = 100): Promise<ArtistLeaderboardEntry[]> {
-  return getJson<ArtistLeaderboardEntry[]>(`/leaderboards/artists?limit=${limit}`);
+export interface ArtistLeaderboardResponse {
+  updatedAt: string;
+  count: number;
+  artists: ArtistLeaderboardEntry[];
+}
+
+/** Returns the entries. Use `getArtistLeaderboardResponse` if you need `updatedAt`. */
+export async function getArtistLeaderboard(limit = 100): Promise<ArtistLeaderboardEntry[]> {
+  return (await getArtistLeaderboardResponse(limit)).artists ?? [];
+}
+
+export function getArtistLeaderboardResponse(limit = 100): Promise<ArtistLeaderboardResponse> {
+  return getJson<ArtistLeaderboardResponse>(`/leaderboards/artists?limit=${limit}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -245,7 +299,8 @@ export interface TraderLeaderboardEntry {
   wallet: string;
   totalVolumeSol: number;
   totalVolumeSolFmt: string;
-  totalVolumeUsd: number;
+  /** Pre-formatted for display, e.g. "$1,701.18". Not arithmetic-safe. */
+  totalVolumeUsd: string;
   tradeCount: number;
   battleCount: number;
   wins: number;
@@ -253,12 +308,24 @@ export interface TraderLeaderboardEntry {
   winRate: number;
   netPnlSol: number;
   netPnlFmt: string;
-  netPnlUsd: number;
+  /** Pre-formatted for display. Not arithmetic-safe. */
+  netPnlUsd: string;
   netPnlPositive: boolean;
 }
 
-export function getTraderLeaderboard(limit = 100): Promise<TraderLeaderboardEntry[]> {
-  return getJson<TraderLeaderboardEntry[]>(`/leaderboards/traders?limit=${limit}`);
+export interface TraderLeaderboardResponse {
+  updatedAt: string;
+  solPriceUsd: number;
+  count: number;
+  traders: TraderLeaderboardEntry[];
+}
+
+export async function getTraderLeaderboard(limit = 100): Promise<TraderLeaderboardEntry[]> {
+  return (await getTraderLeaderboardResponse(limit)).traders ?? [];
+}
+
+export function getTraderLeaderboardResponse(limit = 100): Promise<TraderLeaderboardResponse> {
+  return getJson<TraderLeaderboardResponse>(`/leaderboards/traders?limit=${limit}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -285,10 +352,20 @@ export interface SongsQuery {
   sort?: "volume" | "battles" | "winRate";
 }
 
-export function getSongLeaderboard(query: SongsQuery = {}): Promise<SongLeaderboardEntry[]> {
+export interface SongLeaderboardResponse {
+  updatedAt: string;
+  count: number;
+  songs: SongLeaderboardEntry[];
+}
+
+export async function getSongLeaderboard(query: SongsQuery = {}): Promise<SongLeaderboardEntry[]> {
+  return (await getSongLeaderboardResponse(query)).songs ?? [];
+}
+
+export function getSongLeaderboardResponse(query: SongsQuery = {}): Promise<SongLeaderboardResponse> {
   const params = new URLSearchParams();
   if (query.limit !== undefined) params.set("limit", String(query.limit));
   if (query.sort) params.set("sort", query.sort);
   const qs = params.toString();
-  return getJson<SongLeaderboardEntry[]>(`/leaderboards/songs${qs ? `?${qs}` : ""}`);
+  return getJson<SongLeaderboardResponse>(`/leaderboards/songs${qs ? `?${qs}` : ""}`);
 }
