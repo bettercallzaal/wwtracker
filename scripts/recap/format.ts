@@ -118,21 +118,37 @@ export function buildWeeklyRecap(
   const closestMargin = withMargin.slice().sort((a, b) => a.margin - b.margin)[0] ?? null;
 
   const artistCounts = new Map<string, number>();
+  const artistWins = new Map<string, number>();
   for (const b of battles) {
     const aId = artistIdentity(b.aHandle, b.a);
     const bId = artistIdentity(b.bHandle, b.b);
     artistCounts.set(aId, (artistCounts.get(aId) ?? 0) + 1);
     artistCounts.set(bId, (artistCounts.get(bId) ?? 0) + 1);
+    const winnerId = b.winner === b.a ? aId : b.winner === b.b ? bId : null;
+    if (winnerId !== null) {
+      artistWins.set(winnerId, (artistWins.get(winnerId) ?? 0) + 1);
+    }
   }
   const mostActive = [...artistCounts.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
 
+  const mainCount = battles.filter((b) => b.type === "MAIN").length;
+
+  const topWinnerSide = topVolume ? winnerSide(topVolume) : null;
+  const topWinnerName = topVolume
+    ? (topWinnerSide === "a"
+        ? battleName(topVolume.aHandle, topVolume.a)
+        : topWinnerSide === "b"
+          ? battleName(topVolume.bHandle, topVolume.b)
+          : topVolume.winner)
+    : null;
+
   const dataUsed = [
-    `Battles this week: ${battles.length} (source: public/ww-battles.json, ${weekStart} to ${weekEnd})`,
+    `Battles this week: ${battles.length} (${mainCount} MAIN, ${battles.length - mainCount} QUICK/COMMUNITY) (source: public/ww-battles.json, ${weekStart} to ${weekEnd})`,
     `Total volume: ${totalVol.toFixed(2)} SOL (source: same)`,
   ];
   if (topVolume) {
     dataUsed.push(
-      `Top-volume battle: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)}, ${topVolume.vol.toFixed(2)} SOL (source: same, battle_id ${topVolume.id})`,
+      `Top-volume battle: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)}, ${topVolume.vol.toFixed(2)} SOL — ${topWinnerName} wins (source: same, battle_id ${topVolume.id})`,
     );
   }
   if (closestMargin) {
@@ -141,11 +157,19 @@ export function buildWeeklyRecap(
     );
   }
   if (mostActive) {
-    dataUsed.push(`Most active artist: ${mostActive[0]}, ${mostActive[1]} battle(s) (source: same)`);
+    const wins = artistWins.get(mostActive[0]) ?? 0;
+    const losses = mostActive[1] - wins;
+    dataUsed.push(`Most active artist: ${mostActive[0]}, ${wins}W-${losses}L (${mostActive[1]} battles) (source: same)`);
   }
 
-  const farcaster = `WaveWarZ weekly recap, ${weekStart} to ${weekEnd}. ${battles.length} battles, ${totalVol.toFixed(2)} SOL total volume.${topVolume ? ` Biggest: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)}.` : ""} ${TAG_LINE}`;
-  const x = `WaveWarZ week of ${weekStart}: ${battles.length} battles, ${totalVol.toFixed(2)} SOL. ${TAG_LINE}`;
+  const mainLine = mainCount > 0
+    ? ` Including ${mainCount} Main Event${mainCount > 1 ? "s" : ""}.`
+    : "";
+  const closestLine = closestMargin
+    ? ` Closest: ${battleName(closestMargin.aHandle, closestMargin.a)} vs ${battleName(closestMargin.bHandle, closestMargin.b)}, decided by ${closestMargin.margin}%.`
+    : "";
+  const farcaster = `WaveWarZ weekly recap, ${weekStart} to ${weekEnd}. ${battles.length} battles, ${totalVol.toFixed(2)} SOL total volume.${mainLine}${topVolume ? ` Biggest: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)} — ${topWinnerName} wins.` : ""}${closestLine} ${TAG_LINE}`;
+  const x = `WaveWarZ week of ${weekStart}: ${battles.length} battles, ${totalVol.toFixed(2)} SOL.${topVolume ? ` Top: ${battleName(topVolume.aHandle, topVolume.a)} vs ${battleName(topVolume.bHandle, topVolume.b)} — ${topWinnerName} wins.` : ""} ${TAG_LINE}`;
 
   return {
     farcaster,
