@@ -2,6 +2,8 @@
 
 One line per hourly run: what was tried, and whether it worked or got stuck.
 
+2026-07-16 (this session) - Researched DJ Wavy sentiment + AMA content + fan-made content + artist roster churn via parallel subagents. WebFetch worked on wavewarz.info (verified live stats, roster, Clippers program) but blocked on X (HTTP 402) and YouTube (footer only). DJ Wavy generates zero public discourse on indexed platforms — community discussion likely confined to Discord/Telegram. AMA format confirmed ("LIVE MUSIC & LIVE TRADING" X Spaces + YouTube). Fan content: Clippers program (incentivized), one organic clipper found. Roster: frameworkfortune and InkSpireMusic are newer artists not in top-48. Two tournaments in recruitment phase (16-artist + AI-artist bracket). Wrote 2026-07-16-community-dj-wavy-sentiment-and-amas.md and 2026-07-16-community-fan-content-and-roster-churn.md.
+
 2026-07-15 09:05 UTC - Tried community events/charity-initiatives/Discord-Telegram angle via WebSearch+WebFetch - stuck-because-WebFetch returned 403 on every URL this run (including unrelated control domains like en.wikipedia.org), so no page could be fetched/verified; only WebSearch snippets were available. Wrote up snippet-only leads under Unverified and flagged the tooling outage as the real blocker for future runs.
 
 # WaveWarZ community research - run log
