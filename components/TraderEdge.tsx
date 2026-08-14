@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
-import { getPublicBattles, type BattleSummary } from "@/lib/wavewarzApi";
+import { getPublicBattles, pollWinnerOf, type BattleSummary } from "@/lib/wavewarzApi";
 
 const fmt = (n: number, dp = 2) =>
   n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -56,6 +56,8 @@ interface EdgeStats {
   pollRight: number;
   wavyN: number;
   wavyRight: number;
+  judgeN: number;
+  judgeRight: number;
   heat: number[][]; // [day][hour] volume
   heatMax: number;
   artists: { name: string; battles: number; wins: number; vol: number }[];
@@ -81,6 +83,8 @@ function computeStats(battles: BattleSummary[]): EdgeStats {
   let pollRight = 0;
   let wavyN = 0;
   let wavyRight = 0;
+  let judgeN = 0;
+  let judgeRight = 0;
 
   for (const b of decidedBattles) {
     const p1 = b.artist1.poolSol ?? 0;
@@ -96,15 +100,44 @@ function computeStats(battles: BattleSummary[]): EdgeStats {
       buckets[idx].n += 1;
       if (won) buckets[idx].won += 1;
     }
-    const poll = b.factors?.pollWinner;
-    if (poll === "artist1" || poll === "artist2") {
+    // Poll verdicts arrive under different keys per battle type - `pollWinner` on
+    // Quick/community, `xPollWinner` on Main Events. Reading only the first key
+    // silently dropped every Main Event from this stat.
+    const poll = pollWinnerOf(b.factors);
+    if (poll) {
       pollN += 1;
       if (poll === b.winnerSide) pollRight += 1;
     }
+    // DJ Wavy (the AI judge) only exists on Quick/community battles.
     const wavy = b.factors?.djWavyWinner;
     if (wavy === "artist1" || wavy === "artist2") {
       wavyN += 1;
       if (wavy === b.winnerSide) wavyRight += 1;
+    }
+    // Human judge only exists on Main Events - a separate signal, not merged with
+    // the AI judge above.
+    const judge = b.factors?.humanJudgeWinner;
+    if (judge === "artist1" || judge === "artist2") {
+      judgeN += 1;
+      if (judge === b.winnerSide) judgeRight += 1;
+    }
+  }
+
+  // `artist.name` means different things per battle type: on a Main Event it is the
+  // artist, on a Quick Battle it is the SONG TITLE. One wallet carries 119 distinct
+  // names in the current history - that is a catalog, not aliases. Taking the
+  // first-seen name therefore labelled artists with track titles.
+  //
+  // Resolve from Main Events only, where the field really is the artist. Roughly 60%
+  // of the wallets listed below resolve; the rest fall back to a shortened wallet,
+  // which is honest, rather than to a song title, which is not.
+  const artistNameByWallet = new Map<string, string>();
+  for (const b of battles) {
+    if (b.type !== "main") continue;
+    for (const side of ["artist1", "artist2"] as const) {
+      const w = b[side].wallet;
+      const n = (b[side].name ?? "").trim();
+      if (w && n && !artistNameByWallet.has(w)) artistNameByWallet.set(w, n);
     }
   }
 
@@ -125,7 +158,7 @@ function computeStats(battles: BattleSummary[]): EdgeStats {
       const w = b[side].wallet;
       if (!w) continue;
       const cur = byWallet.get(w) ?? {
-        name: (b[side].name ?? "").trim() || w.slice(0, 6),
+        name: artistNameByWallet.get(w) ?? `${w.slice(0, 4)}...${w.slice(-4)}`,
         battles: 0,
         wins: 0,
         vol: 0,
@@ -154,6 +187,8 @@ function computeStats(battles: BattleSummary[]): EdgeStats {
     pollRight,
     wavyN,
     wavyRight,
+    judgeN,
+    judgeRight,
     heat,
     heatMax,
     artists,
@@ -210,6 +245,7 @@ export default function TraderEdge() {
   const favPct = pct(stats.favWon, stats.favN);
   const pollPct = pct(stats.pollRight, stats.pollN);
   const wavyPct = pct(stats.wavyRight, stats.wavyN);
+  const judgePct = pct(stats.judgeRight, stats.judgeN);
 
   const heroCards = [
     {
@@ -225,7 +261,15 @@ export default function TraderEdge() {
     {
       n: `${fmt(wavyPct, 1)}%`,
       label: "DJ Wavy pick wins",
-      detail: `${stats.wavyRight}/${stats.wavyN} - the weakest of the three signals. Fade accordingly.`,
+      detail: `${stats.wavyRight}/${stats.wavyN} Quick Battles - the AI judge, and the weakest of the signals. Fade accordingly.`,
+    },
+    {
+      n: stats.judgeN > 0 ? `${fmt(judgePct, 1)}%` : "unknown",
+      label: "human judge pick wins",
+      detail:
+        stats.judgeN > 0
+          ? `${stats.judgeRight}/${stats.judgeN} Main Events - the human leg of the three-point system`
+          : "no judged Main Events in the loaded history yet",
     },
     {
       n: "50%",
@@ -342,7 +386,14 @@ export default function TraderEdge() {
       {/* artist draw power */}
       <div style={panel}>
         <h3 style={h3}>Artist draw power (wallet-keyed)</h3>
-        <p style={sub}>avg SOL moved per appearance, min 3 battles - who brings the money</p>
+        <p style={sub}>
+          avg SOL moved per appearance, min 3 battles - who brings the money
+        </p>
+        <p style={{ fontSize: 11, color: C.dim, margin: "0 0 12px", lineHeight: 1.5 }}>
+          Names come from Main Events, where the API returns the artist. Wallets that have
+          only ever run Quick Battles show a shortened address, because there the API
+          returns the song title rather than the artist.
+        </p>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>

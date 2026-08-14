@@ -18,6 +18,19 @@ async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+/**
+ * Trim a URL that may carry stray whitespace from an admin paste.
+ * 62 of the 1,385 battles in the current history have a `musicLink` like
+ * " https://hyperfollow.com/...". Browsers tolerate that in an href, but it
+ * breaks equality, deduplication, and anything keying off the URL - a padded
+ * link and a clean one look like two different artists to a Set.
+ * Returns null for empty input rather than an empty string.
+ */
+export function cleanUrl(u: string | null | undefined): string | null {
+  const t = (u ?? "").trim();
+  return t === "" ? null : t;
+}
+
 // ---------------------------------------------------------------------------
 // /stats
 // ---------------------------------------------------------------------------
@@ -59,6 +72,45 @@ export interface BattleArtist {
   volumeSol: number;
 }
 
+// `factors` is polymorphic - the API returns a different shape per battle type,
+// verified live 2026-08-12:
+//
+//   quick / community -> pollWinner, pollVotesArtist1, pollVotesArtist2,
+//                        djWavyWinner, djWavyReasoning
+//   main             -> humanJudgeWinner, xPollWinner, solVoteWinner, judgedAt
+//
+// This mirrors the two judging systems: Quick Battles settle on a poll plus DJ
+// Wavy (an AI judge - its reasoning text refers to "Track A"/"Track B" and is
+// machine-written), while Main Events settle on the three-point system of human
+// judge, X poll, and SOL vote.
+//
+// Every field is optional because none of them are present on both shapes.
+// Reading `factors.pollWinner` on a Main Event yields undefined, so callers must
+// handle both - see `pollWinnerOf` below.
+export interface BattleFactors {
+  /** Quick/community only. */
+  pollWinner?: string | null;
+  pollVotesArtist1?: number | null;
+  pollVotesArtist2?: number | null;
+  djWavyWinner?: string | null;
+  djWavyReasoning?: string | null;
+  /** Main only. */
+  humanJudgeWinner?: string | null;
+  xPollWinner?: string | null;
+  solVoteWinner?: string | null;
+  judgedAt?: string | null;
+}
+
+/**
+ * The audience-poll verdict for a battle, whichever shape it arrived in.
+ * Quick/community battles carry `pollWinner`; Main Events carry `xPollWinner`.
+ * Returns null when this battle has no poll verdict - never a silent default.
+ */
+export function pollWinnerOf(factors: BattleFactors | null | undefined): "artist1" | "artist2" | null {
+  const raw = factors?.pollWinner ?? factors?.xPollWinner ?? null;
+  return raw === "artist1" || raw === "artist2" ? raw : null;
+}
+
 export interface BattleSummary {
   battleId: number;
   type: "main" | "quick" | "community";
@@ -67,7 +119,7 @@ export interface BattleSummary {
   winnerSide: "artist1" | "artist2" | null;
   artist1: BattleArtist;
   artist2: BattleArtist;
-  factors: { pollWinner: string | null; djWavyWinner: string | null; djWavyReasoning: string | null };
+  factors: BattleFactors;
   imageUrl: string | null;
   createdAt: string;
   endsAt: string;
@@ -122,8 +174,15 @@ export interface EventRound {
   battleId: number;
   roundNumber: number;
   winnerSide: "artist1" | "artist2" | null;
-  poolSol: { artist1: number; artist2: number };
-  volumeSol: { artist1: number; artist2: number };
+  // Flat, not nested - verified against the live endpoint 2026-08-12. An earlier
+  // nested `poolSol: { artist1, artist2 }` shape was never what the API returns.
+  artist1PoolSol: number;
+  artist2PoolSol: number;
+  artist1VolumeSol: number;
+  artist2VolumeSol: number;
+  createdAt: string;
+  endsAt: string;
+  live: boolean;
   humanJudgeWinner: string | null;
   xPollWinner: string | null;
   solVoteWinner: string | null;
@@ -168,6 +227,45 @@ export function getPublicEvents(query: EventsQuery = {}): Promise<EventsResponse
 }
 
 // ---------------------------------------------------------------------------
+// Leaderboards
+//
+// All three leaderboard endpoints return a WRAPPED object, not a bare array -
+// verified live 2026-08-13:
+//
+//   /leaderboards/artists -> { updatedAt, count, artists: [...] }
+//   /leaderboards/traders -> { updatedAt, solPriceUsd, count, traders: [...] }
+//   /leaderboards/songs   -> { updatedAt, count, songs: [...] }
+//
+// These were previously typed as bare arrays, so calling .map() on the result
+// would have thrown at runtime. Nothing consumed them yet, which is why it went
+// unnoticed - it would have failed the moment the leaderboard pages were wired
+// to live data.
+//
+// Some numeric fields also arrive as strings: the artists endpoint sends
+// totalVolumeSol as "300.7357", and every *Usd field on every endpoint is a
+// pre-formatted display string like "$22,879.97". Use solNum() before doing
+// arithmetic on anything SOL-denominated.
+// ---------------------------------------------------------------------------
+
+/**
+ * Coerce a SOL amount that may arrive as a number or a numeric string.
+ * Returns null for anything unparseable rather than 0 - a missing value must
+ * never render as a real zero.
+ */
+export function solNum(v: number | string | null | undefined): number | null {
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === "string") {
+    // Number("") and Number("   ") are both 0, which would turn a missing value
+    // into a real-looking zero. Reject empty input before parsing.
+    const cleaned = v.replace(/[$,\s]/g, "");
+    if (cleaned === "") return null;
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // /leaderboards/artists
 // ---------------------------------------------------------------------------
 
@@ -177,18 +275,33 @@ export interface ArtistLeaderboardEntry {
   wins: number;
   losses: number;
   draws: number;
-  totalVolumeSol: number;
-  totalVolumeUsd: number;
-  totalEarningsSol: number;
-  totalEarningsUsd: number;
+  /** Numeric string on this endpoint, e.g. "300.7357". Use `solNum()`. */
+  totalVolumeSol: number | string;
+  /** Pre-formatted for display, e.g. "$22,879.97". Not arithmetic-safe. */
+  totalVolumeUsd: string;
+  /** Numeric string. Use `solNum()`. */
+  totalEarningsSol: number | string;
+  /** Pre-formatted for display. */
+  totalEarningsUsd: string;
   winRate: number;
   battles: number;
   pfpUrl: string | null;
   twitterHandle: string | null;
 }
 
-export function getArtistLeaderboard(limit = 100): Promise<ArtistLeaderboardEntry[]> {
-  return getJson<ArtistLeaderboardEntry[]>(`/leaderboards/artists?limit=${limit}`);
+export interface ArtistLeaderboardResponse {
+  updatedAt: string;
+  count: number;
+  artists: ArtistLeaderboardEntry[];
+}
+
+/** Returns the entries. Use `getArtistLeaderboardResponse` if you need `updatedAt`. */
+export async function getArtistLeaderboard(limit = 100): Promise<ArtistLeaderboardEntry[]> {
+  return (await getArtistLeaderboardResponse(limit)).artists ?? [];
+}
+
+export function getArtistLeaderboardResponse(limit = 100): Promise<ArtistLeaderboardResponse> {
+  return getJson<ArtistLeaderboardResponse>(`/leaderboards/artists?limit=${limit}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -199,7 +312,8 @@ export interface TraderLeaderboardEntry {
   wallet: string;
   totalVolumeSol: number;
   totalVolumeSolFmt: string;
-  totalVolumeUsd: number;
+  /** Pre-formatted for display, e.g. "$1,701.18". Not arithmetic-safe. */
+  totalVolumeUsd: string;
   tradeCount: number;
   battleCount: number;
   wins: number;
@@ -207,12 +321,24 @@ export interface TraderLeaderboardEntry {
   winRate: number;
   netPnlSol: number;
   netPnlFmt: string;
-  netPnlUsd: number;
+  /** Pre-formatted for display. Not arithmetic-safe. */
+  netPnlUsd: string;
   netPnlPositive: boolean;
 }
 
-export function getTraderLeaderboard(limit = 100): Promise<TraderLeaderboardEntry[]> {
-  return getJson<TraderLeaderboardEntry[]>(`/leaderboards/traders?limit=${limit}`);
+export interface TraderLeaderboardResponse {
+  updatedAt: string;
+  solPriceUsd: number;
+  count: number;
+  traders: TraderLeaderboardEntry[];
+}
+
+export async function getTraderLeaderboard(limit = 100): Promise<TraderLeaderboardEntry[]> {
+  return (await getTraderLeaderboardResponse(limit)).traders ?? [];
+}
+
+export function getTraderLeaderboardResponse(limit = 100): Promise<TraderLeaderboardResponse> {
+  return getJson<TraderLeaderboardResponse>(`/leaderboards/traders?limit=${limit}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -239,10 +365,20 @@ export interface SongsQuery {
   sort?: "volume" | "battles" | "winRate";
 }
 
-export function getSongLeaderboard(query: SongsQuery = {}): Promise<SongLeaderboardEntry[]> {
+export interface SongLeaderboardResponse {
+  updatedAt: string;
+  count: number;
+  songs: SongLeaderboardEntry[];
+}
+
+export async function getSongLeaderboard(query: SongsQuery = {}): Promise<SongLeaderboardEntry[]> {
+  return (await getSongLeaderboardResponse(query)).songs ?? [];
+}
+
+export function getSongLeaderboardResponse(query: SongsQuery = {}): Promise<SongLeaderboardResponse> {
   const params = new URLSearchParams();
   if (query.limit !== undefined) params.set("limit", String(query.limit));
   if (query.sort) params.set("sort", query.sort);
   const qs = params.toString();
-  return getJson<SongLeaderboardEntry[]>(`/leaderboards/songs${qs ? `?${qs}` : ""}`);
+  return getJson<SongLeaderboardResponse>(`/leaderboards/songs${qs ? `?${qs}` : ""}`);
 }
