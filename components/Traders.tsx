@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
 import { TRADERS, ME_WALLET, TREASURY_WALLET, type Trader } from "@/lib/traders";
 import { toCsv, downloadCsv } from "@/lib/csv";
+import { DATA_AS_OF } from "@/lib/freshness";
 
 const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 const fmt = (n: number, dp = 2) => n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -140,7 +141,7 @@ export default function Traders() {
       </section>
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        Top 40 of {TRADERS.length} shown; search covers all {TRADERS.length}. Wallets link to Solscan. Snapshot 2026-06-15.
+        Top 40 of {TRADERS.length} shown; search covers all {TRADERS.length}. Wallets link to Solscan. Snapshot {DATA_AS_OF}.
       </p>
     </div>
   );
