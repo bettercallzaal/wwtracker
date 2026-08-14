@@ -131,8 +131,12 @@ npm run build
 Done: scrolling-section dashboard, live treasury balance with intraday highs,
 program analytics, live trader PnL, full research doc, profitability section
 (floor + distribution split), table search/sort, CSV export across the data
-tables, and a recap pipeline (fetch + Main Event/show/weekly draft generation).
+tables, a recap pipeline (fetch + Main Event/show/weekly draft generation),
+and the X Spaces speaker-log matcher (`scripts/recap/speaker-log.ts` -
+resolves diarized speaker_N labels to real names from a manually-captured
+caption log; see `docs/ARCHITECTURE.md` §7).
 Next: fill the distribution history + recipient wallets in
 `lib/distributions.ts` to make the Profitability section real; per-battle PnL
 + win rate via buyShares/sellShares instruction decode; artist-payout tracing;
-the X Spaces speaker log (Phase B of the recap pipeline).
+a CLI wrapper for the speaker-log matcher (live capture itself stays manual -
+X's seek slider resists automation).
