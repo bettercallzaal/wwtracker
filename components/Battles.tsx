@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
 import { BATTLE_STATS as S } from "@/lib/battles";
+import { DATA_AS_OF } from "@/lib/freshness";
 import { toCsv, downloadCsv } from "@/lib/csv";
 
 interface Battle {
@@ -121,7 +122,7 @@ export default function Battles() {
           WaveWarZ<span style={{ color: C.dim, fontWeight: 400 }}> / battles</span>
         </h1>
         <p style={{ margin: "8px 0 0", color: C.text, lineHeight: 1.6, maxWidth: 720 }}>
-          The full battle history - {all ? fmt(all.length) : "958"} battles, all
+          The full battle history - {all ? fmt(all.length) : fmt(S.totalShown)} battles, all
           time. Search by song or artist, filter by type.
         </p>
       </header>
@@ -130,8 +131,10 @@ export default function Battles() {
         <Tile label="TOTAL BATTLES" value={fmt(S.totalShown)} sub="all time" />
         <Tile label="QUICK BATTLES" value={fmt(S.quickBattles)} sub="song vs song" />
         <Tile label="MAIN EVENTS" value={fmt(S.events)} sub={`${S.multiRound} multi-round`} />
+        <Tile label="COMMUNITY" value={fmt(S.communityBattles)} sub="community format" />
         <Tile label="TOTAL VOLUME" value={`${fmt(S.totalVolumeSol, 1)} ◎`} sub="SOL traded" />
         <Tile label="ARTIST PAYOUTS" value={`${fmt(S.artistPayoutsSol, 2)} ◎`} sub="to artists" />
+        <Tile label="TRADER CLAIMS" value={`${fmt(S.traderClaimsSol, 1)} ◎`} sub={`${fmt(S.withdrawalCount)} withdrawals`} />
       </div>
 
       {/* per night */}
@@ -298,9 +301,8 @@ export default function Battles() {
       )}
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        Full feed scraped from wavewarz.info via paginated render (949/958 battles
-        parsed). Winners in green. Rows link to the battle detail. Snapshot
-        2026-06-15.
+        Full feed scraped from wavewarz.info via paginated render. Winners in
+        green. Rows link to the battle detail. Snapshot {DATA_AS_OF}.
       </p>
     </div>
   );
