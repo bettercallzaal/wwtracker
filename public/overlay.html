@@ -9,12 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
 <style>
   /* Transparent page: composites over video in Restream/OBS browser source.
-     Live numbers pulled same-origin from /ww-activity.json + /ww-volboard.json
-     (the tracker's own snapshots), refreshed every 90s. */
+     Live data pulled from wavewarz.info/api/public/stats every 30s.
+     URL params ?left= and ?right= still work as a manual override. */
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { background:transparent; overflow:hidden; height:100%; }
 
-  :root { --gold:#FFC93C; --ink:#ffffff; --glass:rgba(10,12,16,0.78); }
+  :root { --gold:#FFC93C; --ink:#ffffff; --glass:rgba(10,12,16,0.78); --red:#ff4444; }
 
   .bar {
     position:fixed; left:50%; bottom:6vh; transform:translateX(-50%);
@@ -45,6 +45,7 @@
     width:9px; height:9px; border-radius:50%; background:var(--gold);
     animation:pulse 1.6s ease-in-out infinite;
   }
+  .live.standby .dot { background:rgba(255,255,255,0.35); animation:none; }
   @keyframes pulse {
     0%, 100% { opacity:1; box-shadow:0 0 0 0 rgba(255,201,60,0.55); }
     50%       { opacity:0.55; box-shadow:0 0 0 7px rgba(255,201,60,0); }
@@ -65,7 +66,10 @@
   .eq span:nth-child(5){ height:60%; animation-delay:0.22s; }
   @keyframes eq { 0%,100%{transform:scaleY(0.5);} 50%{transform:scaleY(1.05);} }
 
-  /* Live stats strip - values tick + flash gold when they change */
+  /* Standby: dim the eq bars when no live battle */
+  .eq.standby span { background:rgba(255,255,255,0.2); animation:none; transform:scaleY(0.4); }
+
+  /* Stats strip */
   .stats {
     display:flex; align-items:center; gap:20px;
     font-family:'Space Grotesk', sans-serif; font-size:12px;
@@ -78,10 +82,14 @@
   }
   .stats b.flash { color:var(--gold); }
   .stats .tag { color:rgba(255,255,255,0.4); }
+  /* Countdown flashes red in last 60s */
+  #countdown.urgent { color:var(--red) !important; animation:blink 1s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
 
   @media (prefers-reduced-motion: reduce) {
     .live .dot { animation:none; }
     .eq span   { animation:none; transform:none; }
+    #countdown.urgent { animation:none; }
   }
 </style>
 </head>
@@ -93,39 +101,40 @@
              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
         <span class="fallback">WAVEWARZ</span>
       </div>
-      <div class="live"><span class="dot"></span>LIVE</div>
+      <div class="live" id="liveIndicator"><span class="dot"></span><span id="liveLabel">LIVE</span></div>
       <div class="matchup">
         <span class="name" id="left">ARTIST A</span>
         <span class="vs">VS</span>
         <span class="name" id="right">ARTIST B</span>
       </div>
-      <div class="eq" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="eq" id="eqBars" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
     </div>
     <div class="stats">
-      <span><b id="vol">--</b> SOL <span class="tag">30D VOL</span></span>
+      <span><b id="vol">--</b> SOL <span class="tag">TOTAL VOL</span></span>
       <span><b id="battles">--</b> <span class="tag">BATTLES</span></span>
-      <span><b id="today">--</b> <span class="tag">TODAY</span></span>
-      <span id="subwrap"><span class="tag" id="sub">BACK MUSIC, NOT MEMES.</span></span>
+      <span><b id="vol24">--</b> SOL <span class="tag">24H VOL</span></span>
+      <span id="subwrap"><b id="countdown" class="tag">--</b></span>
     </div>
   </div>
 
 <script>
   (function () {
-    // Names/sub via query params - one URL to paste into Restream.
-    var q = new URLSearchParams(location.search);
-    function setText(id, key, upper) {
-      var v = q.get(key);
-      if (v) document.getElementById(id).textContent = upper ? v.toUpperCase() : v;
-    }
-    setText('left', 'left', true);
-    setText('right', 'right', true);
-    setText('sub', 'sub', true);
+    var STATS_URL = 'https://wavewarz.info/api/public/stats';
+    var POLL_MS = 30000;
 
-    // Live numbers: same-origin tracker snapshots. Values flash gold on change.
+    // URL param manual overrides for artist names
+    var q = new URLSearchParams(location.search);
+    var manualLeft  = q.get('left')  ? q.get('left').toUpperCase()  : null;
+    var manualRight = q.get('right') ? q.get('right').toUpperCase() : null;
+
     var prev = {};
+    var countdownInterval = null;
+    var endsAt = null;
+    var isLive = false;
+
     function put(id, value) {
       var el = document.getElementById(id);
-      if (el.textContent === value) return;
+      if (!el || el.textContent === value) return;
       el.textContent = value;
       if (prev[id] !== undefined) {
         el.classList.add('flash');
@@ -134,32 +143,89 @@
       prev[id] = value;
     }
 
-    function refresh() {
-      fetch('/ww-activity.json', { cache: 'no-store' })
-        .then(function (r) { return r.json(); })
-        .then(function (days) {
-          if (!Array.isArray(days) || !days.length) return;
-          var battles = 0;
-          days.forEach(function (d) { battles += (d.battles || 0); });
-          var last = days[days.length - 1];
-          var todayTx = (last.buys || 0) + (last.sells || 0) + (last.claims || 0) + (last.mints || 0);
-          put('battles', String(battles));
-          put('today', todayTx + ' TX');
-        })
-        .catch(function () {});
+    function fmtSol(n) {
+      return n >= 100 ? n.toFixed(1) : n.toFixed(2);
+    }
 
-      fetch('/ww-volboard.json', { cache: 'no-store' })
+    function setLiveState(live) {
+      var indicator = document.getElementById('liveIndicator');
+      var label = document.getElementById('liveLabel');
+      var eq = document.getElementById('eqBars');
+      if (live) {
+        indicator.classList.remove('standby');
+        label.textContent = 'LIVE';
+        eq.classList.remove('standby');
+      } else {
+        indicator.classList.add('standby');
+        label.textContent = 'STANDBY';
+        eq.classList.add('standby');
+      }
+      isLive = live;
+    }
+
+    function updateCountdown() {
+      if (!endsAt) { document.getElementById('countdown').textContent = 'BACK MUSIC, NOT MEMES.'; return; }
+      var secsLeft = Math.max(0, Math.floor((new Date(endsAt) - Date.now()) / 1000));
+      var el = document.getElementById('countdown');
+      if (secsLeft <= 0) {
+        el.textContent = 'SETTLING...';
+        el.classList.remove('urgent');
+        return;
+      }
+      var m = Math.floor(secsLeft / 60);
+      var s = secsLeft % 60;
+      el.textContent = 'ENDS IN ' + m + ':' + (s < 10 ? '0' : '') + s;
+      if (secsLeft <= 60) el.classList.add('urgent');
+      else el.classList.remove('urgent');
+    }
+
+    function applyStats(data) {
+      // Volume + battles from stats
+      if (data.volume && data.volume.totalSol != null) {
+        put('vol', fmtSol(data.volume.totalSol));
+      }
+      if (data.battles && data.battles.total != null) {
+        put('battles', String(data.battles.total));
+      }
+      if (data.volume && data.volume.last24hSol != null) {
+        put('vol24', fmtSol(data.volume.last24hSol));
+      }
+
+      var lb = data.liveBattle;
+      if (lb) {
+        setLiveState(true);
+        endsAt = lb.endsAt || null;
+        if (countdownInterval) clearInterval(countdownInterval);
+        updateCountdown();
+        countdownInterval = setInterval(updateCountdown, 1000);
+
+        // Manual override wins; otherwise use live battle names
+        var leftName  = manualLeft  || (lb.artist1 && lb.artist1.name ? lb.artist1.name.toUpperCase() : 'ARTIST A');
+        var rightName = manualRight || (lb.artist2 && lb.artist2.name ? lb.artist2.name.toUpperCase() : 'ARTIST B');
+        put('left', leftName);
+        put('right', rightName);
+      } else {
+        setLiveState(false);
+        endsAt = null;
+        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+        document.getElementById('countdown').textContent = 'BACK MUSIC, NOT MEMES.';
+        document.getElementById('countdown').classList.remove('urgent');
+
+        // Manual override wins; otherwise show placeholder
+        put('left',  manualLeft  || 'ARTIST A');
+        put('right', manualRight || 'ARTIST B');
+      }
+    }
+
+    function refresh() {
+      fetch(STATS_URL, { cache: 'no-store' })
         .then(function (r) { return r.json(); })
-        .then(function (vb) {
-          var rows = (vb && vb.rows) || [];
-          var sol = rows.reduce(function (s, r) { return s + (r.sol || 0); }, 0);
-          if (sol > 0) put('vol', sol.toFixed(1));
-        })
+        .then(applyStats)
         .catch(function () {});
     }
 
     refresh();
-    setInterval(refresh, 90000); // 90s - snapshot files only move on redeploy/cron
+    setInterval(refresh, POLL_MS);
   })();
 </script>
 </body>
