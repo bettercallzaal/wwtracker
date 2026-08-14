@@ -3,7 +3,8 @@
 import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
 import { usd } from "@/lib/price";
-import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY } from "@/lib/config";
+import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY, FLOOR_SOL } from "@/lib/config";
+import { BATTLE_STATS as S } from "@/lib/battles";
 
 const fmt = (n: number, dp = 0) =>
   n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -39,12 +40,13 @@ export default function AboutWaveWarZ() {
             <Stat label="BUY VOLUME" value={`${fmt(WW.volume.total)} ◎`} sub={usd(WW.volume.total)} />
           )}
           <Stat label="PROGRAM TXS" value={fmt(ps.programTxs)} sub={`${ps.activeDays} active days`} />
-          <Stat label="TREASURY NET" value={`${fmt(ps.treasuryNet, 2)} ◎`} sub={`~the 3.5 floor - ${usd(ps.treasuryNet)}`} />
+          <Stat label="TREASURY NET" value={`${fmt(ps.treasuryNet, 2)} ◎`} sub={`~the ${FLOOR_SOL} floor - ${usd(ps.treasuryNet)}`} />
         </Grid>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
           since {ps.firstDay} - snapshot {WW.generatedAt}. On-chain vs the
-          wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~1,073);
-          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ buy volume (app 483.88 ◎, both sides).` : ""}
+          wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~{S.totalShown.toLocaleString()});
+          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ buy volume (app ${S.totalVolumeSol.toFixed(2)} ◎, both sides);` : ""}
+          {` app ${S.traderClaimsSol.toFixed(2)} ◎ claimed by traders (${S.withdrawalCount} withdrawals).`}
         </p>
       </Section>
 
@@ -77,7 +79,7 @@ export default function AboutWaveWarZ() {
         </table>
         <p style={{ ...metaLabel, fontSize: 11 }}>
           Platform revenue = 0.5% of every trade + 3% of every loser pool -&gt; the
-          treasury wallet and its ~3.5 SOL operating floor.
+          treasury wallet and its ~{FLOOR_SOL} SOL operating floor.
         </p>
       </Section>
 
@@ -97,7 +99,8 @@ export default function AboutWaveWarZ() {
       <Section label="TEAM">
         <ul style={listStyle}>
           <li><b>hurric4n3ike</b> (Ikechi Nwachukwu) - founder / lead developer. Also an artist.</li>
-          <li><b>BetterCallZaal</b> (Zaal Panthaki) - cofounder, head of ecosystem. Founder of The ZAO.</li>
+          <li><b>BetterCallZaal</b> (Zaal Panthaki) - cofounder, head of ecosystem. Founder of{" "}
+            <a href="https://thezao.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>The ZAO</a>.</li>
           <li><b>candy</b> (Samantha Kinney / CandyToyBox) - design, promo, marketing.</li>
         </ul>
       </Section>
@@ -105,8 +108,9 @@ export default function AboutWaveWarZ() {
       {/* ecosystem */}
       <Section label="ECOSYSTEM">
         <p style={{ margin: "0 0 8px", color: C.text, lineHeight: 1.6 }}>
-          WaveWarZ is the music-battle application layer of <b>BCZ -&gt; The ZAO -&gt;
-          WaveWarZ</b> - The ZAO being a web3 music/creator collective. Related
+          WaveWarZ is the music-battle application layer of <b>BCZ -&gt;{" "}
+          <a href="https://thezao.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>The ZAO</a>
+          {" "}-&gt; WaveWarZ</b> — The ZAO is a web3 music/creator collective with 100+ consecutive Fractal governance weeks and onchain Respect scores. Related
           surfaces in the ecosystem:
         </p>
         <ul style={listStyle}>
@@ -127,6 +131,8 @@ export default function AboutWaveWarZ() {
           <Link href="https://x.com/WaveWarZ" label="X / @WaveWarZ" />
           <Link href="https://www.youtube.com/@WaveWarZ" label="YouTube" />
           <Link href="https://www.instagram.com/wavewarz" label="Instagram" />
+          <Link href="https://thezao.com" label="thezao.com" />
+          <Link href="https://warpcast.com/~/channel/zao" label="Farcaster /zao" />
         </div>
       </Section>
     </div>
