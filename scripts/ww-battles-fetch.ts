@@ -58,8 +58,11 @@ export async function fetchNewBattles(
 }
 
 async function main() {
+  const maxPagesArg = process.argv.find((a) => a.startsWith("--max-pages="));
+  const maxPagesRaw = maxPagesArg ? parseInt(maxPagesArg.split("=")[1], 10) : 10;
+  const maxPages = Number.isFinite(maxPagesRaw) && maxPagesRaw > 0 ? maxPagesRaw : 10;
   const existing: StoredBattle[] = JSON.parse(readFileSync(BATTLES_JSON_PATH, "utf-8"));
-  const { added, merged, pagesFetched } = await fetchNewBattles(existing, httpFetchPage());
+  const { added, merged, pagesFetched } = await fetchNewBattles(existing, httpFetchPage(), maxPages);
   if (added.length === 0) {
     console.log(`No new battles found (checked ${pagesFetched} page(s)).`);
     return;
