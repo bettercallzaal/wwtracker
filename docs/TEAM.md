@@ -5,8 +5,8 @@ the people themselves on the record.
 
 | Person | Handle | Role |
 |---|---|---|
-| Hurricane | @Hurric4n3Ike | Founder. Owns the dapp, runs the daily room |
-| Candy | @CandyToyBoxYT1 | Co-founder. Graphics, and owns WaveWarZ Intelligence (`wavewarz.info`) and its public API |
+| Hurricane (Ikechi Nwachukwu) | @Hurric4n3Ike | Founder. Contracts, runs the daily room. Also the featured artist HURRICANE3IKE |
+| Candy / Sam (Samantha Kinney) | @CandyToyBoxYT1 | Co-founder. Built and runs the Solana app stack; owns WaveWarZ Intelligence (`wavewarz.info`) and its public API. **"Sam" is short for Samantha - the same person as Candy** |
 | Zaal | @bettercallzaal | Analytics and tooling. Owns this tracker; runs the ZABAL and Zabal Games |
 | Duchess | - | Marketing |
 | Stu Kwan | @stukwan | DJ and builder; creator of the Quakey board game |
