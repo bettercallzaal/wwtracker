@@ -6,8 +6,11 @@ treasury wallet, the program's activity, and a trader's PnL - backed by Dune.
 **Live:** https://wwtracker.vercel.app
 
 WaveWarZ is a Solana music-battle platform: fans trade SOL on song-vs-song
-battles. Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`. Full research
-in [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
+battles. Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`.
+
+**New here?** Start with [docs/](docs/README.md) - the surface map (WaveWarZ is
+three sites with three owners), the team, and the ecosystem. Full research in
+[docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
 
 ## Sections
 
