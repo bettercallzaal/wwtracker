@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { DATA_AS_OF } from "@/lib/freshness";
 
 // Revalidate every 60s — matches wavewarz.info/api/public/stats cache TTL.
 export const revalidate = 60;
@@ -28,6 +29,12 @@ interface TopBattle {
 
 interface StatsPayload {
   source: "wwtracker-local";
+  /** These figures are computed from a frozen snapshot, not live. Always true here. */
+  stale: true;
+  /** The snapshot's date. This is what the numbers reflect - NOT the request time. */
+  asOf: string;
+  /** Where to get live platform totals instead. */
+  liveTotals: string;
   note: string;
   battles: {
     total: number;
@@ -42,7 +49,8 @@ interface StatsPayload {
     earliest: string;
     latest: string;
   };
-  generatedAt: string;
+  /** When this response was assembled. The data itself is as of `asOf`. */
+  computedAt: string;
 }
 
 const CORS = {
@@ -84,7 +92,15 @@ export async function GET(): Promise<NextResponse> {
 
   const payload: StatsPayload = {
     source: "wwtracker-local",
-    note: "Computed from wwtracker intelligence feed (public/ww-battles.json). May lag wavewarz.info/api/public/stats by up to 138 battles due to feed indexing delay.",
+    stale: true,
+    asOf: DATA_AS_OF,
+    liveTotals: "/api/ww/stats",
+    note:
+      "HISTORICAL ANALYTICS, NOT LIVE. Computed from a frozen battle snapshot " +
+      `(public/ww-battles.json, as of ${DATA_AS_OF}). These figures do not update - ` +
+      "for live platform totals use /api/ww/stats. This endpoint exists for the " +
+      "richer per-battle breakdowns (top battle, by-type, avg per battle) that the " +
+      "live stats endpoint does not compute.",
     battles: {
       total: battles.length,
       byType,
@@ -102,7 +118,8 @@ export async function GET(): Promise<NextResponse> {
       earliest: dates.length ? dates.reduce((a, b) => (a < b ? a : b)) : "",
       latest: dates.length ? dates.reduce((a, b) => (a > b ? a : b)) : "",
     },
-    generatedAt: new Date().toISOString(),
+    // When this response was assembled. The DATA is as of `asOf`, not this.
+    computedAt: new Date().toISOString(),
   };
 
   return NextResponse.json(payload, { headers: CORS });
