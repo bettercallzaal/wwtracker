@@ -9,3 +9,9 @@ next-env.d.ts
 .vercel
 .env*.local
 .gstack/
+
+# per-machine agent config, not shared
+.claude/settings.json
+.claude/settings.local.json
+.serena/cache/
+.serena/project.local.yml
