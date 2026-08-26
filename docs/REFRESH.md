@@ -109,6 +109,25 @@ Reusable public query **7728208** ("ww-fnj-hist"): PATCH its `query_sql`, POST
 `/execution/{id}/status`, GET `/query/7728208/results`. Key in `.env.local`
 (`DUNE_API_KEY`). Free tier = HARD 2-minute execution timeout.
 
+**Account change (2026-06-17).** The original key hit its per-cycle credit cap
+and now returns HTTP 402. The replacement Dune account does **not** own public
+query 7728208, so it cannot PATCH it. Query **7740037** was created on the new
+account as the drop-in equivalent - use that id with the current key. 7728208
+still works for anyone holding the original account's key.
+
+**Windowing.** The 2-minute cap is per execution and cannot be raised on the free
+tier (a paid tier lifts it). An `account_activity` join over a wide date range
+will not finish. Chunk it: ~1 week per execution works for ordinary months, but
+the busy **Feb-Apr 2026** months need **3-day windows**. This cannot be done in
+one or two runs on the free tier.
+
+**Credits.** The datapoint allowance is per billing cycle, and **failed or
+timed-out executions still consume datapoints** - they scan before they fail. A
+run of timeouts burns the cycle with nothing to show. Query only the windows you
+are actually missing and avoid re-runs. Cheap shape: single-address scans (FNj
+inflows -> skips/queue). Expensive shape: any `account_activity` self-join
+(sell-side volume, DJ Wavy classification).
+
 ```sql
 -- daily program activity -> public/ww-activity.json (53 days)
 -- disc map (to_hex is UPPERCASE): buy 28EF8A9A sell B8A4A910 initBattle 756CA69F
@@ -148,9 +167,32 @@ a fee-trimmed 0.02 skip); queue = `amt == 0.005`. Verified vs 2026-06-13 (20 ski
 / 1.1667 SOL, queue 11). Both `public/ww-skips.json` + `ww-queue.json` are
 date-keyed maps; merge new days into the existing history, newest-first.
 
+> **This calibration is unverified beyond one night and may be wrong.** It assumes
+> skip / queue / DJ Wavy are the only paid actions that pay `FNj`. If anything else
+> does, those payments are silently counted as skips or queue. Open question, not
+> yet answered: `docs/issues/001-fnj-payment-bucket-classification.md`. Do not
+> treat the skip figures as exact until it is closed.
+
+**DJ Wavy split coverage.** `public/ww-wavysplit.json` classifies 103 nights
+(queue 382 / DJ Wavy 31). Roughly 49 nights in **2026-02-17 .. 2026-04-28** are
+still unclassified - the busy months that need 3-day windows. DJ Wavy is a
+low-event metric (~31 events all-time), so finishing the gap is optional and not
+worth a fresh credit cycle on its own.
+
 ## D. Finish
 
 ```bash
 # update lib/freshness.ts DATA_AS_OF, then:
 npm run validate && npm run build && vercel --prod --yes
 ```
+
+**The Dune key lives in two places.** `.env.local` locally (gitignored) *and*
+the Vercel Production environment for the `wwtracker` project. Rotating it means
+updating **both** - changing only `.env.local` leaves the deployed daily cron
+calling Dune with a dead key.
+
+Note the two failure modes differ. Key **unset** is handled: `/api/balance`
+returns 503 `configured:false` and the client falls back to sample data. Key
+**present but revoked** is not: `lib/dune.ts` throws a `DuneError` and the route
+returns Dune's own status (401/402) with the message, so the dashboard shows an
+error rather than sample data.

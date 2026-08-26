@@ -10,3 +10,6 @@ next-env.d.ts
 .env*.local
 .gstack/
 .serena/
+
+# Claude Code scheduler lock - per-run, never shared
+.claude/scheduled_tasks.lock
