@@ -43,11 +43,19 @@ resolve to the right section.
   tech-stack cost table, and monthly expense/income P&L - with any figure that
   doesn't reconcile flagged explicitly rather than smoothed over. Config in
   `lib/opsLedger.ts`.
-- **06 Analytics** - WaveWarZ program-wide on-chain: 1,127 battles / 9,045 trades /
-  122 traders (decoded instructions), battles-vs-trades timeline, daily activity
-  (14,681 txs over 230 days since Aug 2025), treasury daily flow (lifetime net
-  +3.51 SOL = the floor), and a top-traders leaderboard. Snapshot in `lib/wwData.ts`.
+- **06 Analytics** - WaveWarZ program-wide on-chain: battles-vs-trades timeline,
+  daily activity, treasury daily flow, and a top-traders leaderboard. Every
+  figure here is a **baked snapshot** in `lib/wwData.ts`, not live.
+  As of its `generatedAt` (2026-06-14, covering through 2026-06-13): 1,127
+  battles created / 9,045 trades (6,914 buys + 2,131 sells) / 122 unique
+  traders, 14,681 program txs over 230 active days since 2025-08-01, and
+  lifetime treasury net +3.51 SOL, which is the floor. Those numbers are frozen
+  at that date and have not been re-pulled since - see **Data freshness** below.
 - **07 Battles** - the full battle history: search, filter by type, CSV export.
+  `public/ww-battles.json` currently holds **1,161** battles, refreshed
+  independently via `npm run fetch:battles`. It is a different source and a
+  later date than the 1,127 in the § 06 snapshot; the two are not expected to
+  match.
 - **08 Traders** - the artist leaderboard, the full trader table, and a
   lookup for any wallet's own PnL (cumulative SOL, live from on-chain, win
   rate, biggest win/loss - shown alongside the stats-app's realized figure).
@@ -98,6 +106,25 @@ Output lands in `recaps/battles/`, `recaps/shows/`, `recaps/weekly/` as
 markdown files with a "Data used" section citing the exact source for every
 number, and a "Not included" section for anything that can't be verified at
 that granularity (no per-battle payout/trade data exists).
+
+## Data freshness
+
+Most of this dashboard is baked snapshots, and they do not refresh themselves.
+`lib/freshness.ts` stamps the site with `DATA_AS_OF`, currently **2026-06-16**.
+Treat every snapshot figure as being that old unless a section says otherwise.
+Live paths (treasury balance via cached Dune query, Audius, YouTube) are
+unaffected. `docs/REFRESH.md` is the runbook for re-pulling, and records the
+Dune free-tier limits that make a full refresh non-trivial.
+
+Two things to know before quoting any number from this repo:
+
+- **PR #212 is open and unmerged.** It carries `public/ww-wavysplit.json` at 103
+  classified nights (queue 382 / DJ Wavy 31). The deployed site still serves the
+  80-night version, so the Battles section's SKIP / QUEUE / DJ WAVY split reads
+  low in production until that merges. Nothing else in this README depends on it.
+- **The skip and queue figures rest on an unverified assumption.** They classify
+  SOL inflows to the treasury wallet by amount alone. See
+  `docs/issues/001-fnj-payment-bucket-classification.md` - open, unfixed.
 
 ## How it works
 
