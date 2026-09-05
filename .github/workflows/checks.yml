@@ -27,10 +27,12 @@ jobs:
     name: types, tests, data
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          # 22, not 20: the runner forces Node 20 actions onto 24 already and
+          # annotates every run about it. Local dev is on 23.
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npx tsc --noEmit
@@ -46,10 +48,10 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run smoke:stats
