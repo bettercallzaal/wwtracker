@@ -286,9 +286,9 @@ export default function PlatformAnalytics() {
               {fmt(WW.program.buys + WW.program.sells)} trades.
             </li>
             <li>
-              Trading is hard: the tracked wallet is a net loser at{" "}
-              <b>{fmt(WW.traderStats.winRate, 1)}% win rate</b> - claims rarely
-              outrun bets.
+              <b>{fmt(WW.program.claims)}</b> <i>claimShares</i> calls against{" "}
+              <b>{fmt(WW.program.battlesSettled)}</b> settled battles - traders
+              have to claim manually, so a settled battle is not a paid-out one.
             </li>
           </ul>
         </Panel>

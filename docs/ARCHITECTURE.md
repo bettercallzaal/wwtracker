@@ -138,7 +138,7 @@ sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
 | 06 | Revenue | WeeklyRevenueAnalytics.tsx | Weekly on-chain fee wallet inflow, the trend, per-battle fee | WW + live API |
 | 07 | Operations | OpsLedger.tsx | Real-world costs/income (tech stack, monthly P&L, fee wallet balance) | lib/opsLedger.ts + live RPC |
 | 08 | Analytics | PlatformAnalytics.tsx | Decoded instruction mix, daily activity, treasury flow, per-trader volume | WW + public/ww-activity.json, ww-volboard.json |
-| 09 | Wallet | TraderScorecard.tsx, TraderEdge.tsx | Per-wallet PnL lookup (cumulative SOL, win rate, biggest moves, all on-chain verified) | live RPC |
+| 09 | Market | TraderEdge.tsx | When money shows up, which artists pull it in, how often the crowd is right, the shape of the market | public API + WW |
 | 10 | Embeds | EmbedsSection.tsx | Gallery of embeddable charts and counters | components/embeds/ |
 | 11 | Ecosystem | Ecosystem.tsx, Events.tsx, Artists.tsx, Music.tsx, Faq.tsx | The ZAO, events, artist roster, FAQ | static + Audius API (songs) |
 

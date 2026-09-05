@@ -9,7 +9,10 @@
 //    program's first instruction is 2025-05-26, so three months of the
 //    platform's history were silently missing from every "all-time" figure.
 //    The counts it produced were roughly 45 percent low.
-// 2. Daily activity and the instruction mix are no longer fetched here at all.
+// 2. It also pulled one wallet's per-trade PnL series. That was the cofounder's
+//    own trading record, which is a different question from how the platform is
+//    doing, and it is out of scope now - this repo tracks the business.
+// 3. Daily activity and the instruction mix are no longer fetched here at all.
 //    They live in public/ww-onchain-daily.json, which the app also serves
 //    directly to the browser, so there is exactly one copy of that series
 //    rather than a JSON file and a TypeScript literal that can drift apart.
@@ -19,7 +22,6 @@
 //   public/ww-platform-volume.json   - daily both-sides SOL volume
 //   <dune-dir>/traders.json          - top signers by tx count
 //   <dune-dir>/devflow.json          - treasury daily inflow/outflow/net
-//   <dune-dir>/pnl.json              - tracked trader per-tx SOL deltas
 //   <dune-dir>/signers.json          - COUNT(DISTINCT tx_signer), all time
 //
 // The three Dune files are raw `GET /v1/execution/{id}/results` responses.
@@ -120,57 +122,6 @@ if (!program.uniqueTraders) {
   throw new Error("signers.json missing or empty - refusing to emit a snapshot with uniqueTraders 0");
 }
 
-// --- tracked trader ---------------------------------------------------------
-const pnlRaw = duneRows("pnl");
-const deltas = pnlRaw.map((r) => Number(r.sol_delta));
-
-let cum = 0;
-let pnl = pnlRaw.map((r) => {
-  cum += Number(r.sol_delta);
-  return { t: String(r.block_time).slice(0, 19), cum: round(cum, 4) };
-});
-// Downsample for the chart. Keeping the last point matters - it is the headline
-// figure, and dropping it would understate or overstate the wallet's position.
-if (pnl.length > 180) {
-  const step = pnl.length / 180;
-  const keep = [];
-  for (let i = 0; i < 180; i++) keep.push(pnl[Math.floor(i * step)]);
-  if (keep[keep.length - 1] !== pnl[pnl.length - 1]) keep.push(pnl[pnl.length - 1]);
-  pnl = keep;
-}
-
-const wins = deltas.filter((d) => d > 0);
-const losses = deltas.filter((d) => d < 0);
-const traderStats = {
-  txs: deltas.length,
-  solBet: round(-losses.reduce((a, d) => a + d, 0), 4),
-  solReturned: round(wins.reduce((a, d) => a + d, 0), 4),
-  net: round(deltas.reduce((a, d) => a + d, 0), 4),
-  biggestWin: deltas.length ? round(Math.max(...deltas), 4) : 0,
-  biggestLoss: deltas.length ? round(Math.min(...deltas), 4) : 0,
-  winTxs: wins.length,
-  lossTxs: losses.length,
-  winRate: deltas.length ? round((100 * wins.length) / deltas.length, 1) : 0,
-};
-
-const moves = pnlRaw.map((r) => ({
-  t: String(r.block_time).slice(0, 10),
-  sol: round(Number(r.sol_delta), 4),
-}));
-const traderTop = {
-  wins: [...moves].sort((a, b) => b.sol - a.sol).slice(0, 5),
-  losses: [...moves].sort((a, b) => a.sol - b.sol).slice(0, 5),
-};
-
-const byMonth = new Map();
-for (const r of pnlRaw) {
-  const m = String(r.block_time).slice(0, 7);
-  byMonth.set(m, (byMonth.get(m) ?? 0) + Number(r.sol_delta));
-}
-const pnlMonthly = [...byMonth.entries()]
-  .sort(([a], [b]) => a.localeCompare(b))
-  .map(([month, net]) => ({ month, net: round(net, 4) }));
-
 // --- platform totals --------------------------------------------------------
 const platformStats = {
   programTxs: sum((d) => d.txs),
@@ -190,14 +141,10 @@ const out = `${header}export const WW: WwSnapshot = {
   generatedAt: ${j(new Date().toISOString().slice(0, 16) + "Z")},
   daily: ${j(daily)},
   traders: ${j(traders)},
-  pnl: ${j(pnl)},
   devflow: ${j(devflow)},
-  traderStats: ${j(traderStats)},
   platformStats: ${j(platformStats)},
   program: ${j(program)},
   timeline: ${j(timeline)},
-  traderTop: ${j(traderTop)},
-  pnlMonthly: ${j(pnlMonthly)},
   volume: ${j(volume)},
 };
 `;
@@ -216,6 +163,4 @@ console.table({
   uniqueTraders: program.uniqueTraders,
   volumeTotal: volume.total,
   treasuryNet: platformStats.treasuryNet,
-  traderTxs: traderStats.txs,
-  traderNet: traderStats.net,
 });
