@@ -51,8 +51,9 @@ export default function Artists() {
     setExpanded(id);
     if (!full[id]) {
       try {
-        const r = await fetch(`${host}/v1/users/${id}/tracks?app_name=${APP}&limit=100&sort=plays`).then((x) => x.json());
-        setFull((prev) => ({ ...prev, [id]: (r?.data ?? []) as Track[] }));
+        const r = await fetch("/api/audius/roster").then((x) => (x.ok ? x.json() : null));
+        const hit = (r?.artists ?? []).find((a: { audiusId: string }) => a.audiusId === id);
+        setFull((prev) => ({ ...prev, [id]: (hit?.tracks ?? []) as Track[] }));
       } catch {
         /* ignore */
       }
@@ -81,30 +82,31 @@ export default function Artists() {
 
   useEffect(() => {
     let alive = true;
-    (async () => {
-      try {
-        const hosts = await fetch("https://api.audius.co").then((r) => r.json());
-        const h: string = hosts?.data?.[0] || "https://discoveryprovider.audius.co";
-        if (alive) setHost(h);
-        const host = h;
-        const out = await Promise.all(
-          ARTISTS.map(async (a) => {
-            try {
-              const [u, t] = await Promise.all([
-                fetch(`${host}/v1/users/${a.audiusId}?app_name=${APP}`).then((r) => r.json()),
-                fetch(`${host}/v1/users/${a.audiusId}/tracks?app_name=${APP}&limit=5&sort=plays`).then((r) => r.json()),
-              ]);
-              return { ww: a, user: u?.data ?? null, tracks: (t?.data ?? []) as Track[] };
-            } catch {
-              return { ww: a, user: null, tracks: [] };
-            }
+    fetch("/api/audius/roster")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive) return;
+        if (!j) {
+          setError("Could not reach Audius right now.");
+          return;
+        }
+        const byId = new Map<string, { user: AudiusUser | null; tracks: Track[] }>(
+          (j.artists ?? []).map((a: { audiusId: string; user: AudiusUser | null; tracks: Track[] }) => [
+            a.audiusId,
+            { user: a.user, tracks: a.tracks ?? [] },
+          ]),
+        );
+        // The roster order is ours, not the API's, so map over ARTISTS rather
+        // than over the response.
+        setCards(
+          ARTISTS.map((a) => {
+            const hit = byId.get(a.audiusId);
+            return { ww: a, user: hit?.user ?? null, tracks: (hit?.tracks ?? []).slice(0, 5) };
           }),
         );
-        if (alive) setCards(out);
-      } catch {
-        if (alive) setError("Could not reach Audius right now.");
-      }
-    })();
+        if (j.reachable === false) setError("Could not reach Audius right now.");
+      })
+      .catch(() => alive && setError("Could not reach Audius right now."));
     return () => {
       alive = false;
     };

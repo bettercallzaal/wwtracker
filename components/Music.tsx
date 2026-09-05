@@ -5,6 +5,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { C, metaLabel } from "@/lib/theme";
 import { AUDIUS_ID_BY_HANDLE as ARTISTS } from "@/lib/artists";
 
+
 const APP = "wwtracker";
 
 interface Track {
@@ -28,34 +29,28 @@ export default function Music() {
 
   useEffect(() => {
     let alive = true;
-    (async () => {
-      try {
-        const hosts = await fetch("https://api.audius.co").then((r) => r.json());
-        const host: string = hosts?.data?.[0] || "https://discoveryprovider.audius.co";
+    fetch("/api/audius/roster")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive) return;
+        if (!j || j.reachable === false) {
+          setError("Could not reach Audius right now.");
+          setTracks([]);
+          return;
+        }
+        // One request instead of one per artist. The route walks the roster
+        // server-side and caches it for everyone - see its header comment.
         const all: Track[] = [];
-        await Promise.all(
-          Object.entries(ARTISTS).map(async ([handle, id]) => {
-            const r = await fetch(`${host}/v1/users/${id}/tracks?app_name=${APP}&limit=100`).then((x) => x.json());
-            for (const t of r?.data ?? []) {
-              all.push({
-                id: t.id,
-                title: t.title,
-                play_count: t.play_count ?? 0,
-                favorite_count: t.favorite_count ?? 0,
-                repost_count: t.repost_count ?? 0,
-                release_date: typeof t.release_date === "string" ? t.release_date.slice(0, 10) : undefined,
-                genre: t.genre ?? "Unknown",
-                permalink: t.permalink,
-                artist: handle,
-              });
-            }
-          }),
-        );
-        if (alive) setTracks(all);
-      } catch {
-        if (alive) setError("Could not reach Audius right now.");
-      }
-    })();
+        for (const a of j.artists ?? []) {
+          for (const t of a.tracks ?? []) all.push({ ...t, artist: a.handle });
+        }
+        setTracks(all);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setError("Could not reach Audius right now.");
+        setTracks([]);
+      });
     return () => {
       alive = false;
     };
