@@ -5,15 +5,56 @@ The treasury wallet, the operating floor, the fee model, the business ledger,
 and the program decoded instruction by instruction.
 
 **Live:** https://wwtracker.vercel.app
+Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo` on Solana mainnet.
 
-WaveWarZ is a Solana music-battle platform: fans trade SOL on song-vs-song
-battles. Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`. Everything
-WaveWarZ battle-shaped, artist-shaped or song-shaped is read live from
-wavewarz.info's public API, never copied.
+---
 
-**New here?** Start with [docs/](docs/README.md) - the surface map (WaveWarZ is
-three sites with three owners), the team, and the ecosystem. Full research in
-[docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
+## Start here
+
+**Read [docs/AUDIT.md](docs/AUDIT.md) first.** It is the current state of the
+repo as of 2026-09-05: what is solid, what is weak, every finding ranked with
+the command that produced it, and the roadmap in the order worth doing. If you
+are picking this up cold, that document is the briefing and this file is the
+map.
+
+The three things to know before touching anything:
+
+1. **wwtracker is the lab. wavewarz.info is production.** Experiments, research
+   and documentation live here. Finished work moves across to
+   `CandyToyBox/wavewarz-intelligence`, which is the system of record and fully
+   in production. Push access granted 2026-09-05. Do not open speculative PRs
+   against it.
+
+2. **Nothing is baked that has a live source, and nothing is rebuilt that
+   wavewarz.info already renders.** See "Why this matters" below for what
+   happened when that rule did not exist.
+
+3. **`CRON_SECRET` must be set in the Vercel project env**, or the daily cron
+   401s and the treasury chart silently freezes. It already did, for 64 days.
+   This is the highest value-per-minute item in the repo and it is not code.
+
+## First five minutes
+
+```bash
+npm install
+npm run validate     # data integrity + staleness gate
+npx vitest run       # 275 tests
+npm run dev          # needs .env.local, see Environment below
+```
+
+`npm run validate` is the fastest read on whether the data is healthy. It warns
+at 14 days stale and fails at 45 under `--strict`.
+
+## Where things are
+
+| I want to... | Go to |
+|---|---|
+| Know the current state and what to work on | [docs/AUDIT.md](docs/AUDIT.md) |
+| Understand how it is built | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Refresh the data | [docs/REFRESH.md](docs/REFRESH.md) |
+| Understand WaveWarZ itself | [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md) |
+| See who owns which site | [docs/SURFACES.md](docs/SURFACES.md) |
+| Use or extend the embeds | [lib/embeds.ts](lib/embeds.ts), gallery at `/embed` |
 
 ## Why this matters
 
@@ -29,16 +70,16 @@ program itself decoded straight off Solana.
 
 ## Sections
 
-Twelve numbered sections in one continuous scroll, with a sticky jump-nav
-(`components/AppShell.tsx`). Old `?tab=` links still resolve to the nearest
-surviving section. Each is a focused lens on one aspect of the business:
+Thirteen numbered sections (00-12) in one continuous scroll, with a sticky
+jump-nav (`components/AppShell.tsx`). Old `?tab=` links still resolve to the
+nearest surviving section. Each is a focused lens on one aspect of the business:
 
 - **00 Overview** - every on-chain series at once. Volume, treasury, battles,
   trades: each line scaled to its own peak so they share one axis, with toggles
   and real numbers in the tooltip.
-- **01 What** - what WaveWarZ is, battle mechanics (buyShares / sellShares /
-  endBattle / claimShares), the fee model, live on-chain snapshot, key addresses,
-  team, and official links.
+- **01 What** - what WaveWarZ is, battle mechanics (create / mint / trade /
+  settle / claim), the fee model, live on-chain snapshot, key addresses, team,
+  and official links.
 - **02 Floor** - the treasury wallet's daily balance (close + intraday high) held
   against the 3.5 SOL operating floor. Live from Dune, refreshed every morning.
 - **03 Growth** - cumulative SOL traded since launch in May 2025, at true scale.
@@ -51,12 +92,15 @@ surviving section. Each is a focused lens on one aspect of the business:
   the per-battle fee.
 - **07 Operations** - real-world costs and income the team tracks manually (not
   on-chain-derivable): tech stack, monthly P&L, the fee wallet live balance.
-- **08 Analytics** - every call to the Solana program, decoded by Anchor
-  discriminator from its first day. No other WaveWarZ surface shows this.
-- **09 Wallet** - look up any wallet's position: cumulative SOL, win rate,
-  biggest moves, all verified on-chain.
+- **08 Program** - the battle state machine as a funnel (create-mint-trade-settle-claim)
+  with gap analysis, plus decoded program instructions. No other WaveWarZ surface
+  shows this.
+- **09 Market** - when money shows up, which artists pull it in, and how often
+  the crowd is right - measured across every battle.
 - **10 Embeds** - every chart here is a standalone iframe for embedding elsewhere.
-- **11 Ecosystem** - where WaveWarZ sits in The ZAO ecosystem, events, FAQ.
+- **11 Artists** - the roster (live from Audius), who they are, their releases,
+  play totals and streaming stats.
+- **12 Ecosystem** - where WaveWarZ sits in The ZAO ecosystem, events, FAQ.
 
 ## Embeds
 

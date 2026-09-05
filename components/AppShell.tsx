@@ -7,6 +7,7 @@ import BalanceDashboard from "./BalanceDashboard";
 import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
 import PlatformAnalytics from "./PlatformAnalytics";
+import BattleLifecycle from "./BattleLifecycle";
 import Profitability from "./Profitability";
 import WeeklyRevenueAnalytics from "./WeeklyRevenueAnalytics";
 import OpsLedger from "./OpsLedger";
@@ -111,8 +112,14 @@ const SECTIONS: Section[] = [
     id: "analytics",
     n: "08",
     title: "The program itself",
-    intro: "every call to the Solana program, decoded by Anchor discriminator, from its first day. no other WaveWarZ surface shows this.",
-    render: () => <PlatformAnalytics />,
+    intro: "the program as a state machine - every battle walks create, mint, trade, settle, claim. the gaps between those stages are the interesting part, and no other WaveWarZ surface shows them.",
+    render: () => (
+      <>
+        <BattleLifecycle />
+        <div style={{ height: 24 }} />
+        <PlatformAnalytics />
+      </>
+    ),
   },
   {
     id: "market",
@@ -129,17 +136,26 @@ const SECTIONS: Section[] = [
     render: () => <EmbedsSection />,
   },
   {
-    id: "ecosystem",
+    id: "artists",
     n: "11",
-    title: "In the ZAO ecosystem",
-    intro: "where WaveWarZ sits in the bigger picture, the artists behind the battles, what's coming up, and the questions people ask most.",
+    title: "The artists behind it",
+    intro: "the roster, live from Audius - who they are, what they have released, and how much of it people are actually playing.",
     render: () => (
       <>
-        <Ecosystem />
-        <div style={{ height: 24 }} />
         <Artists />
         <div style={{ height: 24 }} />
         <Music />
+      </>
+    ),
+  },
+  {
+    id: "ecosystem",
+    n: "12",
+    title: "In the ZAO ecosystem",
+    intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
+    render: () => (
+      <>
+        <Ecosystem />
         <div style={{ height: 24 }} />
         <Events />
         <div style={{ height: 24 }} />
@@ -161,9 +177,8 @@ const LEGACY_TAB: Record<string, string> = {
   // rather than 404ing a link somebody may have shared. Battles and the song
   // chart now live on wavewarz.info; the ecosystem section links out to them.
   battles: "analytics",
-  songs: "ecosystem",
   leaderboard: "market", traders: "market", trader: "market", wallet: "market",
-  artists: "ecosystem", music: "ecosystem",
+  artists: "artists", music: "artists", songs: "artists",
   ecosystem: "ecosystem", events: "ecosystem", faq: "ecosystem",
 };
 

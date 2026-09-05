@@ -25,7 +25,7 @@ interface AudiusUser {
 interface Card {
   ww: (typeof ARTISTS)[number];
   user: AudiusUser | null;
-  tracks: Track[];
+  topTracks: Track[];
 }
 
 interface WwStat { battles: number; wins: number; vol: number; }
@@ -51,8 +51,11 @@ export default function Artists() {
     setExpanded(id);
     if (!full[id]) {
       try {
-        const r = await fetch(`${host}/v1/users/${id}/tracks?app_name=${APP}&limit=100&sort=plays`).then((x) => x.json());
-        setFull((prev) => ({ ...prev, [id]: (r?.data ?? []) as Track[] }));
+        // Fetch full track list for this artist on demand.
+        // The /api/audius/tracks endpoint resolves ID -> handle and handles
+        // Audius API calls, with the same host resolution and backoff logic.
+        const r = await fetch(`/api/audius/tracks/${id}`).then((x) => (x.ok ? x.json() : null));
+        setFull((prev) => ({ ...prev, [id]: (r?.tracks ?? []) as Track[] }));
       } catch {
         /* ignore */
       }
@@ -81,30 +84,36 @@ export default function Artists() {
 
   useEffect(() => {
     let alive = true;
-    (async () => {
-      try {
-        const hosts = await fetch("https://api.audius.co").then((r) => r.json());
-        const h: string = hosts?.data?.[0] || "https://discoveryprovider.audius.co";
-        if (alive) setHost(h);
-        const host = h;
-        const out = await Promise.all(
-          ARTISTS.map(async (a) => {
-            try {
-              const [u, t] = await Promise.all([
-                fetch(`${host}/v1/users/${a.audiusId}?app_name=${APP}`).then((r) => r.json()),
-                fetch(`${host}/v1/users/${a.audiusId}/tracks?app_name=${APP}&limit=5&sort=plays`).then((r) => r.json()),
-              ]);
-              return { ww: a, user: u?.data ?? null, tracks: (t?.data ?? []) as Track[] };
-            } catch {
-              return { ww: a, user: null, tracks: [] };
-            }
+    fetch("/api/audius/roster")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive) return;
+        if (!j) {
+          setError("Could not reach Audius right now.");
+          return;
+        }
+        const byId = new Map<string, { user: AudiusUser | null; topTracks: Track[] }>(
+          (j.artists ?? []).map((a: { audiusId: string; user: AudiusUser | null; tracks: Track[] }) => [
+            a.audiusId,
+            // Sorted here rather than trusting payload order - the route sends a
+            // deduped union, not a plays-ordered list.
+            {
+              user: a.user,
+              topTracks: [...(a.tracks ?? [])].sort((x, y) => y.play_count - x.play_count),
+            },
+          ]),
+        );
+        // The roster order is ours, not the API's, so map over ARTISTS rather
+        // than over the response. Server sends top 15 by plays; show top 5.
+        setCards(
+          ARTISTS.map((a) => {
+            const hit = byId.get(a.audiusId);
+            return { ww: a, user: hit?.user ?? null, topTracks: (hit?.topTracks ?? []).slice(0, 5) };
           }),
         );
-        if (alive) setCards(out);
-      } catch {
-        if (alive) setError("Could not reach Audius right now.");
-      }
-    })();
+        if (j.reachable === false) setError("Could not reach Audius right now.");
+      })
+      .catch(() => alive && setError("Could not reach Audius right now."));
     return () => {
       alive = false;
     };
@@ -170,7 +179,20 @@ export default function Artists() {
           {visible.length === 0 && (
             <p style={{ ...metaLabel, fontSize: 12 }}>no artists match &quot;{q}&quot;.</p>
           )}
-          {visible.map(({ ww, user, tracks }) => (
+          {/* Two columns where there is room. Stacked one per row this section
+              measured 12,261px - thirty-five percent of the whole page - while
+              leaving half the viewport empty. The cards are text-dense but read
+              fine at ~600px, and auto-fit collapses back to one column on
+              anything narrow. */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(430px, 1fr))",
+              gap: 12,
+              alignItems: "start",
+            }}
+          >
+          {visible.map(({ ww, user, topTracks }) => (
             <div key={ww.handle} style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 14, padding: 16 }}>
               <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                 {user?.profile_picture?.["150x150"] ? (
@@ -204,13 +226,13 @@ export default function Artists() {
                   <div style={{ marginTop: 10, fontFamily: C.mono, fontSize: 11, color: C.dim, display: "flex", gap: 12, flexWrap: "wrap" }}>
                     <span>WW: <b style={{ color: C.text }}>{ws.battles}</b> battles</span>
                     <span><b style={{ color: wr >= 50 ? C.good : C.text }}>{ws.wins}W</b> ({wr}%)</span>
-                    <span><b style={{ color: C.accent }}>{fmtSol(ws.vol)} ◎</b> volume</span>
+                    <span><b style={{ color: C.accent }}>{fmtSol(ws.vol)} SOL</b> volume</span>
                   </div>
                 );
               })()}
-              {tracks.length > 0 && (
+              {topTracks.length > 0 && (
                 <div style={{ marginTop: 12, borderTop: `1px solid ${C.grid}`, paddingTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-                  {(expanded === ww.audiusId && full[ww.audiusId] ? full[ww.audiusId]! : tracks).map((t) => (
+                  {(expanded === ww.audiusId && full[ww.audiusId] ? full[ww.audiusId]! : topTracks).map((t) => (
                     <div key={t.id}>
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, fontFamily: C.mono, fontSize: 12, alignItems: "center" }}>
                         <a href={`https://audius.co${t.permalink}`} target="_blank" rel="noreferrer" style={{ color: C.text, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
@@ -251,6 +273,7 @@ export default function Artists() {
               )}
             </div>
           ))}
+          </div>
         </div>
       )}
 

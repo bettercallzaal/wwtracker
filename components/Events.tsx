@@ -94,7 +94,7 @@ export default function Events() {
               <div style={{ position: "relative", paddingTop: "56.25%", borderRadius: 10, overflow: "hidden", border: `1px solid ${C.grid}` }}>
                 <iframe
                   title={v.title}
-                  src={`https://www.youtube.com/embed/${v.id}`}
+                  src={`https://www.youtube-nocookie.com/embed/${v.id}`}
                   loading="lazy"
                   allow="encrypted-media; picture-in-picture"
                   allowFullScreen

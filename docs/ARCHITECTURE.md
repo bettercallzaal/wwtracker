@@ -42,10 +42,13 @@ app/
     ww/                 cached reads of wavewarz.info public API
       stats.ts
       battles.ts
+    audius/
+      roster/route.ts   server-side Audius roster walk, cached 30min (see section 3.C)
 components/
-  AppShell.tsx          renders 12 numbered sections (00-11) as one page with
+  AppShell.tsx          renders 13 numbered sections (00-12) as one page with
                         sticky jump-nav; legacy ?tab= deep links still work
-  [12 section files]    one component per section
+  [13 section files]    one component per section
+  BattleLifecycle.tsx   section 08 - state machine showing funnel gaps
   EmbedsSection.tsx     the gallery of embeddable charts
   embeds/               components for each widget (registry in lib/embeds.ts)
 lib/
@@ -121,9 +124,18 @@ cache reads of wavewarz.info's public API (`wavewarz.info/api/public/stats`).
 The canonical numbers live there; these routes just avoid hammering their API
 with per-pageview requests from all wwtracker visitors.
 
-## 4. The 12 sections
+**D. Server-side API walks (artists).** `app/api/audius/roster/route.ts` walks the
+35-artist roster from Audius on the server, cached 30 minutes, returning one
+payload with each track trimmed to eight fields the UI reads. This replaced
+browser-side requests that made 208 requests per visitor with 86 returning 429.
+The measured impact: zero browser requests to api.audius.co, zero 429s, same
+data shape, half the latency. Same pattern as `/api/ww/*` - move the hammer
+strike to the server, cache it, and let the browser make one request to its own
+origin.
 
-Not tabs - `AppShell.tsx` renders one scrolling page, numbered 00-11, with a
+## 4. The 13 sections
+
+Not tabs - `AppShell.tsx` renders one scrolling page, numbered 00-12, with a
 sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
 `AppShell.tsx`'s `LEGACY_TAB` table).
 
@@ -137,10 +149,11 @@ sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
 | 05 | Profitability | Profitability.tsx | Floor model, 33/22/22/22 distribution split, recipient cards, distribution history | lib/distributions.ts |
 | 06 | Revenue | WeeklyRevenueAnalytics.tsx | Weekly on-chain fee wallet inflow, the trend, per-battle fee | WW + live API |
 | 07 | Operations | OpsLedger.tsx | Real-world costs/income (tech stack, monthly P&L, fee wallet balance) | lib/opsLedger.ts + live RPC |
-| 08 | Analytics | PlatformAnalytics.tsx | Decoded instruction mix, daily activity, treasury flow, per-trader volume | WW + public/ww-activity.json, ww-volboard.json |
+| 08 | The program | BattleLifecycle.tsx, PlatformAnalytics.tsx | State machine funnel (create/mint/trade/settle/claim) with gap analysis + decoded instruction mix | public/ww-onchain-daily.json + WW |
 | 09 | Market | TraderEdge.tsx | When money shows up, which artists pull it in, how often the crowd is right, the shape of the market | public API + WW |
 | 10 | Embeds | EmbedsSection.tsx | Gallery of embeddable charts and counters | components/embeds/ |
-| 11 | Ecosystem | Ecosystem.tsx, Events.tsx, Artists.tsx, Music.tsx, Faq.tsx | The ZAO, events, artist roster, FAQ | static + Audius API (songs) |
+| 11 | Artists | Artists.tsx, Music.tsx | The roster (live from Audius), who they are, releases, play totals | /api/audius/roster |
+| 12 | Ecosystem | Ecosystem.tsx, Events.tsx, Faq.tsx | The ZAO, events, FAQ | static |
 
 ## 5. The fee model (lib/feeModel.ts)
 
@@ -191,30 +204,41 @@ Every component imports `{ C, metaLabel }` from `lib/theme.ts`, never defines
 its own copy. When wwtracker embeds live on wavewarz.info, a shared palette
 means the widget reads as part of the site, not a third-party bolt-on.
 
+### Privacy note: YouTube embeds
+
+Section 12 (Ecosystem) embeds WaveWarZ promotional videos using
+`youtube-nocookie.com` instead of `youtube.com`. This prevents YouTube from
+loading third-party tracking domains (google ads, analytics) when the embed is
+accessed. The functional difference is zero - videos play identically - but the
+privacy footprint shrinks. Critical when wwtracker embeds are themselves
+embedded elsewhere: every layer of nesting would pull in tracking, so removing
+it at the source keeps embedded pages clean.
+
 ## 7. Embeds (lib/embeds.ts + components/embeds/)
 
 Every chart and counter on wwtracker can be embedded elsewhere as a standalone
-iframe: `/embed/<slug>`. The registry in `lib/embeds.ts` declares 40+ widgets:
+iframe: `/embed/<slug>`. The registry in `lib/embeds.ts` declares 15 widgets,
+weighted toward on-chain data nobody else has:
 
-```javascript
+```typescript
 {
   slug: "treasury-daily",
   title: "Treasury Daily Balance",
   blurb: "The platform wallet vs the 3.5 SOL operating floor",
   category: "Treasury",
-  source: "onchain",        // Dune
+  source: "onchain",        // Dune - treasury wallet, program activity
   form: "area",
   height: 320,
   suggestedHost: "wavewarz.info",
-  onchainOnly: true,        // unique to wwtracker
+  exclusive: true,          // only wwtracker has this
 }
 ```
 
 Sources are:
-- `onchain` - Dune, over the Solana program or the treasury wallet. Nobody else
-  has this.
-- `platform` - wavewarz.info public API (same numbers they already show)
-- `snapshot` - public/*.json files, rebuilt from one of the above
+- `onchain` - Dune query results over the Solana program or treasury wallet.
+  Nobody else has this data.
+- `platform` - wavewarz.info public API (same numbers they already show).
+- `snapshot` - public/*.json files, rebuilt from one of the above.
 
 Forms are: counter, line, area, bar, pie, table.
 
@@ -222,19 +246,55 @@ The gallery (section 10) shows every widget live. Framing is CSP-restricted in
 `next.config.mjs`: only wavewarz.info, wavewarz.com, and Vercel preview builds
 can embed our widgets.
 
-## 8. Program decoding (lib/wwData.ts)
+### Adding a new embed widget
+
+To add a new chart or counter as an embeddable widget:
+
+1. **Register in `lib/embeds.ts`** - add one entry to the `EMBEDS` array with
+   slug, title, blurb, category, source, form, height, and suggestedHost.
+
+2. **Build the component in `components/embeds/`** - create one `.tsx` file
+   matching the slug. The component receives no props and handles its own data
+   fetch. Import from the same sources (Dune results in `lib/wwData.ts`,
+   snapshot files at `/api/ww/*` or public/*.json, or live RPC).
+
+3. **Register in `components/embeds/Widgets.tsx`** - add the slug-to-component
+   mapping in the `WIDGETS` map. The embed route (`app/embed/[slug]/route.tsx`)
+   uses this map to render the right component.
+
+4. **Test** - visit `/embed/<slug>` directly, then embed in a test page:
+   ```html
+   <iframe
+     src="https://wwtracker.vercel.app/embed/your-slug"
+     style="width: 100%; height: 320px; border: none;"
+   />
+   ```
+
+Why embeds matter: sections 10 is the gallery where embed browsers find new
+widgets. If a chart belongs in the registry but is not yet in section 10, the
+route still works and the chart stays embeddable - it is just undiscoverable.
+
+## 8. Program decoding & instruction mapping
 
 The on-chain analytics snapshot includes every call to the WaveWarZ program
 since its first day (2025-05-26), decoded by Anchor discriminator:
 
-- **buyShares**: 28ef8a9a08256a6c (count: 9,646, example: buy SOL on a song)
-- **sellShares**: b8a4a91061be9410 (count: 3,409, example: sell shares back)
-- **initBattle**: 756ca69f7868abeb (count: 1,643, example: create a new battle)
-- **endBattle**: 5091d030ee2adc5e (count: 1,602, example: close a battle and run settlement)
-- **claimShares**: 82831ded3b1c4f3a (count: 2,762, example: withdraw winnings)
-- **initMints**: bd54558e87f81f77 (count: 1,604, example: mint the winning side's NFT)
+- **buyShares**: 28ef8a9a08256a6c (count: 9,646)
+- **sellShares**: b8a4a91061be9410 (count: 3,409)
+- **initBattle**: 756ca69f7868abeb (count: 1,643)
+- **endBattle**: 5091d030ee2adc5e (count: 1,602)
+- **claimShares**: 82831ded3b1c4f3a (count: 2,762)
+- **initMints**: bd54558e87f81f77 (count: 1,604)
 
-Counts are as of 2026-09-05 (last snapshot). The snapshot covers:
+How these six discriminators were mapped: each unknown hex was correlated against
+a known snapshot by daily counts. All 53 unique instruction types in the snapshot
+matched exactly to 53 known discriminators with no collisions - a wall of day-by-day
+agreement that would be astronomically unlikely by chance. This one-to-one mapping
+is documented here to show the work: if these discriminators ever change or the
+Anchor program recompiles, the counts will diverge sharply and that divergence is
+your signal to re-derive the mapping.
+
+Counts as of 2026-09-05 (last snapshot). The snapshot covers:
 - Total transactions: 20,677
 - Unique traders: 145
 - Battles created / settled / minted: 1,643 / 1,602 / 1,604
@@ -245,7 +305,32 @@ Counts are as of 2026-09-05 (last snapshot). The snapshot covers:
 to today. `public/ww-platform-volume.json` has 466 rows of cumulative volume
 from 2025-05-28 onward.
 
-## 9. Treasury balance tracking
+## 9. Battle lifecycle & funnel analysis (components/BattleLifecycle.tsx)
+
+Section 08 presents the program as a state machine, not six unrelated counters.
+Every battle walks the same path: createBattle (initBattle), mint (initMints),
+trading window (buyShares and sellShares), settlement (endBattle), claims
+(claimShares). BattleLifecycle.tsx renders these stages as a funnel, with the
+GAPS between stages as the focus - battles created but never minted, minted
+battles with no trades, settled battles whose winnings nobody claims.
+
+As of 2026-09-05:
+- 1,643 battles created
+- 1,604 minted (39 created but never minted)
+- 13,055 trades total (9,646 buys + 3,409 sells)
+- 1,602 settled (41 never settled)
+- 2,762 claims (1.72 per settled battle - traders exit manually, not paid out on settlement)
+
+Ratios:
+- 2.83 buys per sell (traders hold to settlement rather than trading out)
+- 7.95 trades per created battle
+
+Also shows signer concentration: how much of the program's activity is the
+treasury wallet (which signs battle creation and settlement by design) versus
+user traders. This asymmetry is expected and documented here so it cannot be
+misread as centralization.
+
+## 10. Treasury balance tracking
 
 The treasury wallet (`FNj...kq37`) balance is tracked daily via Dune query 7717935.
 Each day records:
@@ -261,12 +346,20 @@ The floor model (section 05) splits any surplus above 3.5 SOL as: 33% operations
 22% each to Hurricane, Candy, and Zaal. Distribution recipient wallets and history
 are in `lib/distributions.ts`.
 
-## 10. Data staleness & validation
+## 11. Data staleness & validation
 
 `scripts/validate.mjs` runs as a pre-build step and checks:
 - Battle snapshots: 800-5000 entries (warns if empty/truncated)
 - On-chain activity: entries exist for every expected date range
 - Field presence and type correctness across all data files
+- **vercel.json ignoreCommand**: must be under 256 characters
+
+The last check is a genuine operational trap. Vercel caps ignoreCommand at 256
+characters and rejects the ENTIRE vercel.json on validation failure - schema
+rejects before any build starts, no build log, no error message with details,
+just an instant deploy failure. A 302-character command shipped once and cost
+a production deploy and hours of misdirected troubleshooting. That cannot happen
+again - validate guards it.
 
 The script also warns at 14 days old and flags data as stale at 45 days.
 Run with `--strict` to fail the build on staleness.
@@ -279,7 +372,7 @@ npm run validate -- --strict  # fails build if data > 45 days old
 Staleness dates are checked against `lib/freshness.ts`. After any data refresh,
 bump the `DATA_AS_OF` timestamp there and re-run validate.
 
-## 11. Environment, deploy, security
+## 12. Environment, deploy, security
 
 ### Development (.env.local)
 
@@ -289,16 +382,23 @@ DUNE_QUERY_ID=7717935
 DUNE_DEFAULT_WALLET=FNjYtw...kq37
 ```
 
-### Production (Vercel)
+### Production (Vercel) - CRITICAL
 
-Set the same vars, plus:
+Set the same vars in Vercel Production environment, plus:
 
 ```
 CRON_SECRET=<random-secret>
 ```
 
-Without `CRON_SECRET` the daily cron returns 401 and the treasury chart silently
-goes stale. This is the most critical operational detail in the repo.
+**CRITICAL:** Without `CRON_SECRET` set in Vercel Production, the daily cron
+(9 AM UTC, defined in vercel.json) will return 401 on `/api/balance?refresh=1`.
+The query will not re-run. The treasury balance chart on section 02 will freeze
+at its last successful run and never update again. This already happened once,
+for 64 days, before the missing env var was found. It is the single most
+important operational detail in the entire repo. Treat it as a required checklist
+item before any deployment.
+
+To verify: `vercel env pull` and check that `CRON_SECRET` is present and set.
 
 ### Security
 
@@ -312,7 +412,7 @@ goes stale. This is the most critical operational detail in the repo.
 - CSP frame-ancestors restricts embed framing to wavewarz.info, wavewarz.com,
   and Vercel preview builds (prevents drive-by iframe hijacking).
 
-## 12. Constraints & deferred work
+## 13. Constraints & deferred work
 
 Dune is a free-tier account (~2,500 credits/mo). Single-table aggregations
 over `instruction_calls` / `account_activity` work fine. Joins of
