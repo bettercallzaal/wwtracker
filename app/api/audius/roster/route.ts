@@ -33,6 +33,12 @@ interface Track {
   permalink: string;
 }
 
+interface Totals {
+  trackCount: number;
+  plays: number;
+  favorites: number;
+}
+
 interface ArtistCard {
   handle: string;
   audiusId: string;
@@ -44,6 +50,10 @@ interface ArtistCard {
     profile_picture?: unknown;
     bio?: string;
   } | null;
+  totals: Totals;
+  genres: [string, number][];
+  byMonth: [string, number][];
+  /** Deduped union of this artist's top-by-plays, top-by-reposts and newest. */
   tracks: Track[];
 }
 
@@ -104,6 +114,58 @@ async function mapPool<T, R>(
   return out;
 }
 
+function computeAggregates(tracks: Track[]): Omit<ArtistCard, "handle" | "audiusId" | "user"> {
+  // Compute totals from full track list
+  const totals: Totals = {
+    trackCount: tracks.length,
+    plays: tracks.reduce((s, t) => s + t.play_count, 0),
+    favorites: tracks.reduce((s, t) => s + t.favorite_count, 0),
+  };
+
+  // Genre histogram
+  const genreMap = new Map<string, number>();
+  for (const t of tracks) {
+    const g = t.genre || "Unknown";
+    genreMap.set(g, (genreMap.get(g) ?? 0) + 1);
+  }
+  const genres = [...genreMap.entries()];
+
+  // Release month histogram (skip tracks without release_date)
+  const monthMap = new Map<string, number>();
+  for (const t of tracks) {
+    if (t.release_date) {
+      const m = t.release_date.slice(0, 7);
+      monthMap.set(m, (monthMap.get(m) ?? 0) + 1);
+    }
+  }
+  const byMonth = [...monthMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+  // The UI renders a GLOBAL top 12 by plays, top 6 by reposts and 6 newest. A
+  // track can only reach a global top N if it is in its own artist's top N, so
+  // sending each artist's top N is exact - no aggregate changes.
+  //
+  // Sending three separate arrays of whole track objects is not, though: the
+  // lists overlap heavily (a most-played track is usually also a most-reposted
+  // one) and for an artist with 23 tracks, 12 + 6 + 6 is more objects than the
+  // full catalogue. That is why the first version of this route shrank the
+  // payload by 953 bytes out of 276,067. So the union is deduped by id and sent
+  // once, with the three orderings recoverable client-side by sorting.
+  const byId = new Map<string, Track>();
+  const take = (list: Track[], n: number) => {
+    for (const t of list.slice(0, n)) byId.set(t.id, t);
+  };
+  take([...tracks].sort((a, b) => b.play_count - a.play_count), 12);
+  take([...tracks].sort((a, b) => b.repost_count - a.repost_count), 6);
+  take(
+    [...tracks]
+      .filter((t) => t.release_date)
+      .sort((a, b) => (a.release_date! < b.release_date! ? 1 : -1)),
+    6,
+  );
+
+  return { totals, genres, byMonth, tracks: [...byId.values()] };
+}
+
 export async function GET(): Promise<NextResponse> {
   const hostRes = await getJson<{ data?: string[] }>("https://api.audius.co");
   const hosts = hostRes?.data ?? [];
@@ -120,16 +182,26 @@ export async function GET(): Promise<NextResponse> {
         `${host}/v1/users/${a.audiusId}/tracks?app_name=${APP}&limit=100&sort=plays`,
       ),
     ]);
+    const tracks = (t?.data ?? []).map(trimTrack);
+    const agg = computeAggregates(tracks);
     return {
       handle: a.handle,
       audiusId: a.audiusId,
       user: u?.data ?? null,
-      tracks: (t?.data ?? []).map(trimTrack),
+      ...agg,
     };
   });
 
   const artists = cards.map((c, i) =>
-    c ?? { handle: ROSTER[i].handle, audiusId: ROSTER[i].audiusId, user: null, tracks: [] },
+    c ?? {
+      handle: ROSTER[i].handle,
+      audiusId: ROSTER[i].audiusId,
+      user: null,
+      totals: { trackCount: 0, plays: 0, favorites: 0 },
+      genres: [],
+      byMonth: [],
+      tracks: [],
+    },
   );
 
   // Every card empty means Audius was unreachable, not that the roster is

@@ -17,13 +17,20 @@ interface Track {
   release_date?: string;
   genre?: string;
   permalink: string;
-  artist: string;
+}
+
+interface ArtistAgg {
+  handle: string;
+  totals: { trackCount: number; plays: number; favorites: number };
+  genres: [string, number][];
+  byMonth: [string, number][];
+  tracks: Track[];
 }
 
 const fmt = (n: number) => (n ?? 0).toLocaleString();
 
 export default function Music() {
-  const [tracks, setTracks] = useState<Track[] | null>(null);
+  const [aggs, setAggs] = useState<ArtistAgg[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
 
@@ -35,21 +42,25 @@ export default function Music() {
         if (!alive) return;
         if (!j || j.reachable === false) {
           setError("Could not reach Audius right now.");
-          setTracks([]);
+          setAggs([]);
           return;
         }
-        // One request instead of one per artist. The route walks the roster
-        // server-side and caches it for everyone - see its header comment.
-        const all: Track[] = [];
-        for (const a of j.artists ?? []) {
-          for (const t of a.tracks ?? []) all.push({ ...t, artist: a.handle });
-        }
-        setTracks(all);
+        // Server computes aggregates from the full per-artist track list.
+        // Client receives only what is displayed, reducing payload from 276KB.
+        setAggs(
+          (j.artists ?? []).map((a: { handle: string; totals: ArtistAgg["totals"]; genres: ArtistAgg["genres"]; byMonth: ArtistAgg["byMonth"]; tracks: Track[] }) => ({
+            handle: a.handle,
+            totals: a.totals,
+            genres: a.genres,
+            byMonth: a.byMonth,
+            tracks: a.tracks,
+          })),
+        );
       })
       .catch(() => {
         if (!alive) return;
         setError("Could not reach Audius right now.");
-        setTracks([]);
+        setAggs([]);
       });
     return () => {
       alive = false;
@@ -57,36 +68,60 @@ export default function Music() {
   }, []);
 
   const agg = useMemo(() => {
-    if (!tracks) return null;
-    const plays = tracks.reduce((s, t) => s + t.play_count, 0);
-    const favs = tracks.reduce((s, t) => s + t.favorite_count, 0);
-    const genres = new Map<string, number>();
-    for (const t of tracks) genres.set(t.genre || "Unknown", (genres.get(t.genre || "Unknown") ?? 0) + 1);
-    const top = [...tracks].sort((a, b) => b.play_count - a.play_count).slice(0, 12);
-    const reposted = [...tracks].sort((a, b) => b.repost_count - a.repost_count).slice(0, 6);
-    const newest = [...tracks]
+    if (!aggs) return null;
+    // Sum totals from all artists
+    let trackCount = 0;
+    let plays = 0;
+    let favs = 0;
+    for (const a of aggs) {
+      trackCount += a.totals.trackCount;
+      plays += a.totals.plays;
+      favs += a.totals.favorites;
+    }
+
+    // Merge per-artist genre histograms
+    const genreMap = new Map<string, number>();
+    for (const a of aggs) {
+      for (const [g, count] of a.genres) {
+        genreMap.set(g, (genreMap.get(g) ?? 0) + count);
+      }
+    }
+
+    // Merge per-artist month histograms
+    const monthMap = new Map<string, number>();
+    for (const a of aggs) {
+      for (const [m, count] of a.byMonth) {
+        monthMap.set(m, (monthMap.get(m) ?? 0) + count);
+      }
+    }
+    const byMonth = [...monthMap.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([month, count]) => ({ month, count }));
+
+    // One deduped list per artist covers all three orderings. Each artist's
+    // list already contains its own top 12 by plays, top 6 by reposts and 6
+    // newest, so re-sorting the union and slicing is exact for the global lists.
+    const all: (Track & { artist: string })[] = [];
+    for (const a of aggs) {
+      for (const t of a.tracks) all.push({ ...t, artist: a.handle });
+    }
+    const top = [...all].sort((a, b) => b.play_count - a.play_count).slice(0, 12);
+    const reposted = [...all].sort((a, b) => b.repost_count - a.repost_count).slice(0, 6);
+    const newest = [...all]
       .filter((t) => t.release_date)
       .sort((a, b) => (a.release_date! < b.release_date! ? 1 : -1))
       .slice(0, 6);
-    const months = new Map<string, number>();
-    for (const t of tracks) {
-      if (!t.release_date) continue;
-      const m = t.release_date.slice(0, 7);
-      months.set(m, (months.get(m) ?? 0) + 1);
-    }
-    const byMonth = [...months.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([month, count]) => ({ month, count }));
+
     return {
-      tracks: tracks.length,
+      tracks: trackCount,
       plays,
       favs,
       artists: Object.keys(ARTISTS).length,
-      genres: [...genres.entries()].sort((a, b) => b[1] - a[1]),
+      genres: [...genreMap.entries()].sort((a, b) => b[1] - a[1]),
       top,
       reposted,
       newest,
       byMonth,
     };
-  }, [tracks]);
+  }, [aggs]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -102,7 +137,7 @@ export default function Music() {
 
       {error && <p style={{ color: C.danger, fontFamily: C.mono, fontSize: 13 }}>{error}</p>}
 
-      {!agg && !error ? (
+      {aggs === null && !error ? (
         <div className="skeleton-shimmer" style={{ height: 300, borderRadius: 16 }} />
       ) : agg ? (
         <>
