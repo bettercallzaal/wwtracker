@@ -1,23 +1,28 @@
 import type { Metadata } from "next";
+import { Inter, JetBrains_Mono, Rajdhani } from "next/font/google";
 import "./globals.css";
 
 // Three faces, three jobs, per the WaveWarZ design system: Rajdhani is the
 // arena voice (scoreboard headlines), Inter carries anything a human reads as a
-// sentence, and JetBrains Mono is reserved for data, labels and system state.
-//
-// Loaded by stylesheet rather than next/font/google on purpose. next/font
-// fetches the font files at BUILD time, which makes every deploy depend on
-// Google being reachable from the build container - if it is not, the build
-// fails outright rather than degrading. A stylesheet link moves that dependency
-// to the browser, where a failure costs a fallback face instead of a deploy.
-// The CSS variable names are unchanged, so lib/theme.ts and globals.css do not
-// care which way the files arrive.
-const FONT_CSS =
-  "https://fonts.googleapis.com/css2" +
-  "?family=Inter:wght@400;500;600;700" +
-  "&family=JetBrains+Mono:wght@500;700" +
-  "&family=Rajdhani:wght@600;700" +
-  "&display=swap";
+// sentence, and JetBrains Mono is reserved for data, labels and system state -
+// it is the signal that a number is real rather than decorative.
+const display = Rajdhani({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-disp",
+  display: "swap",
+});
+const body = Inter({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://wavewarz.info"),
@@ -73,12 +78,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link rel="stylesheet" href={FONT_CSS} />
-      </head>
+    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>
         <script
           type="application/ld+json"

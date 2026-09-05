@@ -12,6 +12,24 @@ function json(path) {
   catch (e) { bad(`${path} unreadable: ${e.message}`); return null; }
 }
 
+// vercel.json
+// Vercel caps ignoreCommand at 256 characters and rejects the ENTIRE
+// vercel.json above that - schema validation fails before any build starts, so
+// the deployment errors instantly with no build log to read. A 302-character
+// command shipped once and cost a production deploy plus a long detour into
+// hypotheses about the application code, which was never involved.
+const vercelCfg = json("vercel.json");
+if (vercelCfg && typeof vercelCfg === "object") {
+  const cmd = typeof vercelCfg.ignoreCommand === "string" ? vercelCfg.ignoreCommand : "";
+  if (!cmd) {
+    ok("vercel.json has no ignoreCommand");
+  } else {
+    cmd.length <= 256
+      ? ok(`vercel.json ignoreCommand ${cmd.length}/256 chars`)
+      : bad(`vercel.json ignoreCommand is ${cmd.length} chars - Vercel rejects over 256`);
+  }
+} else bad("vercel.json unreadable");
+
 // public/ww-battles.json
 const battles = json("public/ww-battles.json");
 if (Array.isArray(battles)) {
