@@ -1,5 +1,10 @@
 # WaveWarZ docs - start here
 
+**Current state and roadmap: [AUDIT.md](AUDIT.md).** Read that first - it is
+dated, every claim carries the command that produced it, and it says what to
+work on next in priority order. Everything else here is reference.
+
+
 A front door to the docs in this folder. If you are trying to understand WaveWarZ and
 found conflicting information elsewhere, these are authoritative and dated.
 

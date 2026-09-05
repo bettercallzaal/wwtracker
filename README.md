@@ -5,15 +5,56 @@ The treasury wallet, the operating floor, the fee model, the business ledger,
 and the program decoded instruction by instruction.
 
 **Live:** https://wwtracker.vercel.app
+Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo` on Solana mainnet.
 
-WaveWarZ is a Solana music-battle platform: fans trade SOL on song-vs-song
-battles. Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`. Everything
-WaveWarZ battle-shaped, artist-shaped or song-shaped is read live from
-wavewarz.info's public API, never copied.
+---
 
-**New here?** Start with [docs/](docs/README.md) - the surface map (WaveWarZ is
-three sites with three owners), the team, and the ecosystem. Full research in
-[docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
+## Start here
+
+**Read [docs/AUDIT.md](docs/AUDIT.md) first.** It is the current state of the
+repo as of 2026-09-05: what is solid, what is weak, every finding ranked with
+the command that produced it, and the roadmap in the order worth doing. If you
+are picking this up cold, that document is the briefing and this file is the
+map.
+
+The three things to know before touching anything:
+
+1. **wwtracker is the lab. wavewarz.info is production.** Experiments, research
+   and documentation live here. Finished work moves across to
+   `CandyToyBox/wavewarz-intelligence`, which is the system of record and fully
+   in production. Push access granted 2026-09-05. Do not open speculative PRs
+   against it.
+
+2. **Nothing is baked that has a live source, and nothing is rebuilt that
+   wavewarz.info already renders.** See "Why this matters" below for what
+   happened when that rule did not exist.
+
+3. **`CRON_SECRET` must be set in the Vercel project env**, or the daily cron
+   401s and the treasury chart silently freezes. It already did, for 64 days.
+   This is the highest value-per-minute item in the repo and it is not code.
+
+## First five minutes
+
+```bash
+npm install
+npm run validate     # data integrity + staleness gate
+npx vitest run       # 275 tests
+npm run dev          # needs .env.local, see Environment below
+```
+
+`npm run validate` is the fastest read on whether the data is healthy. It warns
+at 14 days stale and fails at 45 under `--strict`.
+
+## Where things are
+
+| I want to... | Go to |
+|---|---|
+| Know the current state and what to work on | [docs/AUDIT.md](docs/AUDIT.md) |
+| Understand how it is built | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Refresh the data | [docs/REFRESH.md](docs/REFRESH.md) |
+| Understand WaveWarZ itself | [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md) |
+| See who owns which site | [docs/SURFACES.md](docs/SURFACES.md) |
+| Use or extend the embeds | [lib/embeds.ts](lib/embeds.ts), gallery at `/embed` |
 
 ## Why this matters
 
