@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import {
   getLatestBalances,
+  getLatestResults,
   executeForWallet,
   executeSavedQuery,
   DuneError,
   type BalanceRow,
+  type LatestResults,
 } from "@/lib/dune";
+import { decideRefresh } from "@/lib/refresh-policy";
 import { isValidSolanaAddress } from "@/lib/solana";
 
 // Revalidate the default (cached) path every 12h. The execute path opts out of
@@ -18,6 +21,16 @@ interface BalancePayload {
   origin: "cache" | "execute";
   wallet: string | null;
   mint: string | null;
+  /**
+   * Only present on the ?refresh=1 path. Says whether the query was actually
+   * re-run and why, so a declined refresh is legible in the response instead
+   * of looking identical to a successful one.
+   */
+  refresh?: {
+    executed: boolean;
+    reason: "stale" | "unknown-age" | "fresh" | "forced";
+    ageMs: number | null;
+  };
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
@@ -43,19 +56,64 @@ export async function GET(request: Request): Promise<NextResponse> {
   // called the series live - a stale number presented confidently is worse than
   // an obviously missing one.
   //
-  // Gated because an execute costs Dune credits and is therefore abusable by
-  // anyone who can reach the URL. Vercel cron sends `Authorization: Bearer
-  // $CRON_SECRET`; if CRON_SECRET is unset we refuse rather than leave an
-  // unauthenticated credit-burn endpoint open.
+  // An execute costs Dune credits, so this cannot be open to anyone who can
+  // reach the URL. It is bounded by a RATE LIMIT rather than a bearer token,
+  // because the token gate failed closed: with CRON_SECRET unset the route
+  // answered 401, the execute never fired, and the chart froze for 64 days
+  // while every surface still said "live". A missing env var and a hostile
+  // caller were indistinguishable, and both were silent.
+  //
+  // The bound is Dune's own stored execution age - see lib/refresh-policy.ts.
+  // The read below is the cheap cached path, so a declined refresh still
+  // returns real rows and costs no credit.
   if (url.searchParams.get("refresh") === "1") {
-    const secret = process.env.CRON_SECRET;
-    const auth = request.headers.get("authorization");
-    if (!secret || auth !== `Bearer ${secret}`) {
-      return NextResponse.json(
-        { error: "Refresh requires CRON_SECRET authorization" },
-        { status: 401 },
-      );
+    let latest: LatestResults;
+    try {
+      latest = await getLatestResults(queryId, apiKey);
+    } catch (err) {
+      const status = err instanceof DuneError ? (err.status ?? 502) : 500;
+      const message = err instanceof Error ? err.message : "Refresh failed";
+      return NextResponse.json({ error: message }, { status });
     }
+
+    // CRON_SECRET is now an optional override, not a requirement. Present and
+    // matching, it forces an execute regardless of age, which is what you want
+    // when re-running by hand after fixing a query. Absent, the rate limit
+    // alone governs - so an unset env var can no longer freeze anything.
+    //
+    // The `!!secret` is load-bearing, not defensive noise. Without it an unset
+    // env var interpolates to the literal string "Bearer undefined", which any
+    // caller can send - turning a missing variable into an open override. The
+    // same bug shipped elsewhere in the estate this week.
+    const secret = process.env.CRON_SECRET;
+    const forced =
+      !!secret && request.headers.get("authorization") === `Bearer ${secret}`;
+
+    const decision = decideRefresh({
+      lastExecutionMs: latest.executionEndedAt,
+      nowMs: Date.now(),
+    });
+
+    if (!forced && !decision.execute) {
+      // 200, not 429. The caller asked for the treasury series and is getting
+      // the treasury series; only the re-run was declined. Saying so in the
+      // body keeps the outcome visible instead of inferred - the same reason
+      // /api/ww/* returns 200 with a status field rather than a 5xx.
+      const payload: BalancePayload = {
+        rows: latest.rows,
+        source: "live",
+        origin: "cache",
+        wallet: defaultWallet ?? null,
+        mint: null,
+        refresh: {
+          executed: false,
+          reason: decision.reason,
+          ageMs: decision.ageMs,
+        },
+      };
+      return NextResponse.json(payload);
+    }
+
     try {
       const { rows } = await executeSavedQuery(queryId, apiKey);
       const payload: BalancePayload = {
@@ -64,6 +122,11 @@ export async function GET(request: Request): Promise<NextResponse> {
         origin: "execute",
         wallet: defaultWallet ?? null,
         mint: null,
+        refresh: {
+          executed: true,
+          reason: forced ? "forced" : decision.reason,
+          ageMs: decision.ageMs,
+        },
       };
       return NextResponse.json(payload);
     } catch (err) {

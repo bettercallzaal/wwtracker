@@ -18,9 +18,11 @@ APIs. Only snapshots need manual refresh. This is the runbook.
 | Fee wallet balance (live Solana RPC) | mainnet-beta | lib/opsLedger.tsx display | Yes - live on every page load |
 | Per-night queue/skips | Dune (FNj inflows) | public/ww-queue.json, ww-skips.json | No - old (Jul 2), not refreshed |
 
-The treasury chart (section 02) is the most time-sensitive. Without
-`CRON_SECRET` set in Vercel Production, the cron fails and the chart goes
-stale. This is the most critical operational detail in the repo.
+The treasury chart (section 02) is the most time-sensitive. It refreshes from
+the daily cron at 9 AM UTC, which re-runs the Dune query whenever the stored
+execution is 20h+ old. That bound replaced a `CRON_SECRET` bearer gate which
+failed closed - with the env var unset the cron got a 401 and the chart froze
+for 64 days while every surface still called it live.
 
 ## Refreshing the snapshots
 
@@ -136,9 +138,12 @@ before deployment.
 
 ## Production checklist - CRITICAL
 
-- **Is `CRON_SECRET` set in Vercel Production?** If not, the treasury chart
-  will freeze and never update. Run `vercel env pull` and verify it is present.
-  This was the cause of a 64-day chart freeze once before. Non-negotiable.
+- **Is the cron actually executing?** A refresh that ran returns
+  `"origin":"execute"`; one that was declined as too fresh returns
+  `"origin":"cache"` with a `refresh.reason` of `fresh`. Two consecutive days of
+  `cache` on the 9 AM run means something is wrong. `CRON_SECRET` is optional
+  now, so its absence is no longer a failure mode - but a Dune outage or a
+  broken query still is.
 - Are the daily logs showing successful cron runs? Check Vercel Function Logs
   for `/api/balance?refresh=1` at 9 AM UTC every day.
 - Do the snapshot file timestamps match expectations (14 days = warning,

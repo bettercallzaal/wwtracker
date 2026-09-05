@@ -1,5 +1,6 @@
 import "server-only";
 import { normalizeRows } from "./dune-normalize";
+import { parseExecutionEndedAt } from "./refresh-policy";
 import type { BalanceRow } from "./dune-normalize";
 
 export type { BalanceRow };
@@ -78,10 +79,20 @@ async function duneFetch(
 // Cached read - default wallet path. Reads the saved query's last results.
 // ---------------------------------------------------------------------------
 
-export async function getLatestBalances(
+export interface LatestResults {
+  rows: BalanceRow[];
+  /**
+   * Epoch ms of the execution these rows came from, or null if Dune did not
+   * report one. This is what tells the refresh path whether re-running the
+   * query would buy anything - see lib/refresh-policy.ts.
+   */
+  executionEndedAt: number | null;
+}
+
+export async function getLatestResults(
   queryId: string,
   apiKey: string,
-): Promise<BalanceRow[]> {
+): Promise<LatestResults> {
   // no-store: we read Dune's already-cached query results (cheap, no execute),
   // so we don't want Vercel's persistent Data Cache pinning a stale copy across
   // deploys. Freshness comes from Dune re-running the query (cron / manual).
@@ -97,7 +108,18 @@ export async function getLatestBalances(
     );
   }
   const json = (await res.json()) as { result?: { rows?: unknown } };
-  return normalizeRows(json.result?.rows);
+  return {
+    rows: normalizeRows(json.result?.rows),
+    // The timestamps sit on the envelope, alongside `result`, not inside it.
+    executionEndedAt: parseExecutionEndedAt(json),
+  };
+}
+
+export async function getLatestBalances(
+  queryId: string,
+  apiKey: string,
+): Promise<BalanceRow[]> {
+  return (await getLatestResults(queryId, apiKey)).rows;
 }
 
 // ---------------------------------------------------------------------------
