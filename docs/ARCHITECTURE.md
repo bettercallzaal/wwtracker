@@ -1,23 +1,33 @@
 # wwtracker - Architecture & Build Documentation
 
-How the WaveWarZ tracker is built, where the data comes from, and how every
-number on the dashboard is produced. Companion to
-[WAVEWARZ-RESEARCH.md](WAVEWARZ-RESEARCH.md) (the WaveWarZ domain research).
+The on-chain business layer for WaveWarZ: the treasury wallet, the operating
+floor, the fee model, the business ledger, and the program decoded instruction
+by instruction. Companion to [WAVEWARZ-RESEARCH.md](WAVEWARZ-RESEARCH.md)
+(the WaveWarZ domain research).
 
 - Live: https://wwtracker.vercel.app
 - Repo: https://github.com/bettercallzaal/wwtracker
 - Stack: Next.js 14 (App Router) + React 18 + recharts. TypeScript throughout.
-  No UI framework - inline styles + a shared palette (`lib/theme.ts`).
+  No UI framework - inline styles + shared palette from the WaveWarZ design
+  system (`lib/theme.ts`).
 
 ---
 
-## 1. What it is
+## 1. Why this was built
 
-A read-only dashboard for WaveWarZ (a Solana music-battle betting platform). It
-surfaces three things: the platform treasury wallet's balance, program-wide
-on-chain activity, and a single trader's PnL. All data is derived from
-[Dune Analytics](https://dune.com) queries over the WaveWarZ program
-`9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`.
+wavewarz.info (CandyToyBox/wavewarz-intelligence) is the system of record.
+It indexes Solana via Helius into Supabase, owns the canonical Battle ID,
+publishes a free public API with 7 endpoints, and renders the battles table,
+leaderboards, songs, and artist pages. wwtracker used to copy all of that.
+
+Those copies drifted. On 2026-09-XX the on-chain data was audited: the baked
+trader table showed the top trader down 19.02 SOL while the platform's own API
+had them up 29.95 SOL, and a baked song list held 37 rows against the API's 934.
+
+The rule now is: nothing is baked that has a live source, and nothing is
+rebuilt that wavewarz.info already renders. What is left is the part no other
+WaveWarZ surface has: the treasury wallet, the operating floor, the fee model,
+the business ledger, and the program itself decoded straight off Solana.
 
 ## 2. Repo layout
 
@@ -26,309 +36,291 @@ app/
   layout.tsx            root layout + metadata
   page.tsx              renders <AppShell/>
   globals.css           palette vars, reduced-motion, focus, skeleton shimmer
-  api/balance/route.ts  GET endpoint: treasury daily balance (live, server-side)
+  api/
+    balance/route.ts    GET endpoint: treasury daily balance (live, server-side)
+                        ?refresh=1 re-runs the Dune query (gated by CRON_SECRET)
+    ww/                 cached reads of wavewarz.info public API
+      stats.ts
+      battles.ts
 components/
-  AppShell.tsx          renders the 11 numbered sections (see §4) as one scrolling
-                        page with sticky jump-nav; legacy ?tab= deep links still work
-  AboutWaveWarZ.tsx / HowItWorks.tsx    what it is, mechanics, fees, snapshot, addresses, team, links
-  BalanceDashboard.tsx  the treasury floor: close bars + intraday-high line vs 3.5 floor
-  PlatformGrowth.tsx    cumulative SOL volume timeline
-  Profitability.tsx     floor model + distribution split
-  OpsLedger.tsx         real-world costs/income: tech stack, monthly P&L, fee wallet (lib/opsLedger.ts)
-  PlatformAnalytics.tsx decoded instruction mix, timeline, activity, treasury flow, volume, leaderboard
-  Battles.tsx           full battle history: search/filter/CSV export
-  Leaderboard.tsx / Traders.tsx / TraderScorecard.tsx   artist leaderboard, trader table, wallet PnL lookup
-  Songs.tsx / Artists.tsx / Music.tsx   song charts + artist roster, Audius-backed
-  Ecosystem.tsx / Events.tsx / Faq.tsx  ecosystem context, events, FAQ
+  AppShell.tsx          renders 12 numbered sections (00-11) as one page with
+                        sticky jump-nav; legacy ?tab= deep links still work
+  [12 section files]    one component per section
+  EmbedsSection.tsx     the gallery of embeddable charts
+  embeds/               components for each widget (registry in lib/embeds.ts)
 lib/
-  dune.ts               server-only Dune client (live reads + execute path)
-  solana.ts             base58 address validation
-  theme.ts              shared palette + label style - every component should import
-                        `{ C, metaLabel }` from here, never redefine its own copy
-  config.ts             single source of truth for PROGRAM_ID / TREASURY_WALLET /
-                        TRACKED_TRADER_WALLET - import these, don't hardcode addresses
+  dune.ts               server-only Dune client
+  embeds.ts             widget registry: slug, title, blurb, source, form, height
+  feeModel.ts           fee schedules: trade splits, settlement splits, launch fees
+  theme.ts              WaveWarZ design tokens (from CandyToyBox/wavewarz-intelligence)
+  config.ts             PROGRAM_ID / TREASURY_WALLET / etc
   wwData.ts             GENERATED on-chain analytics snapshot (do not hand-edit)
-  sampleData.ts         deterministic fallback balance series
-  traderSample.ts       deterministic fallback PnL curve
+  sampleData.ts         fallback balance series when env unset
+  battles.ts            aggregate battle counts (live from /api/ww/stats)
+  songs.ts              song chart data (from wavewarz.info, cached locally)
+  leaderboard.ts        artist leaderboard
+  traders.ts            trader table
+  distributions.ts      floor model + distribution split config
+  opsLedger.ts          real-world costs/income the team tracks manually
+  price.ts              SOL/USD reference
+  csv.ts                export utilities
 public/
-  ww-battles.json           per-battle records (id/type/date/artists/winner/vol/margin) - Battles.tsx
-  ww-activity.json          daily buys/sells/battles/settled/claims - PlatformAnalytics.tsx
-  ww-volboard.json          30d buy-side SOL volume per trader - PlatformAnalytics.tsx
-  ww-platform-volume.json   daily buy/sell volume timeseries - PlatformGrowth.tsx
-  ww-lifetime.json          lifetime volume snapshot (approx, sourced) - OnChainProof.tsx
-  ww-queue.json / ww-skips.json / ww-wavysplit.json   per-night queue/skip/DJ-Wavy counts - Battles.tsx
+  ww-battles.json           per-battle records (from live feed via npm run fetch:battles)
+  ww-onchain-daily.json     daily: txs, traders, buys, sells, claims, created, settled, minted
+                            468 days from 2025-05-26 (program's first day)
+  ww-platform-volume.json   daily buy/sell volume timeseries
+                            466 days from 2025-05-28, totalling 921.4852 SOL
+  ww-activity.json          daily instruction-type mix (buys, sells, battles, settled, claims)
+  ww-volboard.json          30d per-trader SOL volume leaderboard
+  ww-queue.json / ww-skips.json / ww-wavysplit.json   per-night queue/skip/DJ-Wavy counts
+  ww-lifetime.json          lifetime volume snapshot
 scripts/
-  ww-research.sh        run the core Dune queries -> /tmp/ww-*.json (needs DUNE_API_KEY)
+  validate.mjs          pre-build data staleness checks; warns at 14d, flags at 45d
+  ww-research.sh        run Dune queries offline -> /tmp/ww-*.json (needs DUNE_API_KEY)
   ww-gen.py             read /tmp/ww-*.json -> regenerate lib/wwData.ts
-  validate.mjs          prebuild sanity checks on the snapshots above (run via `npm run validate`)
-  recap/                the recap pipeline's internals (parser, merge, state, format) - see §7
-  ww-battles-fetch.ts   refreshes public/ww-battles.json from the live feed (`npm run fetch:battles`)
-  ww-recap.ts           generates recap drafts (`npm run recap`) - see §7
-recaps/                 generated recap drafts (gitignored content aside from .gitkeep + STATE.json)
+  ww-battles-fetch.ts   refreshes public/ww-battles.json from live feed (npm run fetch:battles)
+  ww-recap.ts           generates recap drafts (npm run recap) for battles, shows, weekly
+  recap/                recap pipeline internals (parser, merge, state, format)
+recaps/                 generated recap drafts (gitignored except .gitkeep + STATE.json)
 docs/
   WAVEWARZ-RESEARCH.md  domain research (program model, fees, team, findings)
   ARCHITECTURE.md       this file
-  REFRESH.md            runbook for refreshing every snapshot
-vercel.json             framework pin + daily cron warming /api/balance
+  REFRESH.md            runbook for refreshing data
+vercel.json             daily 9 AM cron: hits /api/balance?refresh=1
+next.config.mjs         CSP frame-ancestors for embeds (wavewarz.info, wavewarz.com)
 ```
 
 ## 3. Two data paths
 
-The app deliberately uses two different mechanisms, by cost and freshness:
+The app deliberately uses two patterns, by cost and freshness:
 
-**A. Live path (treasury balance).** `app/api/balance/route.ts` calls
-`lib/dune.ts:getLatestBalances()`, which reads the *cached results* of saved Dune
-query `7717935` (cheap - no query execution per request). The key lives only in
-this server route. The fetch uses `cache: "no-store"` so Vercel's persistent Data
-Cache cannot pin a stale copy across deploys. The client component fetches
-`/api/balance`; if env is unset the route returns 503 and the component falls back
-to `sampleData.ts`.
+**A. Live (treasury balance).** `app/api/balance/route.ts` calls
+`lib/dune.ts:getLatestBalances()`, which reads the cached results of saved Dune
+query 7717935 (no execution cost - cheap). The DUNE_API_KEY lives only in this
+server route. The fetch uses `cache: "no-store"` so Vercel's persistent Data
+Cache cannot pin a stale copy across deploys.
 
-**B. Snapshot path (everything else).** The heavier analytics (instruction decode,
-PnL, volume, timelines) are computed by running Dune queries offline via
-`scripts/ww-research.sh`, then baked into `lib/wwData.ts` by `scripts/ww-gen.py`.
-Components import `WW` from `lib/wwData.ts` directly - no request-time Dune calls,
-always fast, zero per-view credit cost. `WW.generatedAt` stamps the snapshot.
+The daily cron (`vercel.json`, 9 AM) hits `/api/balance?refresh=1`, which calls
+`executeSavedQuery()` instead, forcing Dune to re-run the query. This endpoint
+is gated by `CRON_SECRET` - a bearer token that must be set in the Vercel
+Production environment. Without it the cron returns 401, the query never re-runs,
+and the treasury chart silently goes stale. This is the single most important
+operational detail in the repo.
 
-Why two paths: the treasury balance should be current (live cached read is cheap);
-the analytics are expensive Solana scans, so we snapshot them and refresh on demand.
+**B. Snapshots (everything else).** Heavier analytics (instruction decode,
+volume, timelines, trader PnL) are computed offline:
+1. `scripts/ww-research.sh` runs Dune queries -> `/tmp/ww-*.json`
+2. `scripts/ww-gen.py` reads those -> regenerates `lib/wwData.ts`
+3. Components import `WW` from `lib/wwData.ts` directly
 
-## 4. The sections
+This pattern is cheap: no per-view Dune cost, instant renders, zero credit
+spent after build time. `WW.generatedAt` stamps the snapshot's age.
 
-Not tabs - `AppShell.tsx` renders one scrolling page, numbered 00-10, with a
+**C. Live API reads (battles, volume, artists, traders).** `/api/ww/*` routes
+cache reads of wavewarz.info's public API (`wavewarz.info/api/public/stats`).
+The canonical numbers live there; these routes just avoid hammering their API
+with per-pageview requests from all wwtracker visitors.
+
+## 4. The 12 sections
+
+Not tabs - `AppShell.tsx` renders one scrolling page, numbered 00-11, with a
 sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
-`AppShell.tsx`'s `LEGACY_TAB` table) since that's how the app used to work.
+`AppShell.tsx`'s `LEGACY_TAB` table).
 
 | # | Section | Component(s) | Shows | Source |
 |---|---------|--------------|-------|--------|
-| 00 | Overview | OnChainProof.tsx | Master chart overlaying volume/treasury/battles/trades (each indexed to its own peak) + stat tiles | WW |
-| 01 | What | AboutWaveWarZ.tsx, HowItWorks.tsx | What WaveWarZ is, battle flow, fee table, live snapshot, addresses, team, ecosystem, links | WW + static |
-| 02 | Floor | BalanceDashboard.tsx | Treasury daily close (bars) + intraday high (line) vs 3.5 floor; Day/Week; ATH/30d/days tiles | live /api/balance |
-| 03 | Growth | PlatformGrowth.tsx | Cumulative SOL volume timeline since launch | public/ww-platform-volume.json |
-| 04 | Profitability | Profitability.tsx | Floor model, 33/22/22/22 distribution split, recipient cards, distribution history (TBD until real data) | lib/distributions.ts |
-| 05 | Running the business | OpsLedger.tsx | Fee wallet live SOL/WARZ balance, historical treasury snapshots, tech-stack cost table, monthly expense/income P&L (team-reported, unreconciled figures flagged) | lib/opsLedger.ts + live Solana RPC |
-| 06 | Analytics | PlatformAnalytics.tsx | Decoded battles/trades/claims/traders, battles-vs-trades timeline, daily activity, treasury flow, buy-volume chart, tx-count leaderboard | WW + public/ww-activity.json, ww-volboard.json |
-| 07 | Battles | Battles.tsx | Full battle history, search/filter/CSV export | public/ww-battles.json + ww-queue/skips/wavysplit.json |
-| 08 | Traders | Leaderboard.tsx, Traders.tsx, TraderScorecard.tsx | Artist leaderboard, full trader table, per-wallet PnL lookup | lib/leaderboard.ts, lib/traders.ts, WW |
-| 09 | Music | Songs.tsx, Artists.tsx, Music.tsx | Song charts + artist roster, Audius play counts and inline play | lib/songs.ts, lib/artists.ts + live Audius API |
-| 10 | Ecosystem | Ecosystem.tsx, Events.tsx, Faq.tsx | ZAO ecosystem context, events, FAQ | static |
+| 00 | Overview | OnChainProof.tsx | Master chart (volume/treasury/battles/trades, each indexed to its peak) + stat tiles | WW |
+| 01 | What | AboutWaveWarZ.tsx, HowItWorks.tsx, FeeModel.tsx | What WaveWarZ is, battle flow, fee table, live snapshot, addresses, team, links | WW + static + lib/feeModel.ts |
+| 02 | Floor | BalanceDashboard.tsx | Treasury daily close (bars) + intraday high (line) vs 3.5 floor; Day/Week toggle | live /api/balance |
+| 03 | Growth | PlatformGrowth.tsx | Cumulative SOL volume timeline since May 2025 | public/ww-platform-volume.json |
+| 04 | Economics | FeeModel.tsx | Fee schedule: 1.5% per trade (1.0% artist, 0.5% platform), settlement splits | lib/feeModel.ts |
+| 05 | Profitability | Profitability.tsx | Floor model, 33/22/22/22 distribution split, recipient cards, distribution history | lib/distributions.ts |
+| 06 | Revenue | WeeklyRevenueAnalytics.tsx | Weekly on-chain fee wallet inflow, the trend, per-battle fee | WW + live API |
+| 07 | Operations | OpsLedger.tsx | Real-world costs/income (tech stack, monthly P&L, fee wallet balance) | lib/opsLedger.ts + live RPC |
+| 08 | Analytics | PlatformAnalytics.tsx | Decoded instruction mix, daily activity, treasury flow, per-trader volume | WW + public/ww-activity.json, ww-volboard.json |
+| 09 | Wallet | TraderScorecard.tsx, TraderEdge.tsx | Per-wallet PnL lookup (cumulative SOL, win rate, biggest moves, all on-chain verified) | live RPC |
+| 10 | Embeds | EmbedsSection.tsx | Gallery of embeddable charts and counters | components/embeds/ |
+| 11 | Ecosystem | Ecosystem.tsx, Events.tsx, Artists.tsx, Music.tsx, Faq.tsx | The ZAO, events, artist roster, FAQ | static + Audius API (songs) |
 
-## 5. Metrics & methodology
+## 5. The fee model (lib/feeModel.ts)
 
-Every number traces to a Dune query over `solana.instruction_calls` (tx_signer,
-executing_account, `data`) and/or `solana.account_activity` (address,
-post_balance, balance_change). Program = `9TUf...`, treasury = `FNj...`, the
-tracked trader = `4aY1...`.
+Every SOL that moves on WaveWarZ follows a fixed schedule:
 
-- **Treasury close / intraday high** - `account_activity` for `FNj`:
-  `max_by(post_balance, block_time)` per day = close; `max(post_balance)` =
-  intraday high (captures peaks skimmed before close, e.g. 4.65 SOL on 06-13).
-  Gap-filled forward over a date spine. Query `7717935` (the live one).
-- **Instruction mix** - decode the 8-byte Anchor discriminator with
-  `to_hex(bytearray_substring(data,1,8))` and map to IDL names. All six verified.
-  Counts: 1,127 battles created / 1,110 settled, 6,914 buys + 2,131 sells, 2,299
-  claims, 122 unique traders (Dune snapshot 2026-06-14; see `lib/wwData.ts.generatedAt`).
-- **Trader PnL (flow-based)** - for every WaveWarZ tx the wallet signs, take its
-  `balance_change` on `account_activity`. Cumulative sum = realized net SOL
-  (-2.96). Win rate = share of positive-delta txs (35.7%). Independent of the
-  bonding-curve math; differs from the stats app's per-battle realized figure.
-- **Platform buy volume** - join `account_activity` (signer's negative delta) to
-  the set of `buyShares` txs by `tx_id`+`tx_signer`. Sum = SOL committed on buys
-  (324.62; includes ~1.5% fees + gas). Buy-side only; the app reports 878.88 SOL
-  both-sides (wavewarz.info live, 2026-07-29; was 483.88 at 2026-06-14 Dune snapshot).
-- **Monthly PnL / biggest moves / footprint** - all derived from the same per-tx
-  delta list.
+- **Trade fee**: 1.5% per trade, split 1.0% to artist, 0.5% to platform
+  (collected from traders as they buy and sell shares)
 
-## 6. The Dune queries
+- **Settlement split** (applied to the losing pool when a battle ends):
+  - 50% back to losing traders (pro-rata to their share)
+  - 40% to winning traders (pro-rata)
+  - 5% to winning artist
+  - 2% to losing artist
+  - 3% to platform
 
-`scripts/ww-research.sh` runs these (reusing one scratch query id, then fetching
-results). Key program/wallets are constants; the API key comes from
-`$DUNE_API_KEY`.
+- **Battle launch fees**:
+  - Quick Battle: 0.69 SOL
+  - Community Battle: 4.0 SOL
+  - Main Event: free (staff-run)
 
-```sql
--- daily program activity
-SELECT block_date, count(distinct tx_id) AS txs, count(distinct tx_signer) AS traders
-FROM solana.instruction_calls
-WHERE executing_account = '<PROGRAM>' AND block_date >= date '2025-08-01'
-GROUP BY 1 ORDER BY 1;
+- **Skip-queue auction**: first skip costs 0.02 SOL, each successive skip costs
+  0.01 more (0.03, 0.04, 0.05... up to approximately 0.12 before the queue resets)
 
--- instruction-type decode
-SELECT to_hex(bytearray_substring(data,1,8)) AS disc, count(*) AS calls,
-       count(distinct tx_signer) AS signers
-FROM solana.instruction_calls
-WHERE executing_account = '<PROGRAM>' AND block_date >= date '2025-08-01'
-GROUP BY 1 ORDER BY 2 DESC;
+These figures are declared in `lib/feeModel.ts` and exported as utility functions
+(`tradeFeeSplit()`, `settlementSplit()`, `skipAuctionCost()`, etc). The fee table
+in section 01 (HowItWorks.tsx) renders them. Use this library, never hardcode fees.
 
--- trader per-tx SOL delta (cumulative = realized PnL)
-WITH ww AS (
-  SELECT distinct tx_id FROM solana.instruction_calls
-  WHERE executing_account='<PROGRAM>' AND tx_signer='<TRADER>' AND block_date >= date '2025-08-01')
-SELECT aa.block_time, aa.balance_change/1e9 AS sol_delta
-FROM solana.account_activity aa JOIN ww ON aa.tx_id=ww.tx_id
-WHERE aa.address='<TRADER>' ORDER BY aa.block_time;
+Reference: CandyToyBox/wavewarz-intelligence CLAUDE.md and public/llms.txt.
 
--- treasury daily flow
-SELECT block_date,
-  sum(case when balance_change>0 then balance_change else 0 end)/1e9 AS inflow,
-  sum(case when balance_change<0 then -balance_change else 0 end)/1e9 AS outflow,
-  sum(balance_change)/1e9 AS net
-FROM solana.account_activity WHERE address='<TREASURY>' GROUP BY 1 ORDER BY 1;
+## 6. The design system (lib/theme.ts)
 
--- platform daily buy volume (flow-based)
-WITH buy_tx AS (
-  SELECT DISTINCT tx_id, tx_signer FROM solana.instruction_calls
-  WHERE executing_account='<PROGRAM>'
-    AND bytearray_substring(data,1,8)=from_hex('28ef8a9a08256a6c')  -- buyShares
-    AND block_date >= date '2025-08-01')
-SELECT aa.block_date, sum(-aa.balance_change)/1e9 AS buy_volume, count(distinct aa.tx_id) AS buys
-FROM solana.account_activity aa JOIN buy_tx b ON aa.tx_id=b.tx_id AND aa.address=b.tx_signer
-WHERE aa.balance_change < 0 GROUP BY 1 ORDER BY 1;
+The entire palette comes verbatim from docs/DESIGN-SYSTEM.md v1.0 in the
+CandyToyBox/wavewarz-intelligence repo:
+
+- Void, bg, panel, elev - surface hierarchy
+- Accent (lime 95fe7c) - primary action and success
+- Blue - secondary/info
+- Text, dim - typography
+- Danger (red ef4444) - only for sell actions, losses, the floor line (never positive things)
+- Zero purple, in any shade
+
+Fonts are loaded in `app/layout.tsx`:
+- **Rajdhani** (600, 700 weight): the arena voice for scoreboard headlines
+- **Inter**: body text for sentences
+- **JetBrains Mono**: data labels and system state (the signal that a number is real)
+
+Every component imports `{ C, metaLabel }` from `lib/theme.ts`, never defines
+its own copy. When wwtracker embeds live on wavewarz.info, a shared palette
+means the widget reads as part of the site, not a third-party bolt-on.
+
+## 7. Embeds (lib/embeds.ts + components/embeds/)
+
+Every chart and counter on wwtracker can be embedded elsewhere as a standalone
+iframe: `/embed/<slug>`. The registry in `lib/embeds.ts` declares 40+ widgets:
+
+```javascript
+{
+  slug: "treasury-daily",
+  title: "Treasury Daily Balance",
+  blurb: "The platform wallet vs the 3.5 SOL operating floor",
+  category: "Treasury",
+  source: "onchain",        // Dune
+  form: "area",
+  height: 320,
+  suggestedHost: "wavewarz.info",
+  onchainOnly: true,        // unique to wwtracker
+}
 ```
 
-The Dune REST flow per query: `POST /v1/query` (create) or `PATCH /v1/query/{id}`
-(update SQL) -> `POST /v1/query/{id}/execute` -> poll `GET /v1/execution/{id}/status`
-until `QUERY_STATE_COMPLETED` -> `GET /v1/execution/{id}/results`.
+Sources are:
+- `onchain` - Dune, over the Solana program or the treasury wallet. Nobody else
+  has this.
+- `platform` - wavewarz.info public API (same numbers they already show)
+- `snapshot` - public/*.json files, rebuilt from one of the above
 
-## 6.5. Daily treasury records (`public/ww-daily-treasury.csv`)
+Forms are: counter, line, area, bar, pie, table.
 
-The team's own day-by-day fee-wallet tracker, cleaned up, cross-checked, and
-backfilled all the way back to the wallet's earliest on-chain activity. Not
-wired into the UI yet - this is the team's internal record, kept in the repo
-because it's real ground truth worth version-controlling. Covers
-**2025-07-01 through today**, 386 rows.
+The gallery (section 10) shows every widget live. Framing is CSP-restricted in
+`next.config.mjs`: only wavewarz.info, wavewarz.com, and Vercel preview builds
+can embed our widgets.
 
-Columns: `date, day, balance_sol, delta_sol, battles_launched,
-battles_launched_onchain, notes, source`.
+## 8. Program decoding (lib/wwData.ts)
 
-- **`battles_launched`** is the team's own reported count where they gave one
-  (manual period only); **`battles_launched_onchain`** is independent, derived
-  directly from every real Battle account on-chain (see below) - a cross-check,
-  not a silent replacement. The two mostly agree closely but not exactly (e.g.
-  2026-02-09: 5 and 5; 2026-03-13: manual 13 vs on-chain 11) - treat small
-  day-to-day drift as expected (manual tallying vs a machine-precise count),
-  not a bug.
-- **2026-02-09 through 2026-05-25** (`source: manual`): transcribed from the
-  team's spreadsheet (`WaveWarZ_Financial_Tracker.xlsx` - Daily BattleZ tab) -
-  daily SOL balance, day-over-day delta, battles launched that day, and notes.
-- **2026-05-26** (`source: on-chain (corrected)`): the original spreadsheet
-  showed a -3.52 SOL delta here, but that was a formula artifact (computed
-  against a blank balance cell where manual tracking had lapsed), not a real
-  distribution - the real "Paid Team" distribution is the 2026-05-16 entry.
-  Corrected using the verified on-chain closing balance for that day.
-- **2025-07-01 through 2026-02-08 and 2026-05-27 through today**
-  (`source: on-chain (backfilled)`): the spreadsheet only ever covered
-  2026-02-09 through 2026-05-25. Both edges backfilled by walking
-  `getSignaturesForAddress` for the treasury wallet (paginated back to its
-  earliest activity, ~2025-06-29), finding each UTC day's last successful
-  transaction, and reading its `postBalances` entry for the wallet via
-  `getTransaction` (same last-balance-of-the-day method Dune's
-  `account_activity` query uses, just via public RPC directly since no Dune
-  query is available in this environment). A handful of days
-  had no transactions at all - those carry the prior day's balance forward,
-  marked `on-chain (backfilled, no activity that day)`. `notes` stays empty
-  for every backfilled row - that's the team's own commentary, not something
-  on-chain. `battles_launched` for backfilled rows is filled from the
-  on-chain count described below (there's no separate manual figure to
-  cross-check against for these days).
+The on-chain analytics snapshot includes every call to the WaveWarZ program
+since its first day (2025-05-26), decoded by Anchor discriminator:
 
-**How `battles_launched_onchain` is derived:** each WaveWarZ battle is a PDA
-account owned by the program (`getProgramAccounts` filtered to `dataSize:
-353`, the real observed size of a Battle account - 1,404 found on-chain, vs.
-1,089 in `public/ww-battles.json`'s scraped feed, confirming the feed
-undercounts). Byte offset 8-16 of each account is `battle_id`, which turns
-out to be a Unix timestamp of the battle's creation (confirmed by deriving
-the Battle PDA for a known battle - seeds `["battle", battle_id (u64 LE)]` -
-and finding its on-chain `battle_id` matches `public/ww-battles.json`'s `id`
-field exactly). Bucketing all 1,404 `battle_id`s by America/New_York calendar
-day (not UTC - UTC bucketing didn't reconcile with the team's manual counts,
-Eastern did much better) gives a real, independent daily battle count
-straight from the chain.
+- **buyShares**: 28ef8a9a08256a6c (count: 9,646, example: buy SOL on a song)
+- **sellShares**: b8a4a91061be9410 (count: 3,409, example: sell shares back)
+- **initBattle**: 756ca69f7868abeb (count: 1,643, example: create a new battle)
+- **endBattle**: 5091d030ee2adc5e (count: 1,602, example: close a battle and run settlement)
+- **claimShares**: 82831ded3b1c4f3a (count: 2,762, example: withdraw winnings)
+- **initMints**: bd54558e87f81f77 (count: 1,604, example: mint the winning side's NFT)
 
-## 7. Refreshing the data
+Counts are as of 2026-09-05 (last snapshot). The snapshot covers:
+- Total transactions: 20,677
+- Unique traders: 145
+- Battles created / settled / minted: 1,643 / 1,602 / 1,604
+- Buys / sells / claims: 9,646 / 3,409 / 2,762
+- Total volume: 921.4852 SOL (confirmed against reported 921.29 SOL)
+
+`public/ww-onchain-daily.json` has 468 rows of daily activity from 2025-05-26
+to today. `public/ww-platform-volume.json` has 466 rows of cumulative volume
+from 2025-05-28 onward.
+
+## 9. Treasury balance tracking
+
+The treasury wallet (`FNj...kq37`) balance is tracked daily via Dune query 7717935.
+Each day records:
+- **Close**: the last transaction's post-balance for that UTC day
+- **Intraday high**: the peak balance that day (may be higher than close if funds
+  were skimmed before day-end)
+
+The operating floor is 3.5 SOL (tunable in `components/BalanceDashboard.tsx`).
+Section 02 shows bars for daily close and a line for the intraday high, with the
+floor marked as a reference line.
+
+The floor model (section 05) splits any surplus above 3.5 SOL as: 33% operations,
+22% each to Hurricane, Candy, and Zaal. Distribution recipient wallets and history
+are in `lib/distributions.ts`.
+
+## 10. Data staleness & validation
+
+`scripts/validate.mjs` runs as a pre-build step and checks:
+- Battle snapshots: 800-5000 entries (warns if empty/truncated)
+- On-chain activity: entries exist for every expected date range
+- Field presence and type correctness across all data files
+
+The script also warns at 14 days old and flags data as stale at 45 days.
+Run with `--strict` to fail the build on staleness.
 
 ```bash
-export DUNE_API_KEY=...        # never commit this
-bash scripts/ww-research.sh    # runs core queries -> /tmp/ww-*.json
-# (optional helpers for decode / timeseries / volume were run ad hoc -> /tmp/ww-*.json)
-python3 scripts/ww-gen.py      # regenerates lib/wwData.ts (stamps generatedAt)
-npm run build                  # verify
+npm run validate          # warns only
+npm run validate -- --strict  # fails build if data > 45 days old
 ```
 
-For the live treasury balance, re-run Dune query `7717935` (manually or via the
-cron) so its cached results update; the app reads them no-store.
+Staleness dates are checked against `lib/freshness.ts`. After any data refresh,
+bump the `DATA_AS_OF` timestamp there and re-run validate.
 
-### Battles + recap drafts
+## 11. Environment, deploy, security
 
-`public/ww-battles.json` no longer needs the manual gstack-browse scrape in
-`REFRESH.md` §A - `npm run fetch:battles` (`scripts/ww-battles-fetch.ts`)
-pages the live WaveWarZ Intelligence feed itself, merges only genuinely new
-battles in, and fails loud (throws, writes nothing) on any fetch/parse error
-rather than risking a stale or partial write. `npm run recap` generates
-Farcaster/X draft recap posts (per Main Event, per show, or a trailing-week
-rollup) into `recaps/` - every number cites its source file, nothing is
-invented. Full design/rationale:
-`docs/superpowers/specs/2026-07-14-recap-pipeline-design.md`; command
-reference in the top-level `README.md`'s "Recaps" section.
+### Development (.env.local)
 
-### Phase B: X Spaces speaker log
+```
+DUNE_API_KEY=<key>
+DUNE_QUERY_ID=7717935
+DUNE_DEFAULT_WALLET=FNjYtw...kq37
+```
 
-`scripts/recap/speaker-log.ts` turns a diarized show transcript (speaker_0,
-speaker_1... anonymous labels, e.g. from Deepgram) plus a manually-captured
-caption log ("Name @handle: text" lines noted with timestamps while watching
-the live Space) into the `SpeakerLogEntry[]` shape `buildShowRecap` already
-consumes, with real names substituted for the anonymous labels:
+### Production (Vercel)
 
-- `parseCaptionLine(raw, timestampSec)` - parses one caption line into a
-  `CaptionEvent`.
-- `textSimilarity(a, b)` - Jaccard overlap of non-stopword tokens; the match
-  primitive (word-order and cross-source tokenization drift insensitive).
-- `resolveSpeakerNames(utterances, captions, opts?)` - matches each utterance
-  to its best-overlapping caption within a time window (default 3s slack),
-  then majority-votes per speaker so one bad match can't flip an otherwise
-  well-identified speaker. Speakers with no match above the similarity
-  threshold are simply omitted.
-- `buildSpeakerLog(utterances, matches, opts?)` - substitutes resolved names
-  only where `confidence` clears the threshold (default 0.5); otherwise keeps
-  the original anonymous label. An unattributed quote beats a wrongly
-  attributed one.
+Set the same vars, plus:
 
-This is the automatable core. What still isn't (per
-`~/.claude/skills/identifying-speakers-in-recordings`, confirmed by direct
-testing): X's Spaces seek slider resists all programmatic seeking (click,
-drag, keyboard, synthetic pointer events all fail), so producing the caption
-log itself is still a human watching the recording and noting `Name @handle:
-text` + timestamp as it happens - there's no code path yet that drives the
-browser through a full Space unattended. There's also no CLI wrapper yet
-tying diarization output + a caption-log file into one `npm run` command;
-today the three functions above are called directly.
+```
+CRON_SECRET=<random-secret>
+```
 
-## 8. Environment, deploy, security
+Without `CRON_SECRET` the daily cron returns 401 and the treasury chart silently
+goes stale. This is the most critical operational detail in the repo.
 
-- Env (`.env.local`, gitignored; also set in Vercel Production): `DUNE_API_KEY`
-  (server-only, no `NEXT_PUBLIC_`), `DUNE_QUERY_ID=7717935`, `DUNE_DEFAULT_WALLET`.
-- Vercel project `wwtracker`. `vercel.json` pins `"framework":"nextjs"` and a
-  daily cron warming `/api/balance`. Deployment Protection is disabled so the team
-  can view without a Vercel login.
-- Security: the Dune key never reaches the client - confirmed by grepping the
-  built `.next/static` output (0 hits) and that `lib/dune.ts` is `import
-  "server-only"`. `?wallet=` / `?mint=` are base58-validated before any credit is
-  spent. `.env.local` and `.vercel` are gitignored.
+### Security
 
-## 9. Constraints & deferred work
+- The Dune key never reaches the client - confirmed by grepping built `.next/static`
+  (0 hits) and by `lib/dune.ts` carrying `import "server-only"`.
+- `?wallet=` / `?mint=` parameters are base58-validated before any Dune credit
+  is spent (prevents address-enumeration attacks).
+- `.env.local` and `.vercel/` are gitignored.
+- The `/api/balance?refresh=1` endpoint is gated by `CRON_SECRET` bearer token
+  (prevents anonymous credit-burn).
+- CSP frame-ancestors restricts embed framing to wavewarz.info, wavewarz.com,
+  and Vercel preview builds (prevents drive-by iframe hijacking).
 
-Dune is a **free-tier** account (~2,500 credits/mo). Confirmed ceiling: **single-table
-aggregations over `instruction_calls` / `account_activity` complete fine**
-(daily activity, instruction decode, timeseries, daily volume, treasury flow),
-but **joins of `account_activity` to a tx-set time out** (volume-per-trader,
-artist payouts, per-battle PnL all failed). Those deep analytics need either a
-paid Dune tier (faster execution) or the Helius RPC + Supabase path that candy's
-apps already use (`getAccountInfo`/`getProgramAccounts` on Battle PDAs). Stay
-credit-frugal and prefer single-table aggregations on free tier.
+## 12. Constraints & deferred work
 
-Deferred (each needs heavier/repeated executions or RPC decode):
-- Per-trader volume leaderboard - the GROUP-BY-signer join times out on free tier.
-- Per-battle PnL + win rate - needs the battle PDA per tx (account decode).
-- Sell-side volume (to match the reported both-sides total; see `lib/battles.ts` BATTLE_STATS.totalVolumeSol for current figure).
-- Artist-payout tracing - artist wallets live in each on-chain Battle account
-  (`artist_a_wallet` / `artist_b_wallet`); needs RPC `getProgramAccounts` decode.
-- Ops-budget wallet + weekly-skim quantification.
+Dune is a free-tier account (~2,500 credits/mo). Single-table aggregations
+over `instruction_calls` / `account_activity` work fine. Joins of
+`account_activity` to a tx-set time out at 2 minutes.
+
+Deferred (would need a paid Dune tier or Helius RPC + Supabase):
+- Per-trader volume leaderboard (GROUP-BY-signer join times out)
+- Per-battle PnL + win rate (needs Battle PDA decode)
+- Artist-payout tracing (needs getProgramAccounts over Battle PDAs)
+- Sell-side volume (to match reported both-sides total)
+- Ops-budget wallet + weekly-skim quantification

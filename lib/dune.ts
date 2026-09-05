@@ -226,6 +226,79 @@ export async function executeForWallet(
 }
 
 // ---------------------------------------------------------------------------
+// Refresh path - re-run the saved query itself, no parameters.
+//
+// This exists because `getLatestBalances` only READS whatever execution Dune
+// last completed. Nothing in this app ever asked Dune to run the query again,
+// so the treasury series silently froze: on 2026-09-05 the saved query's newest
+// row was 2026-07-03, 64 days old, while the app and the docs both described
+// section 02 Floor as "live". Reading a cache faithfully is not the same as
+// being current. The daily Vercel cron now calls this instead.
+//
+// Deliberately separate from executeForWallet: query 7717935 declares no
+// parameters, so posting a `query_parameters` body at it is wrong. This just
+// says "run yourself" and waits.
+// ---------------------------------------------------------------------------
+
+export async function executeSavedQuery(
+  queryId: string,
+  apiKey: string,
+  opts: { timeoutMs?: number; pollMs?: number } = {},
+): Promise<DuneFetchResult> {
+  const { timeoutMs = 90_000, pollMs = 3_000 } = opts;
+
+  const execRes = await duneFetch(`/query/${queryId}/execute`, apiKey, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+  if (!execRes.ok) {
+    throw new DuneError(
+      `Dune execute failed: ${execRes.status} ${execRes.statusText}`,
+      execRes.status,
+    );
+  }
+  const executionId = ((await execRes.json()) as { execution_id?: string })
+    .execution_id;
+  if (!executionId) throw new DuneError("Dune execute returned no execution_id");
+
+  const deadline = nowMs() + timeoutMs;
+  let state = "";
+  while (nowMs() < deadline) {
+    const statusRes = await duneFetch(`/execution/${executionId}/status`, apiKey);
+    if (!statusRes.ok) {
+      throw new DuneError(
+        `Dune status failed: ${statusRes.status} ${statusRes.statusText}`,
+        statusRes.status,
+      );
+    }
+    state = ((await statusRes.json()) as { state?: string }).state ?? "";
+    if (state === "QUERY_STATE_COMPLETED") break;
+    if (state === "QUERY_STATE_FAILED" || state === "QUERY_STATE_CANCELLED") {
+      throw new DuneError(`Dune execution ${state} for query ${queryId}`);
+    }
+    await sleep(pollMs);
+  }
+  if (state !== "QUERY_STATE_COMPLETED") {
+    throw new DuneError(
+      `Dune refresh timed out after ${Math.round(timeoutMs / 1000)}s for query ${queryId}`,
+    );
+  }
+
+  const resultsRes = await duneFetch(
+    `/execution/${executionId}/results?limit=${RESULT_LIMIT}`,
+    apiKey,
+  );
+  if (!resultsRes.ok) {
+    throw new DuneError(
+      `Dune results failed: ${resultsRes.status} ${resultsRes.statusText}`,
+      resultsRes.status,
+    );
+  }
+  const resultsJson = (await resultsRes.json()) as { result?: { rows?: unknown } };
+  return { rows: normalizeRows(resultsJson.result?.rows), origin: "execute" };
+}
+
+// ---------------------------------------------------------------------------
 // Small utils (kept here so the module is self-contained / server-only).
 // ---------------------------------------------------------------------------
 

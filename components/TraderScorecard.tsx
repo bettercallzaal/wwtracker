@@ -18,7 +18,7 @@ import { C, metaLabel } from "@/lib/theme";
 import { sampleTraderPnl } from "@/lib/traderSample";
 import { WW } from "@/lib/wwData";
 import { usd } from "@/lib/price";
-import { TRADERS, ME_WALLET } from "@/lib/traders";
+import { ME_WALLET } from "@/lib/traders";
 import { PROGRAM_ID } from "@/lib/config";
 
 // ---------------------------------------------------------------------------
@@ -51,8 +51,55 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 
+/** This wallet's row on the platform's own trader leaderboard, live. */
+interface OfficialRow {
+  rank: number;
+  netPnlSol: number;
+  winRate: number;
+  tradeCount: number;
+}
+
+function useOfficialRow(wallet: string): OfficialRow | null {
+  const [row, setRow] = useState<OfficialRow | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/ww/leaderboards/traders?limit=500")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive || !j) return;
+        const rows: {
+          wallet: string;
+          netPnlSol: number;
+          winRate: number;
+          tradeCount: number;
+        }[] = j?.data?.traders ?? [];
+        const i = rows.findIndex((t) => t.wallet === wallet);
+        if (i < 0) return;
+        setRow({
+          rank: i + 1,
+          netPnlSol: rows[i].netPnlSol,
+          winRate: rows[i].winRate,
+          tradeCount: rows[i].tradeCount,
+        });
+      })
+      .catch(() => {
+        /* the other two figures still render; this card just does not appear */
+      });
+    return () => {
+      alive = false;
+    };
+  }, [wallet]);
+  return row;
+}
+
 export default function TraderScorecard() {
   const reducedMotion = useReducedMotion();
+
+  // The platform's own figure for this wallet. This used to come from a baked
+  // TRADERS array whose `pnl` was sign-flipped against the platform's number -
+  // it showed the top trader down 19 SOL while the platform had them up 30. It
+  // is read live now so the two can never disagree again.
+  const official = useOfficialRow(ME_WALLET);
 
   // Real cumulative SOL PnL from on-chain (every WaveWarZ tx's net SOL delta).
   // Falls back to the deterministic sample if the snapshot is empty.
@@ -66,7 +113,6 @@ export default function TraderScorecard() {
 
   const onChainNet = live ? WW.pnl[WW.pnl.length - 1].cum : TRADER.netPnlSol;
   const ts = WW.traderStats;
-  const official = TRADERS.find((t) => t.wallet === ME_WALLET);
 
   const fmt = (n: number, dp = 2) =>
     n.toLocaleString(undefined, {
@@ -160,16 +206,10 @@ export default function TraderScorecard() {
 
       {/* PnL three ways - reconcile the different figures */}
       <section style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 16, padding: 16 }}>
-        <span style={metaLabel}>NET PnL - THREE WAYS (THEY MEASURE DIFFERENT THINGS)</span>
+        <span style={metaLabel}>
+          NET PnL - {official ? "THREE" : "TWO"} WAYS (THEY MEASURE DIFFERENT THINGS)
+        </span>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginTop: 12 }}>
-          {official && (
-            <PnlCard
-              value={`${official.pnl >= 0 ? "+" : ""}${fmt(official.pnl)} ◎`}
-              label="OFFICIAL (wavewarz.info)"
-              note={`payout received - SOL invested. Rank #${official.rank}/${TRADERS.length}, ${official.win}% win (${official.rec}).`}
-              color={official.pnl >= 0 ? C.good : C.danger}
-            />
-          )}
           <PnlCard
             value={`${fmt(onChainNet)} ◎`}
             label="ON-CHAIN FLOW"
@@ -182,6 +222,14 @@ export default function TraderScorecard() {
             note={`-${fmt(Math.abs(TRADER.roiPct), 2)}% ROI over ${TRADER.battles.toLocaleString()} battles (per the leaderboard widget).`}
             color={C.danger}
           />
+          {official && (
+            <PnlCard
+              value={`${official.netPnlSol >= 0 ? "+" : ""}${fmt(official.netPnlSol)} ◎`}
+              label="OFFICIAL (WAVEWARZ.INFO)"
+              note={`rank #${official.rank}, ${Math.round(official.winRate)}% win rate over ${official.tradeCount.toLocaleString()} trades. Counts real claimShares withdrawals, not just recorded trades - this is the number the platform shows you.`}
+              color={official.netPnlSol >= 0 ? C.good : C.danger}
+            />
+          )}
         </div>
       </section>
 
@@ -309,7 +357,7 @@ export default function TraderScorecard() {
                 <XAxis dataKey="month" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} />
                 <YAxis tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={44} tickFormatter={(v: number) => fmt(v, 1)} />
                 <Tooltip
-                  cursor={{ fill: "rgba(255,194,75,0.08)" }}
+                  cursor={{ fill: "rgba(149,254,124,0.08)" }}
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
                   formatter={(v: number | string) => [`${fmt(Number(v))} ◎`, "net"]}

@@ -4,8 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { C, metaLabel } from "@/lib/theme";
 import { AUDIUS_ID_BY_HANDLE, ROSTER, X_TO_AUDIUS_HANDLE, AUDIUS_TO_X_HANDLE } from "@/lib/artists";
-import { songsByArtist } from "@/lib/songs";
+import { useSongsByArtist } from "@/lib/songs";
 import { LEADERBOARD } from "@/lib/leaderboard";
+
+/** One artist's row on the platform's own leaderboard, live. */
+interface LiveArtist {
+  rank: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  totalVolumeSol: string;
+  totalEarningsSol: string;
+}
 
 interface RawBattle {
   id: string;
@@ -62,7 +72,12 @@ export default function ArtistPage() {
     return mapped ? mapped[1] : null;
   }, [handle]);
   const audiusId = audiusHandle ? (AUDIUS_ID_BY_HANDLE[audiusHandle] ?? null) : null;
-  const songs = useMemo(() => songsByArtist(audiusHandle ?? handle), [handle, audiusHandle]);
+  const songs = useSongsByArtist(audiusHandle ?? handle);
+  // LEADERBOARD stays in the build for generateStaticParams and the recap
+  // tooling, but its STATS are a 2026-06-15 snapshot and were being rendered as
+  // if current. The displayed figures come from the platform's live board now;
+  // the snapshot is only used to find which row this handle is.
+  const [liveArtist, setLiveArtist] = useState<LiveArtist | null>(null);
   const lb = useMemo(() => {
     const lower = handle.toLowerCase();
     const direct = LEADERBOARD.find((a) => a.handle.toLowerCase() === lower);
@@ -71,6 +86,38 @@ export default function ArtistPage() {
     return xHandle ? LEADERBOARD.find((a) => a.handle.toLowerCase() === xHandle.toLowerCase()) ?? null : null;
   }, [handle, audiusHandle]);
   const rosterNote = useMemo(() => ROSTER.find((a) => a.handle.toLowerCase() === handle.toLowerCase())?.note ?? null, [handle]);
+
+  useEffect(() => {
+    if (!lb?.wallet) return;
+    let alive = true;
+    fetch("/api/ww/leaderboards/artists?limit=500")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive || !j) return;
+        const rows: (LiveArtist & { name: string; twitterHandle: string | null })[] =
+          (j?.data?.artists ?? []).map((a: Record<string, unknown>, i: number) => ({
+            rank: i + 1,
+            wins: Number(a.wins ?? 0),
+            losses: Number(a.losses ?? 0),
+            winRate: Number(a.winRate ?? 0),
+            totalVolumeSol: String(a.totalVolumeSol ?? "0"),
+            totalEarningsSol: String(a.totalEarningsSol ?? "0"),
+            name: String(a.name ?? ""),
+            twitterHandle: (a.twitterHandle as string) ?? null,
+          }));
+        const want = (lb.handle ?? "").toLowerCase();
+        const hit =
+          rows.find((r) => (r.twitterHandle ?? "").toLowerCase() === want) ??
+          rows.find((r) => r.name.toLowerCase() === (lb.name ?? "").toLowerCase());
+        if (hit) setLiveArtist(hit);
+      })
+      .catch(() => {
+        /* the page still renders; the tiles just fall back to the snapshot */
+      });
+    return () => {
+      alive = false;
+    };
+  }, [lb]);
 
   const [user, setUser] = useState<AudiusUser | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -142,7 +189,7 @@ export default function ArtistPage() {
         <div>
           <h1 style={{ margin: 0, fontSize: "clamp(22px,5vw,30px)" }}>{user?.name || handle}</h1>
           <div style={{ fontFamily: C.mono, fontSize: 13, color: C.dim }}>
-            @{handle}{lb ? ` - leaderboard #${lb.rank}` : ""}
+            @{handle}{liveArtist ? ` - leaderboard #${liveArtist.rank}` : lb ? ` - leaderboard #${lb.rank}` : ""}
           </div>
           {rosterNote && (
             <div style={{ fontFamily: C.mono, fontSize: 12, color: C.dim, marginTop: 4, fontStyle: "italic" }}>
@@ -155,10 +202,10 @@ export default function ArtistPage() {
       {/* stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12 }}>
         {lb && <>
-          <Tile label="MAIN-EVENT REC" value={lb.rec} />
-          <Tile label="WIN %" value={`${lb.win}%`} />
-          <Tile label="VOLUME" value={`${fmt(lb.vol)} ◎`} />
-          <Tile label="EARNINGS" value={`${fmt(lb.earn, 3)} ◎`} />
+          <Tile label="MAIN-EVENT REC" value={liveArtist ? `${liveArtist.wins}W-${liveArtist.losses}L` : lb.rec} />
+          <Tile label="WIN %" value={`${Math.round(liveArtist ? liveArtist.winRate : lb.win)}%`} />
+          <Tile label="VOLUME" value={`${fmt(liveArtist ? Number(liveArtist.totalVolumeSol) : lb.vol)} ◎`} />
+          <Tile label="EARNINGS" value={`${fmt(liveArtist ? Number(liveArtist.totalEarningsSol) : lb.earn, 3)} ◎`} />
         </>}
         {user && <>
           <Tile label="AUDIUS FOLLOWERS" value={fmt(user.follower_count, 0)} />
@@ -184,7 +231,7 @@ export default function ArtistPage() {
             {songs.map((s) => (
               <div key={s.rank} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontFamily: C.mono, fontSize: 13, borderTop: `1px solid ${C.grid}`, paddingTop: 6 }}>
                 <span>#{s.rank} {s.song} <span style={{ color: C.dim }}>- {s.genre}</span></span>
-                <span style={{ color: C.dim, flexShrink: 0 }}>{s.record} - {s.heat}/100</span>
+                <span style={{ color: C.dim, flexShrink: 0 }}>{s.record} - {Math.round(s.winPct)}% - {s.vol.toFixed(2)} ◎</span>
               </div>
             ))}
           </div>

@@ -19,16 +19,16 @@ export default function OG() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "linear-gradient(135deg, #190f24, #2b1c3f)",
+          background: "linear-gradient(135deg, #0d1321, #111a2c)",
           padding: 72,
           fontFamily: "monospace",
         }}
       >
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 84, fontWeight: 800, color: "#ffc24b", letterSpacing: "-2px" }}>
+          <div style={{ fontSize: 84, fontWeight: 800, color: "#95fe7c", letterSpacing: "-2px" }}>
             WaveWarZ
           </div>
-          <div style={{ fontSize: 34, color: "#a596b8", marginTop: 8 }}>
+          <div style={{ fontSize: 34, color: "#8b97ab", marginTop: 8 }}>
             on-chain tracker
           </div>
         </div>
@@ -38,7 +38,7 @@ export default function OG() {
           <Stat label="TRADERS" value={fmt(p.uniqueTraders)} />
           <Stat label="BUY VOLUME" value={`${fmt(Math.round(WW.volume.total))} SOL`} />
         </div>
-        <div style={{ fontSize: 24, color: "#a596b8" }}>
+        <div style={{ fontSize: 24, color: "#8b97ab" }}>
           wwtracker.vercel.app - Solana music-battle platform
         </div>
       </div>
@@ -50,8 +50,8 @@ export default function OG() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      <div style={{ fontSize: 22, color: "#a596b8" }}>{label}</div>
-      <div style={{ fontSize: 52, fontWeight: 700, color: "#f4ecff" }}>{value}</div>
+      <div style={{ fontSize: 22, color: "#8b97ab" }}>{label}</div>
+      <div style={{ fontSize: 52, fontWeight: 700, color: "#daecfd" }}>{value}</div>
     </div>
   );
 }

@@ -126,7 +126,7 @@ export default function Music() {
                     <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="month" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={24} />
                     <YAxis tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
-                    <Tooltip cursor={{ fill: "rgba(255,194,75,0.08)" }} contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }} labelStyle={{ color: C.dim }} formatter={(v: number | string) => [v, "tracks"]} />
+                    <Tooltip cursor={{ fill: "rgba(149,254,124,0.08)" }} contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }} labelStyle={{ color: C.dim }} formatter={(v: number | string) => [v, "tracks"]} />
                     <Bar dataKey="count" fill={C.accent} fillOpacity={0.8} radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>

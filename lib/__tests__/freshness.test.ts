@@ -20,10 +20,26 @@ describe("FRESHNESS", () => {
     expect(values.some((v) => v === "live")).toBe(true);
   });
 
-  it("all snapshot values are valid ISO dates or 'live'", () => {
+  // Three legal values, and no fourth. "live" means fetched per request,
+  // "manual" means a human maintains it and no date would be honest, and
+  // anything else must be a real date. A free-text value here is how a dataset
+  // ends up with a reassuring label and no verifiable age.
+  it("all values are a valid ISO date, 'live', or 'manual'", () => {
     for (const [key, val] of Object.entries(FRESHNESS)) {
-      if (val === "live") continue;
-      expect(val, `FRESHNESS["${key}"] must be YYYY-MM-DD`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      if (val === "live" || val === "manual") continue;
+      expect(val, `FRESHNESS["${key}"] must be YYYY-MM-DD, live, or manual`).toMatch(
+        /^\d{4}-\d{2}-\d{2}$/,
+      );
+    }
+  });
+
+  it("no dated value is in the future", () => {
+    for (const [key, val] of Object.entries(FRESHNESS)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) continue;
+      expect(
+        Date.parse(`${val}T00:00:00Z`),
+        `FRESHNESS["${key}"] is dated in the future`,
+      ).toBeLessThanOrEqual(Date.now());
     }
   });
 });

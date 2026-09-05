@@ -1,63 +1,35 @@
 import { describe, it, expect } from "vitest";
-import { SONGS, songsByArtist } from "@/lib/songs";
+import { audiusHandleFromLink } from "@/lib/songs";
 
-describe("SONGS", () => {
-  it("has at least 37 entries", () => {
-    expect(SONGS.length).toBeGreaterThanOrEqual(37);
+// The per-artist song list joins on the Audius permalink's handle segment
+// rather than on the API's display name, because the two are frequently
+// different ("GodclouD" vs "therealgodcloud"). These cover that parse, which is
+// the single point where a bad result would silently empty an artist's page.
+describe("audiusHandleFromLink", () => {
+  it("pulls the handle out of an Audius permalink", () => {
+    expect(audiusHandleFromLink("https://audius.co/GodclouD/fuck-yo-feelingz")).toBe("GodclouD");
   });
 
-  it("every entry has required fields with correct types", () => {
-    for (const s of SONGS) {
-      expect(typeof s.rank, `rank type for "${s.song}"`).toBe("number");
-      expect(s.song, `song empty at rank ${s.rank}`).toBeTruthy();
-      expect(s.artist, `artist empty at rank ${s.rank}`).toBeTruthy();
-      expect(s.genre, `genre empty at rank ${s.rank}`).toBeTruthy();
-      expect(typeof s.heat, `heat type for "${s.song}"`).toBe("number");
-      expect(typeof s.winPct, `winPct type for "${s.song}"`).toBe("number");
-      expect(typeof s.vol, `vol type for "${s.song}"`).toBe("number");
-    }
+  it("tolerates the stray leading whitespace seen in real admin-pasted links", () => {
+    expect(audiusHandleFromLink("  https://audius.co/Kata7yst/say-eltio ")).toBe("Kata7yst");
   });
 
-  it("ranks are unique", () => {
-    const ranks = SONGS.map((s) => s.rank);
-    expect(new Set(ranks).size).toBe(ranks.length);
+  it("decodes a percent-encoded handle", () => {
+    expect(audiusHandleFromLink("https://audius.co/Goose%20P%C3%A4rk/track")).toBe("Goose Pärk");
   });
 
-  it("ranks start at 1 and are sequential", () => {
-    const sorted = [...SONGS].sort((a, b) => a.rank - b.rank);
-    sorted.forEach((s, i) => {
-      expect(s.rank).toBe(i + 1);
-    });
+  it("returns null for a non-Audius host", () => {
+    expect(audiusHandleFromLink("https://hyperfollow.com/someartist/song")).toBeNull();
   });
 
-  it("heat values are 0–100", () => {
-    for (const s of SONGS) {
-      expect(s.heat, `heat out of range for "${s.song}"`).toBeGreaterThanOrEqual(0);
-      expect(s.heat, `heat out of range for "${s.song}"`).toBeLessThanOrEqual(100);
-    }
+  it("returns null for empty, missing and malformed input", () => {
+    expect(audiusHandleFromLink("")).toBeNull();
+    expect(audiusHandleFromLink(null)).toBeNull();
+    expect(audiusHandleFromLink(undefined)).toBeNull();
+    expect(audiusHandleFromLink("not a url")).toBeNull();
   });
 
-  it("winPct values are 0–100", () => {
-    for (const s of SONGS) {
-      expect(s.winPct, `winPct out of range for "${s.song}"`).toBeGreaterThanOrEqual(0);
-      expect(s.winPct, `winPct out of range for "${s.song}"`).toBeLessThanOrEqual(100);
-    }
-  });
-});
-
-describe("songsByArtist", () => {
-  it("returns songs matching the artist handle", () => {
-    const results = songsByArtist("GodclouD");
-    expect(results.length).toBeGreaterThan(0);
-    expect(results.every((s) => s.artist === "GodclouD")).toBe(true);
-  });
-
-  it("returns empty array for unknown artist", () => {
-    expect(songsByArtist("nobody_here_ever")).toEqual([]);
-  });
-
-  it("is case-sensitive (matching songs.ts implementation)", () => {
-    expect(songsByArtist("godcloud")).toEqual([]);
-    expect(songsByArtist("GodclouD").length).toBeGreaterThan(0);
+  it("returns null when the permalink has no handle segment", () => {
+    expect(audiusHandleFromLink("https://audius.co/")).toBeNull();
   });
 });

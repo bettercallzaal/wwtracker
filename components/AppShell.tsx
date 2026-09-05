@@ -15,17 +15,28 @@ import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
 import Ecosystem from "./Ecosystem";
 import Events from "./Events";
-import Songs from "./Songs";
 import Artists from "./Artists";
 import Music from "./Music";
-import Leaderboard from "./Leaderboard";
-import Traders from "./Traders";
-import Battles from "./Battles";
+import TraderEdge from "./TraderEdge";
+import FeeModel from "./FeeModel";
+import EmbedsSection from "./EmbedsSection";
 import Faq from "./Faq";
 
-// The dashboard is one top-to-bottom read. It opens with what WaveWarZ is and
-// gets deeper the further you scroll - explainer, then the treasury floor, then
-// the money model, then the full on-chain data, then the people and the music.
+// The dashboard is one top-to-bottom read: what WaveWarZ is, then the treasury
+// floor, then the money model, then the full on-chain picture, then the ways to
+// take it elsewhere.
+//
+// WHAT IS DELIBERATELY NOT HERE. There used to be a battles table, a song chart
+// and a trader leaderboard. wavewarz.info already renders all three, from the
+// database that is their system of record, and ours were copies - which meant
+// ours could disagree with theirs, and did: the baked trader table showed the
+// top trader down 19 SOL while the platform had them up 30. A second set of
+// numbers for the same thing is a liability, not a feature. Those sections are
+// gone and the ecosystem section links out instead.
+//
+// What is left is the part no other WaveWarZ surface has: the treasury, the
+// operating floor, the fee model, the business ledger, and the program decoded
+// straight off Solana.
 type Section = {
   id: string;
   n: string;
@@ -59,89 +70,83 @@ const SECTIONS: Section[] = [
     id: "floor",
     n: "02",
     title: "The treasury floor",
-    intro: "the headline. the platform wallet's daily balance held against a 3.5 SOL operating floor - live from Dune.",
+    intro: "the headline. the platform wallet's daily balance held against a 3.5 SOL operating floor - live from Dune, refreshed every morning.",
     render: () => <BalanceDashboard />,
   },
   {
     id: "growth",
     n: "03",
     title: "Growth over time",
-    intro: "how the platform has grown since it launched - the shape of the last stretch, not just today's number.",
+    intro: "cumulative SOL traded since the platform's first battle in May 2025 - the real shape, at true scale.",
     render: () => <PlatformGrowth />,
   },
   {
-    id: "profitability",
+    id: "economics",
     n: "04",
+    title: "Where every SOL goes",
+    intro: "the fee schedule made visible: 1.5% per trade split two-to-one in the artist's favour, the settlement waterfall, and the skip-queue auction.",
+    render: () => <FeeModel />,
+  },
+  {
+    id: "profitability",
+    n: "05",
     title: "Profitability + the split",
     intro: "once the wallet is past the floor, the excess distributes: 33% operations, 22% each to Hurricane / Candy / Zaal.",
     render: () => <Profitability />,
   },
   {
     id: "revenue",
-    n: "05",
+    n: "06",
     title: "Weekly revenue analytics",
-    intro: "real weekly inflow from the on-chain fee wallet - this week's revenue, the trend, and the per-battle fee.",
+    intro: "real weekly inflow to the on-chain fee wallet - this week's revenue, the trend, and the per-battle fee.",
     render: () => <WeeklyRevenueAnalytics />,
   },
   {
     id: "ops",
-    n: "06",
+    n: "07",
     title: "Running the business",
     intro: "real-world costs and income the team tracks manually - tech stack, monthly P&L, the fee wallet. not on-chain-derivable, so treat it as reported.",
     render: () => <OpsLedger />,
   },
   {
     id: "analytics",
-    n: "07",
-    title: "Platform analytics",
-    intro: "the full on-chain picture now - battles, trades, and traders decoded straight from the program.",
+    n: "08",
+    title: "The program itself",
+    intro: "every call to the Solana program, decoded by Anchor discriminator, from its first day. no other WaveWarZ surface shows this.",
     render: () => <PlatformAnalytics />,
   },
   {
-    id: "battles",
-    n: "08",
-    title: "The battles",
-    intro: "every battle on record. search it, sort it, export it.",
-    render: () => <Battles />,
-  },
-  {
-    id: "traders",
+    id: "wallet",
     n: "09",
-    title: "Who's trading",
-    intro: "the leaderboard, the full trader table, and a lookup for any wallet's own PnL.",
+    title: "Your wallet on-chain",
+    intro: "look up any wallet's own position measured from the chain - cumulative SOL, win rate, biggest moves - alongside the platform's own figure for it.",
     render: () => (
       <>
-        <Leaderboard />
-        <div style={{ height: 24 }} />
-        <Traders />
-        <div style={{ height: 24 }} />
         <TraderScorecard />
+        <div style={{ height: 24 }} />
+        <TraderEdge />
       </>
     ),
   },
   {
-    id: "music",
+    id: "embeds",
     n: "10",
-    title: "The music",
-    intro: "the songs and artists the battles are built on - Audius play counts and inline play.",
-    render: () => (
-      <>
-        <Songs />
-        <div style={{ height: 24 }} />
-        <Artists />
-        <div style={{ height: 24 }} />
-        <Music />
-      </>
-    ),
+    title: "Take it with you",
+    intro: "every chart here is a standalone iframe. one line, no key, themed to match - drop them anywhere in the ecosystem.",
+    render: () => <EmbedsSection />,
   },
   {
     id: "ecosystem",
     n: "11",
     title: "In the ZAO ecosystem",
-    intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
+    intro: "where WaveWarZ sits in the bigger picture, the artists behind the battles, what's coming up, and the questions people ask most.",
     render: () => (
       <>
         <Ecosystem />
+        <div style={{ height: 24 }} />
+        <Artists />
+        <div style={{ height: 24 }} />
+        <Music />
         <div style={{ height: 24 }} />
         <Events />
         <div style={{ height: 24 }} />
@@ -159,9 +164,13 @@ const LEGACY_TAB: Record<string, string> = {
   growth: "growth",
   profitability: "profitability",
   analytics: "analytics",
-  battles: "battles",
-  leaderboard: "traders", traders: "traders", trader: "traders",
-  songs: "music", artists: "music", music: "music",
+  // Sections that no longer exist here land on the nearest thing that does,
+  // rather than 404ing a link somebody may have shared. Battles and the song
+  // chart now live on wavewarz.info; the ecosystem section links out to them.
+  battles: "analytics",
+  songs: "ecosystem",
+  leaderboard: "wallet", traders: "wallet", trader: "wallet",
+  artists: "ecosystem", music: "ecosystem",
   ecosystem: "ecosystem", events: "ecosystem", faq: "ecosystem",
 };
 

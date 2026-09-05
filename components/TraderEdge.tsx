@@ -365,7 +365,7 @@ export default function TraderEdge() {
                         style={{
                           width: 22,
                           height: 20,
-                          background: alpha > 0 ? `rgba(255, 194, 75, ${alpha})` : C.elev,
+                          background: alpha > 0 ? `rgba(149,254,124, ${alpha})` : C.elev,
                           border: `1px solid ${C.bg}`,
                         }}
                       />

@@ -13,3 +13,9 @@ next-env.d.ts
 
 # Claude Code scheduler lock - per-run, never shared
 .claude/scheduled_tasks.lock
+
+# Env backups - `.env*.local` does NOT match a .bak suffix, so spell it out.
+# A stray .env.local.bak-* once sat untracked in the repo root holding a live
+# DUNE_API_KEY; one `git add -A` would have published it.
+.env*.bak*
+*.env.local*

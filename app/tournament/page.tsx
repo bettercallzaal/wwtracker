@@ -242,7 +242,7 @@ export default function TournamentPage() {
                     <div
                       key={m.a + m.b}
                       style={{
-                        background: m.status === "pending" ? "#2b1c3f" : C.panel,
+                        background: m.status === "pending" ? "#111a2c" : C.panel,
                         border: `1px solid ${m.status === "pending" ? C.accent : C.grid}`,
                         borderRadius: 10,
                         padding: "12px 16px",
