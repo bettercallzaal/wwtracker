@@ -40,12 +40,20 @@ The three things to know before touching anything:
 ```bash
 npm install
 npm run validate     # data integrity + staleness gate
-npx vitest run       # 275 tests
+npx vitest run       # 288 tests
+npm run smoke:stats  # is the upstream wavewarz.info API still the shape we expect?
 npm run dev          # needs .env.local, see Environment below
 ```
 
-`npm run validate` is the fastest read on whether the data is healthy. It warns
-at 14 days stale and fails at 45 under `--strict`.
+`npm run validate` is the fastest read on whether our own data is healthy. It
+warns at 14 days stale and fails at 45 under `--strict`. Datasets knowingly
+parked past that carry an expiry date in `scripts/validate.mjs`, so the decision
+to keep parking them has to be made again rather than inherited by silence.
+
+`npm run smoke:stats` is the fastest read on whether *their* data is still the
+shape we assume. Both run daily in `.github/workflows/checks.yml`; neither is
+wired into the build, because stale data must not block an unrelated code deploy
+and our deploys must not depend on a third party's uptime.
 
 ## Where things are
 
@@ -126,6 +134,22 @@ nearest surviving section. Each is a focused lens on one aspect of the business:
 - [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md) - WaveWarZ domain
   research: program model, instruction discriminators, fee/settlement formulas,
   team, ecosystem, and on-chain findings.
+- [docs/PUBLIC-API.md](docs/PUBLIC-API.md) - the `/api/ww/*` endpoints this repo
+  **serves** to embedders.
+- [docs/UPSTREAM-STATS-API.md](docs/UPSTREAM-STATS-API.md) - the
+  `wavewarz.info/api/public/stats` contract this repo **consumes** and does not
+  own. Checked by `npm run smoke:stats`.
+
+## Tools
+
+- `npm run smoke:stats` - fetches the upstream stats endpoint and asserts all 13
+  documented fields still exist with the right type. An upstream rename would
+  otherwise surface as a wrong number on a chart rather than as an error.
+- `npm run decode:battle -- <battle_id>` - derives a battle's PDA and vault PDA
+  and decodes the on-chain account. Takes the platform battle id as it appears in
+  `public/ww-battles.json` (a large number like `1787629692`, not an index).
+  With no `HELIUS_API_KEY` it prints the PDAs and a ready curl command instead of
+  failing, so it is useful without a key.
 
 ## Recaps
 
