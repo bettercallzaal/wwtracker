@@ -105,7 +105,10 @@ export default function EmbedsSection() {
             {/* Relative path: the same markup works on localhost, a preview
                 deploy and production without touching a single URL. */}
             <iframe
-              src={`/embed/${w.slug}`}
+              // bare=1 drops the widget's own title row. The preview card
+              // already carries the title, and rendering it twice made every
+              // card look like a mistake.
+              src={`/embed/${w.slug}?bare=1`}
               title={w.title}
               height={w.height}
               loading="lazy"

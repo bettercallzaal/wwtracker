@@ -172,6 +172,19 @@ export default function Artists() {
           {visible.length === 0 && (
             <p style={{ ...metaLabel, fontSize: 12 }}>no artists match &quot;{q}&quot;.</p>
           )}
+          {/* Two columns where there is room. Stacked one per row this section
+              measured 12,261px - thirty-five percent of the whole page - while
+              leaving half the viewport empty. The cards are text-dense but read
+              fine at ~600px, and auto-fit collapses back to one column on
+              anything narrow. */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(430px, 1fr))",
+              gap: 12,
+              alignItems: "start",
+            }}
+          >
           {visible.map(({ ww, user, tracks }) => (
             <div key={ww.handle} style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 14, padding: 16 }}>
               <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
@@ -253,6 +266,7 @@ export default function Artists() {
               )}
             </div>
           ))}
+          </div>
         </div>
       )}
 
