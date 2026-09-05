@@ -38,9 +38,9 @@ interface SeriesDef {
 
 const SERIES: SeriesDef[] = [
   { id: "vol", name: "Volume", color: C.accent, unit: " SOL", dp: 1 },
-  { id: "bal", name: "Treasury", color: "#7ee0a0", unit: " SOL", dp: 2 },
-  { id: "btl", name: "Battles", color: "#8ab4ff", unit: "", dp: 0 },
-  { id: "trd", name: "Trades", color: "#c9a3ff", unit: "", dp: 0 },
+  { id: "bal", name: "Treasury", color: C.blue, unit: " SOL", dp: 2 },
+  { id: "btl", name: "Battles", color: "#5fd0c4", unit: "", dp: 0 },
+  { id: "trd", name: "Trades", color: "#f0b429", unit: "", dp: 0 },
 ];
 
 const START = "2025-08-01";
@@ -173,7 +173,7 @@ export default function OnChainProof() {
       k: "Total volume",
       v: liveStats ? fmt(liveStats.volume.totalSol, 1) : fmt(peaks.vol, 1),
       u: "SOL",
-      s: liveStats ? "live from WaveWarZ API" : "decoded buy volume (snapshot)",
+      s: liveStats ? "live from WaveWarZ API" : "per-battle volume, both sides (snapshot)",
     },
     {
       k: "Treasury now",
@@ -196,7 +196,7 @@ export default function OnChainProof() {
       s: "live, automatic per-trade + settlement",
     },
     { k: "Trades", v: fmt(prog.buys + prog.sells), u: "", s: `${fmt(prog.buys)} buys / ${fmt(prog.sells)} sells` },
-    { k: "Traders", v: "122", u: "", s: "unique wallets (snapshot)" },
+    { k: "Traders", v: fmt(prog.uniqueTraders, 0), u: "", s: "unique wallets, all time" },
   ];
 
   return (

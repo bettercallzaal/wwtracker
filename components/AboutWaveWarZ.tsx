@@ -37,7 +37,7 @@ export default function AboutWaveWarZ() {
           <Stat label="CLAIMS" value={fmt(p.claims)} sub="winnings withdrawn" />
           <Stat label="UNIQUE TRADERS" value={fmt(p.uniqueTraders)} sub="distinct buyers" />
           {WW.volume.total > 0 && (
-            <Stat label="BUY VOLUME" value={`${fmt(WW.volume.total)} ◎`} sub={usd(WW.volume.total)} />
+            <Stat label="TOTAL VOLUME" value={`${fmt(WW.volume.total)} ◎`} sub={usd(WW.volume.total)} />
           )}
           <Stat label="PROGRAM TXS" value={fmt(ps.programTxs)} sub={`${ps.activeDays} active days`} />
           <Stat label="TREASURY NET" value={`${fmt(ps.treasuryNet, 2)} ◎`} sub={`~the ${FLOOR_SOL} floor - ${usd(ps.treasuryNet)}`} />
@@ -45,7 +45,7 @@ export default function AboutWaveWarZ() {
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
           since {ps.firstDay} - snapshot {WW.generatedAt}. On-chain vs the
           wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~{S.totalShown.toLocaleString()});
-          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ buy volume (app ${S.totalVolumeSol.toFixed(2)} ◎, both sides);` : ""}
+          {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ traded, both sides (the platform reports ${S.totalVolumeSol.toFixed(2)} ◎);` : ""}
           {` app ${S.traderClaimsSol.toFixed(2)} ◎ claimed by traders (${S.withdrawalCount} withdrawals).`}
         </p>
       </Section>

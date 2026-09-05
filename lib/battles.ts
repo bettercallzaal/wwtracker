@@ -11,22 +11,25 @@ export interface RecentBattle {
 // battles: { total:1302, mainEvents:51, mainBattles:165, quickBattles:1101, communityBattles:36 }
 // traderClaims: { totalSol:381.1971, withdrawalCount:1526 }
 export const BATTLE_STATS = {
-  events: 51,           // mainEvents (COC-style show events) per /api/public/stats
-  quickBattles: 1101,
-  multiRound: 165,      // mainBattles (MAIN matches played) per /api/public/stats
-  communityBattles: 36,
-  totalShown: 1302,     // total per live API (feed lags)
-  totalVolumeSol: 878.8755,
-  artistPayoutsSol: 13.4144,
+  events: 53,           // mainEvents (COC-style show events) per /api/public/stats
+  quickBattles: 1291,
+  multiRound: 171,      // mainBattles (MAIN matches played) per /api/public/stats
+  communityBattles: 38,
+  totalShown: 1500,     // total per live API (feed lags)
+  totalVolumeSol: 921.29,
+  artistPayoutsSol: 14.3465,
+  // Upstream /api/public/stats no longer returns a platformRevenue object, so
+  // this is the last value it ever reported (2026-06-15) and cannot be refreshed
+  // by the documented method. Do not treat it as current - see docs/REFRESH.md.
   platformRevenueSol: 20.2008,
-  traderClaimsSol: 381.1971,  // cumulative claimShares withdrawals
-  withdrawalCount: 1526,     // distinct claimShares transactions
+  traderClaimsSol: 408.73,   // cumulative claimShares withdrawals
+  withdrawalCount: 1928,     // distinct claimShares transactions
 };
 
 export const RECENT_BATTLES: RecentBattle[] = [
   { type: "MAIN", a: "AI LUI", b: "Benny J", winner: "AI LUI", vol: 17.6623, date: "Jun 8, 2026" },
   { type: "MAIN", a: "Geek Myth", b: "Taji Kamikaze", winner: "Geek Myth", vol: 11.099, date: "Jun 11, 2026" },
   { type: "MAIN", a: "Stella Estrella", b: "Aporkalypse", winner: "Stella Estrella", vol: 3.4257, date: "Jun 15, 2026" },
-  { type: "QUICK", a: "GESD1", b: "WYFL Freestyle", winner: "GESD1", vol: 0.1212, date: "Jul 29, 2026" },
-  { type: "QUICK", a: "Life Happens x JayStreetz x LUI", b: "For my PeopleZ", winner: "For my PeopleZ", vol: 0.1143, date: "Jul 29, 2026" },
+  { type: "QUICK", a: "I Am Hondro", b: "Say ElTio", winner: "Say ElTio", vol: 0.26, date: "Aug 25, 2026" },
+  { type: "QUICK", a: "Eat Away Dough", b: "BOUT THAiT!", winner: "Eat Away Dough", vol: 0.1369, date: "Aug 25, 2026" },
 ];

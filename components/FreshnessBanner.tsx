@@ -39,10 +39,13 @@ export default function FreshnessBanner() {
         lineHeight: 1.5,
       }}
     >
-      <span style={{ fontWeight: 700, color: C.accent }}>data through {DATA_AS_OF}</span>
+      <span style={{ fontWeight: 700, color: C.accent }}>
+        baked data through {DATA_AS_OF}
+      </span>
       <span style={{ color: C.dim }}>
-        live refresh is paused - the on-chain snapshot is {stale} days old. numbers below are the
-        last full pull, not today&apos;s. fresh data returns when the source quota resets.
+        the treasury series, platform totals and leaderboards on this page are live. what is
+        baked is the battle-history file, {stale} days old - refresh it with{" "}
+        <code>npm run fetch:battles</code>. see docs/REFRESH.md.
       </span>
     </div>
   );

@@ -3,7 +3,7 @@
   "ignoreCommand": "git diff --quiet $VERCEL_GIT_PREVIOUS_SHA $VERCEL_GIT_COMMIT_SHA -- app components lib public package.json package-lock.json next.config.mjs tsconfig.json vercel.json",
   "crons": [
     {
-      "path": "/api/balance",
+      "path": "/api/balance?refresh=1",
       "schedule": "0 9 * * *"
     }
   ]

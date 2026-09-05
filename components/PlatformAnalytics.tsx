@@ -35,6 +35,21 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 
+// On-chain daily data from Dune - all instructions decoded day by day.
+// This replaces the stale lib/wwData.ts snapshot with fresh, continuously-updated data
+// from 2025-05-26 (program's true first day) to today.
+interface OnchainDailyRow {
+  date: string;
+  txs: number;
+  traders: number;
+  buys: number;
+  sells: number;
+  claims: number;
+  created: number;  // createBattle / initializeBattle calls
+  settled: number;  // endBattle / settleBattle calls
+  minted: number;   // mint instruction calls
+}
+
 interface ActivityDay {
   date: string;
   buys: number;
@@ -49,47 +64,76 @@ interface VolRow {
   sol: number;
   buys: number;
 }
-interface VolBoard {
-  meta: { window_days: number; as_of: string; note: string };
-  rows: VolRow[];
-}
-
 export default function PlatformAnalytics() {
   const reduced = useReducedMotion();
-  const [activity, setActivity] = useState<ActivityDay[] | null>(null);
-  const [volboard, setVolboard] = useState<VolBoard | null>(null);
+  const [onchainDaily, setOnchainDaily] = useState<OnchainDailyRow[] | null>(null);
 
   useEffect(() => {
     let alive = true;
-    fetch("/ww-activity.json")
+    // Fetch fresh on-chain daily data: all program instructions decoded by day.
+    // Gap-filled from 2025-05-26 (first day) to today with zero values for inactive days.
+    fetch("/ww-onchain-daily.json")
       .then((r) => r.json())
-      .then((d: ActivityDay[]) => alive && setActivity([...d].reverse().slice(-30)))
-      .catch(() => {});
-    fetch("/ww-volboard.json")
-      .then((r) => r.json())
-      .then((d: VolBoard) => alive && setVolboard(d))
+      .then((d: OnchainDailyRow[]) => alive && setOnchainDaily(d))
       .catch(() => {});
     return () => {
       alive = false;
     };
   }, []);
 
+  // The last-30-days view is a window onto the same fresh series the rest of
+  // this section uses. It used to come from public/ww-activity.json, a separate
+  // snapshot that had gone 81 days stale while this panel still called itself
+  // LIVE. Deriving it removes the second copy that made that possible.
+  const activity = useMemo<ActivityDay[] | null>(() => {
+    if (!onchainDaily?.length) return null;
+    return onchainDaily
+      .filter((d) => d.txs > 0)
+      .slice(-30)
+      .map((d) => ({
+        date: d.date,
+        buys: d.buys,
+        sells: d.sells,
+        battles: d.created,
+        settled: d.settled,
+        claims: d.claims,
+        mints: d.minted,
+      }));
+  }, [onchainDaily]);
+
+  // Compute summary stats from fresh on-chain data. These are all-time program stats
+  // from the decoded instruction stream, not estimates or subsets.
   const summary = useMemo(() => {
-    const totalTxs = WW.daily.reduce((s, d) => s + d.txs, 0);
-    const activeDays = WW.daily.length;
-    const peak = WW.daily.reduce(
+    if (!onchainDaily) return null;
+    const totalTxs = onchainDaily.reduce((s, d) => s + d.txs, 0);
+    const activeDays = onchainDaily.filter((d) => d.txs > 0).length;
+    const peak = onchainDaily.reduce(
       (m, d) => (d.txs > m.txs ? d : m),
-      { block_date: "-", txs: 0, traders: 0 },
+      { date: "-", txs: 0, traders: 0 },
     );
+    // Distinct traders across all time - pulled from the dataset directly
     const uniqueTraders = WW.traders.filter((t) => t.trader !== TREASURY).length;
-    const first = WW.daily[0]?.block_date ?? "-";
+    const first = onchainDaily[0]?.date ?? "-";
     return { totalTxs, activeDays, peak, uniqueTraders, first };
-  }, []);
+  }, [onchainDaily]);
 
   const dailyData = useMemo(
-    () => WW.daily.map((d) => ({ date: d.block_date, txs: d.txs, traders: d.traders })),
-    [],
+    () => (onchainDaily ? onchainDaily.map((d) => ({ date: d.date, txs: d.txs, traders: d.traders })) : []),
+    [onchainDaily],
   );
+
+  // Timeline: created/settled/minted battles per day vs total trades (buys + sells + claims).
+  // This shows the relationship between battle lifecycle and trading activity.
+  const timelineData = useMemo(() => {
+    if (!onchainDaily) return [];
+    return onchainDaily.map((d) => ({
+      date: d.date,
+      battles: d.created,
+      settled: d.settled,
+      minted: d.minted,
+      trades: d.buys + d.sells + d.claims,
+    }));
+  }, [onchainDaily]);
 
   const flowData = useMemo(
     () =>
@@ -101,14 +145,19 @@ export default function PlatformAnalytics() {
     [],
   );
 
-  if (WW.daily.length === 0) {
+  // Show loading state until on-chain data arrives, or fall back to old snapshot if fetch fails.
+  if (!onchainDaily && WW.daily.length === 0) {
     return (
       <p style={{ ...metaLabel, fontSize: 13 }}>
-        Analytics snapshot not generated yet. Run scripts/ww-research.sh and
-        regenerate lib/wwData.ts.
+        Loading on-chain analytics. If this persists, check that public/ww-onchain-daily.json
+        was generated and is valid JSON.
       </p>
     );
   }
+
+  // Use fresh data if available; fall back to stale snapshot for trader stats that
+  // don't have equivalents in the on-chain data alone.
+  const safe = { summary: summary || { totalTxs: 0, activeDays: 0, peak: { date: "-", txs: 0, traders: 0 }, uniqueTraders: 0, first: "-" }, dailyData };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -125,7 +174,7 @@ export default function PlatformAnalytics() {
           WaveWarZ<span style={{ color: C.dim, fontWeight: 400 }}> / on-chain</span>
         </h1>
         <span style={{ ...metaLabel, fontSize: 11 }}>
-          program 9TUf...g2fYo - since {summary.first}
+          program 9TUf...g2fYo - since {safe.summary.first}
         </span>
       </div>
 
@@ -137,7 +186,7 @@ export default function PlatformAnalytics() {
         . What's below is this tracker's own angle: trend charts and flow that dashboard doesn't show.
       </p>
 
-      {/* headline tiles */}
+      {/* headline tiles - all computed from fresh on-chain data */}
       <div
         style={{
           display: "grid",
@@ -145,13 +194,13 @@ export default function PlatformAnalytics() {
           gap: 12,
         }}
       >
-        <Tile label="PROGRAM TXS">{fmt(summary.totalTxs)}</Tile>
-        <Tile label="ACTIVE DAYS">{fmt(summary.activeDays)}</Tile>
-        <Tile label="TRADERS (TOP 50)">{fmt(summary.uniqueTraders)}</Tile>
+        <Tile label="PROGRAM TXS">{fmt(safe.summary.totalTxs)}</Tile>
+        <Tile label="ACTIVE DAYS">{fmt(safe.summary.activeDays)}</Tile>
+        <Tile label="TRADERS (TOP 50)">{fmt(safe.summary.uniqueTraders)}</Tile>
         <Tile label="PEAK DAY">
-          {fmt(summary.peak.txs)}
+          {fmt(safe.summary.peak.txs)}
           <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>
-            {summary.peak.block_date}
+            {safe.summary.peak.date}
           </small>
         </Tile>
         <Tile label="TREASURY NET">
@@ -182,7 +231,7 @@ export default function PlatformAnalytics() {
                 <YAxis yAxisId="l" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={32} />
                 <YAxis yAxisId="r" orientation="right" tick={{ fill: C.good, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={24} />
                 <Tooltip
-                  cursor={{ fill: "rgba(255,194,75,0.08)" }}
+                  cursor={{ fill: "rgba(149,254,124,0.08)" }}
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
                   formatter={(v: number | string, n) => [fmt(Number(v)), n]}
@@ -201,100 +250,89 @@ export default function PlatformAnalytics() {
         </Panel>
       )}
 
-      {volboard && volboard.rows.length > 0 && (
-        <Panel label={`LIVE - TOP BUYERS BY SOL VOLUME, LAST ${volboard.meta.window_days} DAYS`}>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 13 }}>
-              <thead>
-                <tr style={{ color: C.dim, textAlign: "left" }}>
-                  <th style={th}>#</th>
-                  <th style={th}>WALLET</th>
-                  <th style={{ ...th, textAlign: "right" }}>VOLUME ◎</th>
-                  <th style={{ ...th, textAlign: "right" }}>BUYS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {volboard.rows
-                  .filter((t) => t.trader !== TREASURY)
-                  .slice(0, 15)
-                  .map((t, i) => {
-                    const mine = t.trader === ME;
-                    return (
-                      <tr key={t.trader} style={{ borderTop: `1px solid ${C.grid}`, color: mine ? C.accent : C.text }}>
-                        <td style={td}>{i + 1}</td>
-                        <td style={td} title={t.trader}>{short(t.trader)}{mine ? "  (you)" : ""}</td>
-                        <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(t.sol, 2)}</td>
-                        <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmt(t.buys)}</td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
+      {/* A "top buyers by SOL volume" panel used to sit here, fed by
+          public/ww-volboard.json. It was labelled LIVE while running on a file
+          81 days old, and per-signer volume needs an account_activity join that
+          the free Dune tier times out on. Removed rather than relabelled: it is
+          a trader ranking, which is wavewarz.info's own leaderboard to own, and
+          a second ranking that disagrees with theirs helps nobody. */}
+
+      {/* what the data says - mixing fresh and persistent data sources */}
+      {onchainDaily && (
+        <Panel label="WHAT THE DATA SAYS">
+          <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 14 }}>
+            <li>
+              Treasury nets <b>{fmt(WW.platformStats.treasuryNet, 2)} ◎</b> lifetime -
+              landing on the ~{FLOOR_SOL} SOL floor, so the skim discipline holds on-chain.
+            </li>
+            <li>
+              <b>
+                {fmt(
+                  Math.round(
+                    ((onchainDaily.reduce((s, d) => s + d.settled, 0) /
+                      Math.max(1, onchainDaily.reduce((s, d) => s + d.created, 0))) *
+                      1000) /
+                      10,
+                  ),
+                )}
+                %
+              </b>
+              {" "}
+              of battles settle - the program resolves what it starts.
+            </li>
+            <li>
+              <b>{fmt(WW.program.uniqueTraders)} traders</b> moved{" "}
+              <b>{fmt(WW.volume.total)} ◎</b> of trading volume across{" "}
+              {fmt(WW.program.buys + WW.program.sells)} trades.
+            </li>
+            <li>
+              Trading is hard: the tracked wallet is a net loser at{" "}
+              <b>{fmt(WW.traderStats.winRate, 1)}% win rate</b> - claims rarely
+              outrun bets.
+            </li>
+          </ul>
+        </Panel>
+      )}
+
+      {/* daily activity - from fresh on-chain data */}
+      {onchainDaily && onchainDaily.length > 0 && (
+        <Panel label="DAILY ACTIVITY - TXS (BARS) vs UNIQUE TRADERS (LINE)">
+          <div style={{ height: 280 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={dailyData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={48} />
+                <YAxis yAxisId="l" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={40} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fill: C.good, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={28} />
+                <Tooltip
+                  cursor={{ fill: "rgba(149,254,124,0.08)" }}
+                  contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
+                  labelStyle={{ color: C.dim }}
+                  formatter={(v: number | string, n) => [fmt(Number(v)), n === "txs" ? "txs" : "traders"]}
+                />
+                <Bar yAxisId="l" dataKey="txs" fill={C.accent} fillOpacity={0.8} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
+                <Line yAxisId="r" type="monotone" dataKey="traders" stroke={C.good} strokeWidth={1.5} dot={false} isAnimationActive={!reduced} />
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
           <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>
-            Buy-side SOL committed per wallet over the last {volboard.meta.window_days} days
-            (as of {volboard.meta.as_of}). FNj (platform ops) excluded. Live from Dune.
+            All-time daily activity from on-chain instruction decode, refreshed from Dune.
+            Spans {onchainDaily[0]?.date} to {onchainDaily[onchainDaily.length - 1]?.date}.
           </p>
         </Panel>
       )}
 
-      {/* what the data says */}
-      <Panel label="WHAT THE DATA SAYS">
-        <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 14 }}>
-          <li>
-            Treasury nets <b>{fmt(WW.platformStats.treasuryNet, 2)} ◎</b> lifetime -
-            landing on the ~{FLOOR_SOL} SOL floor, so the skim discipline holds on-chain.
-          </li>
-          <li>
-            <b>{fmt(Math.round((WW.program.battlesSettled / Math.max(1, WW.program.battlesCreated)) * 1000) / 10)}%</b>{" "}
-            of battles settle - the program resolves what it starts.
-          </li>
-          <li>
-            <b>{fmt(WW.program.uniqueTraders)} traders</b> moved{" "}
-            <b>{fmt(WW.volume.total)} ◎</b> of buy volume across{" "}
-            {fmt(WW.program.buys + WW.program.sells)} trades.
-          </li>
-          <li>
-            Trading is hard: the tracked wallet is a net loser at{" "}
-            <b>{fmt(WW.traderStats.winRate, 1)}% win rate</b> - claims rarely
-            outrun bets.
-          </li>
-        </ul>
-      </Panel>
-
-      {/* daily activity */}
-      <Panel label="DAILY ACTIVITY - TXS (BARS) vs UNIQUE TRADERS (LINE)">
-        <div style={{ height: 280 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={dailyData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="date" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={48} />
-              <YAxis yAxisId="l" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={40} />
-              <YAxis yAxisId="r" orientation="right" tick={{ fill: C.good, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={28} />
-              <Tooltip
-                cursor={{ fill: "rgba(255,194,75,0.08)" }}
-                contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
-                labelStyle={{ color: C.dim }}
-                formatter={(v: number | string, n) => [fmt(Number(v)), n === "txs" ? "txs" : "traders"]}
-              />
-              <Bar yAxisId="l" dataKey="txs" fill={C.accent} fillOpacity={0.8} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
-              <Line yAxisId="r" type="monotone" dataKey="traders" stroke={C.good} strokeWidth={1.5} dot={false} isAnimationActive={!reduced} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      </Panel>
-
-      {/* battles vs trades over time */}
-      {WW.timeline.length > 0 && (
-        <Panel label="BATTLES (LINE) vs TRADES (BARS) PER DAY">
+      {/* battles vs trades over time - from decoded on-chain data */}
+      {timelineData.length > 0 && (
+        <Panel label="BATTLES CREATED (LINE) vs TRADES PER DAY (BARS)">
           <div style={{ height: 280 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={WW.timeline} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+              <ComposedChart data={timelineData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke={C.grid} strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="block_date" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={48} />
+                <XAxis dataKey="date" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={48} />
                 <YAxis tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={40} />
                 <Tooltip
-                  cursor={{ fill: "rgba(255,194,75,0.08)" }}
+                  cursor={{ fill: "rgba(149,254,124,0.08)" }}
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
                   formatter={(v: number | string, n) => [fmt(Number(v)), n]}
@@ -304,6 +342,9 @@ export default function PlatformAnalytics() {
               </ComposedChart>
             </ResponsiveContainer>
           </div>
+          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>
+            Battles = createBattle calls decoded from on-chain. Trades = buys + sells + claims per day.
+          </p>
         </Panel>
       )}
 
@@ -329,9 +370,9 @@ export default function PlatformAnalytics() {
         </Panel>
       )}
 
-      {/* platform buy volume */}
+      {/* platform volume, both sides */}
       {WW.volume.series.length > 0 && (
-        <Panel label={`PLATFORM BUY VOLUME - ${fmt(WW.volume.total, 1)} ◎ COMMITTED`}>
+        <Panel label={`PLATFORM VOLUME - ${fmt(WW.volume.total, 1)} ◎ TRADED, BOTH SIDES`}>
           <div style={{ height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={WW.volume.series} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
@@ -339,10 +380,10 @@ export default function PlatformAnalytics() {
                 <XAxis dataKey="block_date" tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={{ stroke: C.grid }} minTickGap={48} />
                 <YAxis tick={{ fill: C.dim, fontSize: 11, fontFamily: C.mono }} tickLine={false} axisLine={false} width={44} tickFormatter={(v: number) => fmt(v, 1)} />
                 <Tooltip
-                  cursor={{ fill: "rgba(255,194,75,0.08)" }}
+                  cursor={{ fill: "rgba(149,254,124,0.08)" }}
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
-                  formatter={(v: number | string) => [`${fmt(Number(v), 2)} ◎`, "buy volume"]}
+                  formatter={(v: number | string) => [`${fmt(Number(v), 2)} ◎`, "volume"]}
                 />
                 <Bar dataKey="vol" fill={C.accent} fillOpacity={0.8} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
               </BarChart>
@@ -354,22 +395,44 @@ export default function PlatformAnalytics() {
         </Panel>
       )}
 
-      <Panel label="HOW THESE COMPARE TO OTHER TABS">
-        <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 13 }}>
-          <li><b>Battles</b>: {fmt(WW.program.battlesCreated)} here = on-chain <i>initializeBattle</i> calls; the Battles tab&apos;s {S.totalShown.toLocaleString()} is the site&apos;s battle count (it groups multi-song main events and excludes test battles).</li>
-          <li><b>Traders</b>: {fmt(WW.program.uniqueTraders)} here = unique <i>buyShares</i> signers on-chain; the Traders tab shows the site&apos;s top 101 leaderboard.</li>
-          <li><b>Volume</b>: {fmt(WW.volume.total, 0)} ◎ here is buy-side only (SOL committed on buys); the site reports ~{S.totalVolumeSol.toFixed(0)} ◎ counting both buy and sell sides.</li>
-          <li><b>Claims</b>: {fmt(WW.program.claims)} <i>claimShares</i> instruction calls on-chain (Dune); the site reports {S.withdrawalCount} withdrawals totaling {S.traderClaimsSol.toFixed(2)} ◎ — different counting methodology, same underlying action.</li>
-        </ul>
-        <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>Different measures, all from-chain - not contradictions.</p>
-      </Panel>
+      {onchainDaily && (
+        <Panel label="HOW THESE COMPARE TO OTHER TABS">
+          <ul style={{ margin: 0, paddingLeft: 18, color: C.text, lineHeight: 1.8, fontSize: 13 }}>
+            <li>
+              <b>Battles</b>: {fmt(onchainDaily.reduce((s, d) => s + d.created, 0))} here = on-chain{" "}
+              <i>createBattle</i> calls decoded from instruction stream; the Battles tab&apos;s{" "}
+              {S.totalShown.toLocaleString()} is the site&apos;s battle count (it groups multi-song main
+              events and excludes test battles).
+            </li>
+            <li>
+              <b>Traders</b>: {fmt(WW.program.uniqueTraders)} here = unique <i>buyShares</i> signers on-chain;
+              the Traders tab shows the site&apos;s top 101 leaderboard.
+            </li>
+            <li>
+              <b>Volume</b>: {fmt(WW.volume.total, 0)} ◎ is both sides, summed from the
+              platform&apos;s own per-battle figures, so it agrees with the ~{S.totalVolumeSol.toFixed(0)} ◎
+              the site reports rather than sitting alongside it as a rival number.
+            </li>
+            <li>
+              <b>Claims</b>: {fmt(onchainDaily.reduce((s, d) => s + d.claims, 0))} <i>claimShares</i>{" "}
+              instruction calls decoded from on-chain; the site reports {S.withdrawalCount} withdrawals
+              totaling {S.traderClaimsSol.toFixed(2)} ◎ — different counting methodology, same underlying
+              action.
+            </li>
+          </ul>
+          <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>Different measures, all from-chain - not contradictions.</p>
+        </Panel>
+      )}
 
-      <p style={{ margin: 0, fontFamily: C.mono, fontSize: 12, color: C.dim, lineHeight: 1.5 }}>
-        On-chain snapshot {WW.generatedAt || "(pending)"} from Dune over program
-        {PROGRAM} (a bit older than the {DATA_AS_OF}{" "}
-        site snapshots). Treasury wallet FNj signs every battle, so it tops raw tx
-        count and is excluded from the trader board. See docs/WAVEWARZ-RESEARCH.md.
-      </p>
+      {onchainDaily && (
+        <p style={{ margin: 0, fontFamily: C.mono, fontSize: 12, color: C.dim, lineHeight: 1.5 }}>
+          On-chain instruction data refreshed from Dune over program {PROGRAM}. Daily activity
+          (txs, battles, trades) comes from decoded on-chain instructions; treasury flow, platform
+          buy volume, and trader PnL are from the {WW.generatedAt || "older"} snapshot (these require
+          separate data pipelines). Treasury wallet FNj signs every battle, so it tops raw tx count and
+          is excluded from the trader board. See docs/WAVEWARZ-RESEARCH.md.
+        </p>
+      )}
     </div>
   );
 }

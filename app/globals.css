@@ -1,14 +1,17 @@
+/* WaveWarZ design system tokens - see lib/theme.ts for why wwtracker wears
+   them rather than its own palette. Keep the two files in step; lib/theme.ts is
+   the source of truth for anything rendered from JS. */
 :root {
-  --bg: #190f24;
-  --bg-panel: #211531;
-  --bg-elev: #2b1c3f;
-  --accent: #ffc24b;
-  --accent-dim: #b8863a;
-  --text: #f4ecff;
-  --text-dim: #a596b8;
-  --grid: #3a2950;
-  --danger: #ff6b6b;
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --bg: #0d1321;
+  --bg-panel: #0f1626;
+  --bg-elev: #111a2c;
+  --accent: #95fe7c;
+  --accent-dim: rgba(149, 254, 124, 0.14);
+  --blue: #7ec1fb;
+  --text: #daecfd;
+  --text-dim: #8b97ab;
+  --grid: rgba(126, 193, 251, 0.14);
+  --danger: #ef4444;
 }
 
 * {
@@ -21,12 +24,7 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -72,4 +70,22 @@ body {
 /* On-chain overview: collapse cofounder PnL card on narrow screens */
 @media (max-width: 620px) {
   .proof-trader { grid-template-columns: 1fr !important; }
+}
+
+/* The arena voice. Condensed, uppercase, used for anything that should read
+   like a scoreboard rather than a sentence. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-disp), system-ui, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+/* Data is always tabular so columns of numbers line up. */
+code,
+pre,
+.mono {
+  font-variant-numeric: tabular-nums;
 }

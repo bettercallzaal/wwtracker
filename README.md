@@ -1,72 +1,75 @@
-# wwtracker - WaveWarZ on-chain tracker
+# wwtracker - WaveWarZ on-chain business layer
 
-Next.js (App Router) dashboard tracking WaveWarZ on Solana - the platform
-treasury wallet, the program's activity, and a trader's PnL - backed by Dune.
+Next.js (App Router) dashboard for the WaveWarZ Solana music-battle platform.
+The treasury wallet, the operating floor, the fee model, the business ledger,
+and the program decoded instruction by instruction.
 
 **Live:** https://wwtracker.vercel.app
 
 WaveWarZ is a Solana music-battle platform: fans trade SOL on song-vs-song
-battles. Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`.
+battles. Program: `9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo`. Everything
+WaveWarZ battle-shaped, artist-shaped or song-shaped is read live from
+wavewarz.info's public API, never copied.
 
 **New here?** Start with [docs/](docs/README.md) - the surface map (WaveWarZ is
 three sites with three owners), the team, and the ecosystem. Full research in
 [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md).
 
+## Why this matters
+
+wavewarz.info (the system of record for WaveWarZ) already renders the battles
+table, leaderboards, songs, and artist pages. A second set of those numbers in
+wwtracker would be a liability: the old tracker held a trader table that showed
+the top trader down 19 SOL while wavewarz.info's own API had them up 30, and a
+song list with 37 rows against the API's 934. So the rule now is: nothing here
+is baked that has a live source on wavewarz.info, and nothing is rebuilt that
+they already render. What is left is the part no other WaveWarZ surface shows:
+the treasury, the operating floor, the fee model, the business ledger, and the
+program itself decoded straight off Solana.
+
 ## Sections
 
-Not tabs - one scrolling page, numbered 00-10, with a sticky jump-nav
-(`components/AppShell.tsx`). Old `?tab=` links from before the redesign still
-resolve to the right section.
+Twelve numbered sections in one continuous scroll, with a sticky jump-nav
+(`components/AppShell.tsx`). Old `?tab=` links still resolve to the nearest
+surviving section. Each is a focused lens on one aspect of the business:
 
-- **00 Overview** - the landing view. Stat tiles (volume, treasury, battles,
-  trades, traders, active days) plus a master chart overlaying volume /
-  treasury / battles / trades (indexed to each line's own peak = 100% so they
-  share one axis - no dual-y - with real numbers in the tooltip and per-line
-  toggles).
-- **01 What** - the WaveWarZ hub: what it is, how a battle works
-  (buyShares/sellShares/endBattle/claimShares, 2-of-3 judging), the fee model, a
-  live on-chain snapshot, key addresses (Solscan links), team, and official links.
-- **02 Floor** - the treasury/dev wallet `FNj...` daily end-of-day SOL
-  balance vs the 3.5 SOL operating floor. Bars = daily close; the line = intraday
-  high (peaks that get skimmed before close - e.g. the wallet hit **4.65 SOL**
-  intraday on 2026-06-13 but closed at 3.51). DAY / WEEK toggle. Live from Dune.
-- **03 Growth** - true-scale cumulative SOL volume since launch, not indexed
-  like the Overview chart - the actual shape of the platform's growth curve.
-- **04 Profitability** - the floor model made visible: the 3.5 SOL operating
-  floor, the distribution split (33% operations, 22% each to Hurricane / Candy /
-  Zaal), a split pie, recipient cards (Solscan links when wallets are set), and a
-  distribution history table. Config in `lib/distributions.ts`; rows show TBD
-  until the real distribution dates/amounts + wallets are filled in.
-- **05 Running the business** - real-world costs and income the team tracks
-  manually (not on-chain-derivable): the fee wallet's live SOL/WARZ balance
-  (verified against Solana mainnet RPC), historical treasury snapshots, the
-  tech-stack cost table, and monthly expense/income P&L - with any figure that
-  doesn't reconcile flagged explicitly rather than smoothed over. Config in
-  `lib/opsLedger.ts`.
-- **06 Analytics** - WaveWarZ program-wide on-chain: 1,127 battles / 9,045 trades /
-  122 traders (decoded instructions), battles-vs-trades timeline, daily activity
-  (14,681 txs over 230 days since Aug 2025), treasury daily flow (lifetime net
-  +3.51 SOL = the floor), and a top-traders leaderboard. Snapshot in `lib/wwData.ts`.
-- **07 Battles** - the full battle history: search, filter by type, CSV export.
-- **08 Traders** - the artist leaderboard, the full trader table, and a
-  lookup for any wallet's own PnL (cumulative SOL, live from on-chain, win
-  rate, biggest win/loss - shown alongside the stats-app's realized figure).
-- **09 Music** - the songs and artists the battles are built on: song charts
-  with Audius play counts + inline play, and the artist roster.
-- **10 Ecosystem** - where WaveWarZ sits in the ZAO ecosystem, events, and FAQ.
+- **00 Overview** - every on-chain series at once. Volume, treasury, battles,
+  trades: each line scaled to its own peak so they share one axis, with toggles
+  and real numbers in the tooltip.
+- **01 What** - what WaveWarZ is, battle mechanics (buyShares / sellShares /
+  endBattle / claimShares), the fee model, live on-chain snapshot, key addresses,
+  team, and official links.
+- **02 Floor** - the treasury wallet's daily balance (close + intraday high) held
+  against the 3.5 SOL operating floor. Live from Dune, refreshed every morning.
+- **03 Growth** - cumulative SOL traded since launch in May 2025, at true scale.
+- **04 Economics** - the fee schedule made visible: 1.5% per trade split in the
+  artist's favour, the settlement waterfall, the skip-queue auction, and where
+  every SOL goes.
+- **05 Profitability** - once the wallet exceeds the floor, the surplus
+  distributes as 33% operations, 22% each to Hurricane / Candy / Zaal.
+- **06 Revenue** - real weekly inflow to the on-chain fee wallet, the trend, and
+  the per-battle fee.
+- **07 Operations** - real-world costs and income the team tracks manually (not
+  on-chain-derivable): tech stack, monthly P&L, the fee wallet live balance.
+- **08 Analytics** - every call to the Solana program, decoded by Anchor
+  discriminator from its first day. No other WaveWarZ surface shows this.
+- **09 Wallet** - look up any wallet's position: cumulative SOL, win rate,
+  biggest moves, all verified on-chain.
+- **10 Embeds** - every chart here is a standalone iframe for embedding elsewhere.
+- **11 Ecosystem** - where WaveWarZ sits in The ZAO ecosystem, events, FAQ.
 
-Table features across those sections: client-side search/filter (songs, traders,
-artists, battles), sortable columns (traders), and CSV export (leaderboard,
-traders, battles) via the reusable `lib/csv.ts`.
+## Embeds
 
-## Streaming Overlay
-
-- **[/overlay.html](/overlay.html)** - lower-third browser-source overlay for
-  Restream / OBS. Shows live WaveWarZ data: 30-day volume, total battles, and
-  today's transaction count. Values refresh automatically from the tracker's own
-  snapshots every 90 seconds. Artist names via `?left=ARTIST1&right=ARTIST2&sub=TAGLINE`
-  query params. Transparent background, reduced-motion safe, optimized for
-  compositing over video.
+- **Gallery** - section 10 shows every embeddable chart and counter. One line,
+  no key, themed to the WaveWarZ design system.
+- **Widget registry** - `lib/embeds.ts` declares what can be embedded
+  (`/embed/<slug>`). Each entry is one chart or counter: treasury balance, daily
+  activity, instruction-type mix, battles, volume, per-trader SOL, etc. Framing
+  is CSP-restricted in `next.config.mjs`.
+- **On-chain only** - the registry is weighted toward charts that only exist
+  here: treasury, program activity, the operating floor. Battles, leaderboards,
+  songs, and artist pages are on wavewarz.info - link to those instead of
+  rebuilding them.
 
 ## Docs
 
@@ -99,26 +102,43 @@ markdown files with a "Data used" section citing the exact source for every
 number, and a "Not included" section for anything that can't be verified at
 that granularity (no per-battle payout/trade data exists).
 
-## How it works
+## Two data paths
 
-- `lib/dune.ts` - server-only Dune client. `getLatestBalances()` reads cached
-  query results (cheap); `executeForWallet()` runs execute -> poll -> results for
-  other wallets; `getCachedRows()` is the generic cached reader.
-- `app/api/balance/route.ts` - holds the key server-side; `?wallet=` / `?mint=`
-  validated as base58 before any credit is spent.
-- `lib/wwData.ts` - baked Dune analytics snapshot; regenerate with
-  `scripts/ww-research.sh` (needs `DUNE_API_KEY`).
-- `vercel.json` - daily cron warms `/api/balance`.
+The app uses two patterns, each fitted to its cost and freshness:
+
+- **Live** - the treasury balance reads from Dune's cached results of saved query
+  7717935 (no execution cost). The `/api/balance?refresh=1` endpoint (gated by
+  `CRON_SECRET`) forces a re-run via `executeSavedQuery()` in `lib/dune.ts`.
+  The daily Vercel cron hits this endpoint at 9 AM to refresh. Missing
+  `CRON_SECRET` in the Vercel environment will cause the chart to silently
+  freeze - this is the single most important operational detail in the repo.
+
+- **Snapshots** - heavier analytics (instruction decode, PnL, volume, timelines)
+  are Dune queries run offline via `scripts/ww-research.sh`, then baked into
+  `lib/wwData.ts` by `scripts/ww-gen.py`. Components read directly from `wwData`
+  - no request-time Dune calls, always instant, zero per-view cost. Live until
+  manually refreshed.
+
+Platform stats (battles, volume, artists, traders) come from wavewarz.info's
+public API via `/api/ww/*` routes, cached and served through the tracker rather
+than hitting the upstream API directly.
 
 ## Environment
 
-Copy `.env.example` to `.env.local`:
+Local development: copy `.env.example` to `.env.local` with:
 
 - `DUNE_API_KEY` - server-only, never exposed (no `NEXT_PUBLIC_`).
 - `DUNE_QUERY_ID` - the daily-balance query (7717935).
 - `DUNE_DEFAULT_WALLET` - the treasury wallet.
 
-With env unset the dashboard still renders on deterministic sample data.
+Production (Vercel): set the same vars, plus:
+
+- `CRON_SECRET` - the secret for the daily refresh cron. Without this the
+  treasury chart will freeze. The cron hits `/api/balance?refresh=1` every
+  morning at 9 AM; if this env var is unset the endpoint returns 401 and the
+  chart silently goes stale.
+
+Without env the dashboard renders on deterministic sample data.
 
 ## Develop
 
@@ -129,17 +149,16 @@ npm run typecheck
 npm run build
 ```
 
-## Status / next
+## Refresh & operations
 
-Done: scrolling-section dashboard, live treasury balance with intraday highs,
-program analytics, live trader PnL, full research doc, profitability section
-(floor + distribution split), table search/sort, CSV export across the data
-tables, a recap pipeline (fetch + Main Event/show/weekly draft generation),
-and the X Spaces speaker-log matcher (`scripts/recap/speaker-log.ts` -
-resolves diarized speaker_N labels to real names from a manually-captured
-caption log; see `docs/ARCHITECTURE.md` §7).
-Next: fill the distribution history + recipient wallets in
-`lib/distributions.ts` to make the Profitability section real; per-battle PnL
-+ win rate via buyShares/sellShares instruction decode; artist-payout tracing;
-a CLI wrapper for the speaker-log matcher (live capture itself stays manual -
-X's seek slider resists automation).
+- Most data auto-updates via live APIs or daily cron. The treasury balance is
+  always current.
+- Some data is baked snapshots: battles list, on-chain program analytics, artist
+  and trader leaderboards. See `docs/REFRESH.md` for how to regenerate them.
+- `scripts/validate.mjs` runs pre-build and warns if data is older than 14 days,
+  flags stale at 45 days. Run with `--strict` to fail the build on staleness.
+- `npm run fetch:battles` refreshes `public/ww-battles.json` from the live
+  WaveWarZ Intelligence feed. Fails loud on any HTTP or parse error rather than
+  writing stale data.
+- `npm run recap` generates Farcaster/X draft recap posts for battles, shows, or
+  a weekly rollup into `recaps/`. Every number cites its source file.

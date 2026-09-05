@@ -3,6 +3,15 @@
 A front door to the docs in this folder. If you are trying to understand WaveWarZ and
 found conflicting information elsewhere, these are authoritative and dated.
 
+## What is wwtracker
+
+wwtracker is the ON-CHAIN BUSINESS LAYER for WaveWarZ. It is not a second leaderboard
+or a backup battles table. wavewarz.info (their system of record) already has those.
+What wwtracker covers, and what nothing else does, is the treasury wallet, the operating
+floor, the fee model, the business ledger, and the program decoded instruction by
+instruction. Everything battle-shaped, artist-shaped or song-shaped is read live from
+wavewarz.info's public API or linked out to their pages, never copied.
+
 ## The map
 
 - [**SURFACES.md**](./SURFACES.md) - the three WaveWarZ surfaces and who owns each. Read
@@ -14,13 +23,19 @@ found conflicting information elsewhere, these are authoritative and dated.
 
 - [**PUBLIC-API.md**](./PUBLIC-API.md) - cached, embeddable stats endpoints. Use these
   instead of hitting the upstream API directly.
-- [**ARCHITECTURE.md**](./ARCHITECTURE.md) - how this tracker is built.
-- [**REFRESH.md**](./REFRESH.md) - how the baked data snapshots are regenerated.
+- [**ARCHITECTURE.md**](./ARCHITECTURE.md) - how this tracker is built, data paths, the
+  fee model, the sections, every metric's methodology.
+- [**REFRESH.md**](./REFRESH.md) - which data is live, which is baked, and how to refresh
+  the snapshots that haven't auto-updated.
 
-## The one true number
+## The live sources
 
-Any live figure this tracker shows reads from `wavewarz.info`'s public API, cached through
-`/api/ww/*`. The canonical battle count is `GET /api/ww/stats` -> `data.battles.total`.
+- `wavewarz.info/api/public/stats` - the canonical battle count, volume, artist payouts,
+  trader claims. Use these, not our copies.
+- Dune Analytics - treasury wallet balance (live cached), program-wide on-chain activity
+  (snapshots). Queries over Solana `solana.instruction_calls` and `solana.account_activity`.
+- Solana RPC - fee wallet current balance, per-wallet on-chain state.
+
 Numbers in snapshot files or dated recaps are historical - read them as of their date, not
 as current.
 

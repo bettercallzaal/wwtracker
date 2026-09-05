@@ -472,7 +472,7 @@ function ChartCard({
               tickFormatter={(v: number) => fmt(v, 1)}
             />
             <Tooltip
-              cursor={{ fill: "rgba(255,194,75,0.08)" }}
+              cursor={{ fill: "rgba(149,254,124,0.08)" }}
               contentStyle={{
                 background: C.bg,
                 border: `1px solid ${C.grid}`,

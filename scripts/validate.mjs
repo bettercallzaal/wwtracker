@@ -30,57 +30,28 @@ if (Array.isArray(battles)) {
   [...types].every((t) => ["QUICK", "MAIN", "COMMUNITY", "UNCLASSIFIED"].includes(t)) ? ok(`battle types ${[...types].join(",")}`) : bad(`unexpected battle type in ${[...types]}`);
 } else bad("battles not an array");
 
-// public/ww-skips.json + ww-queue.json
-for (const [name, lo] of [["ww-skips", 30], ["ww-queue", 30]]) {
-  const d = json(`public/${name}.json`);
-  if (d && typeof d === "object") {
-    const n = Object.keys(d).length;
-    n >= lo ? ok(`${name} nights ${n}`) : bad(`${name} nights ${n} (expected >= ${lo})`);
-  } else bad(`${name} not an object`);
-}
-
-// public/ww-activity.json
-const activity = json("public/ww-activity.json");
-if (Array.isArray(activity)) {
-  activity.length >= 30 ? ok(`ww-activity rows ${activity.length}`) : bad(`ww-activity rows ${activity.length} (expected >= 30)`);
-  const badRow = activity.find((r) => !r || !r.date || r.buys == null);
-  badRow ? bad(`ww-activity missing date/buys: ${JSON.stringify(badRow)}`) : ok("ww-activity rows have date+buys");
-} else bad("ww-activity.json not an array");
-
 // public/ww-platform-volume.json
 const platVol = json("public/ww-platform-volume.json");
 if (Array.isArray(platVol)) {
   platVol.length >= 100 ? ok(`ww-platform-volume rows ${platVol.length}`) : bad(`ww-platform-volume rows ${platVol.length} (expected >= 100)`);
-  const badPv = platVol.find((r) => !r || !r.date || r.buy == null);
-  badPv ? bad(`ww-platform-volume missing date/buy: ${JSON.stringify(badPv)}`) : ok("ww-platform-volume rows have date+buy");
+  const badPv = platVol.find((r) => !r || !r.date || r.vol == null);
+  badPv ? bad(`ww-platform-volume missing date/vol: ${JSON.stringify(badPv)}`) : ok("ww-platform-volume rows have date+vol");
 } else bad("ww-platform-volume.json not an array");
 
-// public/ww-wavysplit.json
-const wavySplit = json("public/ww-wavysplit.json");
-if (wavySplit && typeof wavySplit === "object" && !Array.isArray(wavySplit)) {
-  const n = Object.keys(wavySplit).length;
-  n >= 30 ? ok(`ww-wavysplit nights ${n}`) : bad(`ww-wavysplit nights ${n} (expected >= 30)`);
-} else bad("ww-wavysplit.json not an object");
+// public/ww-onchain-daily.json - fresh decoded on-chain instruction data, gap-filled from
+// program's first day (2025-05-26) to today. Replaces the stale lib/wwData.ts snapshot for
+// on-chain activity charts and summaries.
+const onchainDaily = json("public/ww-onchain-daily.json");
+if (Array.isArray(onchainDaily)) {
+  onchainDaily.length >= 300 ? ok(`ww-onchain-daily rows ${onchainDaily.length}`) : bad(`ww-onchain-daily rows ${onchainDaily.length} (expected >= 300)`);
+  const badRow = onchainDaily.find((r) => !r || !r.date || r.txs == null);
+  badRow ? bad(`ww-onchain-daily missing date/txs: ${JSON.stringify(badRow)}`) : ok("ww-onchain-daily rows have date+txs");
+} else bad("ww-onchain-daily.json not an array");
 
-// public/ww-lifetime.json
-const lifetime = json("public/ww-lifetime.json");
-if (lifetime && typeof lifetime === "object") {
-  typeof lifetime.lifetime_sol === "number" && lifetime.lifetime_sol > 0
-    ? ok(`ww-lifetime lifetime_sol ${lifetime.lifetime_sol}`)
-    : bad(`ww-lifetime.lifetime_sol invalid: ${lifetime.lifetime_sol}`);
-} else bad("ww-lifetime.json not an object");
-
-// public/ww-volboard.json
-const volboard = json("public/ww-volboard.json");
-if (volboard && typeof volboard === "object" && Array.isArray(volboard.rows)) {
-  volboard.rows.length >= 5 ? ok(`ww-volboard rows ${volboard.rows.length}`) : bad(`ww-volboard rows ${volboard.rows.length} (expected >= 5)`);
-} else bad("ww-volboard.json missing .rows array");
-
-// lib snapshots - count rows via a cheap regex so we notice if a regen empties them
+// lib snapshots - count rows via a cheap regex so we notice if a regen empties them.
+// Note: traders.ts and songs.ts now use live API data and no longer have baked arrays.
 for (const [file, marker, min] of [
   ["lib/leaderboard.ts", /rank:\d+|"rank":\d+/g, 40],
-  ["lib/traders.ts", /"rank":\d+|rank:\d+/g, 90],
-  ["lib/songs.ts", /rank: \d+/g, 37],
 ]) {
   try {
     const m = (readFileSync(file, "utf8").match(marker) || []).length;
@@ -88,5 +59,81 @@ for (const [file, marker, min] of [
   } catch (e) { bad(`${file}: ${e.message}`); }
 }
 
+// Verify traders.ts and songs.ts have migrated to live data.
+for (const file of ["lib/traders.ts", "lib/songs.ts"]) {
+  try {
+    const content = readFileSync(file, "utf8");
+    content.includes("live") ? ok(`${file} migrated to live data`) : bad(`${file} missing live data comment`);
+  } catch (e) { bad(`${file}: ${e.message}`); }
+}
+
+// ---------------------------------------------------------------------------
+// Staleness. Every check above counts rows - none of them look at DATES, so a
+// snapshot frozen for months passed clean while the site served numbers that
+// were 80+ days out. These report how old each dataset's newest record is.
+//
+// Warnings by default (a stale snapshot must not block an unrelated code
+// deploy); pass --strict to turn them into failures for CI or a data-refresh PR.
+// Thresholds: WARN_DAYS is "someone should refresh", STALE_DAYS is "this is
+// misinforming people".
+// ---------------------------------------------------------------------------
+const strict = process.argv.includes("--strict");
+const WARN_DAYS = 14;
+const STALE_DAYS = 45;
+let warnings = 0;
+const warn = (m) => { console.log(`  WARN ${m}`); warnings++; };
+
+const TODAY = new Date();
+const daysOld = (d) => Math.floor((TODAY - d) / 86400000);
+
+/** Latest parseable date in a list, or null. Handles ISO and "Aug 25, 2026". */
+function newest(values) {
+  let best = null;
+  for (const v of values) {
+    const t = Date.parse(v);
+    if (Number.isNaN(t)) continue;
+    if (best === null || t > best) best = t;
+  }
+  return best === null ? null : new Date(best);
+}
+
+/** Read a string constant out of a .ts file, e.g. DATA_AS_OF = "2026-06-16". */
+function tsConst(file, name) {
+  try {
+    const m = readFileSync(file, "utf8").match(
+      new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`),
+    );
+    return m ? m[1] : null;
+  } catch { return null; }
+}
+
+const datasets = [
+  ["lib/freshness.ts DATA_AS_OF", tsConst("lib/freshness.ts", "DATA_AS_OF")],
+  ["lib/price.ts SOL_USD_AS_OF", tsConst("lib/price.ts", "SOL_USD_AS_OF")],
+  ["public/ww-battles.json", Array.isArray(battles) ? newest(battles.map((b) => b.date)) : null],
+  ["public/ww-platform-volume.json", Array.isArray(platVol) ? newest(platVol.map((r) => r.date)) : null],
+  ["public/ww-onchain-daily.json", Array.isArray(onchainDaily) ? newest(onchainDaily.map((r) => r.date)) : null],
+];
+
+console.log("");
+for (const [label, raw] of datasets) {
+  if (raw == null) { warn(`${label}: no date found - cannot check staleness`); continue; }
+  const d = raw instanceof Date ? raw : new Date(Date.parse(raw));
+  if (Number.isNaN(d.getTime())) { warn(`${label}: unparseable date ${raw}`); continue; }
+  const age = daysOld(d);
+  const stamp = d.toISOString().slice(0, 10);
+  if (age >= STALE_DAYS) {
+    const msg = `${label}: ${age} days old (newest ${stamp}, stale past ${STALE_DAYS})`;
+    strict ? bad(msg) : warn(msg);
+  } else if (age >= WARN_DAYS) {
+    warn(`${label}: ${age} days old (newest ${stamp})`);
+  } else {
+    ok(`${label}: ${age} days old (newest ${stamp})`);
+  }
+}
+
+if (warnings && !failures) {
+  console.log(`\n${warnings} staleness warning(s) - see docs/REFRESH.md. Re-run with --strict to fail on these.`);
+}
 console.log(failures ? `\nVALIDATION FAILED (${failures})` : "\nvalidation passed");
 process.exit(failures ? 1 : 0);

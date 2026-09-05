@@ -172,7 +172,7 @@ export default function WeeklyRevenueAnalytics({ solPrice }: WeeklyRevenueAnalyt
                   width={32}
                 />
                 <Tooltip
-                  cursor={{ fill: "rgba(255,194,75,0.08)" }}
+                  cursor={{ fill: "rgba(149,254,124,0.08)" }}
                   contentStyle={{
                     background: C.bg,
                     border: `1px solid ${C.grid}`,
