@@ -23,7 +23,8 @@ The three things to know before touching anything:
    and documentation live here. Finished work moves across to
    `CandyToyBox/wavewarz-intelligence`, which is the system of record and fully
    in production. Push access granted 2026-09-05. Do not open speculative PRs
-   against it.
+   against it - prove it here first, then see [docs/PORTING.md](docs/PORTING.md)
+   for how a piece crosses over.
 
 2. **Nothing is baked that has a live source, and nothing is rebuilt that
    wavewarz.info already renders.** See "Why this matters" below for what
@@ -50,6 +51,7 @@ at 14 days stale and fails at 45 under `--strict`.
 | I want to... | Go to |
 |---|---|
 | Know the current state and what to work on | [docs/AUDIT.md](docs/AUDIT.md) |
+| Move finished work onto wavewarz.info | [docs/PORTING.md](docs/PORTING.md) |
 | Understand how it is built | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Refresh the data | [docs/REFRESH.md](docs/REFRESH.md) |
 | Understand WaveWarZ itself | [docs/WAVEWARZ-RESEARCH.md](docs/WAVEWARZ-RESEARCH.md) |
