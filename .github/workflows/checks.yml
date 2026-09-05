@@ -1,0 +1,55 @@
+# Two checks that had no home.
+#
+# Both already existed and neither ever ran. `validate.mjs --strict` turns
+# staleness into a failure and was invoked nowhere in the repo - the 45-day
+# gate that docs/AUDIT.md lists among the things that are genuinely solid could
+# not fire. `smoke:stats` asserts the upstream wavewarz.info contract still
+# holds and was a command you had to remember to type.
+#
+# Deliberately NOT in `prebuild`. Data staleness must not block an unrelated
+# code deploy, and making our deploys depend on a third party's uptime is the
+# coupling this repo exists to avoid. Failing loudly here costs nothing and
+# blocks nothing.
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # 08:30 UTC, half an hour ahead of the treasury cron in vercel.json, so a
+    # broken upstream contract is visible before the refresh runs against it.
+    - cron: "30 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: types, tests, data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      # --strict: stale data fails here even though it never fails a deploy.
+      # Datasets knowingly parked carry an expiry date in the script itself.
+      - run: node scripts/validate.mjs --strict
+
+  upstream-contract:
+    name: upstream stats API contract
+    # Schedule and manual only. This calls wavewarz.info, and a PR should not
+    # go red because someone else's API had a bad minute.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run smoke:stats

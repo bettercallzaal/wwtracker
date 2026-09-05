@@ -1,8 +1,15 @@
 # wwtracker audit and roadmap
 
-Audited 2026-09-05. Every figure here was measured on that date by running the
-command shown next to it, not recalled. Re-run them before trusting them - the
-point of dating a claim is so you know when to be suspicious of it.
+Audited 2026-09-05, and revised the same evening after a working session that
+moved several of these. Every figure here was measured by running the command
+shown next to it, not recalled. Re-run them before trusting them - the point of
+dating a claim is so you know when to be suspicious of it.
+
+What moved on 2026-09-05, so the diff against an older copy reads clearly: the
+cron gate was replaced rather than configured (4.1), the treasury refresh is now
+rate-limited instead of secret-gated, nine stale pull requests were closed
+against evidence and three reopened as fresh work, and the two dormant checks -
+strict staleness and the upstream contract smoke test - were armed in CI.
 
 This is the document to read first if you are picking the repo up cold. It says
 what is solid, what is weak, and what to do next in priority order.
@@ -72,8 +79,10 @@ of the self-hosting-specific advisories. It still wants doing.
 
 ### 3.2 Component test coverage is thin - HIGH
 
-32 test files cover `lib/` well. Only **two of twenty** components have any
-test: `BalanceDashboard` and `FreshnessBanner`.
+33 test files cover `lib/` well. Only **two of twenty** components have any
+test: `BalanceDashboard` and `FreshnessBanner`. That ratio has not moved all
+day while the test count went 275 -> 288, which is the point: the new tests
+went where tests were already easy to write.
 
 That is the wrong shape for this repo, because the bugs that actually shipped
 this year were in components, not in lib: a panel labelled `LIVE - DAILY
@@ -108,6 +117,12 @@ maintained data. They are a widget waiting to be built, not dead weight.
 The skip-queue auction they describe is real treasury revenue - 0.02 SOL to jump
 the queue, escalating 0.01 per jump - and the mechanic is already modelled in
 `lib/feeModel.ts`. See 4.2.
+
+As of 2026-09-05 they are parked explicitly rather than tacitly: `KNOWN_STALE`
+in `scripts/validate.mjs` exempts all three from the strict staleness gate
+**until 2026-10-15**, after which strict fails on them whatever their age. The
+exemption has a deadline so that continuing to park them is a decision someone
+makes again, not one inherited by silence.
 
 ### 3.5 The pre-April-2026 volume history is inherited, not verified - MEDIUM
 
@@ -161,7 +176,7 @@ on an unknown state and reports which branch it took in the response body. 13
 tests in `lib/__tests__/refresh-policy.test.ts`, one of which asserts the
 64-day-old execution would now trigger a re-run.
 
-### 4.2 Build the skip-queue revenue widget - half a day
+### 4.2 Build the skip-queue revenue widget - half a day, soft deadline 2026-10-15
 
 The data exists (3.4), the mechanic is modelled and tested in `lib/feeModel.ts`,
 and it is genuinely unpublished information about platform revenue. It fits
@@ -251,6 +266,22 @@ Recorded so nobody pays for them twice.
 - **Every documented Dune query filtered `block_date >= 2025-08-01`** against a
   program whose first instruction is 2025-05-26. Every all-time figure ran about
   45 percent low until 2026-09-05.
+- **Solana PDA derivation hashes seeds, then the bump, then the program id.**
+  Not seeds/program/bump. Get the order wrong and you still get a well-formed,
+  off-curve, entirely valid-looking address - it is simply not the account, and
+  `getAccountInfo` returns null with no error. It reads as "that battle does not
+  exist." Cost: `scripts/ww-battle-decode.ts` shipped in a PR that could never
+  have worked, and sat open for 50 days. Found 2026-09-05 by running it against
+  chain rather than reading it.
+- **`Bearer ${process.env.SECRET}` with the variable unset is the string
+  `"Bearer undefined"`**, which any caller can send. A missing env var becomes an
+  open door. Guard the comparison with a truthiness check on the secret itself;
+  the check is load-bearing, not defensive noise. This shipped elsewhere in the
+  estate the same week.
+- **A gate nobody invokes is not a gate.** `validate.mjs --strict` fails on data
+  past 45 days and was referenced in three documents as a live safeguard while
+  `grep` found it invoked in exactly zero places. Three datasets sat 81 days old
+  underneath it. Armed in CI 2026-09-05. The same was true of `smoke:stats`.
 - **Dune's free tier times out at 2 minutes.** Anything joining
   `solana.account_activity` to `instruction_calls` across the whole history will
   not complete. Address-filtered queries are fine; per-signer joins are not.

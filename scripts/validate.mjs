@@ -111,6 +111,22 @@ for (const file of ["lib/traders.ts", "lib/songs.ts"]) {
 const strict = process.argv.includes("--strict");
 const WARN_DAYS = 14;
 const STALE_DAYS = 45;
+
+// Datasets knowingly parked past STALE_DAYS, each with the date its parking
+// expires. These three describe the skip-queue auction and the DJ Wavy split -
+// real, actively maintained data with no section rendering it yet (docs/AUDIT.md
+// 3.4, and 4.2 for the widget that will). They are a backlog item, not neglect,
+// and failing the build on them would mean --strict gets removed within a week.
+//
+// The expiry is the point. An exemption with no deadline is the check switched
+// off with extra steps: past the date below these fail in strict mode whatever
+// their age, so the decision to keep parking them has to be made again out loud
+// rather than inherited by silence.
+const KNOWN_STALE = {
+  "public/ww-skips.json": "2026-10-15",
+  "public/ww-queue.json": "2026-10-15",
+  "public/ww-wavysplit.json": "2026-10-15",
+};
 let warnings = 0;
 const warn = (m) => { console.log(`  WARN ${m}`); warnings++; };
 
@@ -160,7 +176,15 @@ for (const [label, raw] of datasets) {
   const stamp = d.toISOString().slice(0, 10);
   if (age >= STALE_DAYS) {
     const msg = `${label}: ${age} days old (newest ${stamp}, stale past ${STALE_DAYS})`;
-    strict ? bad(msg) : warn(msg);
+    const parkedUntil = KNOWN_STALE[label];
+    if (parkedUntil && TODAY < new Date(`${parkedUntil}T23:59:59Z`)) {
+      warn(`${msg} - knowingly parked until ${parkedUntil}`);
+    } else if (parkedUntil) {
+      const m = `${msg} - the exemption expired ${parkedUntil}, refresh it or move the date deliberately`;
+      strict ? bad(m) : warn(m);
+    } else {
+      strict ? bad(msg) : warn(msg);
+    }
   } else if (age >= WARN_DAYS) {
     warn(`${label}: ${age} days old (newest ${stamp})`);
   } else {

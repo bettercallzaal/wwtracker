@@ -136,6 +136,31 @@ After any refresh:
 The build step runs the validators before compilation, so staleness catches
 before deployment.
 
+## The morning check
+
+One command, thirty seconds. Run it and read three fields.
+
+```bash
+curl -s https://wwtracker.vercel.app/api/balance \
+  | python3 -c "import json,sys; d=json.load(sys.stdin); r=d['rows'][-1]; print('newest row:', r['block_date'], '| balance:', r['eod_sol_balance'], '| origin:', d['origin'])"
+```
+
+**newest row should be yesterday or today.** That is the whole check. If it is
+more than two days behind, the daily refresh is not landing and the treasury
+chart is showing a photograph.
+
+`origin` on this call is always `cache` - it is the cheap read. To see whether
+the re-run itself happened, check Vercel Function Logs for
+`/api/balance?refresh=1` at 09:00 UTC: a run that executed returns
+`"origin":"execute"`, one declined as too fresh returns `"origin":"cache"` with
+`refresh.reason` of `fresh`.
+
+**First run under the new policy is 2026-09-06 09:00 UTC.** The refresh is now
+bounded by the age of Dune's stored execution (20h) rather than by a bearer
+token, so a missing env var can no longer freeze it - but a Dune outage, an
+exhausted credit balance or a broken query still can. One `fresh` is normal;
+two consecutive days of `fresh` on the 09:00 run is not.
+
 ## Production checklist - CRITICAL
 
 - **Is the cron actually executing?** A refresh that ran returns
