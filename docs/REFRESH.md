@@ -71,16 +71,27 @@ of embedding copies.
 
 ### Per-night queue and skips (public/ww-queue.json, ww-skips.json)
 
-These are old (Jul 2) and no longer actively refreshed. They track FNj wallet
-inflows by size (skips = 0.015-1.0 SOL, queue = exactly 0.005 SOL). If you do
-refresh them:
+Still maintained, and still refreshed by hand. PR #212 extended the DJ Wavy
+split to 103 nights, so treat these as live working data even though no
+section renders them today - the skip-queue auction is real platform revenue
+and belongs in an embed rather than in a deleted file.
 
-```bash
-# Dune query: count inflows by amount per day, join to FNj activity
-# Merge new days into the existing history (newest-first map)
-```
+Skip calibration: skips = FNj inflows `0.015 <= amt <= 1.0` (the 0.0157 bucket is
+a fee-trimmed 0.02 skip); queue = `amt == 0.005`. Verified vs 2026-06-13 (20 skips
+/ 1.1667 SOL, queue 11). Both `public/ww-skips.json` + `ww-queue.json` are
+date-keyed maps; merge new days into the existing history, newest-first.
 
-Not critical - the battles table (section 07) displays fine without them.
+> **This calibration is unverified beyond one night and may be wrong.** It assumes
+> skip / queue / DJ Wavy are the only paid actions that pay `FNj`. If anything else
+> does, those payments are silently counted as skips or queue. Open question, not
+> yet answered: `docs/issues/001-fnj-payment-bucket-classification.md`. Do not
+> treat the skip figures as exact until it is closed.
+
+**DJ Wavy split coverage.** `public/ww-wavysplit.json` classifies 103 nights
+(queue 382 / DJ Wavy 31). Roughly 49 nights in **2026-02-17 .. 2026-04-28** are
+still unclassified - the busy months that need 3-day windows. DJ Wavy is a
+low-event metric (~31 events all-time), so finishing the gap is optional and not
+worth a fresh credit cycle on its own.
 
 ### SOL/USD reference price (lib/price.ts)
 
@@ -120,3 +131,16 @@ before deployment.
   for `/api/balance?refresh=1` at 9 AM every day.
 - Do the snapshot file timestamps match expectations (14 days = warning,
   45 days = stale)?
+
+## The Dune key
+
+**The Dune key lives in two places.** `.env.local` locally (gitignored) *and*
+the Vercel Production environment for the `wwtracker` project. Rotating it means
+updating **both** - changing only `.env.local` leaves the deployed daily cron
+calling Dune with a dead key.
+
+Note the two failure modes differ. Key **unset** is handled: `/api/balance`
+returns 503 `configured:false` and the client falls back to sample data. Key
+**present but revoked** is not: `lib/dune.ts` throws a `DuneError` and the route
+returns Dune's own status (401/402) with the message, so the dashboard shows an
+error rather than sample data.

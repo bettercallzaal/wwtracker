@@ -30,6 +30,19 @@ if (Array.isArray(battles)) {
   [...types].every((t) => ["QUICK", "MAIN", "COMMUNITY", "UNCLASSIFIED"].includes(t)) ? ok(`battle types ${[...types].join(",")}`) : bad(`unexpected battle type in ${[...types]}`);
 } else bad("battles not an array");
 
+// public/ww-skips.json + ww-queue.json + ww-wavysplit.json
+// No section renders these today, but they are actively maintained by hand
+// (PR #212 extended the DJ Wavy split to 103 nights) and the skip-queue auction
+// is real platform revenue. They are checked, not deleted - a maintained file
+// with no reader is a widget waiting to be built, not dead weight.
+for (const [name, lo] of [["ww-skips", 30], ["ww-queue", 30], ["ww-wavysplit", 30]]) {
+  const d = json(`public/${name}.json`);
+  if (d && typeof d === "object" && !Array.isArray(d)) {
+    const n = Object.keys(d).length;
+    n >= lo ? ok(`${name} nights ${n}`) : bad(`${name} nights ${n} (expected >= ${lo})`);
+  } else bad(`${name} not an object`);
+}
+
 // public/ww-platform-volume.json
 const platVol = json("public/ww-platform-volume.json");
 if (Array.isArray(platVol)) {
@@ -114,6 +127,11 @@ const datasets = [
   ["public/ww-platform-volume.json", Array.isArray(platVol) ? newest(platVol.map((r) => r.date)) : null],
   ["public/ww-onchain-daily.json", Array.isArray(onchainDaily) ? newest(onchainDaily.map((r) => r.date)) : null],
 ];
+
+for (const name of ["ww-skips", "ww-queue", "ww-wavysplit"]) {
+  const d = json(`public/${name}.json`);
+  datasets.push([`public/${name}.json`, d && typeof d === "object" ? newest(Object.keys(d)) : null]);
+}
 
 console.log("");
 for (const [label, raw] of datasets) {
