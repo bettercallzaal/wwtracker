@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { FLOOR_SOL } from "@/lib/config";
 import {
   Area,
   AreaChart,
@@ -112,8 +113,6 @@ interface BalanceRow {
   day_high: number;
 }
 
-const OPERATING_FLOOR = 3.5;
-
 export function TreasuryFloor({ opts }: { opts: EmbedOptions }) {
   const { data, status } = useJson<{ rows: BalanceRow[] }>("/api/balance");
   const rows = useMemo(() => thin(data?.rows ?? []), [data]);
@@ -165,11 +164,11 @@ export function TreasuryFloor({ opts }: { opts: EmbedOptions }) {
             dot={false}
           />
           <ReferenceLine
-            y={OPERATING_FLOOR}
+            y={FLOOR_SOL}
             stroke={p.red}
             strokeDasharray="4 4"
             label={{
-              value: "3.5 FLOOR",
+              value: `${FLOOR_SOL} FLOOR`,
               position: "insideTopRight",
               fill: p.mut,
               fontSize: 9,
@@ -204,7 +203,7 @@ export function TreasuryBalance({ opts }: { opts: EmbedOptions }) {
         sub={
           delta === null
             ? undefined
-            : `${delta >= 0 ? "+" : ""}${num(delta, 3)} SOL since previous close - floor 3.5`
+            : `${delta >= 0 ? "+" : ""}${num(delta, 3)} SOL since previous close - floor ${FLOOR_SOL}`
         }
       />
     </EmbedShell>
