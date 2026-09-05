@@ -1,6 +1,7 @@
 # WaveWarZ docs - start here
 
-**Current state and roadmap: [AUDIT.md](AUDIT.md).** Read that first - it is
+**Current state and roadmap: [AUDIT.md](AUDIT.md).** Moving work to production:
+**[PORTING.md](PORTING.md)**. Read that first - it is
 dated, every claim carries the command that produced it, and it says what to
 work on next in priority order. Everything else here is reference.
 
