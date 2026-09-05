@@ -13,7 +13,8 @@
     "test": "vitest run",
     "fetch:battles": "tsx scripts/ww-battles-fetch.ts",
     "recap": "tsx scripts/ww-recap.ts",
-    "speaker-log": "tsx scripts/ww-speaker-log.ts"
+    "speaker-log": "tsx scripts/ww-speaker-log.ts",
+    "smoke:stats": "tsx scripts/smoke-stats-api.ts"
   },
   "dependencies": {
     "next": "^14.2.35",
