@@ -161,7 +161,6 @@ export default function OnChainProof() {
 
   const tot = WW.platformStats;
   const prog = WW.program;
-  const ts = WW.traderStats;
 
   // Volume and battle count come live from WaveWarZ's own public API
   // (wavewarz.info/api-docs) when it responds - always current, vs. the
@@ -396,41 +395,12 @@ export default function OnChainProof() {
         </ResponsiveContainer>
       </ScaleCard>
 
-      <div
-        style={{
-          background: C.panel,
-          border: `1px solid ${C.grid}`,
-          borderRadius: 16,
-          padding: "18px 20px",
-          display: "grid",
-          gridTemplateColumns: "1.1fr 1fr",
-          gap: 16,
-        }}
-        className="proof-trader"
-      >
-        <div>
-          <div style={{ ...metaLabel, fontSize: 10 }}>THE PART NOBODY SHOWS YOU - COFOUNDER PNL</div>
-          <div style={{ fontSize: 40, fontWeight: 800, color: C.danger, marginTop: 6, fontVariantNumeric: "tabular-nums" }}>
-            {fmt(ts.net, 2)} SOL
-          </div>
-          <p style={{ color: C.dim, fontSize: 14, margin: "10px 0 0", maxWidth: 380, lineHeight: 1.55 }}>
-            {fmt(ts.txs)} trades. bet {fmt(ts.solBet, 1)} SOL, got {fmt(ts.solReturned, 1)} back. net
-            negative, on-chain, in public - because that is the whole point.
-          </p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 10px", alignContent: "center" }}>
-          <Metric n={`${fmt(ts.winRate, 1)}%`} l="win rate" />
-          <Metric n={`${fmt(ts.winTxs)}/${fmt(ts.lossTxs)}`} l="wins / losses" />
-          <Metric n={`+${fmt(ts.biggestWin, 2)}`} l="biggest win (SOL)" />
-          <Metric n={`${fmt(ts.biggestLoss, 2)}`} l="biggest loss (SOL)" />
-        </div>
-      </div>
-
       <p style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, margin: 0 }}>
         {balLive ? "treasury live from Solana." : "treasury on sample data (API unset)."}{" "}
         {liveStats ? "volume/battles/payouts live from WaveWarZ's API." : "volume and battles from the baked Dune snapshot."}{" "}
-        trades and traders are from the Dune snapshot ({fmt(tot.activeDays)} active days through {tot.lastDay},
-        generated {WW.generatedAt}). indexed chart, not dual-axis - see the DEV WALLET and BATTLES tabs for full-scale views.
+        trades and traders are decoded from the program via Dune ({fmt(tot.activeDays)} active days
+        through {tot.lastDay}, generated {WW.generatedAt}). each line is indexed to its own peak so
+        they share one axis - the Growth and Floor sections show the same series at true scale.
       </p>
     </div>
   );
@@ -448,14 +418,6 @@ function ScaleCard({ title, note, children }: { title: string; note: string; chi
   );
 }
 
-function Metric({ n, l }: { n: string; l: string }) {
-  return (
-    <div>
-      <div style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{n}</div>
-      <div style={{ fontFamily: C.mono, fontSize: 11, color: C.dim }}>{l}</div>
-    </div>
-  );
-}
 
 interface TooltipEntry {
   payload: Row;

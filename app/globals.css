@@ -67,10 +67,6 @@ body {
   }
 }
 
-/* On-chain overview: collapse cofounder PnL card on narrow screens */
-@media (max-width: 620px) {
-  .proof-trader { grid-template-columns: 1fr !important; }
-}
 
 /* The arena voice. Condensed, uppercase, used for anything that should read
    like a scoreboard rather than a sentence. */

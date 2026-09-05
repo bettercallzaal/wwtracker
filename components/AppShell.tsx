@@ -6,7 +6,6 @@ import { DATA_AS_OF } from "@/lib/freshness";
 import BalanceDashboard from "./BalanceDashboard";
 import OnChainProof from "./OnChainProof";
 import PlatformGrowth from "./PlatformGrowth";
-import TraderScorecard from "./TraderScorecard";
 import PlatformAnalytics from "./PlatformAnalytics";
 import Profitability from "./Profitability";
 import WeeklyRevenueAnalytics from "./WeeklyRevenueAnalytics";
@@ -116,17 +115,11 @@ const SECTIONS: Section[] = [
     render: () => <PlatformAnalytics />,
   },
   {
-    id: "wallet",
+    id: "market",
     n: "09",
-    title: "Your wallet on-chain",
-    intro: "look up any wallet's own position measured from the chain - cumulative SOL, win rate, biggest moves - alongside the platform's own figure for it.",
-    render: () => (
-      <>
-        <TraderScorecard />
-        <div style={{ height: 24 }} />
-        <TraderEdge />
-      </>
-    ),
+    title: "Reading the market",
+    intro: "when the money shows up, which artists pull it in, and how often the crowd is right - measured across every battle rather than picked out by hand.",
+    render: () => <TraderEdge />,
   },
   {
     id: "embeds",
@@ -169,7 +162,7 @@ const LEGACY_TAB: Record<string, string> = {
   // chart now live on wavewarz.info; the ecosystem section links out to them.
   battles: "analytics",
   songs: "ecosystem",
-  leaderboard: "wallet", traders: "wallet", trader: "wallet",
+  leaderboard: "market", traders: "market", trader: "market", wallet: "market",
   artists: "ecosystem", music: "ecosystem",
   ecosystem: "ecosystem", events: "ecosystem", faq: "ecosystem",
 };

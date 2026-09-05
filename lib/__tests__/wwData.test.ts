@@ -49,17 +49,6 @@ describe("WW snapshot (lib/wwData.ts)", () => {
     expect(Date.parse(ps.firstDay)).not.toBeNaN();
   });
 
-  it("traderStats has plausible PnL figures", () => {
-    const ts = WW.traderStats;
-    expect(ts.txs).toBeGreaterThan(0);
-    expect(ts.solBet).toBeGreaterThan(0);
-    expect(ts.solReturned).toBeGreaterThanOrEqual(0);
-    expect(ts.winTxs).toBeGreaterThanOrEqual(0);
-    expect(ts.lossTxs).toBeGreaterThanOrEqual(0);
-    expect(ts.winTxs + ts.lossTxs).toBeLessThanOrEqual(ts.txs);
-    expect(ts.winRate).toBeGreaterThanOrEqual(0);
-    expect(ts.winRate).toBeLessThanOrEqual(100);
-  });
 
   it("timeline series is non-empty and cumulative battles match program", () => {
     expect(WW.timeline.length).toBeGreaterThan(0);
