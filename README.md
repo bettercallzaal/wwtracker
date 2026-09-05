@@ -29,16 +29,16 @@ program itself decoded straight off Solana.
 
 ## Sections
 
-Twelve numbered sections in one continuous scroll, with a sticky jump-nav
-(`components/AppShell.tsx`). Old `?tab=` links still resolve to the nearest
-surviving section. Each is a focused lens on one aspect of the business:
+Thirteen numbered sections (00-12) in one continuous scroll, with a sticky
+jump-nav (`components/AppShell.tsx`). Old `?tab=` links still resolve to the
+nearest surviving section. Each is a focused lens on one aspect of the business:
 
 - **00 Overview** - every on-chain series at once. Volume, treasury, battles,
   trades: each line scaled to its own peak so they share one axis, with toggles
   and real numbers in the tooltip.
-- **01 What** - what WaveWarZ is, battle mechanics (buyShares / sellShares /
-  endBattle / claimShares), the fee model, live on-chain snapshot, key addresses,
-  team, and official links.
+- **01 What** - what WaveWarZ is, battle mechanics (create / mint / trade /
+  settle / claim), the fee model, live on-chain snapshot, key addresses, team,
+  and official links.
 - **02 Floor** - the treasury wallet's daily balance (close + intraday high) held
   against the 3.5 SOL operating floor. Live from Dune, refreshed every morning.
 - **03 Growth** - cumulative SOL traded since launch in May 2025, at true scale.
@@ -51,12 +51,15 @@ surviving section. Each is a focused lens on one aspect of the business:
   the per-battle fee.
 - **07 Operations** - real-world costs and income the team tracks manually (not
   on-chain-derivable): tech stack, monthly P&L, the fee wallet live balance.
-- **08 Analytics** - every call to the Solana program, decoded by Anchor
-  discriminator from its first day. No other WaveWarZ surface shows this.
-- **09 Wallet** - look up any wallet's position: cumulative SOL, win rate,
-  biggest moves, all verified on-chain.
+- **08 Program** - the battle state machine as a funnel (create-mint-trade-settle-claim)
+  with gap analysis, plus decoded program instructions. No other WaveWarZ surface
+  shows this.
+- **09 Market** - when money shows up, which artists pull it in, and how often
+  the crowd is right - measured across every battle.
 - **10 Embeds** - every chart here is a standalone iframe for embedding elsewhere.
-- **11 Ecosystem** - where WaveWarZ sits in The ZAO ecosystem, events, FAQ.
+- **11 Artists** - the roster (live from Audius), who they are, their releases,
+  play totals and streaming stats.
+- **12 Ecosystem** - where WaveWarZ sits in The ZAO ecosystem, events, FAQ.
 
 ## Embeds
 

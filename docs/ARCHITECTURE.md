@@ -149,7 +149,7 @@ sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
 | 05 | Profitability | Profitability.tsx | Floor model, 33/22/22/22 distribution split, recipient cards, distribution history | lib/distributions.ts |
 | 06 | Revenue | WeeklyRevenueAnalytics.tsx | Weekly on-chain fee wallet inflow, the trend, per-battle fee | WW + live API |
 | 07 | Operations | OpsLedger.tsx | Real-world costs/income (tech stack, monthly P&L, fee wallet balance) | lib/opsLedger.ts + live RPC |
-| 08 | Program | BattleLifecycle.tsx, PlatformAnalytics.tsx | State machine funnel (create/mint/trade/settle/claim) with gap analysis + decoded instruction mix | public/ww-onchain-daily.json + WW |
+| 08 | The program | BattleLifecycle.tsx, PlatformAnalytics.tsx | State machine funnel (create/mint/trade/settle/claim) with gap analysis + decoded instruction mix | public/ww-onchain-daily.json + WW |
 | 09 | Market | TraderEdge.tsx | When money shows up, which artists pull it in, how often the crowd is right, the shape of the market | public API + WW |
 | 10 | Embeds | EmbedsSection.tsx | Gallery of embeddable charts and counters | components/embeds/ |
 | 11 | Artists | Artists.tsx, Music.tsx | The roster (live from Audius), who they are, releases, play totals | /api/audius/roster |
@@ -204,10 +204,20 @@ Every component imports `{ C, metaLabel }` from `lib/theme.ts`, never defines
 its own copy. When wwtracker embeds live on wavewarz.info, a shared palette
 means the widget reads as part of the site, not a third-party bolt-on.
 
+### Privacy note: YouTube embeds
+
+Section 12 (Ecosystem) embeds WaveWarZ promotional videos using
+`youtube-nocookie.com` instead of `youtube.com`. This prevents YouTube from
+loading third-party tracking domains (google ads, analytics) when the embed is
+accessed. The functional difference is zero - videos play identically - but the
+privacy footprint shrinks. Critical when wwtracker embeds are themselves
+embedded elsewhere: every layer of nesting would pull in tracking, so removing
+it at the source keeps embedded pages clean.
+
 ## 7. Embeds (lib/embeds.ts + components/embeds/)
 
 Every chart and counter on wwtracker can be embedded elsewhere as a standalone
-iframe: `/embed/<slug>`. The registry in `lib/embeds.ts` declares 17 widgets,
+iframe: `/embed/<slug>`. The registry in `lib/embeds.ts` declares 15 widgets,
 weighted toward on-chain data nobody else has:
 
 ```typescript

@@ -10,6 +10,7 @@ APIs. Only snapshots need manual refresh. This is the runbook.
 | Treasury balance + intraday high | Dune query 7717935 (cached read) | - | Yes - daily 9 AM cron via `/api/balance?refresh=1` |
 | Battle aggregate stats | wavewarz.info/api/public/stats | lib/battles.ts | Yes - routes cache the API |
 | Song charts | wavewarz.info/leaderboards/songs | lib/songs.ts | Partial - component reads Audius live, battle context is cached |
+| Artist roster (section 11) | Audius API (server-side walk, cached 30min) | /api/audius/roster | Yes - endpoint caches on server to avoid 429 rate limits |
 | Artist leaderboard | wavewarz.info/leaderboards/artists | lib/leaderboard.ts | No - snapshot |
 | Trader leaderboard | wavewarz.info/leaderboards/traders | lib/traders.ts | No - snapshot |
 | Battles list | wavewarz-intelligence.vercel.app/battles | public/ww-battles.json | No - manual `npm run fetch:battles` |
@@ -57,17 +58,27 @@ vercel --prod --yes
 
 ### Artist / trader leaderboards (lib/leaderboard.ts, lib/traders.ts)
 
-These are pulled from wavewarz.info. The site renders client-side, so you need
-a browser automation tool. Use the gstack skill (if available in this session):
+Previously embedded from wavewarz.info, but the site renders client-side making
+scrapes fragile. More importantly: wavewarz.info already publishes these live on
+their system of record. Copying them is a liability, not a feature. Section 12
+(Ecosystem) links to their pages instead.
 
-```bash
-# For each leaderboard: navigate, wait for render, extract per-cell
-# Then parse with the regex patterns in the scripts and regenerate the lib/*.ts files
-```
+Do not refresh these. If they are stale, that is acceptable - they are kept in
+the codebase for reference and backward compatibility, but no section renders
+them and no visitor sees them.
 
-Since these are low-priority and wavewarz.info already renders them live, it's
-OK to let them drift. The ecosystem section (11) links to their pages instead
-of embedding copies.
+### Artist roster (section 11 - handled server-side)
+
+The 35-artist roster is now fetched server-side by `/api/audius/roster`, cached
+for 30 minutes. This replaced browser-side requests that made 208 calls per
+visitor (86 returning 429 rate-limit errors). No manual refresh needed - the
+endpoint refreshes its cache automatically.
+
+Why this matters: the old design made every page load on wwtracker generate
+traffic spikes to Audius on behalf of all concurrent visitors. The server-side
+cache collapses 208 requests per visitor into one request per 30 minutes for
+the entire world. The change is operational (not visible to users) and massive
+in scope (zero browser requests to api.audius.co vs hundreds per page load).
 
 ### Per-night queue and skips (public/ww-queue.json, ww-skips.json)
 
@@ -123,12 +134,13 @@ After any refresh:
 The build step runs the validators before compilation, so staleness catches
 before deployment.
 
-## Production checklist
+## Production checklist - CRITICAL
 
-- Is `CRON_SECRET` set in Vercel Environment? If not, the treasury chart will
-  freeze. Run `vercel env pull` locally to verify.
+- **Is `CRON_SECRET` set in Vercel Production?** If not, the treasury chart
+  will freeze and never update. Run `vercel env pull` and verify it is present.
+  This was the cause of a 64-day chart freeze once before. Non-negotiable.
 - Are the daily logs showing successful cron runs? Check Vercel Function Logs
-  for `/api/balance?refresh=1` at 9 AM every day.
+  for `/api/balance?refresh=1` at 9 AM UTC every day.
 - Do the snapshot file timestamps match expectations (14 days = warning,
   45 days = stale)?
 
