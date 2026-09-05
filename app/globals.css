@@ -12,6 +12,13 @@
   --text-dim: #8b97ab;
   --grid: rgba(126, 193, 251, 0.14);
   --danger: #ef4444;
+
+  /* Supplied directly rather than by next/font - see app/layout.tsx for why the
+     faces load by stylesheet. Every family carries a real fallback so a blocked
+     or slow Google Fonts request degrades to a sane face instead of nothing. */
+  --font-disp: "Rajdhani", "Oswald", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 * {
