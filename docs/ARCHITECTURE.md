@@ -38,7 +38,7 @@ app/
   globals.css           palette vars, reduced-motion, focus, skeleton shimmer
   api/
     balance/route.ts    GET endpoint: treasury daily balance (live, server-side)
-                        ?refresh=1 re-runs the Dune query (gated by CRON_SECRET)
+                        ?refresh=1 re-runs the Dune query (rate-limited by execution age)
     ww/                 cached reads of wavewarz.info public API
       stats.ts
       battles.ts
@@ -104,11 +104,16 @@ server route. The fetch uses `cache: "no-store"` so Vercel's persistent Data
 Cache cannot pin a stale copy across deploys.
 
 The daily cron (`vercel.json`, 9 AM) hits `/api/balance?refresh=1`, which calls
-`executeSavedQuery()` instead, forcing Dune to re-run the query. This endpoint
-is gated by `CRON_SECRET` - a bearer token that must be set in the Vercel
-Production environment. Without it the cron returns 401, the query never re-runs,
-and the treasury chart silently goes stale. This is the single most important
-operational detail in the repo.
+`executeSavedQuery()` instead, forcing Dune to re-run the query.
+
+An execute costs credits, so the endpoint is bounded - but by a rate limit
+rather than a bearer token. `lib/refresh-policy.ts` reads the age of Dune's own
+stored execution from the results envelope and re-runs only if it is 20h+ old,
+which caps spend at roughly one execute per day without any shared secret. The
+previous `CRON_SECRET` gate failed closed: unset, the cron got a 401, the query
+never re-ran, and the chart froze for 64 days while the UI called it live. A
+missing env var and a hostile caller produced identical responses, and both were
+silent. `CRON_SECRET` survives as an optional force override.
 
 **B. Snapshots (everything else).** Heavier analytics (instruction decode,
 volume, timelines, trader PnL) are computed offline:
@@ -387,18 +392,22 @@ DUNE_DEFAULT_WALLET=FNjYtw...kq37
 Set the same vars in Vercel Production environment, plus:
 
 ```
-CRON_SECRET=<random-secret>
+CRON_SECRET=<random-secret>    # optional - force override only
 ```
 
-**CRITICAL:** Without `CRON_SECRET` set in Vercel Production, the daily cron
-(9 AM UTC, defined in vercel.json) will return 401 on `/api/balance?refresh=1`.
-The query will not re-run. The treasury balance chart on section 02 will freeze
-at its last successful run and never update again. This already happened once,
-for 64 days, before the missing env var was found. It is the single most
-important operational detail in the entire repo. Treat it as a required checklist
-item before any deployment.
+`CRON_SECRET` is no longer required. When set, a request carrying
+`Authorization: Bearer $CRON_SECRET` forces a Dune re-run regardless of the
+stored execution's age, which is useful for manual re-runs after editing a
+query. When unset, the daily cron still refreshes normally under the age bound
+in `lib/refresh-policy.ts`.
 
-To verify: `vercel env pull` and check that `CRON_SECRET` is present and set.
+It used to be mandatory, and that is what froze the treasury chart for 64 days:
+the gate answered 401 on a missing env var, so the query never re-ran while
+every surface still described the series as live. The lesson is in the module -
+the refresh path now fails open on an unknown state rather than closed.
+
+To verify a refresh landed: the response carries `"origin":"execute"` when the
+query re-ran and `"origin":"cache"` with `refresh.reason` when it was declined.
 
 ### Security
 
@@ -407,8 +416,10 @@ To verify: `vercel env pull` and check that `CRON_SECRET` is present and set.
 - `?wallet=` / `?mint=` parameters are base58-validated before any Dune credit
   is spent (prevents address-enumeration attacks).
 - `.env.local` and `.vercel/` are gitignored.
-- The `/api/balance?refresh=1` endpoint is gated by `CRON_SECRET` bearer token
-  (prevents anonymous credit-burn).
+- The `/api/balance?refresh=1` endpoint is rate-limited by the age of Dune's
+  stored execution, 20h (prevents anonymous credit-burn without depending on an
+  env var that can go missing). An anonymous caller can move the day's single
+  execute earlier; it cannot make a second one happen.
 - CSP frame-ancestors restricts embed framing to wavewarz.info, wavewarz.com,
   and Vercel preview builds (prevents drive-by iframe hijacking).
 

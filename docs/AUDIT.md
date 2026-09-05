@@ -40,13 +40,13 @@ platform's own API had the same wallet at **+29.95**, and a baked song list held
 | Check | Command | Result 2026-09-05 |
 |---|---|---|
 | Types | `npx tsc --noEmit` | clean |
-| Tests | `npx vitest run` | 275 passing, 32 files |
+| Tests | `npx vitest run` | 288 passing, 33 files |
 | Data validation | `node scripts/validate.mjs` | passing, 3 staleness warnings |
-| Production build | `npm run build` | compiles, 59 pages |
+| Production build | `npm run build` | compiles, 60 pages |
 | Dependency audit | `npm audit --omit=dev` | **3 high** |
 
-Size: 20 components / 5,756 lines, 24 lib modules / 2,343 lines, 6 API routes,
-32 test files. One TODO comment in the entire tree.
+Size: 20 components / 5,756 lines, 25 lib modules, 6 API routes,
+33 test files. One TODO comment in the entire tree.
 
 ---
 
@@ -142,14 +142,24 @@ of artist pages that exist is frozen at June.
 
 ## 4. Roadmap, in the order worth doing
 
-### 4.1 Set `CRON_SECRET` in the Vercel project env - 2 minutes, blocking
+### 4.1 The cron gate - DONE 2026-09-05, superseded
 
-Without it the daily cron gets a 401 on `/api/balance?refresh=1` and the
-treasury chart silently freezes. It already did this for **64 days**, from
-2026-07-03 to 2026-09-05, while the README described the chart as live.
+This was "set `CRON_SECRET` in the Vercel project env - 2 minutes, blocking".
+Without it the daily cron got a 401 on `/api/balance?refresh=1` and the treasury
+chart silently froze, as it did for **64 days**, 2026-07-03 to 2026-09-05, while
+the README described the chart as live.
 
-This is the single highest value-per-minute item in the repo and it is not a
-code change.
+Rather than set the env var, the gate was replaced. `lib/refresh-policy.ts`
+bounds the refresh by the age of Dune's own stored execution (20h) instead of by
+a bearer token, so the endpoint is still safe from anonymous credit-burn but no
+missing environment variable can freeze the chart again. `CRON_SECRET` survives
+as an optional force override for manual re-runs.
+
+The reasoning is worth keeping: the old gate failed **closed** and silently, and
+a missing env var was indistinguishable from an attack. The new one fails open
+on an unknown state and reports which branch it took in the response body. 13
+tests in `lib/__tests__/refresh-policy.test.ts`, one of which asserts the
+64-day-old execution would now trigger a re-run.
 
 ### 4.2 Build the skip-queue revenue widget - half a day
 

@@ -30,9 +30,10 @@ The three things to know before touching anything:
    wavewarz.info already renders.** See "Why this matters" below for what
    happened when that rule did not exist.
 
-3. **`CRON_SECRET` must be set in the Vercel project env**, or the daily cron
-   401s and the treasury chart silently freezes. It already did, for 64 days.
-   This is the highest value-per-minute item in the repo and it is not code.
+3. **The daily refresh is rate-limited, not authenticated.** `?refresh=1`
+   re-runs the Dune query only if the stored execution is 20h+ old, so no env
+   var can freeze the chart. `CRON_SECRET` is now an optional override that
+   forces a re-run for manual use. See `lib/refresh-policy.ts`.
 
 ## First five minutes
 
@@ -153,11 +154,11 @@ that granularity (no per-battle payout/trade data exists).
 The app uses two patterns, each fitted to its cost and freshness:
 
 - **Live** - the treasury balance reads from Dune's cached results of saved query
-  7717935 (no execution cost). The `/api/balance?refresh=1` endpoint (gated by
-  `CRON_SECRET`) forces a re-run via `executeSavedQuery()` in `lib/dune.ts`.
-  The daily Vercel cron hits this endpoint at 9 AM to refresh. Missing
-  `CRON_SECRET` in the Vercel environment will cause the chart to silently
-  freeze - this is the single most important operational detail in the repo.
+  7717935 (no execution cost). The `/api/balance?refresh=1` endpoint re-runs it
+  via `executeSavedQuery()` in `lib/dune.ts`. The daily Vercel cron hits this
+  endpoint at 9 AM. The re-run is bounded by the age of Dune's own stored
+  execution (20h, `lib/refresh-policy.ts`) rather than by a bearer token, so an
+  unset env var cannot freeze the chart the way it once did for 64 days.
 
 - **Snapshots** - heavier analytics (instruction decode, PnL, volume, timelines)
   are Dune queries run offline via `scripts/ww-research.sh`, then baked into
@@ -179,10 +180,11 @@ Local development: copy `.env.example` to `.env.local` with:
 
 Production (Vercel): set the same vars, plus:
 
-- `CRON_SECRET` - the secret for the daily refresh cron. Without this the
-  treasury chart will freeze. The cron hits `/api/balance?refresh=1` every
-  morning at 9 AM; if this env var is unset the endpoint returns 401 and the
-  chart silently goes stale.
+- `CRON_SECRET` - **optional.** When set, a request carrying
+  `Authorization: Bearer $CRON_SECRET` forces a Dune re-run regardless of how
+  fresh the stored execution is, which is what you want when re-running by hand
+  after editing a query. Unset, the daily cron still works: the refresh is
+  bounded by execution age, not by this token.
 
 Without env the dashboard renders on deterministic sample data.
 
