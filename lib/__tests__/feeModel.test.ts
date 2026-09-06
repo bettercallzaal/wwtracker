@@ -6,6 +6,7 @@ import {
   skipLadder,
   platformRevenue,
   FEE_SCHEDULE,
+  OBSERVED_CREATION_COST_SOL,
 } from "@/lib/feeModel";
 
 describe("feeModel", () => {
@@ -272,5 +273,28 @@ describe("feeModel", () => {
       expect(split.platformSol).toBeCloseTo(250, 10);
       expect(split.artistSol).toBeCloseTo(split.platformSol * 2, 10);
     });
+  });
+});
+
+// Added 2026-09-06 after measuring battle creation on mainnet.
+describe("launch fees, measured against the schedule", () => {
+  it("keeps the scheduled fees available as a model", () => {
+    expect(FEE_SCHEDULE.QUICK_BATTLE_LAUNCH_FEE).toBe(0.69);
+    expect(FEE_SCHEDULE.COMMUNITY_BATTLE_LAUNCH_FEE).toBe(4);
+  });
+
+  // Twenty creation transactions inspected on mainnet: the treasury received
+  // nothing in any of them, and the creator paid about 0.0039 SOL in rent.
+  // Battle creation is a cost, not income. See docs/LAUNCH-FEES.md.
+  it("records the observed creation cost, which is a cost not a fee", () => {
+    expect(OBSERVED_CREATION_COST_SOL).toBeGreaterThan(0);
+    expect(OBSERVED_CREATION_COST_SOL).toBeLessThan(0.01);
+  });
+
+  // The gap between what is scheduled and what is collected is the whole point
+  // of the document. If these ever converge, something changed on chain.
+  it("keeps the scheduled fee far above the observed cost", () => {
+    expect(FEE_SCHEDULE.QUICK_BATTLE_LAUNCH_FEE)
+      .toBeGreaterThan(OBSERVED_CREATION_COST_SOL * 100);
   });
 });

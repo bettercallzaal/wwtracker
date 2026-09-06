@@ -15,9 +15,27 @@ const SETTLEMENT_WINNING_ARTIST = 0.05; // 5% to winning artist
 const SETTLEMENT_LOSING_ARTIST = 0.02; // 2% to losing artist
 const SETTLEMENT_PLATFORM = 0.03; // 3% to platform
 
-// Launch fees
-const QUICK_BATTLE_LAUNCH_FEE = 0.69; // SOL
-const COMMUNITY_BATTLE_LAUNCH_FEE = 4; // SOL
+// Launch fees.
+//
+// MEASURED 2026-09-06: THESE ARE NOT BEING COLLECTED. Twenty battle-creation
+// transactions were inspected on mainnet and the treasury received nothing in
+// any of them. The wallet's balance moves the other way - the creator pays
+// about 0.0039 SOL in rent for the four accounts a battle needs (the Battle
+// PDA, the vault, and both mints), and the creator pays it whoever they are,
+// 20 of 20, treasury or third party.
+//
+// So battle creation is a cost, not a revenue line. Roughly 5.9 SOL has been
+// spent creating 1,501 battles.
+//
+// The schedule below is kept because it is the documented intent and the
+// waterfall still models it. Any figure derived from it is a model of what
+// would happen if these were charged, not a measurement of income. See
+// docs/LAUNCH-FEES.md.
+const QUICK_BATTLE_LAUNCH_FEE = 0.69; // SOL - scheduled, not observed
+const COMMUNITY_BATTLE_LAUNCH_FEE = 4; // SOL - scheduled, not observed
+
+/** Measured cost to the creator of initialising a battle, in SOL. */
+export const OBSERVED_CREATION_COST_SOL = 0.0039;
 
 // Skip-queue auction
 const SKIP_QUEUE_BASE = 0.02; // First skip costs 0.02 SOL
