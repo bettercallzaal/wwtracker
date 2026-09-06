@@ -101,21 +101,19 @@ nearest surviving section. Each is a focused lens on one aspect of the business:
   distributes as 33% operations, 22% each to Hurricane / Candy / Zaal.
 - **06 Revenue** - real weekly inflow to the on-chain fee wallet, the trend, and
   the per-battle fee.
-- **07 Operations** - real-world costs and income the team tracks manually (not
-  on-chain-derivable): tech stack, monthly P&L, the fee wallet live balance.
-- **08 Program** - the battle state machine as a funnel (create-mint-trade-settle-claim)
+- **07 Program** - the battle state machine as a funnel (create-mint-trade-settle-claim)
   with gap analysis, plus decoded program instructions. No other WaveWarZ surface
   shows this.
-- **09 Market** - when money shows up, which artists pull it in, and how often
+- **08 Market** - when money shows up, which artists pull it in, and how often
   the crowd is right - measured across every battle.
-- **10 Embeds** - every chart here is a standalone iframe for embedding elsewhere.
-- **11 Artists** - the roster (live from Audius), who they are, their releases,
+- **09 Embeds** - every chart here is a standalone iframe for embedding elsewhere.
+- **10 Artists** - the roster (live from Audius), who they are, their releases,
   play totals and streaming stats.
-- **12 Ecosystem** - where WaveWarZ sits in The ZAO ecosystem, events, FAQ.
+- **11 Ecosystem** - where WaveWarZ sits in The ZAO ecosystem, events, FAQ.
 
 ## Embeds
 
-- **Gallery** - section 10 shows every embeddable chart and counter. One line,
+- **Gallery** - section 09 shows every embeddable chart and counter. One line,
   no key, themed to the WaveWarZ design system.
 - **Widget registry** - `lib/embeds.ts` declares what can be embedded
   (`/embed/<slug>`). Each entry is one chart or counter: treasury balance, daily
