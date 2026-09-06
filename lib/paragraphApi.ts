@@ -19,6 +19,8 @@ const BASE = "https://public.api.paragraph.com/api/v1";
 export const PUBLICATION_ID = "03UA0mTK3s5mVAF7BWI5";
 
 export interface DraftPost {
+  /** Defaults to the WaveWarZ blog when omitted. */
+  publicationId?: string;
   title: string;
   subtitle?: string;
   slug?: string;
@@ -78,7 +80,7 @@ export function createPost(draft: DraftPost): Promise<CreatedPost> {
   return call<CreatedPost>("/posts", {
     method: "POST",
     body: JSON.stringify({
-      publicationId: PUBLICATION_ID,
+      publicationId: draft.publicationId ?? PUBLICATION_ID,
       sendNewsletter: false,
       ...draft,
     }),

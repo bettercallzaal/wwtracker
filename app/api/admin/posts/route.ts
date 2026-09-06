@@ -7,6 +7,7 @@
 import { cookies } from "next/headers";
 import { verifyToken, COOKIE_NAME } from "@/lib/adminAuth";
 import { createPost, updatePost, sendTestEmail, ParagraphError, type DraftPost } from "@/lib/paragraphApi";
+import { findPublication } from "@/lib/publications";
 
 async function authorized(): Promise<boolean> {
   const jar = await cookies();
@@ -18,7 +19,9 @@ function parseDraft(body: Record<string, unknown>): DraftPost | string {
   const markdown = typeof body.markdown === "string" ? body.markdown : "";
   if (!title) return "A title is required";
   if (!markdown.trim()) return "The post body is empty";
+  const pub = typeof body.publication === "string" ? findPublication(body.publication) : undefined;
   return {
+    publicationId: pub?.id,
     title,
     markdown,
     subtitle: typeof body.subtitle === "string" ? body.subtitle : undefined,
