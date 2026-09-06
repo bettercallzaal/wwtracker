@@ -8,6 +8,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { cookies } from "next/headers";
 import { verifyToken, COOKIE_NAME } from "@/lib/adminAuth";
 import { gatherFacts, findUnsourcedFigures } from "@/lib/newsletterFacts";
+import { findPublication, PUBLICATIONS } from "@/lib/publications";
 
 const SYSTEM = `You write the WaveWarZ newsletter. WaveWarZ is a Solana music-battle platform: two songs go head to head, fans trade SOL on the outcome, and artists earn 1% of every trade - twice what the platform takes.
 
@@ -30,8 +31,11 @@ export async function POST(request: Request): Promise<Response> {
     return json({ ok: false, error: "ANTHROPIC_API_KEY is not set on the server" }, 503);
   }
 
-  const body = (await request.json().catch(() => ({}))) as { angle?: unknown };
+  const body = (await request.json().catch(() => ({}))) as { angle?: unknown; publication?: unknown };
   const angle = typeof body.angle === "string" ? body.angle.trim() : "";
+  const pub =
+    (typeof body.publication === "string" ? findPublication(body.publication) : undefined) ??
+    PUBLICATIONS[0];
 
   const facts = await gatherFacts();
   if (facts.lines.length === 0) {
@@ -45,7 +49,7 @@ export async function POST(request: Request): Promise<Response> {
       model: "claude-opus-5",
       max_tokens: 16000,
       thinking: { type: "adaptive" },
-      system: SYSTEM,
+      system: `${SYSTEM}\n\n${pub.voice}`,
       messages: [
         {
           role: "user",
@@ -73,6 +77,7 @@ export async function POST(request: Request): Promise<Response> {
       draft,
       facts: facts.lines,
       capturedAt: facts.capturedAt,
+      publication: pub.slug,
       // Surfaced to the writer, never auto-removed. A human decides.
       unsourced: findUnsourcedFigures(draft, facts.figures),
       warnings: facts.errors,

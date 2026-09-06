@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
+import { PUBLICATIONS } from "@/lib/publications";
 
 // The newsletter composer. Publishes to Paragraph, which is what the public
 // blog section reads back - so a post written here shows up on the site by the
@@ -28,6 +29,7 @@ export default function AdminPage() {
   const [unsourced, setUnsourced] = useState<string[]>([]);
   const [lastPostId, setLastPostId] = useState<string | null>(null);
   const [testTo, setTestTo] = useState("");
+  const [pubSlug, setPubSlug] = useState(PUBLICATIONS[0].slug);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -59,7 +61,7 @@ export default function AdminPage() {
     const r = await fetch("/api/admin/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ angle }),
+      body: JSON.stringify({ angle, publication: pubSlug }),
     });
     const d = await r.json();
     setBusy(false);
@@ -94,7 +96,7 @@ export default function AdminPage() {
     const r = await fetch("/api/admin/posts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, subtitle, markdown, sendNewsletter: blast }),
+      body: JSON.stringify({ title, subtitle, markdown, sendNewsletter: blast, publication: pubSlug }),
     });
     const d = await r.json();
     setBusy(false);
@@ -147,6 +149,29 @@ export default function AdminPage() {
       <p style={{ ...metaLabel, color: C.dim, marginBottom: 22 }}>
         Publishes to paragraph.com/@wavewarz
       </p>
+
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ ...metaLabel, color: C.dim, marginBottom: 6 }}>Publication</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {PUBLICATIONS.map((p) => {
+            const on = p.slug === pubSlug;
+            return (
+              <button key={p.slug} type="button" onClick={() => setPubSlug(p.slug)} style={{
+                ...box, width: "auto", padding: "7px 12px", cursor: "pointer",
+                fontSize: 12.5, fontFamily: C.mono,
+                color: on ? C.accent : C.dim,
+                borderColor: on ? C.accent : C.grid,
+                background: on ? C.accentDim : "transparent",
+              }}>{p.name.toUpperCase()}</button>
+            );
+          })}
+        </div>
+        {PUBLICATIONS.find((p) => p.slug === pubSlug)?.note && (
+          <p style={{ color: C.dim, fontSize: 12.5, margin: "8px 0 0" }}>
+            {PUBLICATIONS.find((p) => p.slug === pubSlug)?.note}
+          </p>
+        )}
+      </div>
 
       {/* Draft from the site's own live numbers. The model never sources a
           figure itself - it is handed these and writes prose around them. */}
