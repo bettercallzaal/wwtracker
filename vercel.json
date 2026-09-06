@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "ignoreCommand": "[ -z \"$VERCEL_GIT_PREVIOUS_SHA\" ] && exit 1; git diff --quiet \"$VERCEL_GIT_PREVIOUS_SHA\" \"$VERCEL_GIT_COMMIT_SHA\" -- app components lib public scripts package.json package-lock.json next.config.mjs tsconfig.json vercel.json",
+  "ignoreCommand": "P=$VERCEL_GIT_PREVIOUS_SHA;C=$VERCEL_GIT_COMMIT_SHA;[ -z \"$P\" ] || [ \"$P\" = \"$C\" ] && exit 1;git diff --quiet \"$P\" \"$C\" -- app components lib public scripts package.json package-lock.json next.config.mjs tsconfig.json vercel.json",
   "crons": [
     {
       "path": "/api/balance?refresh=1",
