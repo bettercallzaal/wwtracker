@@ -3,12 +3,14 @@ import { pickBattle, secondsLeft, poolShare } from "@/lib/liveBattle";
 
 const settled = (id: number) => ({
   battleId: id, live: false, winnerDecided: true, winnerSide: "artist2",
-  artist1: { name: "A", poolSol: 0.1 }, artist2: { name: "B", poolSol: 0.2 },
+  artist1: { name: "Track A", wallet: "Wa11111111111111", musicLink: "https://audius.co/artistA/track-a", poolSol: 0.1 },
+  artist2: { name: "Track B", wallet: "Wb11111111111111", musicLink: "https://audius.co/artistB/track-b", poolSol: 0.2 },
   endsAt: "2026-09-05T04:12:25.022Z", url: `https://wavewarz.info/battles/${id}`,
 });
 const live = (id: number) => ({
   battleId: id, live: true, winnerDecided: false, winnerSide: null,
-  artist1: { name: "L1", poolSol: 0.3 }, artist2: { name: "L2", poolSol: 0.1 },
+  artist1: { name: "Live Track 1", wallet: "Wl11111111111111", musicLink: "https://audius.co/liveArtist1/t1", poolSol: 0.3 },
+  artist2: { name: "Live Track 2", wallet: "Wl22222222222222", musicLink: "https://audius.co/liveArtist2/t2", poolSol: 0.1 },
   endsAt: "2026-09-06T05:10:00.000Z",
 });
 
@@ -43,10 +45,20 @@ describe("pickBattle", () => {
     expect(pickBattle({ battles: [{ live: true, artist1: { name: "x" } }] })).toBeNull();
   });
 
+  // The regression this separation exists to prevent: the first version of the
+  // widget rendered the API's `name` field as the artist, so every card showed
+  // a song title where a person's name belonged.
+  it("keeps the track and the artist apart", () => {
+    const b = pickBattle({ battles: [settled(1)] })!;
+    expect(b.a.track).toBe("Track A");
+    expect(b.a.artist).toBe("artistA");
+    expect(b.a.artist).not.toBe(b.a.track);
+  });
+
   it("survives missing artists and missing pools", () => {
     const b = pickBattle({ battles: [{ battleId: 7 }] });
-    expect(b?.a.name).toBe("Artist 1");
-    expect(b?.b.name).toBe("Artist 2");
+    expect(b?.a.track).toBe("Entry 1");
+    expect(b?.a.artist).toBe("unknown artist");
     expect(b?.a.poolSol).toBe(0);
   });
 
