@@ -12,6 +12,13 @@
 # blocks nothing.
 name: checks
 
+# One run per ref. A new push cancels the old run instead of leaving two
+# builds racing to report on the same branch, which is how a stale red or
+# green ends up next to a commit it does not describe.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
