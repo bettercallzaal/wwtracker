@@ -111,6 +111,15 @@ nearest surviving section. Each is a focused lens on one aspect of the business:
   play totals and streaming stats.
 - **11 Ecosystem** - where WaveWarZ sits in The ZAO ecosystem, events, FAQ.
 
+## The newsletter
+
+Section 11 renders the WaveWarZ blog from Paragraph, fetched live and never
+copied. `/admin` is the composer: write markdown, draft with Claude from the
+site's own live figures, publish, and optionally email subscribers.
+
+Full reference, including why the AI is never allowed to source a number and
+what happens when a key is missing: [docs/NEWSLETTER.md](docs/NEWSLETTER.md).
+
 ## Embeds
 
 - **Gallery** - section 09 shows every embeddable chart and counter. One line,
