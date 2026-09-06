@@ -10,6 +10,7 @@ import PlatformAnalytics from "./PlatformAnalytics";
 import BattleLifecycle from "./BattleLifecycle";
 import Profitability from "./Profitability";
 import WeeklyRevenueAnalytics from "./WeeklyRevenueAnalytics";
+import Blog from "./Blog";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
 import Ecosystem from "./Ecosystem";
@@ -141,8 +142,15 @@ const SECTIONS: Section[] = [
     ),
   },
   {
-    id: "ecosystem",
+    id: "blog",
     n: "11",
+    title: "The newsletter",
+    intro: "posts from the WaveWarZ blog on Paragraph - fetched live, never copied. new posts appear here on their own.",
+    render: () => <Blog />,
+  },
+  {
+    id: "ecosystem",
+    n: "12",
     title: "In the ZAO ecosystem",
     intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
     render: () => (
