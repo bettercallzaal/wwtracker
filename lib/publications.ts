@@ -1,10 +1,13 @@
-// The Paragraph publications this composer can write to, and the voice each
-// one is written in.
+// The Paragraph publication this composer writes to, and the voice it is
+// written in.
 //
-// Voices are not decoration. @thezao and @wavewarz read nothing alike, and a
-// WaveWarZ-style recap posted to the ZAO newsletter would be obviously
-// foreign to anyone who reads it. The style notes below were derived by
-// reading the published posts, not invented.
+// WaveWarZ only, deliberately. Other publications exist in the wider estate
+// and this composer does not write to them - the newsletter is a WaveWarZ
+// surface and carries WaveWarZ branding, not anyone else's.
+//
+// The voice below was derived by reading what the blog actually published,
+// not invented. It stays a list of one so the shape is here if a second
+// WaveWarZ-owned publication ever appears.
 
 export interface Publication {
   slug: string;
@@ -31,28 +34,6 @@ music. Explain any mechanic you mention in one clause, because a reader may
 have arrived from a link with no context.
 
 Never use hype vocabulary, price talk, or emoji. Hyphens, never em dashes.`,
-  },
-  {
-    slug: "thezao",
-    id: "DB7iU1HMVzTT9bI4ec6X",
-    name: "The ZAO Newsletter",
-    writable: false,
-    note: "Publishing here needs an API key with access to that publication. Drafting works now; publishing may 403.",
-    voice: `Voice: The ZAO Newsletter. Match it closely, it is distinctive.
-
-All lowercase, including proper nouns and the first word of every line.
-No full stops at the end of lines. Short declarative lines, often one clause
-each, stacked like a journal rather than joined into paragraphs.
-
-Open with "zm" on its own line. First person, present tense, on the ground.
-Concrete and physical: where you are, who you are meeting, what is happening
-today. State plans plainly without selling them.
-
-Recurring furniture, used when it fits and never forced: a day counter line in
-the form "year of the zabal day N", a song of the day with the artist named,
-and the closing line "small moves out loud every day".
-
-Never use emoji, em dashes, hype vocabulary, or marketing register.`,
   },
 ];
 
