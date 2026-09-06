@@ -23,6 +23,11 @@ export default function AdminPage() {
   const [confirmBlast, setConfirmBlast] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [angle, setAngle] = useState("");
+  const [facts, setFacts] = useState<string[] | null>(null);
+  const [unsourced, setUnsourced] = useState<string[]>([]);
+  const [lastPostId, setLastPostId] = useState<string | null>(null);
+  const [testTo, setTestTo] = useState("");
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +45,49 @@ export default function AdminPage() {
     else setMsg({ ok: false, text: d.error ?? "Login failed" });
   }
 
+  async function pullFacts() {
+    setBusy(true); setMsg(null);
+    const r = await fetch("/api/admin/facts");
+    const d = await r.json();
+    setBusy(false);
+    if (d.ok) { setFacts(d.facts); setMsg(null); }
+    else setMsg({ ok: false, text: d.error ?? "Could not fetch the numbers" });
+  }
+
+  async function draftWithAI() {
+    setBusy(true); setMsg(null); setUnsourced([]);
+    const r = await fetch("/api/admin/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ angle }),
+    });
+    const d = await r.json();
+    setBusy(false);
+    if (d.ok) {
+      setMarkdown(d.draft);
+      setFacts(d.facts);
+      setUnsourced(d.unsourced ?? []);
+      if (!title) setTitle("WaveWarZ update");
+      setMsg({ ok: true, text: "Draft written from live figures. Read it before publishing." });
+    } else {
+      setMsg({ ok: false, text: d.error ?? "Generation failed" });
+    }
+  }
+
+  async function sendTest() {
+    if (!lastPostId || !testTo) return;
+    setBusy(true); setMsg(null);
+    const r = await fetch("/api/admin/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ testEmailFor: lastPostId, email: testTo }),
+    });
+    const d = await r.json();
+    setBusy(false);
+    setMsg(d.ok ? { ok: true, text: `Test sent to ${testTo}.` }
+                : { ok: false, text: d.error ?? "Test send failed" });
+  }
+
   async function publish(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setMsg(null);
@@ -51,10 +99,11 @@ export default function AdminPage() {
     const d = await r.json();
     setBusy(false);
     if (d.ok) {
+      setLastPostId(d.result?.id ?? null);
       setMsg({ ok: true, text: blast
         ? "Published and sent to subscribers."
         : "Published. It will appear in the newsletter section within 30 minutes." });
-      setTitle(""); setSubtitle(""); setMarkdown(""); setBlast(false); setConfirmBlast("");
+      setTitle(""); setSubtitle(""); setMarkdown(""); setBlast(false); setConfirmBlast(""); setUnsourced([]);
     } else {
       setMsg({ ok: false, text: d.error ?? "Publish failed" });
     }
@@ -99,6 +148,46 @@ export default function AdminPage() {
         Publishes to paragraph.com/@wavewarz
       </p>
 
+      {/* Draft from the site's own live numbers. The model never sources a
+          figure itself - it is handed these and writes prose around them. */}
+      <div style={{ border: `1px solid ${C.grid}`, borderRadius: 10, padding: 14, marginBottom: 18 }}>
+        <div style={{ ...metaLabel, color: C.dim, marginBottom: 10 }}>Start from tonight's numbers</div>
+        <input value={angle} onChange={(e) => setAngle(e.target.value)}
+          placeholder="Angle, optional. e.g. focus on the artists who won this week"
+          style={{ ...box, marginBottom: 10 }} aria-label="Angle" />
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" onClick={pullFacts} disabled={busy} style={{
+            ...box, width: "auto", cursor: "pointer", padding: "8px 12px",
+            fontSize: 12.5, fontFamily: C.mono, color: C.blue, borderColor: C.grid,
+          }}>SHOW THE NUMBERS</button>
+          <button type="button" onClick={draftWithAI} disabled={busy} style={{
+            ...box, width: "auto", cursor: "pointer", padding: "8px 12px",
+            fontSize: 12.5, fontFamily: C.mono,
+            color: C.accent, borderColor: C.accent, background: C.accentDim,
+          }}>{busy ? "WORKING..." : "DRAFT WITH AI"}</button>
+        </div>
+
+        {facts && (
+          <pre style={{
+            marginTop: 12, marginBottom: 0, padding: 10, background: C.void,
+            border: `1px solid ${C.grid}`, borderRadius: 6, color: C.dim,
+            fontSize: 12, fontFamily: C.mono, whiteSpace: "pre-wrap", overflowX: "auto",
+          }}>{facts.join("\n")}</pre>
+        )}
+
+        {unsourced.length > 0 && (
+          <div style={{ marginTop: 12, border: `1px solid ${C.danger}`, borderRadius: 6, padding: 10 }}>
+            <p style={{ color: C.danger, fontSize: 13, margin: "0 0 4px", fontFamily: C.mono }}>
+              CHECK THESE FIGURES
+            </p>
+            <p style={{ color: C.text, fontSize: 13, margin: 0 }}>
+              The draft states {unsourced.join(", ")}, which is not in the fact sheet above.
+              Verify or remove before publishing.
+            </p>
+          </div>
+        )}
+      </div>
+
       <form onSubmit={publish} style={{ display: "grid", gap: 12 }}>
         <input value={title} onChange={(e) => setTitle(e.target.value)}
           placeholder="Title" style={box} aria-label="Title" />
@@ -137,6 +226,23 @@ export default function AdminPage() {
         <p style={{ color: msg.ok ? C.accent : C.danger, fontSize: 13.5, marginTop: 14 }}>
           {msg.text}
         </p>
+      )}
+
+      {/* Only after something is published - a test email needs a real post. */}
+      {lastPostId && (
+        <div style={{ marginTop: 20, border: `1px solid ${C.grid}`, borderRadius: 10, padding: 14 }}>
+          <div style={{ ...metaLabel, color: C.dim, marginBottom: 8 }}>
+            Send yourself a test before blasting the list
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input value={testTo} onChange={(e) => setTestTo(e.target.value)}
+              placeholder="you@example.com" style={box} aria-label="Test email address" />
+            <button type="button" onClick={sendTest} disabled={busy || !testTo} style={{
+              ...box, width: "auto", cursor: "pointer", padding: "8px 14px",
+              fontSize: 12.5, fontFamily: C.mono, color: C.blue, borderColor: C.grid,
+            }}>SEND TEST</button>
+          </div>
+        </div>
       )}
     </main>
   );
