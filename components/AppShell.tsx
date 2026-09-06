@@ -11,6 +11,7 @@ import BattleLifecycle from "./BattleLifecycle";
 import Profitability from "./Profitability";
 import WeeklyRevenueAnalytics from "./WeeklyRevenueAnalytics";
 import Blog from "./Blog";
+import Surfaces from "./Surfaces";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
 import Ecosystem from "./Ecosystem";
@@ -149,8 +150,15 @@ const SECTIONS: Section[] = [
     render: () => <Blog />,
   },
   {
-    id: "ecosystem",
+    id: "surfaces",
     n: "12",
+    title: "Who builds what",
+    intro: "three surfaces, three owners, one standard. what exists, what is blocked, and what is blocking it - measured, not planned.",
+    render: () => <Surfaces />,
+  },
+  {
+    id: "ecosystem",
+    n: "13",
     title: "In the ZAO ecosystem",
     intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
     render: () => (
