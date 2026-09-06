@@ -854,9 +854,9 @@ export function TopSongs({ opts }: { opts: EmbedOptions }) {
 // ---------------------------------------------------------------------------
 
 function BattleSide({
-  name, pool, art, share, won, opts, dim,
+  track, artist, pool, art, share, won, opts, dim,
 }: {
-  name: string; pool: number; art: string | null; share: number;
+  track: string; artist: string; pool: number; art: string | null; share: number;
   won: boolean; opts: EmbedOptions; dim: boolean;
 }) {
   const p = opts.palette;
@@ -870,11 +870,18 @@ function BattleSide({
           }} />
         )}
         <div style={{ minWidth: 0 }}>
+          {/* The artist competes; the track is what they entered. The API
+              conflates these - `name` is the track - so both are shown, with
+              the artist first because that is who has a record. */}
           <div style={{
             color: p.ice, fontSize: 13, fontWeight: 600, lineHeight: 1.25,
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-          }}>{name}</div>
-          <div style={{ color: won ? p.green : p.mut, fontFamily: FONTS.mono, fontSize: 10.5 }}>
+          }}>{artist}</div>
+          <div style={{
+            color: p.mut, fontSize: 11, lineHeight: 1.3,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>{track}</div>
+          <div style={{ color: won ? p.green : p.mut, fontFamily: FONTS.mono, fontSize: 10.5, marginTop: 2 }}>
             {won ? "WINNER" : `${num(pool, 3)} SOL`}
           </div>
         </div>
@@ -947,7 +954,8 @@ export function LiveBattle({ opts }: { opts: EmbedOptions }) {
 
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
             <BattleSide
-              name={battle.a.name} pool={battle.a.poolSol} art={battle.a.art}
+              track={battle.a.track} artist={battle.a.artist}
+              pool={battle.a.poolSol} art={battle.a.art}
               share={share} opts={opts}
               won={battle.winnerSide === "artist1"}
               dim={battle.settled && battle.winnerSide === "artist2"}
@@ -956,7 +964,8 @@ export function LiveBattle({ opts }: { opts: EmbedOptions }) {
               VS
             </div>
             <BattleSide
-              name={battle.b.name} pool={battle.b.poolSol} art={battle.b.art}
+              track={battle.b.track} artist={battle.b.artist}
+              pool={battle.b.poolSol} art={battle.b.art}
               share={1 - share} opts={opts}
               won={battle.winnerSide === "artist2"}
               dim={battle.settled && battle.winnerSide === "artist1"}
