@@ -4,11 +4,11 @@ import { C } from "@/lib/theme";
 export const metadata: Metadata = {
   title: "WaveWarZ AI Artist Tournament (July 2026)",
   description:
-    "First on-chain AI music battle championship on Solana. 16 AI artists. 355 SOL (~$26K) in one week. 40.5% of all-time volume in 7 days. Grand Final: GEEK MYTH vs Stormbourne.",
+    "First on-chain AI music battle championship on Solana. 16 AI artists. 355 SOL (~$26K) in one week. 40.5% of all-time volume in 7 days. Grand Final GEEK MYTH vs Stormbourne, 13 September 2026.",
   openGraph: {
     title: "WaveWarZ AI Artist Tournament — July 2026",
     description:
-      "16 AI-generated artists. 4 rounds. Live Solana prediction market. Semifinal: GEEK MYTH def. AI LUI 2-1 (~342 SOL). Grand Final pending.",
+      "16 AI-generated artists. 4 rounds. Live Solana prediction market. Semifinal: GEEK MYTH def. AI LUI 2-1 (~342 SOL over three battles). Grand Final: GEEK MYTH vs Stormbourne, 13 September 2026.",
     url: "https://wwtracker.vercel.app/tournament",
     siteName: "wwtracker",
     type: "article",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "WaveWarZ AI Artist Tournament (July 2026)",
     description:
-      "355 SOL in one week · 40.5% of all-time platform volume · GEEK MYTH def. AI LUI 2-1 in the semifinal · Grand Final pending",
+      "355 SOL in one week · 40.5% of all-time platform volume · GEEK MYTH def. AI LUI 2-1 in the semifinal · Grand Final 13 Sept 2026",
   },
 };
 
@@ -66,8 +66,8 @@ const STAT_CARDS = [
   },
   {
     n: "~342 SOL",
-    label: "Semifinal battle volume",
-    detail: "GEEK MYTH def. AI LUI 2-1 — largest single battle ever",
+    label: "Semifinal series volume",
+    detail: "GEEK MYTH 2-1 over three battles · largest single battle was 97.1 SOL of pool",
   },
   {
     n: "16",
@@ -81,6 +81,11 @@ const STAT_CARDS = [
   },
 ];
 
+// Measured on chain 2026-09-06: GEEK MYTH and Stormbourne have never met, and
+// GEEK MYTH has not battled at all since 2026-07-20. The Grand Final is
+// scheduled for 2026-09-13. Until it settles, the bracket carries the date
+// rather than the word "pending", which had been sitting there for seven weeks
+// and reads as imminent whenever you happen to load the page.
 const BRACKET_ROWS = [
   {
     round: "Semifinals",
@@ -92,7 +97,7 @@ const BRACKET_ROWS = [
   {
     round: "Grand Final",
     matchups: [
-      { a: "GEEK MYTH", b: "Stormbourne", result: "PENDING", vol: "—", status: "pending" as const },
+      { a: "GEEK MYTH", b: "Stormbourne", result: "13 SEP 2026", vol: "—", status: "pending" as const },
     ],
   },
 ];
