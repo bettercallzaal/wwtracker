@@ -45,12 +45,6 @@ const BRANDS: Brand[] = [
     tag: "infra",
   },
   {
-    name: "SongJam (SANG)",
-    what: "Leaderboard + Web2-to-Farcaster infrastructure for music; tracks ecosystem mentions with multiplier staking.",
-    href: "https://www.songjam.space",
-    tag: "infra",
-  },
-  {
     name: "ZAO Stock",
     what: "The long-term vision: a physical Maine-based music festival amplified by the ecosystem.",
     href: "https://zaostock.com",
