@@ -10,7 +10,6 @@ import PlatformAnalytics from "./PlatformAnalytics";
 import BattleLifecycle from "./BattleLifecycle";
 import Profitability from "./Profitability";
 import WeeklyRevenueAnalytics from "./WeeklyRevenueAnalytics";
-import OpsLedger from "./OpsLedger";
 import Blog from "./Blog";
 import AboutWaveWarZ from "./AboutWaveWarZ";
 import HowItWorks from "./HowItWorks";
@@ -103,15 +102,8 @@ const SECTIONS: Section[] = [
     render: () => <WeeklyRevenueAnalytics />,
   },
   {
-    id: "ops",
-    n: "07",
-    title: "Running the business",
-    intro: "real-world costs and income the team tracks manually - tech stack, monthly P&L, the fee wallet. not on-chain-derivable, so treat it as reported.",
-    render: () => <OpsLedger />,
-  },
-  {
     id: "analytics",
-    n: "08",
+    n: "07",
     title: "The program itself",
     intro: "the program as a state machine - every battle walks create, mint, trade, settle, claim. the gaps between those stages are the interesting part, and no other WaveWarZ surface shows them.",
     render: () => (
@@ -124,21 +116,21 @@ const SECTIONS: Section[] = [
   },
   {
     id: "market",
-    n: "09",
+    n: "08",
     title: "Reading the market",
     intro: "when the money shows up, which artists pull it in, and how often the crowd is right - measured across every battle rather than picked out by hand.",
     render: () => <TraderEdge />,
   },
   {
     id: "embeds",
-    n: "10",
+    n: "09",
     title: "Take it with you",
     intro: "every chart here is a standalone iframe. one line, no key, themed to match - drop them anywhere in the ecosystem.",
     render: () => <EmbedsSection />,
   },
   {
     id: "artists",
-    n: "11",
+    n: "10",
     title: "The artists behind it",
     intro: "the roster, live from Audius - who they are, what they have released, and how much of it people are actually playing.",
     render: () => (
@@ -151,14 +143,14 @@ const SECTIONS: Section[] = [
   },
   {
     id: "blog",
-    n: "12",
+    n: "11",
     title: "The newsletter",
     intro: "posts from the WaveWarZ blog on Paragraph - fetched live, never copied. new posts appear here on their own.",
     render: () => <Blog />,
   },
   {
     id: "ecosystem",
-    n: "13",
+    n: "12",
     title: "In the ZAO ecosystem",
     intro: "where WaveWarZ sits in the bigger picture, what's coming up, and the questions people ask most.",
     render: () => (

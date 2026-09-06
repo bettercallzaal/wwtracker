@@ -64,7 +64,6 @@ lib/
   leaderboard.ts        artist leaderboard
   traders.ts            trader table
   distributions.ts      floor model + distribution split config
-  opsLedger.ts          real-world costs/income the team tracks manually
   price.ts              SOL/USD reference
   csv.ts                export utilities
 public/
@@ -153,12 +152,11 @@ sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
 | 04 | Economics | FeeModel.tsx | Fee schedule: 1.5% per trade (1.0% artist, 0.5% platform), settlement splits | lib/feeModel.ts |
 | 05 | Profitability | Profitability.tsx | Floor model, 33/22/22/22 distribution split, recipient cards, distribution history | lib/distributions.ts |
 | 06 | Revenue | WeeklyRevenueAnalytics.tsx | Weekly on-chain fee wallet inflow, the trend, per-battle fee | WW + live API |
-| 07 | Operations | OpsLedger.tsx | Real-world costs/income (tech stack, monthly P&L, fee wallet balance) | lib/opsLedger.ts + live RPC |
-| 08 | The program | BattleLifecycle.tsx, PlatformAnalytics.tsx | State machine funnel (create/mint/trade/settle/claim) with gap analysis + decoded instruction mix | public/ww-onchain-daily.json + WW |
-| 09 | Market | TraderEdge.tsx | When money shows up, which artists pull it in, how often the crowd is right, the shape of the market | public API + WW |
-| 10 | Embeds | EmbedsSection.tsx | Gallery of embeddable charts and counters | components/embeds/ |
-| 11 | Artists | Artists.tsx, Music.tsx | The roster (live from Audius), who they are, releases, play totals | /api/audius/roster |
-| 12 | Ecosystem | Ecosystem.tsx, Events.tsx, Faq.tsx | The ZAO, events, FAQ | static |
+| 07 | The program | BattleLifecycle.tsx, PlatformAnalytics.tsx | State machine funnel (create/mint/trade/settle/claim) with gap analysis + decoded instruction mix | public/ww-onchain-daily.json + WW |
+| 08 | Market | TraderEdge.tsx | When money shows up, which artists pull it in, how often the crowd is right, the shape of the market | public API + WW |
+| 09 | Embeds | EmbedsSection.tsx | Gallery of embeddable charts and counters | components/embeds/ |
+| 10 | Artists | Artists.tsx, Music.tsx | The roster (live from Audius), who they are, releases, play totals | /api/audius/roster |
+| 11 | Ecosystem | Ecosystem.tsx, Events.tsx, Faq.tsx | The ZAO, events, FAQ | static |
 
 ## 5. The fee model (lib/feeModel.ts)
 

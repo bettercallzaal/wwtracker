@@ -15,7 +15,6 @@ APIs. Only snapshots need manual refresh. This is the runbook.
 | Trader leaderboard | wavewarz.info/leaderboards/traders | lib/traders.ts | No - snapshot |
 | Battles list | wavewarz-intelligence.vercel.app/battles | public/ww-battles.json | No - manual `npm run fetch:battles` |
 | On-chain program analytics | Dune (decoded instructions, daily activity, volume) | lib/wwData.ts + public/ww-*.json | No - manual scripts/ww-research.sh + ww-gen.py |
-| Fee wallet balance (live Solana RPC) | mainnet-beta | lib/opsLedger.tsx display | Yes - live on every page load |
 | Per-night queue/skips | Dune (FNj inflows) | public/ww-queue.json, ww-skips.json | No - old (Jul 2), not refreshed |
 
 The treasury chart (section 02) is the most time-sensitive. It refreshes from
