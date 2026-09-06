@@ -407,6 +407,12 @@ the refresh path now fails open on an unknown state rather than closed.
 To verify a refresh landed: the response carries `"origin":"execute"` when the
 query re-ran and `"origin":"cache"` with `refresh.reason` when it was declined.
 
+### The newsletter
+
+Read path, write path, the composer, the fact pipeline that keeps the AI from
+inventing figures, and the three environment variables involved:
+[NEWSLETTER.md](NEWSLETTER.md).
+
 ### Security
 
 - The Dune key never reaches the client - confirmed by grepping built `.next/static`
