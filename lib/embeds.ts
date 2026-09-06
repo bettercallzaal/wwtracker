@@ -52,6 +52,22 @@ export interface EmbedWidget {
 }
 
 export const EMBEDS: EmbedWidget[] = [
+  // --- The one widget built for an arena rather than an analytics page. It is
+  // the only entry that changes while you look at it, and the only one whose
+  // normal state is "nothing is happening right now".
+  {
+    slug: "live-battle",
+    title: "Live battle",
+    blurb:
+      "The battle running right now, with a countdown and the pool split as it moves. Falls back to the last result when nothing is live, which is most of the day.",
+    category: "Platform",
+    source: "platform",
+    form: "counter",
+    height: 300,
+    suggestedHost: "The top of an arena page, or anywhere a visitor should be pulled into a battle",
+    exclusive: false,
+  },
+
   // --- Treasury: entirely ours, sourced from the dev wallet's on-chain history.
   {
     slug: "treasury-floor",

@@ -22,6 +22,7 @@ import {
 } from "recharts";
 import EmbedShell, { Counter } from "./EmbedShell";
 import { FONTS, shortWallet, type EmbedOptions } from "@/lib/embedTheme";
+import { secondsLeft, poolShare, type WidgetBattle } from "@/lib/liveBattle";
 
 // Every widget is a client component that fetches its own data. That is
 // deliberate: an embed is loaded on a cold cache from an origin we do not
@@ -835,7 +836,162 @@ export function TopSongs({ opts }: { opts: EmbedOptions }) {
 
 // ---------------------------------------------------------------------------
 
+
+// ---------------------------------------------------------------------------
+// Live battle. The only widget that changes while you are looking at it, and
+// the first one built for an arena rather than for an analytics page.
+//
+// It polls, counts down, and hands off to wavewarz.com to actually trade. It
+// does NOT execute a trade: that needs the program IDL, which is private. The
+// button says "trade on wavewarz.com" rather than "trade", because a button
+// that looks like it trades and then navigates away is worse than an honest
+// link.
+//
+// Designed for the state it is in most of the time - nothing live. Quick
+// battles run about ten minutes on weeknights, so a widget that only looks
+// right mid-battle would look broken all day. The finished-battle state is the
+// default, not the fallback.
+// ---------------------------------------------------------------------------
+
+function BattleSide({
+  name, pool, art, share, won, opts, dim,
+}: {
+  name: string; pool: number; art: string | null; share: number;
+  won: boolean; opts: EmbedOptions; dim: boolean;
+}) {
+  const p = opts.palette;
+  return (
+    <div style={{ flex: 1, minWidth: 0, opacity: dim ? 0.55 : 1 }}>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+        {art && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={art} alt="" style={{
+            width: 34, height: 34, borderRadius: 5, objectFit: "cover", flexShrink: 0,
+          }} />
+        )}
+        <div style={{ minWidth: 0 }}>
+          <div style={{
+            color: p.ice, fontSize: 13, fontWeight: 600, lineHeight: 1.25,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>{name}</div>
+          <div style={{ color: won ? p.green : p.mut, fontFamily: FONTS.mono, fontSize: 10.5 }}>
+            {won ? "WINNER" : `${num(pool, 3)} SOL`}
+          </div>
+        </div>
+      </div>
+      <div style={{ height: 4, background: p.line, borderRadius: 3, overflow: "hidden" }}>
+        <div style={{
+          width: `${Math.round(share * 100)}%`, height: "100%",
+          background: won ? p.green : p.mut, transition: "width .4s",
+        }} />
+      </div>
+    </div>
+  );
+}
+
+export function LiveBattle({ opts }: { opts: EmbedOptions }) {
+  const { data, status } = useJson<{ status: string; data: WidgetBattle | null }>("/api/ww/battle");
+  const battle = data?.data ?? null;
+  const [now, setNow] = useState(() => Date.now());
+
+  // Only tick while a battle is actually running. A timer on a finished battle
+  // is a re-render every second for a number that never changes.
+  useEffect(() => {
+    if (!battle?.live) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [battle?.live]);
+
+  const left = battle ? secondsLeft(battle.endsAt, now) : null;
+  const share = battle ? poolShare(battle.a.poolSol, battle.b.poolSol) : 0.5;
+  const p = opts.palette;
+
+  return (
+    <EmbedShell
+      opts={opts}
+      title="Battle"
+      source="wavewarz.info"
+      href="https://wwtracker.vercel.app/#surfaces"
+      state={status}
+    >
+      {!battle ? (
+        <p style={{ color: p.mut, fontSize: 13 }}>No battles found.</p>
+      ) : (
+        <div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
+            fontFamily: FONTS.mono, fontSize: 10.5, letterSpacing: ".08em",
+          }}>
+            {battle.live ? (
+              <>
+                <span style={{
+                  width: 7, height: 7, borderRadius: "50%", background: p.green,
+                  display: "inline-block",
+                }} />
+                <span style={{ color: p.green }}>LIVE</span>
+                {left !== null && (
+                  <span style={{ color: p.mut }}>
+                    {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")} LEFT
+                  </span>
+                )}
+              </>
+            ) : (
+              <span style={{ color: p.mut }}>
+                {battle.settled ? "LAST BATTLE" : "AWAITING RESULT"}
+              </span>
+            )}
+            <span style={{ color: p.mut, marginLeft: "auto" }}>
+              {battle.type.toUpperCase()}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <BattleSide
+              name={battle.a.name} pool={battle.a.poolSol} art={battle.a.art}
+              share={share} opts={opts}
+              won={battle.winnerSide === "artist1"}
+              dim={battle.settled && battle.winnerSide === "artist2"}
+            />
+            <div style={{ color: p.mut, fontFamily: FONTS.mono, fontSize: 11, paddingTop: 10 }}>
+              VS
+            </div>
+            <BattleSide
+              name={battle.b.name} pool={battle.b.poolSol} art={battle.b.art}
+              share={1 - share} opts={opts}
+              won={battle.winnerSide === "artist2"}
+              dim={battle.settled && battle.winnerSide === "artist1"}
+            />
+          </div>
+
+          {battle.poll && (battle.poll.a > 0 || battle.poll.b > 0) && (
+            <div style={{ color: p.mut, fontFamily: FONTS.mono, fontSize: 10.5, marginTop: 10 }}>
+              POLL {battle.poll.a} - {battle.poll.b}
+              {battle.djWavy && ` / DJ WAVY: ${battle.djWavy === "artist1" ? "A" : "B"}`}
+            </div>
+          )}
+
+          <a
+            href={battle.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "block", marginTop: 12, padding: "8px 10px", textAlign: "center",
+              border: `1px solid ${battle.live ? p.green : p.line}`, borderRadius: 6,
+              color: battle.live ? p.green : p.mut,
+              fontFamily: FONTS.mono, fontSize: 11, letterSpacing: ".06em",
+              textDecoration: "none",
+            }}
+          >
+            {battle.live ? "TRADE ON WAVEWARZ.COM" : "SEE THE BATTLE"}
+          </a>
+        </div>
+      )}
+    </EmbedShell>
+  );
+}
+
 export const WIDGETS: Record<string, (p: { opts: EmbedOptions }) => JSX.Element> = {
+  "live-battle": LiveBattle,
   "treasury-floor": TreasuryFloor,
   "treasury-balance": TreasuryBalance,
   "volume-cumulative": VolumeCumulative,
