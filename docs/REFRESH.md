@@ -98,6 +98,22 @@ date-keyed maps; merge new days into the existing history, newest-first.
 > does, those payments are silently counted as skips or queue. Open question, not
 > yet answered: `docs/issues/001-fnj-payment-bucket-classification.md`. Do not
 > treat the skip figures as exact until it is closed.
+>
+> **Measured 2026-09-07, and it is worse than a second product charge.** `FNj` is
+> also the platform's own trading wallet - 1,155 battles, 2,747 trades - so the
+> battle program pays it constantly in sell proceeds and settlement payouts. Any
+> of those landing in `0.015 .. 1.0` is counted as a member's skip. For the window
+> these files cover that is **414 candidate events worth 17.54 SOL against a
+> published 861 skips / 36.6977 SOL - 48% either way**, and even the 2026-06-13
+> calibration night carries four of them. Whether they actually land depends on
+> whether the Dune query counts program-originated inflows, which has not been
+> checked. Until it is, treat 861 / 36.6977 as an **upper bound on member skip
+> spend**, never as a measurement.
+>
+> **Do not compare this with, or add it to, the 12.77 SOL of platform queue-jump
+> revenue in `treasury_fee_events`.** They are different quantities - what members
+> paid in, versus what the platform kept - over windows that do not overlap at
+> all: these files end 2026-06-16 and `treasury_fee_events` starts 2026-07-02.
 
 **DJ Wavy split coverage.** `public/ww-wavysplit.json` classifies 103 nights
 (queue 382 / DJ Wavy 31). Roughly 49 nights in **2026-02-17 .. 2026-04-28** are
