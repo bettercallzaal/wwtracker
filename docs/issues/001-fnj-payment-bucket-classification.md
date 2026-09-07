@@ -96,3 +96,83 @@ expensive shape and needs date windowing on the free tier. See
   every clone and in the deployed site. It is not a merge artifact.
 - Question originally raised in the soltracker working notes (2026-06-17) and
   never answered; recorded here so it stops getting lost between sessions.
+
+---
+
+## Measured 2026-09-07: the biggest contaminant is not another product charge
+
+Everything above asks whether WaveWarZ **charges** for something else that pays
+`FNj`. That is a product question nobody has answered yet, and it turns out not
+to be the first question.
+
+`FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37` is not only the wallet that
+receives skip and queue payments. **It is also the platform's own trading
+wallet** - it appears on the public trader leaderboard, and across the complete
+chain scan it holds positions in **1,155 battles with 2,747 trades**, seeding
+both sides of battles. `STATE.md` in the protocol repo puts treasury buying at
+19.4% of buy value in a recent sample.
+
+So `FNj` receives SOL from the battle program constantly: sell proceeds when it
+exits a position, and settlement payouts when a side it held wins. The classifier
+looks at amount alone, so any of those landing in `0.015 .. 1.0` is **counted as
+a member's skip**.
+
+Measured against the complete scan - 1,643 battles, 15,359 trades - for the
+window `ww-skips.json` covers, ending 2026-06-16:
+
+| Inflow to `FNj` from the program | Events in the skip bucket | SOL | Confidence |
+|---|---|---|---|
+| Its own sell proceeds | 50 | 3.5238 | **MEASURED** |
+| Its own settlement payouts | 364 | 14.0119 | **MODELLED** |
+| Combined | **414** | **17.54** | |
+| Published for that window | 861 skips | 36.6977 | |
+| Candidate misclassification | **48% by count** | **48% by value** | |
+
+The settlement leg is modelled, not measured: claim amounts are not carried in
+the instruction data, so each payout is attributed from the battle's distribution
+by the wallet's share of the winning supply. That model is the one in
+`tools/leaderboards.py` and it is labelled as a model everywhere it is used. The
+sell leg is exact lamports.
+
+### The calibration night does not clear it either
+
+`docs/REFRESH.md` rests the whole classification on one night, 2026-06-13, where
+20 skips / 1.1667 SOL matched. That night:
+
+    FNj battle sells in the bucket          0 events
+    FNj settlements in the bucket           4 events, 0.1491 SOL   MODELLED
+    published for the night                20 skips, 1.1667 SOL
+
+So even the night that verified the rule carries roughly **20% of its skip count
+and 13% of its skip SOL** as candidate treasury inflow. The check passed because
+nobody was looking for this - it was looking for a second *product charge*, and
+this is not one.
+
+### What this does and does not establish
+
+**It does not prove the figures are wrong.** It depends on whether the Dune query
+behind these files counts program-originated inflows at all. If it restricts to
+system-program transfers from external signers, none of this lands and the skip
+figures are clean. That query has not been read; the rule as documented in
+`REFRESH.md` is stated purely as "FNj inflows `0.015 <= amt <= 1.0`", and the
+issue above states that amount is the only signal, which is what makes this
+plausible enough to measure.
+
+**It does change what to check first.** Question 1 above needs a product answer
+from the team and costs a conversation. This one needs no answer from anybody -
+it is a filter on a query we own, and the data to test it against is already
+committed in the protocol repo at `data/chain-snapshot-2026-09-06`.
+
+### The test that settles it
+
+Take any night in `ww-skips.json` and list the individual `FNj` inflows Dune
+counted, with their signatures. Cross-reference the signatures against the
+battle program. If any appear, the classifier is counting the treasury's own
+proceeds as member spend, and the fix is a source filter rather than a
+re-calibration.
+
+Until then, **`861 skips / 36.6977 SOL` is an upper bound on member skip spend,
+not a measurement of it**, and it should not be quoted as one. It also must not
+be compared against, or added to, the 12.77 SOL of platform queue-jump revenue in
+`treasury_fee_events` - those are different quantities over non-overlapping
+windows. See the note in `docs/REFRESH.md`.
