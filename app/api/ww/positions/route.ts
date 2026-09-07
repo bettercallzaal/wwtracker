@@ -16,8 +16,17 @@ import {
   impliedWinnerPot, impliedMultiple, type Holder,
 } from "@/lib/battlePositions";
 import { publicJson, corsPreflight } from "@/lib/wwPublicRoute";
+import { redactUrl, redactSecrets } from "@/lib/redact";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+
+/**
+ * What `source` reports. NEVER the raw RPC URL - `SOLANA_RPC_URL` is a keyed
+ * endpoint and this route is CORS-open, so echoing it publishes the key to any
+ * caller. Origin only: it gives the provenance a consumer needs and none of the
+ * credential. See lib/redact.ts.
+ */
+const RPC_SOURCE = redactUrl(RPC);
 
 // A battle runs about ten minutes, so a minute-old position is a meaningful
 // fraction of the event. Matches /api/ww/battle.
@@ -95,14 +104,14 @@ export async function GET(request: Request): Promise<Response> {
       battleId = Number(body?.battles?.[0]?.battleId);
     }
     if (!Number.isFinite(battleId)) {
-      return publicJson({ status: "unknown", data: null, fetchedAt: now, ageSeconds: 0, source: RPC });
+      return publicJson({ status: "unknown", data: null, fetchedAt: now, ageSeconds: 0, source: RPC_SOURCE });
     }
 
     const acct = await rpc<{ value: { data: [string, string] } | null }>(
       "getAccountInfo", [battlePda(battleId), { encoding: "base64" }],
     );
     if (!acct.value) {
-      return publicJson({ status: "unknown", data: null, fetchedAt: now, ageSeconds: 0, source: RPC });
+      return publicJson({ status: "unknown", data: null, fetchedAt: now, ageSeconds: 0, source: RPC_SOURCE });
     }
     const b = decodeBattle(Uint8Array.from(Buffer.from(acct.value.data[0], "base64")));
 
@@ -120,7 +129,7 @@ export async function GET(request: Request): Promise<Response> {
       status: "live",
       fetchedAt: now,
       ageSeconds: 0,
-      source: RPC,
+      source: RPC_SOURCE,
       data: {
         battleId,
         running: !b.settled,
@@ -156,8 +165,10 @@ export async function GET(request: Request): Promise<Response> {
       data: null,
       fetchedAt: now,
       ageSeconds: 0,
-      source: RPC,
-      note: err instanceof Error ? err.message : "rpc failed",
+      source: RPC_SOURCE,
+      // Redacted too. An RPC failure message can carry the endpoint it failed
+      // against, and that endpoint is the keyed one.
+      note: redactSecrets(err instanceof Error ? err.message : "rpc failed"),
     } as never);
   }
 }
