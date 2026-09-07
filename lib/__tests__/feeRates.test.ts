@@ -17,12 +17,38 @@ import { fileURLToPath } from "node:url";
 const read = (rel: string) =>
   readFileSync(fileURLToPath(new URL(`../../${rel}`, import.meta.url)), "utf8");
 
-const ARTIST_TRADE_RATE = 0.01005; // 67% of 1.500%
-const PLATFORM_TRADE_RATE = 0.00495; // 33% of 1.500%
+// Stated as three separate facts rather than one derived number, deliberately.
+//
+// The fee and the artist's share of it are different quantities, and every
+// mis-statement of this that has actually happened collapsed them: "the trade
+// fee is 1.005%" instead of "the trade fee is 1.500%, of which the artist takes
+// 67%, so 1.005% of a trade reaches the artist". A test asserting only the
+// resulting 1.005% passes while that sentence is wrong, which is the whole
+// problem - so the primitives are the constants and the rate is derived.
+const TOTAL_TRADE_FEE = 0.015; // measured, exact lamports, 14 trades / 7 battles
+const ARTIST_SPLIT = 0.67; // measured, artist's share OF the fee
+const PLATFORM_SPLIT = 0.33;
+
+const ARTIST_TRADE_RATE = TOTAL_TRADE_FEE * ARTIST_SPLIT;
+const PLATFORM_TRADE_RATE = TOTAL_TRADE_FEE * PLATFORM_SPLIT;
 
 describe("the measured fee split", () => {
   it("is 1.500% total, and the two legs sum to it exactly", () => {
-    expect(ARTIST_TRADE_RATE + PLATFORM_TRADE_RATE).toBeCloseTo(0.015, 10);
+    expect(ARTIST_TRADE_RATE + PLATFORM_TRADE_RATE).toBeCloseTo(TOTAL_TRADE_FEE, 10);
+  });
+
+  it("keeps the fee and the artist's share of it as distinct quantities", () => {
+    // The compression that has actually happened, twice: quoting 1.005% as the
+    // fee. It is 67% of the fee. If these two are ever equal, someone has
+    // flattened a two-step statement into a one-step one.
+    expect(ARTIST_TRADE_RATE).not.toBeCloseTo(TOTAL_TRADE_FEE, 6);
+    expect(ARTIST_TRADE_RATE).toBeCloseTo(0.01005, 10);
+    expect(PLATFORM_TRADE_RATE).toBeCloseTo(0.00495, 10);
+  });
+
+  it("pays the artist twice what the platform takes on the same trade", () => {
+    expect(ARTIST_TRADE_RATE / PLATFORM_TRADE_RATE).toBeCloseTo(67 / 33, 6);
+    expect(ARTIST_TRADE_RATE).toBeGreaterThan(2 * PLATFORM_TRADE_RATE - 1e-9);
   });
 
   it("is not the documented 1.00 / 0.50, which is what makes it worth testing", () => {
@@ -68,5 +94,42 @@ describe("published copy quotes the measured rate", () => {
     // cannot reproduce it.
     expect(page).toContain("7 September 2026");
     expect(page).not.toContain("As of July 2026");
+  });
+});
+
+describe("published copy never states the artist share bare", () => {
+  // A rate with no leg attached is what the next person compresses. Anywhere
+  // 1.005% appears in copy, the sentence around it must say whose share it is,
+  // so that quoting the sentence cannot produce "the trade fee is 1.005%".
+  const SURFACES = ["app/case-study/page.tsx", "lib/embeds.ts"];
+
+  it("attaches the share to its leg wherever the number appears", () => {
+    let found = 0;
+    for (const rel of SURFACES) {
+      const text = read(rel);
+      let from = 0;
+      for (;;) {
+        const at = text.indexOf("1.005%", from);
+        if (at === -1) break;
+        found += 1;
+        const around = text.slice(Math.max(0, at - 240), at + 240);
+        expect(
+          /artist/i.test(around) && /(of every trade|share|split|1\.500%)/i.test(around),
+        ).toBe(true);
+        from = at + 1;
+      }
+    }
+    // Without this the loop passes by finding nothing, which is the same trap
+    // docs/AUDIT.md records as "a gate nobody invokes is not a gate".
+    expect(found).toBeGreaterThanOrEqual(SURFACES.length);
+  });
+
+  it("never calls 1.005% the trade fee", () => {
+    for (const rel of SURFACES) {
+      const text = read(rel).toLowerCase();
+      expect(text).not.toContain("trade fee is 1.005");
+      expect(text).not.toContain("1.005% fee");
+      expect(text).not.toContain("fee of 1.005");
+    }
   });
 });

@@ -185,7 +185,7 @@ export const EMBEDS: EmbedWidget[] = [
     slug: "artist-payouts",
     title: "Paid to artists",
     blurb:
-      "Total SOL paid straight to artists - 1.005% of every trade plus settlement bonuses, automatic and on-chain.",
+      "Total SOL paid straight to artists - the artist's two thirds of a 1.500% trade fee, so 1.005% of every trade, plus settlement bonuses.",
     category: "Platform",
     source: "platform",
     form: "counter",
