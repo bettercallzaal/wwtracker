@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import * as M from "@/lib/measured";
 import { Inter, JetBrains_Mono, Rajdhani } from "next/font/google";
 import "./globals.css";
 
@@ -50,7 +51,11 @@ const jsonLd = {
   "@type": "Dataset",
   name: "WaveWarZ Battle Data",
   description:
-    "On-chain music battle records from WaveWarZ on Solana. Includes 1,500 battles (May 2025 to Sep 2026), artist win/loss records, head-to-head rivalries, trading volume (921+ SOL), and estimated artist earnings. Solana program: 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo.",
+    `On-chain music battle records from WaveWarZ on Solana. ${M.BATTLES_ON_CHAIN.toLocaleString()} battle ` +
+    `accounts on mainnet (${M.SPAN_FIRST} to ${M.SPAN_LAST}), ${M.BATTLES_PUBLIC.toLocaleString()} of them ` +
+    `returned by the public API, artist win/loss records, head-to-head rivalries, ` +
+    `${M.VOLUME_SOL} SOL of trading volume and ${M.ARTIST_TOTAL_SOL} SOL paid to artists across all legs, ` +
+    `measured from chain on ${M.MEASURED_ON_LONG}. Solana program: 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo.`,
   url: "https://wavewarz.info",
   creator: {
     "@type": "Organization",
@@ -59,7 +64,7 @@ const jsonLd = {
   },
   license: "https://creativecommons.org/licenses/by/4.0/",
   datePublished: "2025-05-01",
-  dateModified: "2026-09-05",
+  dateModified: M.MEASURED_ON,
   keywords: [
     "WaveWarZ",
     "Solana",
