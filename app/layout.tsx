@@ -28,11 +28,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://wavewarz.info"),
   title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
   description:
-    "Open-source Solana analytics for WaveWarZ: 1,500+ on-chain music battles, 921+ SOL total volume, artist earnings, head-to-head records, and trader P&L. Data: wavewarz.info/api/public/stats.",
+    "Open-source Solana analytics for WaveWarZ: 1,500+ on-chain music battles, 921+ SOL total volume, artist earnings, head-to-head records, and the on-chain fee model. Data: wavewarz.info/api/public/stats.",
   openGraph: {
     title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
     description:
-      "1,500+ battles, 921+ SOL volume, artist earnings and trader P&L for the WaveWarZ Solana music-battle platform.",
+      "1,500+ battles, 921+ SOL volume, artist earnings and settlement read from chain for the WaveWarZ Solana music-battle platform.",
     url: "https://wavewarz.info",
     siteName: "WaveWarZ Tracker",
     type: "website",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
     description:
-      "1,500+ on-chain music battles, 921+ SOL volume, artist earnings and trader P&L for WaveWarZ on Solana.",
+      "1,500+ on-chain music battles, 921+ SOL volume, artist earnings and settlement read from chain for WaveWarZ on Solana.",
   },
 };
 
