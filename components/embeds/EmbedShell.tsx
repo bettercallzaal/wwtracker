@@ -28,6 +28,15 @@ interface Props {
   state?: "ready" | "loading" | "error";
   /** Shown instead of children when state is "error". */
   errorNote?: string;
+  /**
+   * A standing caveat about the figure itself, shown inside the frame above the
+   * source line. Not an error: the widget is working, the number is qualified.
+   *
+   * It lives inside the frame on purpose. A caveat kept in our own docs does not
+   * travel with a screenshot of the widget, and a screenshot is how an embedded
+   * figure usually moves.
+   */
+  note?: string;
   children: ReactNode;
 }
 
@@ -38,6 +47,7 @@ export default function EmbedShell({
   opts,
   state = "ready",
   errorNote,
+  note,
   children,
 }: Props) {
   const { palette: p, transparent, bare } = opts;
@@ -112,6 +122,23 @@ export default function EmbedShell({
         {state === "ready" && children}
       </div>
 
+      {note && state === "ready" && (
+        <div
+          style={{
+            marginTop: 8,
+            fontFamily: FONTS.mono,
+            fontSize: 9.5,
+            lineHeight: 1.5,
+            letterSpacing: ".02em",
+            color: p.mut,
+            borderTop: `1px solid ${p.line}`,
+            paddingTop: 7,
+          }}
+        >
+          {note}
+        </div>
+      )}
+
       <a
         href={href}
         target="_blank"
@@ -124,8 +151,8 @@ export default function EmbedShell({
           textTransform: "uppercase",
           color: p.mut,
           textDecoration: "none",
-          borderTop: `1px solid ${p.line}`,
-          paddingTop: 7,
+          borderTop: note && state === "ready" ? "none" : `1px solid ${p.line}`,
+          paddingTop: note && state === "ready" ? 4 : 7,
           display: "block",
           whiteSpace: "nowrap",
           overflow: "hidden",

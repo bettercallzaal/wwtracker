@@ -21,6 +21,11 @@ import {
   YAxis,
 } from "recharts";
 import EmbedShell, { Counter } from "./EmbedShell";
+import {
+  TRADER_PNL_NOTE,
+  TRADER_PNL_WITHDRAWN,
+  TRADER_TABLE_HEAD,
+} from "@/lib/traderLeaderboard";
 import { FONTS, shortWallet, type EmbedOptions } from "@/lib/embedTheme";
 import { secondsLeft, poolShare, type WidgetBattle } from "@/lib/liveBattle";
 
@@ -787,18 +792,22 @@ export function TopTraders({ opts }: { opts: EmbedOptions }) {
       href={`${SITE}/#traders`}
       opts={opts}
       state={rows.length ? "ready" : status}
+      // Net P&L used to be the last column here. It was measured against a
+      // complete chain scan on 2026-09-07 and disagreed by 221 SOL in aggregate,
+      // with 45 of 145 ranked wallets displayed in profit while down. See
+      // lib/traderLeaderboard.ts for the measurement and how to restore it.
+      note={TRADER_PNL_WITHDRAWN ? TRADER_PNL_NOTE : undefined}
     >
       <Table
         opts={opts}
         // The API returns raw floats here (winRate comes back as 79.3103448...),
         // so every numeric column is rounded before display.
-        head={["#", "Wallet", "Volume", "Win %", "Net P&L"]}
+        head={[...TRADER_TABLE_HEAD]}
         rows={rows.map((t, i) => [
           i + 1,
           shortWallet(t.wallet),
           num(t.totalVolumeSol, 2),
           num(t.winRate, 0),
-          `${t.netPnlSol >= 0 ? "+" : ""}${num(t.netPnlSol, 2)}`,
         ])}
       />
     </EmbedShell>

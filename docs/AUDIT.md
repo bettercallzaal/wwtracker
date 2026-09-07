@@ -138,6 +138,44 @@ so it is consistent with them - but consistency with a source is not the same as
 correctness, and the Growth section presents 2025 volume with the same
 confidence as last week's. It needs a footnote at minimum.
 
+### 3.55 The top-traders embed was republishing a figure we measured as wrong - FIXED 2026-09-07
+
+The `top-traders` widget rendered a **Net P&L** column straight from
+`wavewarz.info/api/public/leaderboards/traders`, proxied through
+`/api/ww/leaderboards/[kind]`. On 2026-09-07 that leaderboard was measured
+against a complete scan of every trade in the platform's history - 1,643
+battles, 15,359 trades, read from Solana:
+
+    the site   145 wallets summing to +204.29 SOL of trader profit
+    chain      157 wallets summing to  -17.08 SOL
+
+Traders in aggregate must be down by roughly the fees taken out of them. The
+platform's arithmetic is correct; its `trades` table is short, because hydration
+fetches a battle's whole history and skips the write on failure, so the biggest
+battles are lost first. Full derivation in the protocol repo,
+`recon/PNL-DIAGNOSIS.md`.
+
+**Why this belonged in section 3 and not in someone else's backlog.** Section 1
+says wwtracker never copies a battle-shaped figure, after a baked trader table
+drifted to -19.02 against the platform's +29.95. That rule was followed here -
+the widget proxies live rather than baking - and it was not enough, because
+proxying a wrong number publishes it just as effectively. The rule needed the
+second half it now has: **we do not re-publish a figure we have measured to be
+wrong, live or baked.**
+
+It was also the worst possible surface for it. An embed sits on somebody else's
+page under our attribution line, and a caveat in this file does not travel with
+a screenshot.
+
+The column is withdrawn, with the measurement, the reason and the one command
+that would restore it in `lib/traderLeaderboard.ts`. `EmbedShell` grew a `note`
+prop so the caveat renders inside the frame. Volume and win rate stay, and the
+note says plainly that they come from the same short rows.
+
+The concentration is the part worth remembering: one wallet is displayed at
++159.01 SOL while being -54.37 on chain, and that single row is 213 of the 221
+SOL gap. It belongs to a Grand Final competitor, and the final is 13 September.
+
 ### 3.6 `lib/leaderboard.ts` is a snapshot pretending to be a roster - LOW
 
 A 2026-06-15 snapshot of 48 artists, against 52 live. It is no longer used for
