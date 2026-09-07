@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
+import { burnedShare, LARGEST_ACCOUNTS_CAP } from "@/lib/holderList";
 
 interface Holder {
   owner: string;
@@ -33,6 +34,9 @@ interface Positions {
   supplyB: number;
   heldA: number;
   heldB: number;
+  /** The holder list came back at the RPC's 20-account cap and may be short. */
+  truncatedA?: boolean;
+  truncatedB?: boolean;
   settled: boolean;
   marketWinnerIsA: boolean;
   totalDistributionSol: number;
@@ -78,21 +82,33 @@ function SideBar({ a, b }: { a: number; b: number }) {
   );
 }
 
-function HolderTable({ holders, supply, held, color, label }: {
-  holders: Holder[]; supply: number; held: number; color: string; label: string;
+function HolderTable({ holders, supply, held, truncated = false, color, label }: {
+  holders: Holder[]; supply: number; held: number; truncated?: boolean;
+  color: string; label: string;
 }) {
+  // Null when it cannot be known, which is what a truncated holder list makes
+  // it. Rendering the arithmetic anyway would report supply held by the holders
+  // the RPC did not return as supply that was claimed and burned.
+  const burned = burnedShare(supply, held, truncated);
   return (
     <div style={{ background: C.panel, borderRadius: 12, padding: 16, flex: 1, minWidth: 300 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
         <span style={{ width: 10, height: 10, borderRadius: 3, background: color, display: "inline-block" }} />
         <strong style={{ color: C.text }}>{label}</strong>
         <span style={{ ...metaLabel, color: C.dim }}>
-          {holders.length} holder{holders.length === 1 ? "" : "s"}
+          {holders.length}
+          {truncated ? "+" : ""} holder{holders.length === 1 && !truncated ? "" : "s"}
         </span>
       </div>
-      {held < supply && supply > 0 && (
+      {burned !== null && (
         <p style={{ ...metaLabel, color: C.dim, margin: "0 0 10px" }}>
-          {(((supply - held) / supply) * 100).toFixed(0)}% of supply already claimed and burned
+          {(burned * 100).toFixed(0)}% of supply already claimed and burned
+        </p>
+      )}
+      {truncated && (
+        <p style={{ ...metaLabel, color: C.dim, margin: "0 0 10px" }}>
+          Showing the {LARGEST_ACCOUNTS_CAP} largest positions. The chain returns no
+          more than that in one read, so this side may hold more.
         </p>
       )}
       {holders.length === 0 ? (
@@ -214,8 +230,8 @@ export default function LiveBattlePositions() {
           </div>
 
           <div style={{ display: "flex", gap: 16, marginTop: 16, flexWrap: "wrap" }}>
-            <HolderTable holders={d.holdersA} supply={d.supplyA} held={d.heldA} color={C.accent} label="SIDE A" />
-            <HolderTable holders={d.holdersB} supply={d.supplyB} held={d.heldB} color={C.blue} label="SIDE B" />
+            <HolderTable holders={d.holdersA} supply={d.supplyA} held={d.heldA} truncated={d.truncatedA} color={C.accent} label="SIDE A" />
+            <HolderTable holders={d.holdersB} supply={d.supplyB} held={d.heldB} truncated={d.truncatedB} color={C.blue} label="SIDE B" />
           </div>
 
           <p style={{ ...metaLabel, color: C.dim, marginTop: 18 }}>

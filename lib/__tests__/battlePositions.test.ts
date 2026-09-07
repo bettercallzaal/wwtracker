@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   b58encode, b58decode, battlePda, vaultPda, mintPda,
   rankHolders, impliedWinnerPot, impliedMultiple,
+  holderListTruncated, burnedShare, LARGEST_ACCOUNTS_CAP,
 } from "../battlePositions";
 
 // Every expected value below was read from Solana mainnet and is recorded in
@@ -66,5 +67,59 @@ describe("settlement", () => {
   it("expresses the multiple on a holder's stake", () => {
     expect(impliedMultiple(10, 5)).toBeCloseTo(1.2);
     expect(impliedMultiple(0, 5)).toBe(0);
+  });
+});
+
+// The 20-account cap on getTokenLargestAccounts, and the inference it breaks.
+//
+// Measured across every battle in the platform's history - 1,643 battles,
+// 15,359 trades - the most holders any side has ever ended with is 18. The cap
+// has never been hit, which is exactly why it is worth a test: the first battle
+// big enough to hit it is the first one anybody is watching this page during,
+// and the failure is silent.
+
+describe("holderListTruncated", () => {
+  it("treats a cap-length list as possibly short", () => {
+    expect(holderListTruncated(LARGEST_ACCOUNTS_CAP)).toBe(true);
+  });
+
+  it("does not flag a list the RPC clearly did not cut", () => {
+    expect(holderListTruncated(0)).toBe(false);
+    expect(holderListTruncated(18)).toBe(false);
+    expect(holderListTruncated(LARGEST_ACCOUNTS_CAP - 1)).toBe(false);
+  });
+
+  it("is conservative: exactly 20 real holders reads the same as 20 of 34", () => {
+    // The RPC returns an identical response either way, so understating our
+    // knowledge is the only honest option.
+    expect(holderListTruncated(LARGEST_ACCOUNTS_CAP)).toBe(true);
+    expect(holderListTruncated(LARGEST_ACCOUNTS_CAP + 5)).toBe(true);
+  });
+});
+
+describe("burnedShare", () => {
+  it("reports the burned fraction when the holder list is complete", () => {
+    // 250 of 1,000 supply is unaccounted for and the list is whole, so it burned.
+    expect(burnedShare(1000, 750, false)).toBeCloseTo(0.25, 10);
+  });
+
+  it("returns null rather than a number when the list is truncated", () => {
+    // This is the bug. Held is short because the RPC stopped at 20, not because
+    // anything was claimed, and 25% would have been rendered as fact.
+    expect(burnedShare(1000, 750, true)).toBeNull();
+  });
+
+  it("returns null, never zero, when nothing can be said", () => {
+    // An unknown rendered as a number is a lie that looks like data - the same
+    // reason /api/ww/* returns status unknown rather than a zero-filled object.
+    expect(burnedShare(0, 0, false)).toBeNull();
+    expect(burnedShare(1000, 1000, false)).toBeNull();
+    expect(burnedShare(1000, 1200, false)).toBeNull();
+  });
+
+  it("never reports a burn on a battle at the historical holder record", () => {
+    // 18 holders, the most ever seen. Under the cap, so the inference is valid.
+    expect(holderListTruncated(18)).toBe(false);
+    expect(burnedShare(1000, 900, holderListTruncated(18))).toBeCloseTo(0.1, 10);
   });
 });

@@ -12,7 +12,7 @@
 // is reported as `unknown` and the page says so.
 
 import {
-  battlePda, mintPda, decodeBattle, rankHolders,
+  battlePda, mintPda, decodeBattle, rankHolders, holderListTruncated,
   impliedWinnerPot, impliedMultiple, type Holder,
 } from "@/lib/battlePositions";
 import { publicJson, corsPreflight } from "@/lib/wwPublicRoute";
@@ -51,13 +51,25 @@ async function rpc<T>(method: string, params: unknown[], attempts = 3): Promise<
   throw lastErr;
 }
 
-async function sideHolders(battleId: number, side: "a" | "b", supply: number, poolSol: number): Promise<Holder[]> {
+/**
+ * `getTokenLargestAccounts` caps at 20 accounts and says nothing about having
+ * been cut short, so the caller is told whether the list may be incomplete. The
+ * page needs that to avoid reporting held supply as burned - see
+ * `burnedShare` in lib/battlePositions.
+ */
+async function sideHolders(
+  battleId: number, side: "a" | "b", supply: number, poolSol: number,
+): Promise<{ holders: Holder[]; truncated: boolean }> {
   const mint = mintPda(battleId, side);
   const largest = await rpc<{ value: { address: string; amount: string }[] }>(
     "getTokenLargestAccounts", [mint],
   );
+  // Truncation is judged on what the RPC returned, before the zero-balance
+  // filter. A cap-length response with some empties is still a cap-length
+  // response, and the accounts beyond it are unknown either way.
+  const truncated = holderListTruncated(largest.value.length);
   const accounts = largest.value.filter((a) => Number(a.amount) > 0);
-  if (accounts.length === 0) return [];
+  if (accounts.length === 0) return { holders: [], truncated };
   // One batched call for the owners rather than one per account.
   const parsed = await rpc<{ value: ({ data: { parsed: { info: { owner: string } } } } | null)[] }>(
     "getMultipleAccounts", [accounts.map((a) => a.address), { encoding: "jsonParsed" }],
@@ -66,7 +78,7 @@ async function sideHolders(battleId: number, side: "a" | "b", supply: number, po
     owner: parsed.value[i]?.data?.parsed?.info?.owner ?? a.address,
     amount: Number(a.amount),
   }));
-  return rankHolders(raw, supply, poolSol);
+  return { holders: rankHolders(raw, supply, poolSol), truncated };
 }
 
 export async function GET(request: Request): Promise<Response> {
@@ -94,10 +106,12 @@ export async function GET(request: Request): Promise<Response> {
     }
     const b = decodeBattle(Uint8Array.from(Buffer.from(acct.value.data[0], "base64")));
 
-    const [holdersA, holdersB] = await Promise.all([
+    const [sideA, sideB] = await Promise.all([
       sideHolders(battleId, "a", b.supplyA, b.poolASol),
       sideHolders(battleId, "b", b.supplyB, b.poolBSol),
     ]);
+    const { holders: holdersA, truncated: truncatedA } = sideA;
+    const { holders: holdersB, truncated: truncatedB } = sideB;
 
     const heldA = holdersA.reduce((s, h) => s + h.amount, 0);
     const heldB = holdersB.reduce((s, h) => s + h.amount, 0);
@@ -120,8 +134,11 @@ export async function GET(request: Request): Promise<Response> {
         potSol: b.poolASol + b.poolBSol,
         supplyA: b.supplyA,
         supplyB: b.supplyB,
-        // Below total supply means the difference has been claimed and burned.
+        // Below total supply means the difference has been claimed and burned -
+        // but ONLY if the holder list is complete. When truncated, the missing
+        // supply is in the holders the RPC did not return.
         heldA, heldB,
+        truncatedA, truncatedB,
         settled: b.settled,
         marketWinnerIsA: b.winnerArtistA,
         totalDistributionSol: b.totalDistributionSol,
