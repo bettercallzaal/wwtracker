@@ -1,0 +1,116 @@
+#!/usr/bin/env node
+// Watch /live through the Grand Final. Built to be run unattended.
+//
+//   node scripts/live-watch.mjs                    # one check, exit code = severity
+//   node scripts/live-watch.mjs --loop --every 60  # keep checking
+//
+// WHERE THE ALERT LANDS - read this before relying on it:
+//
+//   stdout        one line per check, always, including healthy ones. Silence
+//                 means the watcher itself died, which is the failure a
+//                 success-only watcher hides.
+//   the log       appends to var/live-watch.log so an unattended run leaves a
+//                 record somebody can read afterwards.
+//   exit code     0 ok, 1 info, 2 warn, 3 alert. This is what a cron or a
+//                 supervisor keys on.
+//   macOS notice  --notify posts a system notification on warn and alert. Only
+//                 works while this machine is awake and logged in.
+//
+// It does NOT reach a phone, a channel, or anybody who is not at this machine.
+// If it needs to, that is a delivery decision with credentials attached and it
+// is Zaal's, not mine. Say so plainly rather than let anyone believe they are
+// covered.
+//
+// KEY ROTATION. This reads nothing about the RPC endpoint or its key. It probes
+// our own public endpoint, which resolves SOLANA_RPC_URL server-side at request
+// time, so a rotation cannot break the watcher - and a BOTCHED rotation is
+// exactly what it is built to catch, reported as UNAUTHORIZED rather than as a
+// generic failure.
+
+import { appendFileSync, mkdirSync } from "node:fs";
+import { classify, worst } from "../lib/liveWatch.mjs";
+
+const args = process.argv.slice(2);
+const has = (f) => args.includes(f);
+const val = (f, d) => (args.includes(f) ? args[args.indexOf(f) + 1] : d);
+
+const URL_ = val("--url", "https://wwtracker.vercel.app/api/ww/positions");
+const EVERY = Number(val("--every", "60")) * 1000;
+const TIMEOUT = Number(val("--timeout", "15")) * 1000;
+const LOG = val("--log", "var/live-watch.log");
+const RANK = { ok: 0, info: 1, warn: 2, alert: 3 };
+
+async function probe() {
+  const started = Date.now();
+  try {
+    const res = await fetch(URL_, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(TIMEOUT),
+    });
+    const latencyMs = Date.now() - started;
+    let body = null;
+    try {
+      body = await res.json();
+    } catch {
+      body = null;
+    }
+    return { httpStatus: res.status, latencyMs, body };
+  } catch (err) {
+    return {
+      httpStatus: 0,
+      latencyMs: Date.now() - started,
+      body: null,
+      // Never swallow this into an empty result. A timeout that reads as "no
+      // holders" is the trap this whole project keeps paying for.
+      transportError: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+function notify(title, text) {
+  if (!has("--notify") || process.platform !== "darwin") return;
+  try {
+    const { spawnSync } = require("node:child_process");
+    const esc = (s) => String(s).replace(/["\\]/g, "\\$&");
+    spawnSync("osascript", [
+      "-e",
+      `display notification "${esc(text)}" with title "${esc(title)}"`,
+    ]);
+  } catch {
+    // A failed notification must never take the watcher down with it.
+  }
+}
+
+async function once() {
+  const p = await probe();
+  const verdicts = classify(p);
+  const level = worst(verdicts);
+  const stamp = new Date().toISOString();
+
+  for (const v of verdicts) {
+    const line = `${stamp} ${v.level.toUpperCase().padEnd(5)} ${v.code.padEnd(12)} ${v.message}`;
+    console.log(line);
+    try {
+      mkdirSync(LOG.replace(/\/[^/]+$/, ""), { recursive: true });
+      appendFileSync(LOG, line + "\n");
+    } catch {
+      // Logging failing is not a reason to stop watching.
+    }
+  }
+  if (RANK[level] >= RANK.warn) {
+    const v = verdicts.find((x) => x.level === level);
+    notify(`wwtracker /live: ${v.code}`, v.message);
+  }
+  return RANK[level];
+}
+
+if (has("--loop")) {
+  // A heartbeat every cycle, so that no output at all means the watcher died
+  // rather than that everything is fine.
+  for (;;) {
+    await once();
+    await new Promise((r) => setTimeout(r, EVERY));
+  }
+} else {
+  process.exit(await once());
+}

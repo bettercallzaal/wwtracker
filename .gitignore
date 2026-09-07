@@ -22,3 +22,6 @@ next-env.d.ts
 
 # Session handoff bundles - machine-local maps to a transcript, not source
 .handoffs/
+
+# watcher output
+var/
