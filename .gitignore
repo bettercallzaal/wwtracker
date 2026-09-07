@@ -19,3 +19,6 @@ next-env.d.ts
 # DUNE_API_KEY; one `git add -A` would have published it.
 .env*.bak*
 *.env.local*
+
+# Session handoff bundles - machine-local maps to a transcript, not source
+.handoffs/
