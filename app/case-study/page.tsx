@@ -42,7 +42,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How does The ZAO make money?",
-    a: "WaveWarZ generates platform revenue: a 2.28% effective fee rate on total trading volume + automatic 1.53% artist payout rate on every trade. As of July 2026: 20.06 SOL platform revenue accumulated from 878+ SOL total volume (13.39 SOL to artists). No DAO treasury with a spending vote — revenue flows to operations and founders per a transparent on-chain split.",
+    a: "WaveWarZ revenue comes from three lines that behave differently. Trading carries a 1.500% fee, split 67/33, so 1.005% of every trade goes to the artist and 0.495% to the platform - measured at exact lamports on chain, not modelled. Settlement adds bonuses from the losing pool: 5% to the winning artist, 2% to the losing artist, 3% to the platform. Queue-jump fees are the third line and the largest single one at 12.77 SOL, and they do not scale with volume at all. Measured from chain on 7 September 2026: 928.21 SOL of lifetime volume, 13.94 SOL to artists across all legs (9.33 from trade fees, 4.61 from settlement), and 19.34 SOL of platform revenue from every source. No DAO treasury with a spending vote - revenue flows to operations and founders per a transparent on-chain split.",
   },
 ];
 
