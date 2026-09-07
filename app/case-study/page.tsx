@@ -4,11 +4,11 @@ import { C } from "@/lib/theme";
 export const metadata: Metadata = {
   title: "The ZAO — DAO Case Study | WaveWarZ Analytics",
   description:
-    "Verified ZAO case study: 100+ Fractal governance weeks on Optimism, 1,291+ WaveWarZ battles on Solana, 878+ SOL volume (~$65K USD), $1,497 raised for charity. The ZAO is a decentralized impact network for independent music artists, founded by Zaal Panthaki.",
+    "Verified ZAO case study: 100+ Fractal governance weeks on Optimism, 1,643 WaveWarZ battles on Solana, 928.21 SOL volume measured from chain on 7 Sep 2026, $1,497 raised for charity. The ZAO is a decentralized impact network for independent music artists, founded by Zaal Panthaki.",
   openGraph: {
     title: "The ZAO — DAO Case Study (Jul 2026)",
     description:
-      "100+ Fractal governance weeks · 1,291+ WaveWarZ battles · 878+ SOL volume · $1,497 charity · 157 on-chain Respect holders. Verified facts, July 2026.",
+      "100+ Fractal governance weeks · 1,643 WaveWarZ battles · 928.21 SOL volume · $1,497 charity · 157 on-chain Respect holders. Measured 7 September 2026.",
     url: "https://wwtracker.vercel.app/case-study",
     siteName: "wwtracker",
     type: "article",
@@ -22,7 +22,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What is WaveWarZ?",
-    a: "WaveWarZ is The ZAO's flagship product: a live music-battle prediction market on Solana. Two songs compete head-to-head and fans trade SOL on the outcome. The winner is decided by best 2 of 3: community poll + SOL volume (charts) + DJ Wavy (AI judge). Artists earn 1% of every trade automatically and instantly onchain.",
+    a: "WaveWarZ is The ZAO's flagship product: a live music-battle prediction market on Solana. Two songs compete head-to-head and fans trade SOL on the outcome. The winner is decided by best 2 of 3: community poll + SOL volume (charts) + DJ Wavy (AI judge). The artist earns 1.005% of every trade, automatically and instantly onchain - two thirds of a 1.500% trade fee, and twice what the platform keeps.",
   },
   {
     q: "What is the ZAO Fractal?",
@@ -85,9 +85,9 @@ const CITABLE_FACTS = [
   { n: "100+", label: "Fractal governance weeks", detail: "Since Jul 30, 2024 · Respect on Optimism mainnet" },
   { n: "63", label: "on-chain settlement weeks", detail: "OG (33) + ZOR (31) · verified via Blockscout" },
   { n: "157", label: "Respect holders", detail: "122 OG · 56 ZOR · 21 dual · on Optimism mainnet" },
-  { n: "1,291+", label: "WaveWarZ battles", detail: "On Solana · May 2025 – Jul 2026" },
-  { n: "878+ SOL", label: "cumulative trading volume", detail: "~$65K USD · Jul 2026" },
-  { n: "13.39 SOL", label: "artist payouts", detail: "Automatic · 1% per trade · 34 artists" },
+  { n: "1,643", label: "WaveWarZ battles", detail: "Every battle account on Solana, read 7 Sep 2026 · May 2025 to Sep 2026 · 1,501 of them public" },
+  { n: "928.21 SOL", label: "cumulative trading volume", detail: "Measured from chain, 7 Sep 2026 · ~$167K at $180/SOL" },
+  { n: "13.94 SOL", label: "artist payouts, all legs", detail: "9.33 from the artist’s 67% of a 1.500% trade fee, 4.61 from settlement · 120 artist wallets · 7 Sep 2026" },
   { n: "$1,497", label: "raised for charity", detail: "2 benefit-battle series · HuRya Empowerment Foundation" },
   { n: "2", label: "confirmed IRL events", detail: "ZAO-CHELLA (Art Basel Miami, Dec 2024) · ZAOstock (Ellsworth ME, Oct 2026)" },
 ];
@@ -191,9 +191,11 @@ export default function CaseStudyPage() {
             </em>
           </p>
           <p style={{ margin: 0, color: C.text }}>
-            The flagship product is <strong>WaveWarZ</strong> — live-traded music battles on Solana where
-            artists are paid 1% of every trade instantly onchain. 1,291+ battles completed, 921 unique
-            songs, 34 Audius-rostered artists, 878+ SOL total volume.
+            The flagship product is <strong>WaveWarZ</strong> - live-traded music battles on Solana
+            where the artist takes 1.005% of every trade instantly onchain, which is two thirds of the
+            1.500% trade fee and twice what the platform keeps. Measured from chain on 7 September 2026:
+            1,643 battles, 928.21 SOL of volume, 120 artist wallets that have ever competed, 52 of them
+            on the public leaderboard.
           </p>
         </section>
 

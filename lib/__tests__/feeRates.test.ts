@@ -133,3 +133,56 @@ describe("published copy never states the artist share bare", () => {
     }
   });
 });
+
+describe("the superseded rate does not survive anywhere in copy", () => {
+  // Added after the tests above passed while three surfaces still said "1% of
+  // every trade" - including one inside the FAQ schema. Guarding the correct
+  // number from being compressed does nothing about the wrong number still
+  // sitting there, and only one of those two had a test.
+  const SURFACES = ["app/case-study/page.tsx", "lib/embeds.ts", "app/layout.tsx"];
+  const SUPERSEDED = [
+    "1% of every trade",
+    "1% per trade",
+    "1 percent of every trade",
+    "1 percent of trading volume",
+    "0.5% to the platform",
+  ];
+
+  it("never states the artist rate as the documented 1%", () => {
+    for (const rel of SURFACES) {
+      const text = read(rel).toLowerCase();
+      for (const phrase of SUPERSEDED) {
+        expect({ rel, phrase, found: text.includes(phrase) }).toEqual({
+          rel, phrase, found: false,
+        });
+      }
+    }
+  });
+});
+
+describe("citable facts carry the date they were measured on", () => {
+  // Convention 20: a published figure names its legs and its measurement date.
+  // This block is literally called CITABLE_FACTS, so it is the one place where
+  // a figure without a date is most likely to be quoted onward.
+  it("dates every WaveWarZ figure in the citable-facts block", () => {
+    const page = read("app/case-study/page.tsx");
+    const block = page.slice(
+      page.indexOf("const CITABLE_FACTS"),
+      page.indexOf("export default function"),
+    );
+    expect(block.length).toBeGreaterThan(200);
+    for (const row of ["WaveWarZ battles", "cumulative trading volume", "artist payouts"]) {
+      const at = block.indexOf(row);
+      expect(at).toBeGreaterThan(-1);
+      const line = block.slice(Math.max(0, at - 200), at + 240);
+      expect(/\d{1,2} Sep 2026|September 2026/.test(line)).toBe(true);
+    }
+  });
+
+  it("no longer carries the superseded battle or volume totals", () => {
+    const page = read("app/case-study/page.tsx");
+    expect(page).not.toContain("1,291+");
+    expect(page).not.toContain("878+ SOL");
+    expect(page).not.toContain("13.39 SOL");
+  });
+});
