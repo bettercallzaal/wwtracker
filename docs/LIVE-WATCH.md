@@ -85,6 +85,40 @@ thing being deferred.
 key revoked or the endpoint changed underneath us - because no rotation is
 scheduled to happen during the event.
 
+## Retry before alarming - one failure is weather
+
+Every probe retries up to **3 times over about 10 seconds** and stops as soon as
+one comes back clean. Only a sustained failure alarms, and the message says how
+many attempts it took: `[3/3 attempts failed]`.
+
+This is borrowed rather than invented. A monitor two lanes over fired an alarm on
+a single failed curl, the thing self-healed inside two minutes, and the recovery
+spent a second alarm. Two pages for something that was never broken is how people
+learn to ignore a pager.
+
+**A recovery is still reported**, at info, as `FLAPPED`. A watcher that hides
+flapping is only a slower version of the same problem - the goal is not to be
+quiet, it is to be quiet about the right things. If `FLAPPED` starts repeating,
+that is a signal in itself.
+
+Tune with `--attempts` and `--gap` if the night calls for it.
+
+## An unreadable state is never healthy
+
+`UNRECOGNISED_STATUS` alerts whenever the body's `status` is missing, renamed, or
+anything other than `live`, `stale` or `unknown`.
+
+That rule exists because this watcher had the opposite behaviour until
+2026-09-08. A 200 with no `status` field and `data: null` classified as
+**"ok: live"** - the less the response said, the healthier it looked. It was
+found by testing the classifier rather than reading it, and it is the same
+inverted alarm as the spend guard in a different costume: the failure mode of a
+monitor is silence, and silence is indistinguishable from fine.
+
+Every message also carries the HTTP status, including the healthy one, so a
+silent flip to a 404 or a proxy error page reads as `HTTP 404` rather than as an
+unexplained blob.
+
 ## It probes the page as well as the route
 
 They fail independently. `/api/ww/positions` can be perfectly healthy while

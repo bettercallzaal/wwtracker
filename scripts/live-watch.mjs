@@ -6,7 +6,8 @@
 //
 // WHERE THE ALERT LANDS - read this before relying on it:
 //
-//   Each cycle probes BOTH /api/ww/positions and the /live page itself.
+//   Each cycle probes BOTH /api/ww/positions and the /live page itself, and
+//   retries up to 3 times over ~10s before alarming - one failure is weather.
 //
 //   stdout        one line per check, always, including healthy ones. Silence
 //                 means the watcher itself died, which is the failure a
@@ -30,7 +31,7 @@
 // generic failure.
 
 import { appendFileSync, mkdirSync } from "node:fs";
-import { classify, classifyPage, worst, PAGE_MARKER } from "../lib/liveWatch.mjs";
+import { classify, classifyPage, worst, summarise } from "../lib/liveWatch.mjs";
 
 const args = process.argv.slice(2);
 const has = (f) => args.includes(f);
@@ -100,11 +101,33 @@ async function probePage() {
   }
 }
 
+const ATTEMPTS = Number(val("--attempts", "3"));
+const GAP_MS = Number(val("--gap", "3500"));
+
+/**
+ * Probe up to ATTEMPTS times, stopping as soon as one comes back clean.
+ * Three attempts spaced 3.5s is about ten seconds - long enough that a blip
+ * resolves itself, short enough that a real outage is not hidden.
+ */
+async function attempt(probeFn, classifyFn) {
+  const rounds = [];
+  for (let i = 0; i < ATTEMPTS; i++) {
+    const vs = classifyFn(await probeFn());
+    rounds.push(vs);
+    if (!vs.some((v) => v.level === "alert")) break;
+    if (i < ATTEMPTS - 1) await new Promise((r) => setTimeout(r, GAP_MS));
+  }
+  return summarise(rounds);
+}
+
 async function once() {
   // Both, every cycle. The route can be healthy while the page fails to render
   // - they break independently, and a viewer only ever sees the page.
-  const [api, page] = await Promise.all([probe(), probePage()]);
-  const verdicts = [...classify(api), ...(has("--no-page") ? [] : classifyPage(page))];
+  const [apiVerdicts, pageVerdicts] = await Promise.all([
+    attempt(probe, classify),
+    has("--no-page") ? Promise.resolve([]) : attempt(probePage, classifyPage),
+  ]);
+  const verdicts = [...apiVerdicts, ...pageVerdicts];
   const level = worst(verdicts);
   const stamp = new Date().toISOString();
 
