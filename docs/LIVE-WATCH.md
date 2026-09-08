@@ -85,6 +85,40 @@ thing being deferred.
 key revoked or the endpoint changed underneath us - because no rotation is
 scheduled to happen during the event.
 
+## Retry before alarming - one failure is weather
+
+Every probe retries up to **3 times over about 10 seconds** and stops as soon as
+one comes back clean. Only a sustained failure alarms, and the message says how
+many attempts it took: `[3/3 attempts failed]`.
+
+This is borrowed rather than invented. A monitor two lanes over fired an alarm on
+a single failed curl, the thing self-healed inside two minutes, and the recovery
+spent a second alarm. Two pages for something that was never broken is how people
+learn to ignore a pager.
+
+**A recovery is still reported**, at info, as `FLAPPED`. A watcher that hides
+flapping is only a slower version of the same problem - the goal is not to be
+quiet, it is to be quiet about the right things. If `FLAPPED` starts repeating,
+that is a signal in itself.
+
+Tune with `--attempts` and `--gap` if the night calls for it.
+
+## An unreadable state is never healthy
+
+`UNRECOGNISED_STATUS` alerts whenever the body's `status` is missing, renamed, or
+anything other than `live`, `stale` or `unknown`.
+
+That rule exists because this watcher had the opposite behaviour until
+2026-09-08. A 200 with no `status` field and `data: null` classified as
+**"ok: live"** - the less the response said, the healthier it looked. It was
+found by testing the classifier rather than reading it, and it is the same
+inverted alarm as the spend guard in a different costume: the failure mode of a
+monitor is silence, and silence is indistinguishable from fine.
+
+Every message also carries the HTTP status, including the healthy one, so a
+silent flip to a 404 or a proxy error page reads as `HTTP 404` rather than as an
+unexplained blob.
+
 ## It probes the page as well as the route
 
 They fail independently. `/api/ww/positions` can be perfectly healthy while
@@ -124,10 +158,19 @@ Or just keep a terminal open:
 
     npm run watch:live 2>&1 | tee -a var/live-watch.log
 
-**It does not run while the machine is asleep.** A laptop shut at 9pm is a
-watcher that is not running, and the log will look exactly like a quiet night.
-If the Grand Final needs coverage while nobody is at this machine, the answer is
-a hosted check, not this - and that is a decision with credentials attached.
+**Sleep, measured rather than assumed.** `pmset -g` on 2026-09-08 reports
+`sleep 1` - one minute of idle - held off only by sixteen `caffeinate` processes
+belonging to other lanes. If those stop, this machine sleeps in a minute and
+takes the watcher with it.
+
+So each run is wrapped in `caffeinate -s`, which holds off system sleep for the
+duration of that probe rather than depending on somebody else's process. It does
+**not** keep the machine awake between runs and it cannot help if the lid is
+shut. For coverage with nobody at this machine, the answer is still a hosted
+check, and that is a decision with credentials attached.
+
+**RE-CHECK BY 2026-09-13.** Run `pmset -g` again before the Grand Final; this
+reasoning is only as good as that setting.
 
 Simplest, in a terminal that stays open:
 

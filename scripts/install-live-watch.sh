@@ -14,8 +14,20 @@
 #
 # THE LIMIT, said plainly: launchd does not run while the machine is asleep. A
 # laptop shut at 9pm is a watcher that is not running, and the log will look
-# exactly like a quiet night. If the Grand Final needs coverage while nobody is
-# at this machine, the answer is a hosted check, not this.
+# exactly like a quiet night.
+#
+# Measured 2026-09-08: `pmset -g` reports `sleep 1` on this machine - one minute
+# of idle - currently held off only by sixteen `caffeinate` processes belonging
+# to other lanes. If those stop, the machine sleeps in a minute and the watcher
+# dies with it.
+#
+# So each run is wrapped in `caffeinate -s`, which holds off system sleep for the
+# duration of that probe rather than relying on somebody else's process. It does
+# NOT keep the machine awake between runs, and it cannot help if the lid is shut.
+# For coverage with nobody at this machine the answer is still a hosted check.
+#
+# RE-CHECK BY 2026-09-13: run `pmset -g` again before the Grand Final. This
+# reasoning is only as good as that setting.
 set -euo pipefail
 
 LABEL="com.zao.wwtracker.livewatch"
@@ -47,6 +59,8 @@ cat > "$PLIST" <<PLISTEOF
   <key>Label</key><string>$LABEL</string>
   <key>ProgramArguments</key>
   <array>
+    <string>/usr/bin/caffeinate</string>
+    <string>-s</string>
     <string>$NODE</string>
     <string>$REPO/scripts/live-watch.mjs</string>
     <string>--notify</string>

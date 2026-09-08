@@ -60,7 +60,12 @@ const jsonLd = {
   creator: {
     "@type": "Organization",
     name: "The ZAO (ZTalent Artist Organization)",
-    url: "https://thezao.xyz",
+    // thezao.com, not .xyz: the Organization block on the same page uses .com,
+    // and 18 of the 20 references across these repos do too. Two URLs for one
+    // entity splits it for anything reading the schema. Both domains resolve,
+    // so this is a reversible choice made rather than a question asked.
+    // RE-CHECK BY 2026-12-01, or sooner if either domain moves.
+    url: "https://thezao.com",
   },
   license: "https://creativecommons.org/licenses/by/4.0/",
   datePublished: "2025-05-01",
