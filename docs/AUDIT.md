@@ -270,6 +270,14 @@ cover:
 | `dune.sells == chain.sells` - the straight reading | 22 (7%) |
 | `sells + claims` **total** agrees | **259** |
 
+<!-- measured 2026-09-08T19:20Z · zao-measure --verify "wwtracker: dune sells/claims transposed" -->
+
+Re-runnable by anyone who doubts it, including a future session:
+`zao-measure --verify "wwtracker: dune sells/claims transposed"` re-runs the
+command and reports HOLDS, DRIFTED with both values, or UNVERIFIABLE. The command
+behind it is `tools/dune-daydiff.py` in the protocol repo, run under
+`offline-run.py` with networking denied.
+
 Thirty-five to one, and the pair total agreeing on exactly the days the swap
 holds is what makes it a relabel rather than missing data: the decoder sees every
 instruction and files two of them under each other's name.
