@@ -46,6 +46,13 @@ platform's own API had the same wallet at **+29.95**, and a baked song list held
 
 Re-measured 2026-09-08 by running each command, not by editing the previous row.
 
+Run them all with `npm run check`. It writes the complete output of every gate to
+`var/check/<timestamp>/` whatever happens, because on 2026-09-08 a real test
+failure on main was piped through `grep` for a one-line summary and the reason
+was lost - five clean runs afterwards could not reproduce it and the test's name
+was never seen. That is the same defect as a measurement whose last pipeline
+stage swallows the exit code, and knowing the rule did not prevent it.
+
 | Check | Command | Result 2026-09-08 | Was 2026-09-05 |
 |---|---|---|---|
 | Types | `npx tsc --noEmit` | clean | clean |
