@@ -50,7 +50,8 @@ done
 NODE="$(command -v node)"
 if [ -z "$NODE" ]; then echo "node not found on PATH" >&2; exit 1; fi
 
-mkdir -p "$HOME/Library/LaunchAgents" "$REPO/var"
+LOGDIR="$HOME/.zao/logs"
+mkdir -p "$HOME/Library/LaunchAgents" "$LOGDIR"
 cat > "$PLIST" <<PLISTEOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -68,8 +69,8 @@ cat > "$PLIST" <<PLISTEOF
   <key>WorkingDirectory</key><string>$REPO</string>
   <key>StartInterval</key><integer>$EVERY</integer>
   <key>RunAtLoad</key><true/>
-  <key>StandardOutPath</key><string>$REPO/var/live-watch.log</string>
-  <key>StandardErrorPath</key><string>$REPO/var/live-watch.err</string>
+  <key>StandardOutPath</key><string>$LOGDIR/live-watch.log</string>
+  <key>StandardErrorPath</key><string>$LOGDIR/live-watch.err</string>
 </dict>
 </plist>
 PLISTEOF
@@ -77,10 +78,35 @@ PLISTEOF
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
 
-echo "installed $LABEL, every ${EVERY}s"
+# VERIFY BY OUTCOME. The installer used to print "installed" and stop, which was
+# worthless: launchd will happily load a job that cannot run, `launchctl list`
+# shows it, and the only symptom is silence. That is how this shipped broken -
+# logs pointed under ~/Desktop, which is TCC-protected, so launchd could not open
+# stdout/stderr and exited 78 EX_CONFIG with an empty stderr, because stderr was
+# the thing that failed.
+echo "bootstrapped $LABEL, every ${EVERY}s - now proving it actually runs"
+: > "$LOGDIR/live-watch.log"
+launchctl kickstart -p "gui/$(id -u)/$LABEL" >/dev/null 2>&1 || true
+
+for _ in $(seq 1 20); do
+  [ -s "$LOGDIR/live-watch.log" ] && break
+  sleep 1
+done
+
+if [ -s "$LOGDIR/live-watch.log" ]; then
+  echo "VERIFIED: the agent ran and wrote output."
+  sed 's/^/  /' "$LOGDIR/live-watch.log" | tail -2
+else
+  code=$(launchctl print "gui/$(id -u)/$LABEL" 2>/dev/null | sed -n 's/.*last exit code = \(.*\)/\1/p' | head -1)
+  echo "FAILED: the agent is loaded but produced no output. last exit code: ${code:-unknown}" >&2
+  echo "  78/EX_CONFIG means launchd could not open its log paths - check $LOGDIR is writable" >&2
+  echo "  stderr: $(tail -3 "$LOGDIR/live-watch.err" 2>/dev/null || echo '(empty, which is itself the symptom)')" >&2
+  exit 1
+fi
+
 echo
-echo "Verify it is actually running, rather than trusting this message:"
-echo "  launchctl list | grep wwtracker"
-echo "  tail -f $REPO/var/live-watch.log"
+echo "  logs:      $LOGDIR/live-watch.log"
+echo "  status:    launchctl print gui/$(id -u)/$LABEL | grep 'last exit'"
+echo "  uninstall: $0 --uninstall"
 echo
 echo "It will not run while this machine is asleep."

@@ -140,6 +140,39 @@ The check is the server-rendered `<title>`, not the holder tables: those are
 client-side and legitimately absent from the HTML, and a watcher that cries wolf
 every cycle is one nobody reads on the night it matters.
 
+## The launchd path does NOT work yet - use a terminal on the 13th
+
+**Measured 2026-09-08 by actually running the installer**, which had never been
+executed - only `bash -n` syntax-checked, which proves nothing about behaviour.
+
+Two defects, one fixed and one open.
+
+**Fixed: the logs were under `~/Desktop`, which is TCC-protected.** launchd could
+not open stdout or stderr there, so the job exited **78 / EX_CONFIG** with an
+*empty stderr* - because stderr was the thing that failed. The installer printed
+"installed", `launchctl list` showed the job, and it had never run. On the night
+that is indistinguishable from a quiet evening. Logs now go to `~/.zao/logs`.
+
+**Open, and it blocks the unattended path: under launchd the watcher hangs.** It
+starts, holds fd 1 and 2 on the new log paths, sits in `uv__io_poll` and produces
+no output well past its own worst case of about 55 seconds. The identical command
+run from a shell - including under `env -i` with launchd's bare
+`PATH=/usr/bin:/bin:/usr/sbin:/sbin` - completes in about a second, exit 0.
+**UNMEASURED: why.** Not guessed at.
+
+**So for the Grand Final, run it in a terminal.** That path is proven:
+
+    npm run watch:live 2>&1 | tee -a var/live-watch.log
+
+`./scripts/install-live-watch.sh` now verifies rather than asserts - it truncates
+the log, kickstarts the job, waits, and **fails loudly** if no output appears,
+printing the exit code and the EX_CONFIG hint. It will currently report FAILED,
+which is correct: it is broken, and an installer that says "installed" when the
+thing does not run is worse than no installer.
+
+**RE-CHECK BY 2026-09-13** - if the launchd path is still hanging, the watch is a
+terminal that somebody keeps open.
+
 ## Running it unattended
 
 **Merging a watcher is not watching.** Nothing starts it for you.
