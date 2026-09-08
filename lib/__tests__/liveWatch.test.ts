@@ -48,6 +48,28 @@ describe("the states that mean something", () => {
     expect(worst(v)).toBe("alert");
   });
 
+  it("separates an exhausted budget from a generic failure", () => {
+    // The RPC key was published in a public response body from 2026-09-06, and
+    // rotation is deliberately deferred until after the Grand Final because the
+    // budget is what keeps /live up. So the key is knowingly disclosed through
+    // the 13th, and this is the shape a theft would arrive in - not a rejected
+    // credential, but our own budget being eaten by someone else.
+    const v = classify({
+      ...ok,
+      body: { status: "unknown", data: null, note: "rpc getAccountInfo: HTTP 429 rate limited" },
+    });
+    expect(v[0].code).toBe("RATE_LIMITED");
+    expect(worst(v)).toBe("alert");
+  });
+
+  it("does not confuse a rate limit with a rejected credential", () => {
+    // On the night, "the budget is gone" and "the key stopped working" want
+    // different responses, so they must not collapse into one code.
+    const limited = classify({ ...ok, body: { status: "unknown", data: null, note: "HTTP 429 rate limited" } });
+    const rejected = classify({ ...ok, body: { status: "unknown", data: null, note: "HTTP 401" } });
+    expect(limited[0].code).not.toBe(rejected[0].code);
+  });
+
   it("treats a non-200 as our deployment breaking, not chain", () => {
     const v = classify({ ...ok, httpStatus: 500 });
     expect(v[0].code).toBe("HTTP_ERROR");

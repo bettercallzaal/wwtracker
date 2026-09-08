@@ -33,7 +33,8 @@ watcher died.
 | Code | Level | Why it is on the list |
 |---|---|---|
 | `UNKNOWN` | alert | Chain is unreadable. **Arrives inside a 200**, so anything checking HTTP status alone sees nothing wrong |
-| `UNAUTHORIZED` | alert | The RPC rejected our credential. This is what a **botched key rotation** looks like, and the key is being rotated before the 13th |
+| `UNAUTHORIZED` | alert | The RPC rejected our credential |
+| `RATE_LIMITED` | alert | Our RPC budget is exhausted. **Read the note below before assuming the page is broken** |
 | `HTTP_ERROR` | alert | Non-200, which our contract says never happens - so this is our deployment, not chain |
 | `UNREACHABLE` | alert | Nothing answered at all |
 | `UNPARSEABLE` | alert | 200 with a body that is not an object |
@@ -57,6 +58,32 @@ own public endpoint, which resolves `SOLANA_RPC_URL` server-side at request time
 So a rotation cannot break the watcher, and a *botched* rotation is precisely
 what it is built to catch - reported as `UNAUTHORIZED` rather than as a generic
 failure, so the operator is told which thing broke.
+
+## The key is knowingly disclosed through the 13th
+
+`/api/ww/positions` published `SOLANA_RPC_URL` - a keyed endpoint - in its own
+`source` field from 2026-09-06 until PR #245 closed it. The leak is fixed. The
+key is not rotated.
+
+**That is a decision, not an oversight.** Zaal's call on the evening of
+2026-09-07: rotate *after* the Grand Final, not before, because that key's budget
+is the only thing keeping `/live` up and a rotation going wrong during the event
+is the worse risk. Recorded in `decisions/grill-2026-09-07-evening.md`.
+**Re-raise on 2026-09-14, not before.**
+
+So for six days the key is disclosed and live, deliberately. What that means for
+whoever is watching on the night:
+
+**If `RATE_LIMITED` fires, do not assume the page is broken.** A disclosed key
+being used by somebody else does not look like a rejected credential - it looks
+like our own budget disappearing. That is why it has its own code rather than
+folding into `UNKNOWN`. The response is different too: nothing about the
+deployment needs fixing, and the fix is rotating the key, which is exactly the
+thing being deferred.
+
+`UNAUTHORIZED` firing before the 14th would mean something else entirely - the
+key revoked or the endpoint changed underneath us - because no rotation is
+scheduled to happen during the event.
 
 ## It probes the page as well as the route
 
