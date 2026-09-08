@@ -106,6 +106,29 @@ describe("the states that mean something", () => {
   });
 });
 
+describe("a battle that ended and was never settled", () => {
+  it("is a warning, not a healthy OK", () => {
+    // 93 battles are in this state and every one of them used to report as
+    // running. If the resolver picks one on the night, /live is showing a dead
+    // battle and a watcher keyed on `running` sees nothing wrong.
+    const v = classify({
+      ...ok,
+      body: { status: "live", data: { battleId: 7, running: false, expired: true, settled: false } },
+    });
+    expect(v.some((x) => x.code === "EXPIRED_BATTLE")).toBe(true);
+    expect(worst(v)).toBe("warn");
+  });
+
+  it("does not fire on an ordinary settled battle", () => {
+    const v = classify({
+      ...ok,
+      body: { status: "live", data: { battleId: 7, running: false, expired: false, settled: true } },
+    });
+    expect(v[0].code).toBe("NOT_RUNNING");
+    expect(worst(v)).toBe("info");
+  });
+});
+
 describe("the holder cap, which the Grand Final is most likely to trip", () => {
   it("reports truncation as information, not as a failure", () => {
     // The most holders any side has ever ended with is 18, measured across all

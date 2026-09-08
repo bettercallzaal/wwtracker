@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
 import { burnedShare, LARGEST_ACCOUNTS_CAP } from "@/lib/holderList";
+import { daysSinceEnd } from "@/lib/battlePhase";
 
 interface Holder {
   owner: string;
@@ -24,6 +25,8 @@ interface Holder {
 interface Positions {
   battleId: number;
   running: boolean;
+  /** Window closed and nobody called settlement. Not the same as settled. */
+  expired?: boolean;
   startTime: number;
   endTime: number;
   creator: string;
@@ -200,7 +203,16 @@ export default function LiveBattlePositions() {
               <div>
                 <span style={{ ...metaLabel, color: C.dim }}>State</span>
                 <div style={{ fontSize: 20, color: d.running ? C.accent : C.dim }}>
-                  {d.running ? `RUNNING ${countdown}` : "SETTLED"}
+                  {/* Three states, not two. A battle whose window closed and
+                      which nobody settled is neither running nor settled, and
+                      labelling it either way is wrong - 93 battles are in
+                      exactly that state, one of them fifteen months past its
+                      window. */}
+                  {d.running
+                    ? `RUNNING ${countdown}`
+                    : d.expired
+                      ? `ENDED ${daysSinceEnd(d.endTime, Math.floor(Date.now() / 1000))}d AGO, NOT SETTLED`
+                      : "SETTLED"}
                 </div>
               </div>
             </div>

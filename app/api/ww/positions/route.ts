@@ -17,6 +17,7 @@ import {
 } from "@/lib/battlePositions";
 import { publicJson, corsPreflight } from "@/lib/wwPublicRoute";
 import { redactUrl, redactSecrets } from "@/lib/redact";
+import { battlePhase } from "@/lib/battlePhase";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 
@@ -115,6 +116,8 @@ export async function GET(request: Request): Promise<Response> {
     }
     const b = decodeBattle(Uint8Array.from(Buffer.from(acct.value.data[0], "base64")));
 
+    const phase = battlePhase(b.settled, b.endTime, Math.floor(Date.now() / 1000));
+
     const [sideA, sideB] = await Promise.all([
       sideHolders(battleId, "a", b.supplyA, b.poolASol),
       sideHolders(battleId, "b", b.supplyB, b.poolBSol),
@@ -132,7 +135,12 @@ export async function GET(request: Request): Promise<Response> {
       source: RPC_SOURCE,
       data: {
         battleId,
-        running: !b.settled,
+        // NOT `!settled`. The settled flag is only set when somebody calls
+        // the settlement instruction, and nothing obliges anyone to - so an
+        // abandoned battle reported as running forever. 93 battles were in that
+        // state, the oldest fifteen months past its window.
+        running: phase === "running",
+        expired: phase === "expired",
         startTime: b.startTime,
         endTime: b.endTime,
         creator: b.creator,
