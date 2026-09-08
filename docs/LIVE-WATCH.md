@@ -158,10 +158,19 @@ Or just keep a terminal open:
 
     npm run watch:live 2>&1 | tee -a var/live-watch.log
 
-**It does not run while the machine is asleep.** A laptop shut at 9pm is a
-watcher that is not running, and the log will look exactly like a quiet night.
-If the Grand Final needs coverage while nobody is at this machine, the answer is
-a hosted check, not this - and that is a decision with credentials attached.
+**Sleep, measured rather than assumed.** `pmset -g` on 2026-09-08 reports
+`sleep 1` - one minute of idle - held off only by sixteen `caffeinate` processes
+belonging to other lanes. If those stop, this machine sleeps in a minute and
+takes the watcher with it.
+
+So each run is wrapped in `caffeinate -s`, which holds off system sleep for the
+duration of that probe rather than depending on somebody else's process. It does
+**not** keep the machine awake between runs and it cannot help if the lid is
+shut. For coverage with nobody at this machine, the answer is still a hosted
+check, and that is a decision with credentials attached.
+
+**RE-CHECK BY 2026-09-13.** Run `pmset -g` again before the Grand Final; this
+reasoning is only as good as that setting.
 
 Simplest, in a terminal that stays open:
 
