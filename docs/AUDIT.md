@@ -280,10 +280,77 @@ one definition: Dune counts **more** buys and sells than chain holds and **fewer
 claims. A single systematic cause - a dropped instruction, a missed program, a
 window - moves everything the same way. This does not.
 
-**The one query that would settle it:** take a single battle with a handful of
-trades, list its events from both sides, and diff them. Which specific
-invocations one counts and the other does not is a five-minute answer at the row
-level and has resisted three attempts at the aggregate level.
+### SOLVED 2026-09-08: `sells` and `claims` are transposed in the source
+
+Diffing **day by day** rather than in aggregate - the row-level check this
+section kept recommending - answers it immediately. Across the 330 days both
+cover:
+
+| Reading | Days it holds |
+|---|---|
+| `dune.sells == chain.claims` **and** `dune.claims == chain.sells` | **259 (78%)** |
+| `dune.sells == chain.sells` - the straight reading | 22 (7%) |
+| `sells + claims` **total** agrees | **259** |
+
+<!-- measured 2026-09-08T19:20Z · zao-measure --verify "wwtracker: dune sells/claims transposed" -->
+
+Re-runnable by anyone who doubts it, including a future session:
+`zao-measure --verify "wwtracker: dune sells/claims transposed"` re-runs the
+command and reports HOLDS, DRIFTED with both values, or UNVERIFIABLE. The command
+behind it is `tools/dune-daydiff.py` in the protocol repo, run under
+`offline-run.py` with networking denied.
+
+Thirty-five to one, and the pair total agreeing on exactly the days the swap
+holds is what makes it a relabel rather than missing data: the decoder sees every
+instruction and files two of them under each other's name.
+
+That explains the aggregate signature this section could not - Dune counting
+*more* sells and *fewer* claims, in opposite directions, with the battle counts
+exact. It was never a coverage question.
+
+**It shipped.** `AboutWaveWarZ` rendered `CLAIMS 2,762 / winnings withdrawn` when
+2,762 is the sell count and claims are 3,388, and `BattleLifecycle`'s
+`buysPerSell` was built on it.
+
+Corrected in `scripts/ww-gen.mjs` at the boundary so a regeneration cannot
+reintroduce it, with tests pinning the swap - the obvious "fix" for somebody who
+has not read this is to straighten the mapping and put the bug back. The real
+repair belongs upstream, in whatever produces `public/ww-onchain-daily.json`,
+which is not in this repo.
+
+**The buys residual, and my first explanation for it was wrong.**
+
+I recorded it as looking like a day-boundary or timezone effect. Tested, and it
+is not:
+
+    days with a buy mismatch          138 of 330
+    sum of all deltas                 +349
+    sum of |deltas|                    349   <- identical, so NO negative delta exists
+    adjacent day-pairs, opposite sign  0 of 68 (0%)
+
+A boundary shift moves events between neighbouring days, so it produces roughly
+balanced positives and negatives. **There is not a single day where Dune counts
+fewer buys than chain.** It is strictly one-directional, on 138 days, mostly by
++1 or +2.
+
+So Dune sees buy instructions the chain scan does not. The likeliest remaining
+explanation - and it is a hypothesis, not a measurement - is that
+`solana.instruction_calls` includes instructions from **failed or reverted
+transactions**, which our scan excludes because it only records trades with
+parsed amounts. The 39 no-mint battles would generate exactly this shape:
+attempted buys that could never succeed.
+
+**UNMEASURED, and not measurable from our side** - the chain snapshot holds only
+successful trades, so it cannot count what it filtered out. Settling it needs one
+Dune query filtering on transaction success, which is a one-line change and a
+credit spend somebody has to choose to make.
+
+Recorded this way on purpose: a refuted explanation left standing is worse than
+none, because the next reader stops looking.
+
+**The lesson is the method.** Three attempts failed at the aggregate level; the
+day-level diff took one run. Aggregates hide transpositions perfectly, because
+every total is conserved.
 
 **Do not reconcile this by editing either number.** Today produced two separate
 cases where a figure that looked wrong was a different definition doing its job -
