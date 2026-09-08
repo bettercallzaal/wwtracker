@@ -792,11 +792,13 @@ export function TopTraders({ opts }: { opts: EmbedOptions }) {
       href={`${SITE}/#traders`}
       opts={opts}
       state={rows.length ? "ready" : status}
-      // Net P&L used to be the last column here. It was measured against a
-      // complete chain scan on 2026-09-07 and disagreed by 221 SOL in aggregate,
-      // with 45 of 145 ranked wallets displayed in profit while down. See
-      // lib/traderLeaderboard.ts for the measurement and how to restore it.
-      note={TRADER_PNL_WITHDRAWN ? TRADER_PNL_NOTE : undefined}
+      // Net P&L was withdrawn 2026-09-07 and restored 2026-09-08 after the
+      // record layer backfilled and we re-measured: 0 of 157 wallets now read
+      // profitable while down, against 45 of 145 before. The note stays either
+      // way - it carries the date and the residual, so a screenshot of this
+      // widget says when it was checked. lib/traderLeaderboard.ts has the
+      // working.
+      note={TRADER_PNL_NOTE}
     >
       <Table
         opts={opts}
@@ -808,6 +810,7 @@ export function TopTraders({ opts }: { opts: EmbedOptions }) {
           shortWallet(t.wallet),
           num(t.totalVolumeSol, 2),
           num(t.winRate, 0),
+          `${t.netPnlSol >= 0 ? "+" : ""}${num(t.netPnlSol, 2)}`,
         ])}
       />
     </EmbedShell>

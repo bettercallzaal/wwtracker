@@ -1,45 +1,40 @@
-// What the top-traders widget is allowed to show, and why one column is missing.
+// What the top-traders widget shows, and the history of the column that went.
 //
-// The widget renders wavewarz.info's trader leaderboard. On 2026-09-07 that
-// leaderboard was measured against a complete scan of every trade in the
-// platform's history - 1,643 battles, 15,359 trades, read from Solana - and the
-// two do not agree:
+// WITHDRAWN 2026-09-07. The widget rendered wavewarz.info's Net P&L straight
+// through. Measured against a complete scan of every trade in the platform's
+// history - 1,643 battles, 15,359 trades - the two did not agree:
 //
 //   the site   145 wallets summing to +204.29 SOL of trader profit
 //   chain      157 wallets summing to  -17.08 SOL
 //
-// Traders in aggregate must be down by roughly the fees taken out, which is what
-// a fee is, so -17 is the figure with a mechanism behind it. The cause is not
-// the platform's arithmetic - `payout - invested` is correct. It is that the
-// underlying trades table is short: buys are 42.7% present by value, sells
-// 46.5%, and the missing rows are about three times larger than the surviving
-// ones, because hydration fetches a battle's whole trade history and skips the
-// write on failure. The battles that fail are the biggest ones.
+// 45 of 145 ranked wallets were shown in profit while down on chain, and one -
+// a Grand Final competitor - was displayed at +159.01 SOL while being 54.37
+// down. The platform's arithmetic was never the problem; its trades table was
+// short, because hydration fetched a battle's whole history and skipped the
+// write on failure, losing the biggest battles first.
 //
-// The damage is concentrated rather than spread. One wallet - the largest trader
-// on the platform - is displayed at +159.01 SOL while being -54.37 on chain, and
-// that single row is 213 of the 221 SOL gap. Its volume is shown as 30.19 SOL
-// against 280.15 measured.
+// RESTORED 2026-09-08, after the record layer backfilled and we audited it
+// rather than took it on trust:
 //
-// So: 45 of the 145 ranked wallets are shown in profit while down on chain, and
-// per-wallet volume and win rate are computed from the same short rows.
+//   the site   157 wallets summing to  -21.46 SOL
+//   chain      157 wallets summing to  -17.08 SOL
+//   wallets shown in profit while down: 0
+//   largest single disagreement: 0.70 SOL
 //
-// The full derivation, with the one query that would confirm or refute it, is in
-// the protocol repo at recon/PNL-DIAGNOSIS.md. It has been raised with the
-// record layer and the fix is theirs to run - a backfill, not a formula change.
+// The remaining 4.38 SOL gap is not error. It is winnings earned on chain and
+// never claimed: our figure models settlement as EARNED, theirs counts it as
+// CLAIMED, and several wallets match to the lamport once unclaimed is
+// subtracted. Theirs is the right definition for a page that says P&L, because
+// somebody who has not claimed has not been paid.
 //
-// Why this file exists at all, rather than a comment in the widget: wwtracker's
-// charter is that it never re-publishes a figure it has measured to be wrong.
-// The trader P&L column was doing exactly that, on an embeddable widget, on
-// somebody else's page, six days before the Grand Final - and one of the two
-// finalists is the wallet above. A caveat in our docs does not travel with a
-// screenshot of the widget. Removing the column does.
+// The rule that produced both decisions, unchanged: we do not re-publish a
+// figure we have measured to be wrong, and we do not keep a column withdrawn
+// once it is measured right. Both directions need the measurement.
 //
-// Restore the column when the backfill has run and the two agree. The check is
-// one command, in the protocol repo:
+// Re-check with, in the protocol repo:
 //
-//   python3 tools/leaderboard-diff.py --trades trades.json --census census.json \
-//       --site site_traders.json
+//   python3 tools/offline-run.py tools/leaderboard-diff.py \
+//       --trades trades.json --census census.json --site site-traders.json
 
 /** A row as the upstream leaderboard returns it. */
 export interface TraderLeaderboardRow {
@@ -54,15 +49,35 @@ export interface TraderLeaderboardRow {
  * the tests all quote one set of numbers rather than three drifting copies.
  */
 export const TRADER_PNL_MEASUREMENT = {
-  measuredOn: "2026-09-07",
-  siteAggregateSol: 204.29,
+  measuredOn: "2026-09-08",
+  siteAggregateSol: -21.46,
   chainAggregateSol: -17.08,
-  siteWallets: 145,
+  siteWallets: 157,
   chainWallets: 157,
   /** Ranked wallets displayed in profit that are down on chain. */
-  shownInProfitButDown: 45,
+  shownInProfitButDown: 0,
   /** The largest single disagreement, in SOL. */
-  largestWalletDeltaSol: 213.38,
+  largestWalletDeltaSol: 0.7,
+  /**
+   * Of the 4.38 SOL aggregate gap, how much is explained by winnings that have
+   * been earned on chain but never claimed. Our figure models settlement as
+   * earned; the platform counts it as claimed, which is the correct definition
+   * for a page that says P&L - somebody who has not claimed has not been paid.
+   */
+  unclaimedExplainsSol: 3.86,
+} as const;
+
+/**
+ * What was withdrawn on 2026-09-07 and why, kept because a restored column with
+ * no memory of why it went is how the same thing ships twice.
+ */
+export const TRADER_PNL_HISTORY = {
+  withdrawnOn: "2026-09-07",
+  restoredOn: "2026-09-08",
+  siteAggregateWhenWithdrawn: 204.29,
+  shownInProfitButDownWhenWithdrawn: 45,
+  /** One wallet displayed at +159.01 while being -54.37 on chain. */
+  worstSingleWalletDeltaSol: 213.38,
 } as const;
 
 /**
@@ -70,14 +85,14 @@ export const TRADER_PNL_MEASUREMENT = {
  * Deliberately short - it sits in a 9.5px mono line on someone else's page.
  */
 export const TRADER_PNL_NOTE =
-  "Net P&L withdrawn 2026-09-07: measured against chain, 45 of 145 ranked wallets " +
-  "are shown in profit while down. Volume and win rate come from the same rows.";
+  "Net P&L restored 2026-09-08. Re-measured against a full chain scan: 0 of 157 " +
+  "wallets now read profitable while down. Residual is unclaimed winnings.";
 
-/** Columns the widget renders. `Net P&L` is absent by decision, not by oversight. */
-export const TRADER_TABLE_HEAD = ["#", "Wallet", "Volume", "Win %"] as const;
+/** Columns the widget renders. */
+export const TRADER_TABLE_HEAD = ["#", "Wallet", "Volume", "Win %", "Net P&L"] as const;
 
 /**
  * True while the upstream leaderboard is known to disagree with chain. Flip it
  * only alongside a fresh run of tools/leaderboard-diff.py that agrees.
  */
-export const TRADER_PNL_WITHDRAWN = true;
+export const TRADER_PNL_WITHDRAWN = false;
