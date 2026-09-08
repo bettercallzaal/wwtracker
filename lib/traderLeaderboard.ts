@@ -31,10 +31,25 @@
 // figure we have measured to be wrong, and we do not keep a column withdrawn
 // once it is measured right. Both directions need the measurement.
 //
-// Re-check with, in the protocol repo:
+// THESE CONSTANTS ARE A SNAPSHOT OF A LIVE CHECK, AND CANNOT NOTICE DRIFT.
 //
-//   python3 tools/offline-run.py tools/leaderboard-diff.py \
-//       --trades trades.json --census census.json --site site-traders.json
+// The tests below assert the column is only shown when the measurement says it
+// agrees with chain - but the measurement is these hardcoded numbers. If the
+// upstream leaderboard regresses tomorrow, the column keeps rendering and the
+// tests keep passing, because the constants still say it is fine. That is the
+// inverted alarm sitting inside the restore.
+//
+// So the condition is also registered as a live measurement, which hits the real
+// leaderboard and fails if any of the four conditions stops holding:
+//
+//   zao-measure --verify "wwtracker: trader P&L restore condition"
+//
+// It reports HOLDS, or DRIFTED with both values. The script behind it is
+// tools/pnl-restore-check.py in the protocol repo, and it is deliberately NOT
+// run offline - hitting the live site is the entire point, and a snapshot-only
+// check here could never fail.
+//
+// RE-CHECK BY 2026-09-13, before the Grand Final.
 
 /** A row as the upstream leaderboard returns it. */
 export interface TraderLeaderboardRow {
