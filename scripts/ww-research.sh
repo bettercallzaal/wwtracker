@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 # Regenerate the WaveWarZ on-chain analytics snapshot (lib/wwData.ts).
+#
+# THE DATE FLOOR IS LOAD-BEARING. The program's first instruction is 2025-05-26.
+# Every query here filtered block_date >= 2025-08-01, which cut the first two
+# months - 75 battles, 4.0% of buys, 4.8% of sells, 4.4% of claims - and made
+# every all-time figure run low. That was found and the DATA was regenerated on
+# 2026-09-05, but the filter stayed in this script until 2026-09-08, so the next
+# person to run it would have silently reintroduced the hole.
+#
+# Use 2025-05-01. Do not raise it to "make the query cheaper"; a cheaper wrong
+# number is the expensive kind.
 # Requires DUNE_API_KEY in the environment. Reuses one scratch Dune query,
 # runs each dataset, writes /tmp/ww-<name>.json. Then run scripts/ww-gen.py.
 set -euo pipefail
@@ -27,9 +37,9 @@ run() {
   curl -s "https://api.dune.com/api/v1/execution/$eid/results?limit=5000" "${H[@]}" > "/tmp/ww-$name.json"
 }
 
-run daily "SELECT block_date, count(distinct tx_id) AS txs, count(distinct tx_signer) AS traders FROM solana.instruction_calls WHERE executing_account='$PROG' AND block_date >= date '2025-08-01' GROUP BY 1 ORDER BY 1"
-run traders "SELECT tx_signer AS trader, count(distinct tx_id) AS txs FROM solana.instruction_calls WHERE executing_account='$PROG' AND block_date >= date '2025-08-01' GROUP BY 1 ORDER BY 2 DESC LIMIT 50"
-run pnl "WITH ww AS (SELECT distinct tx_id FROM solana.instruction_calls WHERE executing_account='$PROG' AND tx_signer='$TRADER' AND block_date >= date '2025-08-01') SELECT aa.block_time, aa.balance_change/1e9 AS sol_delta FROM solana.account_activity aa JOIN ww ON aa.tx_id = ww.tx_id WHERE aa.address='$TRADER' ORDER BY aa.block_time"
+run daily "SELECT block_date, count(distinct tx_id) AS txs, count(distinct tx_signer) AS traders FROM solana.instruction_calls WHERE executing_account='$PROG' AND block_date >= date '2025-05-01' GROUP BY 1 ORDER BY 1"
+run traders "SELECT tx_signer AS trader, count(distinct tx_id) AS txs FROM solana.instruction_calls WHERE executing_account='$PROG' AND block_date >= date '2025-05-01' GROUP BY 1 ORDER BY 2 DESC LIMIT 50"
+run pnl "WITH ww AS (SELECT distinct tx_id FROM solana.instruction_calls WHERE executing_account='$PROG' AND tx_signer='$TRADER' AND block_date >= date '2025-05-01') SELECT aa.block_time, aa.balance_change/1e9 AS sol_delta FROM solana.account_activity aa JOIN ww ON aa.tx_id = ww.tx_id WHERE aa.address='$TRADER' ORDER BY aa.block_time"
 run devflow "SELECT block_date, sum(case when balance_change>0 then balance_change else 0 end)/1e9 AS inflow, sum(case when balance_change<0 then -balance_change else 0 end)/1e9 AS outflow, sum(balance_change)/1e9 AS net FROM solana.account_activity WHERE address='$DEV' GROUP BY 1 ORDER BY 1"
 echo "done - now regenerate lib/wwData.ts from /tmp/ww-*.json" >&2
 

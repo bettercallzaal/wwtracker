@@ -219,9 +219,24 @@ counts more buys and sells, and fewer claims. Agreement on the population with
 disagreement on its contents points at instruction classification rather than at
 coverage. One of them is counting something the other is not, on both sides.
 
-The obvious explanation was tested and is dead. A "unique traders" count that
-included wallets which only ever claimed would explain 165 against 157 - but
-**zero** wallets claimed without also having traded, so that is not it.
+**Two explanations have been tested and both are dead.**
+
+A "unique traders" count including wallets that only ever claimed would explain
+165 against 157 - but **zero** wallets claimed without also having traded.
+
+The Dune date floor is the better candidate and it fails harder. Three queries
+filtered from 2025-08-01, excluding 75 battles and roughly 4% of every event
+type. But excluding that window makes the gap **wider**, not narrower:
+
+| From 2025-08-01 only | Dune | Chain |
+|---|---|---|
+| buys | 9,646 | 8,929 |
+| sells | 3,409 | 2,543 |
+| claims | 2,762 | 3,242 |
+
+So Dune counts more trades than chain holds *even on the narrower window*, and
+still fewer claims. A coverage gap cannot produce that; only a different
+definition of what a buy, a sell and a claim are can.
 
 **Do not reconcile this by editing either number.** Today produced two separate
 cases where a figure that looked wrong was a different definition doing its job -
@@ -360,7 +375,13 @@ Recorded so nobody pays for them twice.
   `/api/balance` re-read a stale execution faithfully for 64 days.
 - **Every documented Dune query filtered `block_date >= 2025-08-01`** against a
   program whose first instruction is 2025-05-26. Every all-time figure ran about
-  45 percent low until 2026-09-05.
+  45 percent low until 2026-09-05. **And that fix landed in the data, not in the
+  generator.** `scripts/ww-research.sh` still carried the filter in three of its
+  five queries until 2026-09-08, so the next person to regenerate would have
+  silently reintroduced a hole somebody had already paid to find. The baked
+  series was correct the whole time, which is exactly why nobody noticed. There
+  is a test on the script now - fixing a number and fixing the thing that
+  produces it are different jobs.
 - **Solana PDA derivation hashes seeds, then the bump, then the program id.**
   Not seeds/program/bump. Get the order wrong and you still get a well-formed,
   off-curve, entirely valid-looking address - it is simply not the account, and
