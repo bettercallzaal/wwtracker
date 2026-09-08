@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { C } from "@/lib/theme";
+import * as M from "@/lib/measured";
 
 export const metadata: Metadata = {
   title: "The ZAO — DAO Case Study | WaveWarZ Analytics",
@@ -86,7 +87,7 @@ const CITABLE_FACTS = [
   { n: "63", label: "on-chain settlement weeks", detail: "OG (33) + ZOR (31) · verified via Blockscout" },
   { n: "157", label: "Respect holders", detail: "122 OG · 56 ZOR · 21 dual · on Optimism mainnet" },
   { n: "1,643", label: "WaveWarZ battles", detail: "Every battle account on Solana, read 7 Sep 2026 · May 2025 to Sep 2026 · 1,501 of them public" },
-  { n: "928.21 SOL", label: "cumulative trading volume", detail: "Measured from chain, 7 Sep 2026 · ~$167K at $180/SOL" },
+  { n: "928.21 SOL", label: "cumulative trading volume", detail: `Measured from chain, 7 Sep 2026 · ~$${Math.round(M.VOLUME_USD / 1000)}K at $${M.SOL_USD}/SOL, ${M.SOL_USD_AS_OF}` },
   { n: "13.94 SOL", label: "artist payouts, all legs", detail: "9.33 from the artist’s 67% of a 1.500% trade fee, 4.61 from settlement · 120 artist wallets · 7 Sep 2026" },
   { n: "$1,497", label: "raised for charity", detail: "2 benefit-battle series · HuRya Empowerment Foundation" },
   { n: "2", label: "confirmed IRL events", detail: "ZAO-CHELLA (Art Basel Miami, Dec 2024) · ZAOstock (Ellsworth ME, Oct 2026)" },
