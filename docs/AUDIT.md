@@ -44,16 +44,22 @@ platform's own API had the same wallet at **+29.95**, and a baked song list held
 
 ## 2. Health at a glance
 
-| Check | Command | Result 2026-09-05 |
-|---|---|---|
-| Types | `npx tsc --noEmit` | clean |
-| Tests | `npx vitest run` | 288 passing, 33 files |
-| Data validation | `node scripts/validate.mjs` | passing, 3 staleness warnings |
-| Production build | `npm run build` | compiles, 60 pages |
-| Dependency audit | `npm audit --omit=dev` | **3 high** |
+Re-measured 2026-09-08 by running each command, not by editing the previous row.
 
-Size: 20 components / 5,756 lines, 25 lib modules, 6 API routes,
-33 test files. One TODO comment in the entire tree.
+| Check | Command | Result 2026-09-08 | Was 2026-09-05 |
+|---|---|---|---|
+| Types | `npx tsc --noEmit` | clean | clean |
+| Tests | `npx vitest run` | **435 passing, 46 files** | 288, 33 |
+| Data validation | `node scripts/validate.mjs` | passing, 3 staleness warnings | same |
+| Production build | `npm run build` | compiles | compiles, 60 pages |
+| Dependency audit | `npm audit --omit=dev` | **3 high** | 3 high |
+
+Size: 22 components / 5,963 lines, 40 lib modules, 13 API routes, 35 test files.
+One TODO comment in the entire tree.
+
+The lib count nearly doubled and the API route count more than doubled because
+the routes were always there - the previous figure counted only `app/api/ww/*`
+rather than all of `app/api`. That is a measurement changing, not the codebase.
 
 ---
 
@@ -77,12 +83,25 @@ of the self-hosting-specific advisories. It still wants doing.
 
     npm audit --json | python3 -c "import json,sys; [print(k, v['severity']) for k,v in json.load(sys.stdin)['vulnerabilities'].items()]"
 
-### 3.2 Component test coverage is thin - HIGH
+### 3.2 Component test coverage is thin - HIGH, and got worse
 
-33 test files cover `lib/` well. Only **two of twenty** components have any
-test: `BalanceDashboard` and `FreshnessBanner`. That ratio has not moved all
-day while the test count went 275 -> 288, which is the point: the new tests
-went where tests were already easy to write.
+**Re-measured 2026-09-08 and the finding has strengthened against its own
+author.** Still **two** components have any test - `BalanceDashboard` and
+`FreshnessBanner` - while the component count went 20 -> 22 and the test count
+went 288 -> 435. So the ratio moved from 2/20 to **2/22** across a day that added
+147 tests.
+
+The 2026-09-05 version of this section predicted exactly that: *"the new tests
+went where tests were already easy to write."* It then happened again, on the day
+it was written, to the person who wrote it. Every one of the eight test files
+added on 2026-09-07 and 2026-09-08 lives in `lib/__tests__`.
+
+In fairness to the day, several of those tests are the *class* this section asks
+for even though they are not in `components/` - `feeRates.test.ts` and
+`measured.test.ts` assert published figures against their source, which is the
+stated point. But `liveWatch`, `battlePhase`, `holderList` and `redact` are all
+pure functions extracted **out** of components precisely so they could be tested,
+and extraction is not the same as covering what is left behind.
 
 That is the wrong shape for this repo, because the bugs that actually shipped
 this year were in components, not in lib: a panel labelled `LIVE - DAILY
