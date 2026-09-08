@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Lightweight data validation. Catches broken/empty snapshots before they ship.
 // Run: node scripts/validate.mjs   (exits 1 on any failure)
+import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 let failures = 0;
@@ -191,6 +192,73 @@ for (const [label, raw] of datasets) {
     ok(`${label}: ${age} days old (newest ${stamp})`);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Re-check dates on time-bound claims
+// ---------------------------------------------------------------------------
+//
+// A claim about a program, a deadline, an external service or a setting another
+// lane controls goes stale silently. On 2026-09-08 the estate counted five in one
+// day - a protocol recorded as live that was not, an application drafted against
+// a closed cycle, a VPS marked down that had been up for sixteen days, doc
+// summaries contradicting their own bodies, and superseded pages with nothing
+// marking them.
+//
+// The convention that came out of it was "write a re-check date next to the
+// claim". That is an honor-system rule, and the estate's own measurement is that
+// honor-system rules run at 3-40% while structurally enforced ones run at ~100%.
+// So the convention is enforced here rather than trusted.
+//
+// Write `RE-CHECK BY YYYY-MM-DD` anywhere in a tracked file. Past that date it
+// fails under --strict, which CI runs, so a stale claim breaks the build instead
+// of sitting there being read.
+
+const RECHECK_RE = /RE-CHECK BY (\d{4}-\d{2}-\d{2})/g;
+const RECHECK_WARN_DAYS = 7;
+
+function scanRecheckDates() {
+  let files;
+  try {
+    files = execSync("git ls-files", { encoding: "utf8" }).trim().split("\n");
+  } catch {
+    warn("re-check scan skipped: not a git work tree");
+    return;
+  }
+  let found = 0;
+  for (const f of files) {
+    if (!/\.(md|ts|tsx|mjs|js|sh|json|yml)$/.test(f)) continue;
+    let text;
+    try {
+      text = readFileSync(f, "utf8");
+    } catch {
+      continue;
+    }
+    // The regex literal that defines the marker would otherwise match itself.
+    if (f === "scripts/validate.mjs") continue;
+    for (const m of text.matchAll(RECHECK_RE)) {
+      found++;
+      const due = new Date(`${m[1]}T23:59:59Z`);
+      const daysLeft = Math.floor((due - TODAY) / 86400000);
+      const where = `${f}: claim due for re-check ${m[1]}`;
+      if (daysLeft < 0) {
+        // Past due. This is the whole point - it must not be possible to ignore.
+        const msg = `${where} - ${-daysLeft} day(s) OVERDUE, re-verify it or move the date`;
+        strict ? bad(msg) : warn(msg);
+      } else if (daysLeft <= RECHECK_WARN_DAYS) {
+        warn(`${where} - ${daysLeft} day(s) left`);
+      } else {
+        ok(`${where} - ${daysLeft} day(s) left`);
+      }
+    }
+  }
+  if (found === 0) {
+    // Not a pass. A repo with no dated claims is far likelier to have lost the
+    // convention than to have no time-bound claims in it.
+    warn("no RE-CHECK BY markers found anywhere - the convention has probably been dropped");
+  }
+}
+
+scanRecheckDates();
 
 if (warnings && !failures) {
   console.log(`\n${warnings} staleness warning(s) - see docs/REFRESH.md. Re-run with --strict to fail on these.`);
