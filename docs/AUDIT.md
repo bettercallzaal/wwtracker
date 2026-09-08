@@ -288,10 +288,35 @@ has not read this is to straighten the mapping and put the bug back. The real
 repair belongs upstream, in whatever produces `public/ww-onchain-daily.json`,
 which is not in this repo.
 
-**Still open, much smaller:** buys agree exactly on only 192 of 330 days while
-being 3.6% apart lifetime - small per-day differences that mostly cancel. That
-looks like a day-boundary effect rather than a classification error, and it is
-UNMEASURED rather than explained.
+**The buys residual, and my first explanation for it was wrong.**
+
+I recorded it as looking like a day-boundary or timezone effect. Tested, and it
+is not:
+
+    days with a buy mismatch          138 of 330
+    sum of all deltas                 +349
+    sum of |deltas|                    349   <- identical, so NO negative delta exists
+    adjacent day-pairs, opposite sign  0 of 68 (0%)
+
+A boundary shift moves events between neighbouring days, so it produces roughly
+balanced positives and negatives. **There is not a single day where Dune counts
+fewer buys than chain.** It is strictly one-directional, on 138 days, mostly by
++1 or +2.
+
+So Dune sees buy instructions the chain scan does not. The likeliest remaining
+explanation - and it is a hypothesis, not a measurement - is that
+`solana.instruction_calls` includes instructions from **failed or reverted
+transactions**, which our scan excludes because it only records trades with
+parsed amounts. The 39 no-mint battles would generate exactly this shape:
+attempted buys that could never succeed.
+
+**UNMEASURED, and not measurable from our side** - the chain snapshot holds only
+successful trades, so it cannot count what it filtered out. Settling it needs one
+Dune query filtering on transaction success, which is a one-line change and a
+credit spend somebody has to choose to make.
+
+Recorded this way on purpose: a refuted explanation left standing is worse than
+none, because the next reader stops looking.
 
 **The lesson is the method.** Three attempts failed at the aggregate level; the
 day-level diff took one run. Aggregates hide transpositions perfectly, because
