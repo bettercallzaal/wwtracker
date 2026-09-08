@@ -17,7 +17,8 @@
     "decode:battle": "tsx scripts/ww-battle-decode.ts",
     "smoke:stats": "tsx scripts/smoke-stats-api.ts",
     "watch:live": "node scripts/live-watch.mjs --loop --every 60 --notify",
-    "watch:live:once": "node scripts/live-watch.mjs"
+    "watch:live:once": "node scripts/live-watch.mjs",
+    "check": "node scripts/check.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
