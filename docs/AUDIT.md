@@ -195,6 +195,44 @@ The concentration is the part worth remembering: one wallet is displayed at
 +159.01 SOL while being -54.37 on chain, and that single row is 213 of the 221
 SOL gap. It belongs to a Grand Final competitor, and the final is 13 September.
 
+### 3.8 The Dune fallback figures diverge from chain, and nobody has said which is right - MEDIUM
+
+`lib/wwData.ts` carries a baked `ProgramSummary`. It is the **fallback** rendered
+in `OnChainProof` when the WaveWarZ API is unreachable, so it is what a visitor
+sees on a bad day - labelled `(snapshot)`, which is honest about its age and
+silent about its method.
+
+Compared against the complete chain scan on 2026-09-08:
+
+| | Dune, baked | Chain scan | |
+|---|---|---|---|
+| `battlesCreated` | 1,643 | **1,643** | exact |
+| `battlesSettled` | 1,602 | 1,550 decided / 1,506 with a distribution | neither matches |
+| `buys` | 9,646 | 9,297 | Dune +349 |
+| `sells` | 3,409 | 2,671 | Dune +738 |
+| `claims` | 2,762 | 3,390 | Dune **-628** |
+| `uniqueTraders` | 165 | 157 | Dune +8 |
+
+**The shape is the finding.** They agree *exactly* on the population - 1,643
+battle accounts - and disagree on the events inside it, in both directions: Dune
+counts more buys and sells, and fewer claims. Agreement on the population with
+disagreement on its contents points at instruction classification rather than at
+coverage. One of them is counting something the other is not, on both sides.
+
+The obvious explanation was tested and is dead. A "unique traders" count that
+included wallets which only ever claimed would explain 165 against 157 - but
+**zero** wallets claimed without also having traded, so that is not it.
+
+**Do not reconcile this by editing either number.** Today produced two separate
+cases where a figure that looked wrong was a different definition doing its job -
+458 SOL against our 410.97 at the same date, and the record layer's `trades`
+table against chain. The disagreement here is worth resolving by asking what the
+Dune query counts, not by picking the number that feels better.
+
+Until it is resolved, the honest reading is that `battlesCreated` is
+corroborated by two independent methods and everything else in that struct is
+single-sourced.
+
 ### 3.6 `lib/leaderboard.ts` is a snapshot pretending to be a roster - LOW
 
 A 2026-06-15 snapshot of 48 artists, against 52 live. It is no longer used for
