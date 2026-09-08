@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import {
   TRADER_TABLE_HEAD,
   TRADER_PNL_NOTE,
@@ -58,6 +60,18 @@ describe("the top-traders table", () => {
 
   it("keeps the columns that are still worth showing", () => {
     expect([...TRADER_TABLE_HEAD]).toEqual(["#", "Wallet", "Volume", "Win %", "Net P&L"]);
+  });
+});
+
+describe("the constants know what they cannot do", () => {
+  it("says in the module that they cannot notice upstream drift", () => {
+    // A test asserting constants against constants is circular. The module has
+    // to say so, and point at the live check that is not.
+    const src = readFileSync(
+      fileURLToPath(new URL("../traderLeaderboard.ts", import.meta.url)), "utf8");
+    expect(src).toContain("CANNOT NOTICE DRIFT");
+    expect(src).toContain("zao-measure --verify");
+    expect(src).toContain("RE-CHECK BY");
   });
 });
 
