@@ -157,7 +157,7 @@ so it is consistent with them - but consistency with a source is not the same as
 correctness, and the Growth section presents 2025 volume with the same
 confidence as last week's. It needs a footnote at minimum.
 
-### 3.55 The top-traders embed was republishing a figure we measured as wrong - FIXED 2026-09-07
+### 3.55 The top-traders embed was republishing a figure we measured as wrong - WITHDRAWN 2026-09-07, RESTORED 2026-09-08
 
 The `top-traders` widget rendered a **Net P&L** column straight from
 `wavewarz.info/api/public/leaderboards/traders`, proxied through
@@ -186,8 +186,30 @@ It was also the worst possible surface for it. An embed sits on somebody else's
 page under our attribution line, and a caveat in this file does not travel with
 a screenshot.
 
-The column is withdrawn, with the measurement, the reason and the one command
-that would restore it in `lib/traderLeaderboard.ts`. `EmbedShell` grew a `note`
+**Restored 2026-09-08.** The record layer backfilled and we audited it rather
+than took it on trust. Re-measured against the same chain scan:
+
+| | Withdrawn 2026-09-07 | Restored 2026-09-08 |
+|---|---|---|
+| Site aggregate | +204.29 SOL | **-21.46 SOL** |
+| Wallets | 145 | **157** |
+| Shown in profit while down | 45 | **0** |
+| Largest single delta | 213.38 SOL | **0.70 SOL** |
+
+The remaining 4.38 SOL gap is not error - it is winnings earned on chain and
+never claimed. Our figure models settlement as **earned**, theirs counts it as
+**claimed**, and several wallets match to the lamport once unclaimed is
+subtracted. Theirs is the right definition for a page that says P&L: somebody who
+has not claimed has not been paid. The audit is in the protocol repo at
+`recon/AUDIT-CANDY-PNL-2026-09-08.md`.
+
+The rule that produced both decisions is the same one. We do not re-publish a
+figure we have measured to be wrong, **and we do not keep a column withdrawn once
+it is measured right.** Both directions need the measurement, and a test now
+binds the flag to it - flipping it back without re-measuring fails the build.
+
+The column is back, with the measurement, the reason and the one command
+that re-checks it in `lib/traderLeaderboard.ts`. `EmbedShell` grew a `note`
 prop so the caveat renders inside the frame. Volume and win rate stay, and the
 note says plainly that they come from the same short rows.
 

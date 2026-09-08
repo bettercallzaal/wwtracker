@@ -233,8 +233,8 @@ export const EMBEDS: EmbedWidget[] = [
     slug: "top-traders",
     title: "Top traders",
     blurb:
-      "Traders ranked by SOL volume, with win rate. Net P&L is withdrawn while the " +
-      "upstream figure disagrees with chain - see lib/traderLeaderboard.ts.",
+      "Traders ranked by SOL volume, with win rate and net P&L. Restored 2026-09-08 " +
+      "after the upstream figure was re-measured against a full chain scan.",
     category: "Leaderboards",
     source: "platform",
     form: "table",
