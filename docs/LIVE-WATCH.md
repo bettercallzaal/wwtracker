@@ -140,6 +140,39 @@ The check is the server-rendered `<title>`, not the holder tables: those are
 client-side and legitimately absent from the HTML, and a watcher that cries wolf
 every cycle is one nobody reads on the night it matters.
 
+## The unattended path works - and finding out why it did not is the lesson
+
+**Measured 2026-09-08 by actually running the installer**, which had never been
+executed - only `bash -n` syntax-checked, which proves nothing about behaviour.
+
+Two defects, both now fixed, and the second one was mine twice over.
+
+**Logs were under `~/Desktop`, which is TCC-protected.** launchd could not open
+stdout or stderr there, so the job exited **78 / EX_CONFIG** with an *empty
+stderr* - because stderr was the thing that failed. The installer printed
+"installed", `launchctl list` showed the job, and it had never run. On the night
+that is indistinguishable from a quiet evening. Logs now go to `~/.zao/logs`.
+
+**`caffeinate -s` in `ProgramArguments` broke the job.** With it, the process
+starts, holds its file descriptors, sits in `uv__io_poll` and never produces
+output. Remove it - same plist, same paths, same everything - and it runs and
+writes in under twenty seconds. Measured both ways.
+
+It was also solving the wrong problem. It held sleep off for the one second a
+probe runs and did nothing for the fifty-nine seconds between probes, which is
+when a machine actually sleeps. I added it as a "decision made rather than
+asked"; it was the wrong decision, and only running the thing found that.
+
+So: **no wrapper.** If the machine sleeps the watch stops, and the honest answer
+for coverage with nobody present is a hosted check.
+
+**The installer verifies instead of asserting.** It truncates the log, kickstarts
+the job, waits, and fails loudly with the exit code and an EX_CONFIG hint if
+nothing appears. Verified end to end - it reported VERIFIED with real output, and
+the first line it caught was a genuine `PAGE_SLOW` at 4961ms.
+
+**RE-CHECK BY 2026-09-13.**
+
 ## Running it unattended
 
 **Merging a watcher is not watching.** Nothing starts it for you.
