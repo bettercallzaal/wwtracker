@@ -6,6 +6,8 @@
 //
 // WHERE THE ALERT LANDS - read this before relying on it:
 //
+//   Each cycle probes BOTH /api/ww/positions and the /live page itself.
+//
 //   stdout        one line per check, always, including healthy ones. Silence
 //                 means the watcher itself died, which is the failure a
 //                 success-only watcher hides.
@@ -28,13 +30,15 @@
 // generic failure.
 
 import { appendFileSync, mkdirSync } from "node:fs";
-import { classify, worst } from "../lib/liveWatch.mjs";
+import { classify, classifyPage, worst, PAGE_MARKER } from "../lib/liveWatch.mjs";
 
 const args = process.argv.slice(2);
 const has = (f) => args.includes(f);
 const val = (f, d) => (args.includes(f) ? args[args.indexOf(f) + 1] : d);
 
-const URL_ = val("--url", "https://wwtracker.vercel.app/api/ww/positions");
+const BASE = val("--base", "https://wwtracker.vercel.app");
+const URL_ = val("--url", `${BASE}/api/ww/positions`);
+const PAGE = val("--page", `${BASE}/live`);
 const EVERY = Number(val("--every", "60")) * 1000;
 const TIMEOUT = Number(val("--timeout", "15")) * 1000;
 const LOG = val("--log", "var/live-watch.log");
@@ -81,9 +85,26 @@ function notify(title, text) {
   }
 }
 
+/** Fetch the page a viewer actually opens, not just the route behind it. */
+async function probePage() {
+  const started = Date.now();
+  try {
+    const res = await fetch(PAGE, { cache: "no-store", signal: AbortSignal.timeout(TIMEOUT) });
+    const html = await res.text().catch(() => null);
+    return { httpStatus: res.status, latencyMs: Date.now() - started, html };
+  } catch (err) {
+    return {
+      httpStatus: 0, latencyMs: Date.now() - started, html: null,
+      transportError: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 async function once() {
-  const p = await probe();
-  const verdicts = classify(p);
+  // Both, every cycle. The route can be healthy while the page fails to render
+  // - they break independently, and a viewer only ever sees the page.
+  const [api, page] = await Promise.all([probe(), probePage()]);
+  const verdicts = [...classify(api), ...(has("--no-page") ? [] : classifyPage(page))];
   const level = worst(verdicts);
   const stamp = new Date().toISOString();
 

@@ -58,7 +58,49 @@ So a rotation cannot break the watcher, and a *botched* rotation is precisely
 what it is built to catch - reported as `UNAUTHORIZED` rather than as a generic
 failure, so the operator is told which thing broke.
 
+## It probes the page as well as the route
+
+They fail independently. `/api/ww/positions` can be perfectly healthy while
+`/live` fails to render, because the page is a client component and its bundle,
+its shell or its deploy can break on their own. A viewer only ever sees the page.
+
+| Code | Level | |
+|---|---|---|
+| `PAGE_UNREACHABLE` | alert | nothing answered |
+| `PAGE_ERROR` | alert | non-200 |
+| `PAGE_BROKEN` | alert | **200, but the body is not the page** |
+| `PAGE_SLOW` | warn | over 4s to first byte |
+| `PAGE_OK` | ok | heartbeat |
+
+`PAGE_BROKEN` is the one worth having. A 200 is not a rendered page - a
+single-page-app catch-all will happily answer 200 for a route that does not
+exist, which is how a sibling lane nearly concluded an endpoint was live today.
+The check is the server-rendered `<title>`, not the holder tables: those are
+client-side and legitimately absent from the HTML, and a watcher that cries wolf
+every cycle is one nobody reads on the night it matters.
+
 ## Running it unattended
+
+**Merging a watcher is not watching.** Nothing starts it for you.
+
+    ./scripts/install-live-watch.sh          # launchd agent, every 60s
+    ./scripts/install-live-watch.sh --uninstall
+
+launchd keeps it alive across terminal closes and logins, which a `npm run
+watch:live` in a tab does not. Verify it rather than trusting the installer's
+own success message:
+
+    launchctl list | grep wwtracker
+    tail -f var/live-watch.log
+
+Or just keep a terminal open:
+
+    npm run watch:live 2>&1 | tee -a var/live-watch.log
+
+**It does not run while the machine is asleep.** A laptop shut at 9pm is a
+watcher that is not running, and the log will look exactly like a quiet night.
+If the Grand Final needs coverage while nobody is at this machine, the answer is
+a hosted check, not this - and that is a decision with credentials attached.
 
 Simplest, in a terminal that stays open:
 
@@ -78,6 +120,10 @@ running, and it will look exactly like a quiet night.
 The classifier has a test per alert state. The runner itself was exercised
 against three real targets rather than assumed:
 
-    node scripts/live-watch.mjs                                    INFO  NOT_RUNNING  exit 1
-    node scripts/live-watch.mjs --url .../api/ww/nope              ALERT HTTP_ERROR   exit 3
-    node scripts/live-watch.mjs --url http://127.0.0.1:9/x         ALERT UNREACHABLE  exit 3
+    node scripts/live-watch.mjs                              INFO  NOT_RUNNING       exit 1
+                                                             OK    PAGE_OK
+    node scripts/live-watch.mjs --url .../api/ww/nope        ALERT HTTP_ERROR        exit 3
+    node scripts/live-watch.mjs --url http://127.0.0.1:9/x   ALERT UNREACHABLE       exit 3
+    node scripts/live-watch.mjs --page .../api/ww/stats      ALERT PAGE_BROKEN       exit 3
+    node scripts/live-watch.mjs --page .../nope-not-a-page   ALERT PAGE_ERROR        exit 3
+    node scripts/live-watch.mjs --page http://127.0.0.1:9/x  ALERT PAGE_UNREACHABLE  exit 3
