@@ -10,6 +10,7 @@ import {
 } from "@/lib/dune";
 import { decideRefresh } from "@/lib/refresh-policy";
 import { isValidSolanaAddress } from "@/lib/solana";
+import { redactSecrets } from "@/lib/redact";
 
 // Revalidate the default (cached) path every 12h. The execute path opts out of
 // the data cache itself; this only governs the cached-results read.
@@ -72,7 +73,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       latest = await getLatestResults(queryId, apiKey);
     } catch (err) {
       const status = err instanceof DuneError ? (err.status ?? 502) : 500;
-      const message = err instanceof Error ? err.message : "Refresh failed";
+      const message = redactSecrets(err instanceof Error ? err.message : "Refresh failed");
       return NextResponse.json({ error: message }, { status });
     }
 
@@ -131,7 +132,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       return NextResponse.json(payload);
     } catch (err) {
       const status = err instanceof DuneError ? (err.status ?? 502) : 500;
-      const message = err instanceof Error ? err.message : "Refresh failed";
+      const message = redactSecrets(err instanceof Error ? err.message : "Refresh failed");
       return NextResponse.json({ error: message }, { status });
     }
   }
@@ -190,7 +191,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   } catch (err) {
     const status = err instanceof DuneError ? (err.status ?? 502) : 500;
     const message =
-      err instanceof Error ? err.message : "Unknown error fetching balances";
+      redactSecrets(err instanceof Error ? err.message : "Unknown error fetching balances");
     return NextResponse.json({ error: message }, { status });
   }
 }

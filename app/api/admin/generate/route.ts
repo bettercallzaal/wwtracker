@@ -9,6 +9,7 @@ import { cookies } from "next/headers";
 import { verifyToken, COOKIE_NAME } from "@/lib/adminAuth";
 import { gatherFacts, findUnsourcedFigures } from "@/lib/newsletterFacts";
 import { findPublication, PUBLICATIONS } from "@/lib/publications";
+import { redactSecrets } from "@/lib/redact";
 
 const SYSTEM = `You write the WaveWarZ newsletter. WaveWarZ is a Solana music-battle platform: two songs go head to head, fans trade SOL on the outcome, and artists earn 1% of every trade - twice what the platform takes.
 
@@ -89,7 +90,7 @@ export async function POST(request: Request): Promise<Response> {
     if (err instanceof Anthropic.RateLimitError) {
       return json({ ok: false, error: "Rate limited by Anthropic - try again shortly" }, 429);
     }
-    const msg = err instanceof Error ? err.message : "Generation failed";
+    const msg = redactSecrets(err instanceof Error ? err.message : "Generation failed");
     return json({ ok: false, error: msg }, 502);
   }
 }

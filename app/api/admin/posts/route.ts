@@ -8,6 +8,7 @@ import { cookies } from "next/headers";
 import { verifyToken, COOKIE_NAME } from "@/lib/adminAuth";
 import { createPost, updatePost, sendTestEmail, ParagraphError, type DraftPost } from "@/lib/paragraphApi";
 import { findPublication } from "@/lib/publications";
+import { redactSecrets } from "@/lib/redact";
 
 async function authorized(): Promise<boolean> {
   const jar = await cookies();
@@ -62,7 +63,7 @@ async function run(fn: () => Promise<unknown>): Promise<Response> {
     return json({ ok: true, result: await fn() }, 200);
   } catch (err) {
     const status = err instanceof ParagraphError ? (err.status ?? 502) : 500;
-    const message = err instanceof Error ? err.message : "Request failed";
+    const message = redactSecrets(err instanceof Error ? err.message : "Request failed");
     return json({ ok: false, error: message }, status);
   }
 }
