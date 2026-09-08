@@ -238,6 +238,31 @@ So Dune counts more trades than chain holds *even on the narrower window*, and
 still fewer claims. A coverage gap cannot produce that; only a different
 definition of what a buy, a sell and a claim are can.
 
+**The decoder is not the problem, and that is now measured.** The same
+Dune-derived dataset carries `created`, `minted` and `settled` per day.
+Summed and checked against the chain census:
+
+| | Dune-decoded | Chain census | |
+|---|---|---|---|
+| `created` | 1,643 | 1,643 | exact |
+| `minted` | 1,604 | 1,604 | exact |
+| `created - minted` | **39** | **39** | exact - the documented abandoned creations |
+
+Three independent exact matches at full population, including reproducing the 39
+no-mint creations that took a separate investigation to find on our side. Whoever
+wrote that decoder got `initialize_battle` and `initialize_mints` right across
+1,643 accounts.
+
+So this is not accuracy. It is definition, and the sign tells you it is more than
+one definition: Dune counts **more** buys and sells than chain holds and **fewer**
+claims. A single systematic cause - a dropped instruction, a missed program, a
+window - moves everything the same way. This does not.
+
+**The one query that would settle it:** take a single battle with a handful of
+trades, list its events from both sides, and diff them. Which specific
+invocations one counts and the other does not is a five-minute answer at the row
+level and has resisted three attempts at the aggregate level.
+
 **Do not reconcile this by editing either number.** Today produced two separate
 cases where a figure that looked wrong was a different definition doing its job -
 458 SOL against our 410.97 at the same date, and the record layer's `trades`
