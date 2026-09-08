@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 // Plain ESM on purpose: the unattended watcher must not depend on a TypeScript
 // loader on the night it matters, so the classifier it shares is .mjs too.
-import { classify, worst, SLOW_MS } from "@/lib/liveWatch.mjs";
+import { classify, classifyPage, worst, SLOW_MS, PAGE_MARKER } from "@/lib/liveWatch.mjs";
 
 // The Grand Final is 2026-09-13 and /live will be watched unattended through it.
 // These assert the states worth waking somebody for are actually detected,
@@ -46,6 +46,28 @@ describe("the states that mean something", () => {
     });
     expect(v[0].code).toBe("UNAUTHORIZED");
     expect(worst(v)).toBe("alert");
+  });
+
+  it("separates an exhausted budget from a generic failure", () => {
+    // The RPC key was published in a public response body from 2026-09-06, and
+    // rotation is deliberately deferred until after the Grand Final because the
+    // budget is what keeps /live up. So the key is knowingly disclosed through
+    // the 13th, and this is the shape a theft would arrive in - not a rejected
+    // credential, but our own budget being eaten by someone else.
+    const v = classify({
+      ...ok,
+      body: { status: "unknown", data: null, note: "rpc getAccountInfo: HTTP 429 rate limited" },
+    });
+    expect(v[0].code).toBe("RATE_LIMITED");
+    expect(worst(v)).toBe("alert");
+  });
+
+  it("does not confuse a rate limit with a rejected credential", () => {
+    // On the night, "the budget is gone" and "the key stopped working" want
+    // different responses, so they must not collapse into one code.
+    const limited = classify({ ...ok, body: { status: "unknown", data: null, note: "HTTP 429 rate limited" } });
+    const rejected = classify({ ...ok, body: { status: "unknown", data: null, note: "HTTP 401" } });
+    expect(limited[0].code).not.toBe(rejected[0].code);
   });
 
   it("treats a non-200 as our deployment breaking, not chain", () => {
@@ -105,5 +127,45 @@ describe("worst()", () => {
   });
   it("is ok on an empty set rather than throwing", () => {
     expect(worst([])).toBe("ok");
+  });
+});
+
+describe("the page probe, which the API probe does not cover", () => {
+  // Viewers open /live, not /api/ww/positions. The two fail independently: the
+  // route can be perfectly healthy while the page fails to render, because the
+  // page is a client component and its bundle, shell or deploy can break alone.
+  const good = { httpStatus: 200, latencyMs: 300, html: `<title>${PAGE_MARKER} - wwtracker</title>` };
+
+  it("passes when the server-rendered shell is there", () => {
+    expect(classifyPage(good)[0].code).toBe("PAGE_OK");
+  });
+
+  it("catches a 200 that is not actually the page", () => {
+    // The exact shape that nearly fooled a sibling lane today: a catch-all
+    // answering 200 with something that is not the thing you asked for. A
+    // status code is not a rendered page.
+    const v = classifyPage({ ...good, html: '{"status":"live"}' });
+    expect(v[0].code).toBe("PAGE_BROKEN");
+    expect(worst(v)).toBe("alert");
+  });
+
+  it("catches a non-200 and an unreachable page", () => {
+    expect(classifyPage({ ...good, httpStatus: 404 })[0].code).toBe("PAGE_ERROR");
+    expect(classifyPage({ httpStatus: 0, latencyMs: 9, html: null, transportError: "fetch failed" })[0].code)
+      .toBe("PAGE_UNREACHABLE");
+  });
+
+  it("warns on a slow page without calling it broken", () => {
+    const v = classifyPage({ ...good, latencyMs: SLOW_MS + 1 });
+    expect(v[0].code).toBe("PAGE_SLOW");
+    expect(worst(v)).toBe("warn");
+  });
+
+  it("does not assert on client-rendered content", () => {
+    // The holder tables are client-side and legitimately absent from the HTML.
+    // Asserting on them would fail every single cycle, and a watcher that cries
+    // wolf every minute is one nobody reads on the night it matters.
+    expect(good.html).not.toContain("SIDE A");
+    expect(classifyPage(good)[0].level).toBe("ok");
   });
 });
