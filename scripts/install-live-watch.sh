@@ -17,14 +17,20 @@
 # exactly like a quiet night.
 #
 # Measured 2026-09-08: `pmset -g` reports `sleep 1` on this machine - one minute
-# of idle - currently held off only by sixteen `caffeinate` processes belonging
-# to other lanes. If those stop, the machine sleeps in a minute and the watcher
-# dies with it.
+# of idle - currently held off only by other lanes' `caffeinate` processes.
 #
-# So each run is wrapped in `caffeinate -s`, which holds off system sleep for the
-# duration of that probe rather than relying on somebody else's process. It does
-# NOT keep the machine awake between runs, and it cannot help if the lid is shut.
-# For coverage with nobody at this machine the answer is still a hosted check.
+# A `caffeinate -s` wrapper WAS added here for that, and it was wrong twice over.
+# It BREAKS the job: under launchd, with caffeinate in ProgramArguments the
+# process starts, holds its file descriptors, sits in uv__io_poll and never
+# produces output. Removing it - same plist, same log paths, same everything -
+# and the job runs and writes in under twenty seconds. Measured both ways.
+#
+# It also never solved the problem it was added for. It would hold sleep off for
+# the one second a probe runs, and do nothing for the fifty-nine seconds between
+# probes, which is when the machine would actually sleep.
+#
+# So: no wrapper. If the machine sleeps, the watch stops, and the honest answer
+# for coverage with nobody present is a hosted check.
 #
 # RE-CHECK BY 2026-09-13: run `pmset -g` again before the Grand Final. This
 # reasoning is only as good as that setting.
@@ -60,8 +66,6 @@ cat > "$PLIST" <<PLISTEOF
   <key>Label</key><string>$LABEL</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/usr/bin/caffeinate</string>
-    <string>-s</string>
     <string>$NODE</string>
     <string>$REPO/scripts/live-watch.mjs</string>
     <string>--notify</string>

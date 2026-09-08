@@ -140,38 +140,38 @@ The check is the server-rendered `<title>`, not the holder tables: those are
 client-side and legitimately absent from the HTML, and a watcher that cries wolf
 every cycle is one nobody reads on the night it matters.
 
-## The launchd path does NOT work yet - use a terminal on the 13th
+## The unattended path works - and finding out why it did not is the lesson
 
 **Measured 2026-09-08 by actually running the installer**, which had never been
 executed - only `bash -n` syntax-checked, which proves nothing about behaviour.
 
-Two defects, one fixed and one open.
+Two defects, both now fixed, and the second one was mine twice over.
 
-**Fixed: the logs were under `~/Desktop`, which is TCC-protected.** launchd could
-not open stdout or stderr there, so the job exited **78 / EX_CONFIG** with an
-*empty stderr* - because stderr was the thing that failed. The installer printed
+**Logs were under `~/Desktop`, which is TCC-protected.** launchd could not open
+stdout or stderr there, so the job exited **78 / EX_CONFIG** with an *empty
+stderr* - because stderr was the thing that failed. The installer printed
 "installed", `launchctl list` showed the job, and it had never run. On the night
 that is indistinguishable from a quiet evening. Logs now go to `~/.zao/logs`.
 
-**Open, and it blocks the unattended path: under launchd the watcher hangs.** It
-starts, holds fd 1 and 2 on the new log paths, sits in `uv__io_poll` and produces
-no output well past its own worst case of about 55 seconds. The identical command
-run from a shell - including under `env -i` with launchd's bare
-`PATH=/usr/bin:/bin:/usr/sbin:/sbin` - completes in about a second, exit 0.
-**UNMEASURED: why.** Not guessed at.
+**`caffeinate -s` in `ProgramArguments` broke the job.** With it, the process
+starts, holds its file descriptors, sits in `uv__io_poll` and never produces
+output. Remove it - same plist, same paths, same everything - and it runs and
+writes in under twenty seconds. Measured both ways.
 
-**So for the Grand Final, run it in a terminal.** That path is proven:
+It was also solving the wrong problem. It held sleep off for the one second a
+probe runs and did nothing for the fifty-nine seconds between probes, which is
+when a machine actually sleeps. I added it as a "decision made rather than
+asked"; it was the wrong decision, and only running the thing found that.
 
-    npm run watch:live 2>&1 | tee -a var/live-watch.log
+So: **no wrapper.** If the machine sleeps the watch stops, and the honest answer
+for coverage with nobody present is a hosted check.
 
-`./scripts/install-live-watch.sh` now verifies rather than asserts - it truncates
-the log, kickstarts the job, waits, and **fails loudly** if no output appears,
-printing the exit code and the EX_CONFIG hint. It will currently report FAILED,
-which is correct: it is broken, and an installer that says "installed" when the
-thing does not run is worse than no installer.
+**The installer verifies instead of asserting.** It truncates the log, kickstarts
+the job, waits, and fails loudly with the exit code and an EX_CONFIG hint if
+nothing appears. Verified end to end - it reported VERIFIED with real output, and
+the first line it caught was a genuine `PAGE_SLOW` at 4961ms.
 
-**RE-CHECK BY 2026-09-13** - if the launchd path is still hanging, the watch is a
-terminal that somebody keeps open.
+**RE-CHECK BY 2026-09-13.**
 
 ## Running it unattended
 
