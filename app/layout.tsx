@@ -29,11 +29,14 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://wavewarz.info"),
   title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
   description:
-    "Open-source Solana analytics for WaveWarZ: 1,500+ on-chain music battles, 921+ SOL total volume, artist earnings, head-to-head records, and the on-chain fee model. Data: wavewarz.info/api/public/stats.",
+    `Open-source Solana analytics for WaveWarZ: ${M.BATTLES_ON_CHAIN.toLocaleString()} on-chain music ` +
+    `battles, ${M.VOLUME_SOL} SOL total volume, artist earnings, head-to-head records, and the ` +
+    `on-chain fee model, measured ${M.MEASURED_ON_LONG}. Data: wavewarz.info/api/public/stats.`,
   openGraph: {
     title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
     description:
-      "1,500+ battles, 921+ SOL volume, artist earnings and settlement read from chain for the WaveWarZ Solana music-battle platform.",
+      `${M.BATTLES_ON_CHAIN.toLocaleString()} battles, ${M.VOLUME_SOL} SOL volume, artist earnings and ` +
+      `settlement read from chain for the WaveWarZ Solana music-battle platform.`,
     url: "https://wavewarz.info",
     siteName: "WaveWarZ Tracker",
     type: "website",
@@ -42,7 +45,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
     description:
-      "1,500+ on-chain music battles, 921+ SOL volume, artist earnings and settlement read from chain for WaveWarZ on Solana.",
+      `${M.BATTLES_ON_CHAIN.toLocaleString()} on-chain music battles, ${M.VOLUME_SOL} SOL volume, artist ` +
+      `earnings and settlement read from chain for WaveWarZ on Solana.`,
   },
 };
 
