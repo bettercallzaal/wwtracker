@@ -258,10 +258,44 @@ one definition: Dune counts **more** buys and sells than chain holds and **fewer
 claims. A single systematic cause - a dropped instruction, a missed program, a
 window - moves everything the same way. This does not.
 
-**The one query that would settle it:** take a single battle with a handful of
-trades, list its events from both sides, and diff them. Which specific
-invocations one counts and the other does not is a five-minute answer at the row
-level and has resisted three attempts at the aggregate level.
+### SOLVED 2026-09-08: `sells` and `claims` are transposed in the source
+
+Diffing **day by day** rather than in aggregate - the row-level check this
+section kept recommending - answers it immediately. Across the 330 days both
+cover:
+
+| Reading | Days it holds |
+|---|---|
+| `dune.sells == chain.claims` **and** `dune.claims == chain.sells` | **259 (78%)** |
+| `dune.sells == chain.sells` - the straight reading | 22 (7%) |
+| `sells + claims` **total** agrees | **259** |
+
+Thirty-five to one, and the pair total agreeing on exactly the days the swap
+holds is what makes it a relabel rather than missing data: the decoder sees every
+instruction and files two of them under each other's name.
+
+That explains the aggregate signature this section could not - Dune counting
+*more* sells and *fewer* claims, in opposite directions, with the battle counts
+exact. It was never a coverage question.
+
+**It shipped.** `AboutWaveWarZ` rendered `CLAIMS 2,762 / winnings withdrawn` when
+2,762 is the sell count and claims are 3,388, and `BattleLifecycle`'s
+`buysPerSell` was built on it.
+
+Corrected in `scripts/ww-gen.mjs` at the boundary so a regeneration cannot
+reintroduce it, with tests pinning the swap - the obvious "fix" for somebody who
+has not read this is to straighten the mapping and put the bug back. The real
+repair belongs upstream, in whatever produces `public/ww-onchain-daily.json`,
+which is not in this repo.
+
+**Still open, much smaller:** buys agree exactly on only 192 of 330 days while
+being 3.6% apart lifetime - small per-day differences that mostly cancel. That
+looks like a day-boundary effect rather than a classification error, and it is
+UNMEASURED rather than explained.
+
+**The lesson is the method.** Three attempts failed at the aggregate level; the
+day-level diff took one run. Aggregates hide transpositions perfectly, because
+every total is conserved.
 
 **Do not reconcile this by editing either number.** Today produced two separate
 cases where a figure that looked wrong was a different definition doing its job -

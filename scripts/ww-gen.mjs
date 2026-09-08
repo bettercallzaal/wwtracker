@@ -69,12 +69,34 @@ const timeline = active.map((d) => ({
 }));
 
 const sum = (f) => onchain.reduce((a, d) => a + f(d), 0);
+
+// THE SOURCE HAS `sells` AND `claims` TRANSPOSED, so they are swapped back here.
+//
+// Measured 2026-09-08 against a complete chain scan of all 1,643 battles, day by
+// day across the 330 days both cover:
+//
+//   dune.sells == chain.claims AND dune.claims == chain.sells   259 days (78%)
+//   dune.sells == chain.sells  (the straight reading)            22 days (7%)
+//   sells + claims TOTAL agrees                                 259 days
+//
+// The pair total agreeing on exactly the days the swap holds is what makes it a
+// relabel rather than missing data - the decoder sees every instruction and
+// files two of them under each other's name. 35 to 1 against the straight
+// reading.
+//
+// It shipped: AboutWaveWarZ rendered "CLAIMS 2,762 / winnings withdrawn" when
+// 2,762 is the sell count and claims are 3,388, and BattleLifecycle's
+// buysPerSell was built on it.
+//
+// Corrected here, at the boundary, so a regeneration cannot reintroduce it. The
+// real fix belongs in whatever produces public/ww-onchain-daily.json - that is
+// upstream of this script and not in this repo. AUDIT.md 3.8 has the working.
 const program = {
   battlesCreated: sum((d) => d.created),
   battlesSettled: sum((d) => d.settled),
   buys: sum((d) => d.buys),
-  sells: sum((d) => d.sells),
-  claims: sum((d) => d.claims),
+  sells: sum((d) => d.claims),
+  claims: sum((d) => d.sells),
   // Distinct signers cannot be summed across days without double counting, so
   // this comes from the signer list, not from the daily series.
   uniqueTraders: 0,
