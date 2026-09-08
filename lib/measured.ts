@@ -70,9 +70,14 @@ export const SPAN_LAST = "Sep 2026";
 /**
  * SOL price used for any USD figure, and the day it was taken. USD moves without
  * anything on chain changing, so it never appears without both.
+ *
+ * RE-EXPORTED, never redefined. This file carried its own SOL_USD = 180 until
+ * 2026-09-08 while lib/price.ts said 101.9, both stamped the same day. Two
+ * constants for one quantity is how they drift, and the one in the file named
+ * "measured" was the one nobody had measured.
  */
-export const SOL_USD = 180;
-export const SOL_USD_AS_OF = "2026-09-05";
+export { SOL_USD, SOL_USD_AS_OF } from "./price";
+import { SOL_USD as PRICE } from "./price";
 
 /** Volume in USD at the reference price. Derived, never hand-written. */
-export const VOLUME_USD = Math.round(VOLUME_SOL * SOL_USD);
+export const VOLUME_USD = Math.round(VOLUME_SOL * PRICE);
