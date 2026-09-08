@@ -1,0 +1,83 @@
+# Watching /live through the Grand Final
+
+**13 September 2026.** `/live` has only ever been watched on settled battles with
+zero holders. A main event is the first time it carries real positions, the first
+time anyone is looking while it does, and the first time our own tooling can take
+it down by competing for the same RPC budget.
+
+    npm run watch:live          # loop every 60s, macOS notification on warn+
+    npm run watch:live:once     # single check, exit code is the severity
+
+## Where the alert lands - read this before relying on it
+
+| Channel | Reaches | Caveat |
+|---|---|---|
+| **stdout** | whoever is looking at the terminal | one line per check, **including healthy ones** |
+| **`var/live-watch.log`** | anyone, afterwards | appended, gitignored |
+| **exit code** | a cron, a supervisor | `0` ok, `1` info, `2` warn, `3` alert |
+| **macOS notification** | this machine | `--notify`, and only while it is awake and logged in |
+
+**It does not reach a phone, a channel, or anybody away from this machine.** If
+it needs to, that is a delivery decision with credentials attached, and it is
+Zaal's to make rather than something to assume. Saying so matters more than the
+gap does: a monitor nobody sees is worse than no monitor, because it creates the
+belief that somebody is watching.
+
+**Why the healthy line is printed too.** A watcher that only speaks up when
+something is wrong is silent through its own crash, and silence reads exactly
+like everything being fine. The heartbeat is the point: if the lines stop, the
+watcher died.
+
+## What it wakes you for, and what it does not
+
+| Code | Level | Why it is on the list |
+|---|---|---|
+| `UNKNOWN` | alert | Chain is unreadable. **Arrives inside a 200**, so anything checking HTTP status alone sees nothing wrong |
+| `UNAUTHORIZED` | alert | The RPC rejected our credential. This is what a **botched key rotation** looks like, and the key is being rotated before the 13th |
+| `HTTP_ERROR` | alert | Non-200, which our contract says never happens - so this is our deployment, not chain |
+| `UNREACHABLE` | alert | Nothing answered at all |
+| `UNPARSEABLE` | alert | 200 with a body that is not an object |
+| `STALE` | warn | Serving a cached body, with its age |
+| `SLOW` | warn | Over 4s to first byte. The interesting signal precedes the outage |
+| `TRUNCATED` | info | A side hit the 20-holder read cap |
+| `NOT_RUNNING` | info | No battle in progress. Normal between battles, which is why it is info |
+| `OK` | ok | Heartbeat |
+
+`TRUNCATED` is worth explaining. The most holders any side has ever ended with is
+**18**, measured across all 1,643 battles, and `getTokenLargestAccounts` returns
+at most 20. The Grand Final is the most likely event in the platform's history to
+be the first to trip it. It is not a failure - but if it fires, the holder counts
+on the page have quietly become lower bounds, and somebody should know that while
+it is happening rather than afterwards.
+
+## Key rotation does not break it
+
+The watcher reads **nothing** about the RPC endpoint or its key. It probes our
+own public endpoint, which resolves `SOLANA_RPC_URL` server-side at request time.
+So a rotation cannot break the watcher, and a *botched* rotation is precisely
+what it is built to catch - reported as `UNAUTHORIZED` rather than as a generic
+failure, so the operator is told which thing broke.
+
+## Running it unattended
+
+Simplest, in a terminal that stays open:
+
+    npm run watch:live 2>&1 | tee -a var/live-watch.log
+
+Or on a schedule, keying on the exit code so info-level gaps between battles do
+not page anybody:
+
+    * * * * * cd /path/to/wwtracker && node scripts/live-watch.mjs --notify \
+      >> var/live-watch.log 2>&1 || true
+
+**The machine has to be awake.** A laptop asleep at 9pm is a watcher that is not
+running, and it will look exactly like a quiet night.
+
+## Verified
+
+The classifier has a test per alert state. The runner itself was exercised
+against three real targets rather than assumed:
+
+    node scripts/live-watch.mjs                                    INFO  NOT_RUNNING  exit 1
+    node scripts/live-watch.mjs --url .../api/ww/nope              ALERT HTTP_ERROR   exit 3
+    node scripts/live-watch.mjs --url http://127.0.0.1:9/x         ALERT UNREACHABLE  exit 3
