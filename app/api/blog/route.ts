@@ -14,6 +14,7 @@
 //   { status: "live" | "unknown", fetchedAt, posts, source, error? }
 
 import { parseFeed, type BlogPost } from "@/lib/paragraph";
+import { redactSecrets } from "@/lib/redact";
 
 /** paragraph.com/@wavewarz/rss redirects here; using the target directly saves a hop. */
 const FEED_URL = "https://api.paragraph.com/blogs/rss/@wavewarz";
@@ -55,7 +56,7 @@ export async function GET(): Promise<Response> {
   } catch (err) {
     return json({
       status: "unknown", fetchedAt, posts: [], source: "paragraph.com",
-      error: err instanceof Error ? err.message : "Feed unreachable",
+      error: redactSecrets(err instanceof Error ? err.message : "Feed unreachable"),
     });
   }
 }
