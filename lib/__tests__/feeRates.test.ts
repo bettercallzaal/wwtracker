@@ -148,8 +148,10 @@ describe("the superseded rate does not survive anywhere in copy", () => {
     "app/case-study/page.tsx",
     "app/tournament/page.tsx",
     "components/Faq.tsx",
+    "components/AboutWaveWarZ.tsx",
     "components/FeeModel.tsx",
     "components/HowItWorks.tsx",
+    "components/OnChainProof.tsx",
     "lib/embeds.ts",
     "lib/feeModel.ts",
     "app/layout.tsx",
@@ -160,6 +162,15 @@ describe("the superseded rate does not survive anywhere in copy", () => {
     "1 percent of every trade",
     "1 percent of trading volume",
     "0.5% to the platform",
+    // Added 2026-09-09. Two components stated the rate in forms none of the
+    // phrases above matched - "1.0% of trade" in a table and "0.5% of every
+    // trade" in a chart note - and both shipped to production through a guard
+    // written to stop exactly this.
+    "1.0% of trade",
+    "0.5% of trade",
+    "0.5% of every trade",
+    "1% of volume",
+    "1% of trading volume",
   ];
 
   it("never encodes the superseded rate as a constant either", () => {

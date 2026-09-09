@@ -68,8 +68,10 @@ export default function AboutWaveWarZ() {
       <Section label="ECONOMICS (PER IDL)">
         <table style={tableStyle}>
           <tbody>
-            <Row k="Per trade - artist" v="1.0% of trade" />
-            <Row k="Per trade - platform" v="0.5% of trade" />
+            <Row k="Per trade - total fee" v="1.500% of trade" />
+            <Row k="That fee splits, artist / platform" v="67 / 33" />
+            <Row k="So per trade - artist" v="1.005% of trade" />
+            <Row k="So per trade - platform" v="0.495% of trade" />
             <Row k="Settlement - winning traders" v="40% of loser pool (pro-rata)" />
             <Row k="Settlement - losing traders refund" v="50% of loser pool" />
             <Row k="Settlement - winning artist" v="5% of loser pool" />
@@ -78,8 +80,8 @@ export default function AboutWaveWarZ() {
           </tbody>
         </table>
         <p style={{ ...metaLabel, fontSize: 11 }}>
-          Platform revenue = 0.5% of every trade + 3% of every loser pool -&gt; the
-          treasury wallet and its ~{FLOOR_SOL} SOL operating floor.
+          Platform revenue = 0.495% of every trade + 3% of every loser pool -&gt;
+          the treasury wallet and its ~{FLOOR_SOL} SOL operating floor.
         </p>
       </Section>
 
