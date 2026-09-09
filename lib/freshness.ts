@@ -23,7 +23,7 @@ export const FRESHNESS: Record<string, string> = {
   "platform volume timeline (per-battle, from 2025-05-28)": "2026-09-05",
   "program + treasury snapshot (lib/wwData.ts)": "2026-09-05",
   "SOL/USD reference price": "2026-09-05",
-  "battle history file (recap tooling, npm run fetch:battles)": "2026-08-25",
+  "battle history file (recap tooling, npm run fetch:battles)": "2026-09-08",
   "artist roster for static routes (lib/leaderboard.ts)": "2026-06-15",
   "ops ledger + distributions (team-reported, manual)": "manual",
 };

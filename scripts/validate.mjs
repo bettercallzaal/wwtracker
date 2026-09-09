@@ -38,14 +38,23 @@ if (Array.isArray(battles)) {
   // check against a runaway duplication bug, not a cap on legitimate growth -
   // the live fetch (npm run fetch:battles) adds real new battles over time.
   battles.length >= 800 && battles.length <= 5000 ? ok(`battles count ${battles.length}`) : bad(`battles count ${battles.length} (expected 800-5000)`);
-  const req = ["id", "type", "a", "b", "winner"];
+  // `winner` is deliberately NOT required. The file is built from the public
+  // API, which returns no winnerSide for a battle that has not been decided -
+  // 8 of 1,510 on 2026-09-09. The scrape this replaced dropped such rows
+  // entirely, which is how the file came to be missing 213 battles spread
+  // across every month. A battle nobody has judged yet is still a battle.
+  const req = ["id", "type", "a", "b"];
   const baddrow = battles.find((b) => req.some((k) => !b || b[k] == null || b[k] === ""));
-  baddrow ? bad(`battle missing fields: ${JSON.stringify(baddrow)}`) : ok("every battle has id/type/a/b/winner");
+  baddrow ? bad(`battle missing fields: ${JSON.stringify(baddrow)}`) : ok("every battle has id/type/a/b");
+  const undecided = battles.filter((b) => b.winner == null).length;
+  undecided <= battles.length * 0.05
+    ? ok(`battles awaiting a winner ${undecided}/${battles.length}`)
+    : bad(`battles awaiting a winner ${undecided}/${battles.length} - over 5%, the winner source may have broken`);
   const types = new Set(battles.map((b) => b.type));
-  // UNCLASSIFIED is a legitimate type from the recap pipeline's fetch step: the
-  // live feed has no type field, so a new null-margin battle (could be MAIN or
-  // COMMUNITY - not distinguishable from the feed alone) is tagged UNCLASSIFIED
-  // until manually reviewed. See docs/superpowers/specs/2026-07-14-recap-pipeline-design.md.
+  // UNCLASSIFIED is still accepted, but nothing produces it any more. It existed
+  // because the scraped feed had no type field, so a null-margin battle could be
+  // MAIN or COMMUNITY and was parked until a human looked. The public API states
+  // the type outright, so the guess - and the backlog it created - is gone.
   [...types].every((t) => ["QUICK", "MAIN", "COMMUNITY", "UNCLASSIFIED"].includes(t)) ? ok(`battle types ${[...types].join(",")}`) : bad(`unexpected battle type in ${[...types]}`);
 } else bad("battles not an array");
 
