@@ -5,11 +5,11 @@ import * as M from "@/lib/measured";
 export const metadata: Metadata = {
   title: "The ZAO — DAO Case Study | WaveWarZ Analytics",
   description:
-    "Verified ZAO case study: 100+ Fractal governance weeks on Optimism, 1,643 WaveWarZ battles on Solana, 928.21 SOL volume measured from chain on 7 Sep 2026, $1,497 raised for charity. The ZAO is a decentralized impact network for independent music artists, founded by Zaal Panthaki.",
+    `Verified ZAO case study: 100+ Fractal governance weeks on Optimism, ${M.BATTLES_ON_CHAIN_FMT} WaveWarZ battles on Solana, ${M.VOLUME_SOL} SOL volume measured from chain on ${M.MEASURED_ON_SHORT}, $1,497 raised for charity. The ZAO is a decentralized impact network for independent music artists, founded by Zaal Panthaki.`,
   openGraph: {
     title: "The ZAO — DAO Case Study (Jul 2026)",
     description:
-      "100+ Fractal governance weeks · 1,643 WaveWarZ battles · 928.21 SOL volume · $1,497 charity · 157 on-chain Respect holders. Measured 7 September 2026.",
+      `100+ Fractal governance weeks · ${M.BATTLES_ON_CHAIN_FMT} WaveWarZ battles · ${M.VOLUME_SOL} SOL volume · $1,497 charity · 157 on-chain Respect holders. Measured ${M.MEASURED_ON_LONG}.`,
     url: "https://wwtracker.vercel.app/case-study",
     siteName: "wwtracker",
     type: "article",
@@ -43,7 +43,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How does The ZAO make money?",
-    a: "WaveWarZ revenue comes from three lines that behave differently. Trading carries a 1.500% fee, split 67/33, so 1.005% of every trade goes to the artist and 0.495% to the platform - measured at exact lamports on chain, not modelled. Settlement adds bonuses from the losing pool: 5% to the winning artist, 2% to the losing artist, 3% to the platform. Queue-jump fees are the third line and the largest single one at 12.77 SOL, and they do not scale with volume at all. Measured from chain on 7 September 2026: 928.21 SOL of lifetime volume, 13.94 SOL to artists across all legs (9.33 from trade fees, 4.61 from settlement), and 19.34 SOL of platform revenue from every source. No DAO treasury with a spending vote - revenue flows to operations and founders per a transparent on-chain split.",
+    a: `WaveWarZ revenue comes from three lines that behave differently. Trading carries a 1.500% fee, split 67/33, so 1.005% of every trade goes to the artist and 0.495% to the platform - measured at exact lamports on chain, not modelled. Settlement adds bonuses from the losing pool: 5% to the winning artist, 2% to the losing artist, 3% to the platform. Queue-jump fees are the third line and the largest single one at ${M.QUEUE_FEES_SOL} SOL, and they do not scale with volume at all. Measured from chain on ${M.MEASURED_ON_LONG}: ${M.VOLUME_SOL} SOL of lifetime volume, ${M.ARTIST_TOTAL_SOL} SOL to artists across all legs (${M.ARTIST_FEE_LEG_SOL} from trade fees, ${M.ARTIST_SETTLEMENT_LEG_SOL} from settlement), and ${M.PLATFORM_REVENUE_SOL} SOL of platform revenue from every source. No DAO treasury with a spending vote - revenue flows to operations and founders per a transparent on-chain split.`,
   },
 ];
 
@@ -86,9 +86,9 @@ const CITABLE_FACTS = [
   { n: "100+", label: "Fractal governance weeks", detail: "Since Jul 30, 2024 · Respect on Optimism mainnet" },
   { n: "63", label: "on-chain settlement weeks", detail: "OG (33) + ZOR (31) · verified via Blockscout" },
   { n: "157", label: "Respect holders", detail: "122 OG · 56 ZOR · 21 dual · on Optimism mainnet" },
-  { n: "1,643", label: "WaveWarZ battles", detail: "Every battle account on Solana, read 7 Sep 2026 · May 2025 to Sep 2026 · 1,501 of them public" },
-  { n: "928.21 SOL", label: "cumulative trading volume", detail: `Measured from chain, 7 Sep 2026 · ~$${Math.round(M.VOLUME_USD / 1000)}K at $${M.SOL_USD}/SOL, ${M.SOL_USD_AS_OF}` },
-  { n: "13.94 SOL", label: "artist payouts, all legs", detail: "9.33 from the artist’s 67% of a 1.500% trade fee, 4.61 from settlement · 120 artist wallets · 7 Sep 2026" },
+  { n: M.BATTLES_ON_CHAIN_FMT, label: "WaveWarZ battles", detail: `Every battle account on Solana, read ${M.MEASURED_ON_SHORT} · ${M.SPAN_FIRST} to ${M.SPAN_LAST} · ${M.BATTLES_PUBLIC_FMT} of them public` },
+  { n: `${M.VOLUME_SOL} SOL`, label: "cumulative trading volume", detail: `Measured from chain, ${M.MEASURED_ON_SHORT} · ~$${Math.round(M.VOLUME_USD / 1000)}K at $${M.SOL_USD}/SOL, ${M.SOL_USD_AS_OF}` },
+  { n: `${M.ARTIST_TOTAL_SOL} SOL`, label: "artist payouts, all legs", detail: `${M.ARTIST_FEE_LEG_SOL} from the artist’s 67% of a 1.500% trade fee, ${M.ARTIST_SETTLEMENT_LEG_SOL} from settlement · ${M.ARTIST_WALLETS_FMT} artist wallets · ${M.MEASURED_ON_SHORT}` },
   { n: "$1,497", label: "raised for charity", detail: "2 benefit-battle series · HuRya Empowerment Foundation" },
   { n: "2", label: "confirmed IRL events", detail: "ZAO-CHELLA (Art Basel Miami, Dec 2024) · ZAOstock (Ellsworth ME, Oct 2026)" },
 ];
@@ -194,8 +194,9 @@ export default function CaseStudyPage() {
           <p style={{ margin: 0, color: C.text }}>
             The flagship product is <strong>WaveWarZ</strong> - live-traded music battles on Solana
             where the artist takes 1.005% of every trade instantly onchain, which is two thirds of the
-            1.500% trade fee and twice what the platform keeps. Measured from chain on 7 September 2026:
-            1,643 battles, 928.21 SOL of volume, 120 artist wallets that have ever competed, 52 of them
+            1.500% trade fee and twice what the platform keeps. Measured from chain on{" "}
+            {M.MEASURED_ON_LONG}: {M.BATTLES_ON_CHAIN_FMT} battles, {M.VOLUME_SOL} SOL of volume,{" "}
+            {M.ARTIST_WALLETS_FMT} artist wallets that have ever competed, {M.RANKED_ARTISTS} of them
             on the public leaderboard.
           </p>
         </section>

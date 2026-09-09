@@ -7,6 +7,7 @@
 //
 // Status values are measured, not aspirational. Anything marked "blocked" names
 // what is blocking it.
+import * as M from "./measured";
 
 export type Stage = "live" | "partial" | "blocked" | "not started";
 
@@ -72,9 +73,9 @@ export const SURFACES: Surface[] = [
       "The record. Indexing, backfill, identity, and the API partners read from.",
     build: [
       { step: "Index battles from chain", stage: "live", note: "Already does what the PRD asks to be built." },
-      { step: "Backfill historical battles", stage: "partial", note: "1,501 battles are in the public API today." },
+      { step: "Backfill historical battles", stage: "partial", note: `${M.BATTLES_PUBLIC_FMT} battles are in the public API today.` },
       { step: "Canonical Artist IDs", stage: "not started", note: "Handle resolution exists in the lab; no canonical ID yet." },
-      { step: "Operator attribution on the battle record", stage: "partial", note: "Solved: every battle records its creator on chain via InitializeBattle, backfillable over all 1,501. Only the wallet-to-name binding is unbuilt." },
+      { step: "Operator attribution on the battle record", stage: "partial", note: `Solved: every battle records its creator on chain via InitializeBattle, backfillable over all ${M.BATTLES_PUBLIC_FMT}. Only the wallet-to-name binding is unbuilt.` },
       { step: "Register the first external operator", stage: "not started", note: "No longer blocked - attribution is a read at index time, not a schema change." },
     ],
   },
