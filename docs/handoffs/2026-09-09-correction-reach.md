@@ -115,7 +115,10 @@ fixes matter less than the shape.
 Both repos clean, nothing to apply.
 
 - `wwtracker` - branch `main`, 0 dirty, 0 unpushed, 0 open PRs
-  - HEAD `35fa73f` - Systematic sweep: derive every measured figure, and guard the mechanism (#270)
+  - HEAD when this was written: `35fa73f` (#270). **This bundle's own commit
+    lands after that**, so the sha above is one behind by construction, not
+    stale - a document cannot name the commit that adds it. For the real head,
+    run `git log --oneline -1`. The PR list below is the durable record.
 - `wavewarz-protocol` - branch `main`, 0 dirty, 0 unpushed, 0 open PRs
 - `zao-vault` - lane brief, `handoffs/status/wwtracker.md` and the IN-FLIGHT row
   committed and pushed. Other lanes have work in flight there; it was left alone.
@@ -123,9 +126,9 @@ Both repos clean, nothing to apply.
 `npm run check` at park: typecheck clean, **495 tests**, build compiles,
 `validate --strict` exit 0.
 
-**Merged in this session** - wwtracker #265 #266 #267 #268 #269 #270, and
-wavewarz-protocol #3 #4 #5 #7. (protocol #6 landed at 10:13 UTC, just before
-this session picked up.)
+**Merged in this session** - wwtracker #265 #266 #267 #268 #269 #270 #271, and
+wavewarz-protocol #3 #4 #5 #7. (#271 is this bundle; protocol #6 landed at
+10:13 UTC, just before this session picked up.)
 
 Untracked files: none.
 
