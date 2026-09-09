@@ -369,6 +369,36 @@ Until it is resolved, the honest reading is that `battlesCreated` is
 corroborated by two independent methods and everything else in that struct is
 single-sourced.
 
+### 3.9 Showing your working can make a wrong number more persuasive - the hazard in our own convention
+
+Convention 20 says a published figure names its legs and its measurement date.
+That convention caught real errors today. It also produced one.
+
+`lib/measured.ts` carried `SOL_USD = 180` while `lib/price.ts` said 101.9, both
+stamped 2026-09-05. The 180 was never measured - it was typed, in the file whose
+entire purpose is that figures are measured and single-sourced - and it shipped
+onto the live case-study page as:
+
+    ~$167K at $180/SOL
+
+The honest figure is ~$96K. A 74% overstatement inside a block called
+`CITABLE_FACTS`.
+
+**The annotation made it worse, not better.** `~$167K at $180/SOL` reads more
+trustworthy than a bare `~$167K`, precisely because it shows its working. A
+reader who checks can catch it; a reader who does not is now more confident in a
+wrong number than they would have been without the basis attached.
+
+So the convention is **necessary and not sufficient**. Naming a basis you did not
+measure manufactures credibility. The sufficient half is mechanical:
+`lib/__tests__/solPrice.test.ts` asserts exactly one `export const SOL_USD`
+exists in the repo and that it sits in a plausible band - because the duplication
+was the root cause rather than the digits, and because 180 passed every test here
+for a day.
+
+That framing is the finance lane's, sharpened against my own softer version,
+which had let the convention off.
+
 ### 3.6 `lib/leaderboard.ts` is a snapshot pretending to be a roster - LOW
 
 A 2026-06-15 snapshot of 48 artists, against 52 live. It is no longer used for
