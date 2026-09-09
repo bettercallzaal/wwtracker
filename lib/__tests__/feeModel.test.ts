@@ -169,14 +169,18 @@ describe("feeModel", () => {
       };
       const result = platformRevenue(input);
 
+      // Launch fees are NOT in the total. Measured 2026-09-06: the treasury
+      // receives nothing on battle creation, in 20 of 20 transactions. Adding
+      // them here is what put 1,052.879 SOL on the homepage against a measured
+      // 19.38 - a 54x overstatement, live, until 2026-09-09.
       const expected =
         1000 * 0.015 * 0.33 + // trade fee: 0.495% of volume
         500 * 0.03 + // settlement fee
-        10 * 0.69 + // quick battles
-        5 * 4 + // community battles
         0.5; // skip fees
 
       expect(result.totalSol).toBeCloseTo(expected, 10);
+      // Still returned, because the counterfactual is worth showing.
+      expect(result.modelledLaunchFeesSol).toBeCloseTo(10 * 0.69 + 5 * 4, 10);
     });
 
     it("breaks down revenue by source", () => {
@@ -271,18 +275,18 @@ describe("feeModel", () => {
         skipFeesSol: 15,
       });
 
-      // Trade fees: 10000 * 0.495% = 49.5 SOL (was 50 at the old 0.5% rate)
-      // Launch fees: (50 * 0.69) + (10 * 4) = 34.5 + 40 = 74.5 SOL - MODELLED,
-      //   not collected: measured 2026-09-06, the treasury receives nothing on
-      //   battle creation.
-      // Skip fees: 15 SOL
-      // Total: 49.5 + 74.5 + 15 = 139 SOL
+      // Trade fees: 10000 * 0.495% = 49.5 SOL
+      // Skip fees:  15 SOL
+      // Total:      64.5 SOL - launch fees excluded, they are not collected.
+      // Modelled launch fees: (50 * 0.69) + (10 * 4) = 74.5 SOL, reported
+      //   separately so the counterfactual is visible without being income.
 
       expect(result.tradeFeeSol).toBeCloseTo(49.5, 10);
       expect(result.quickBattleLaunchFeesSol).toBeCloseTo(34.5, 10);
       expect(result.communityBattleLaunchFeesSol).toBeCloseTo(40, 10);
+      expect(result.modelledLaunchFeesSol).toBeCloseTo(74.5, 10);
       expect(result.skipQueueFeeSol).toBeCloseTo(15, 10);
-      expect(result.totalSol).toBeCloseTo(139, 10);
+      expect(result.totalSol).toBeCloseTo(64.5, 10);
     });
 
     it("shows the artist keeping the larger share over a lifetime of volume", () => {
@@ -295,6 +299,36 @@ describe("feeModel", () => {
       expect(split.platformSol).toBeCloseTo(247.5, 10);
       expect(split.artistSol + split.platformSol).toBeCloseTo(split.totalFeeSol, 10);
     });
+  });
+});
+
+describe("uncollected fees stay out of the revenue total", () => {
+  it("does not put a thousand SOL of uncharged launch fees on the page", () => {
+    // The exact live inputs on 2026-09-09: 923.1038 SOL volume, 1,299 quick
+    // and 38 community battles. components/FeeModel.tsx renders totalSol under
+    // "TOTAL PLATFORM REVENUE", and it read 1,052.879 SOL. Measured platform
+    // revenue from every source, lifetime, is 19.38 SOL.
+    const r = platformRevenue({
+      volumeSol: 923.1038,
+      losingPoolSol: 0,
+      quickBattles: 1299,
+      communityBattles: 38,
+      skipFeesSol: 0,
+    });
+    expect(r.totalSol).toBeLessThan(20);
+    expect(r.modelledLaunchFeesSol).toBeGreaterThan(1000);
+    // The headline must not contain the model, at any input.
+    expect(r.totalSol).toBeCloseTo(r.tradeFeeSol + r.settlementFeeSol + r.skipQueueFeeSol, 10);
+  });
+
+  it("keeps the total free of launch fees however many battles there are", () => {
+    const none = platformRevenue({
+      volumeSol: 100, losingPoolSol: 10, quickBattles: 0, communityBattles: 0, skipFeesSol: 1,
+    });
+    const many = platformRevenue({
+      volumeSol: 100, losingPoolSol: 10, quickBattles: 5000, communityBattles: 900, skipFeesSol: 1,
+    });
+    expect(many.totalSol).toBeCloseTo(none.totalSol, 10);
   });
 });
 

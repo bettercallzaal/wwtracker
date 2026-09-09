@@ -115,7 +115,30 @@ export function skipLadder(n: number): number[] {
   return result;
 }
 
-// Platform revenue breakdown from all sources.
+/**
+ * Platform revenue, with the launch fees kept OUT of the total.
+ *
+ * CORRECTED 2026-09-09. `totalSol` used to include the modelled launch fees,
+ * and components/FeeModel.tsx renders it from live stats under the heading
+ * "TOTAL PLATFORM REVENUE". With 1,299 quick and 38 community battles that put
+ * **1,052.879 SOL** on the homepage. Measured platform revenue from every
+ * source, lifetime, is **19.38 SOL**. It was overstated 54x.
+ *
+ * The measurement that says so is three days older than this correction and is
+ * written at the top of this file: twenty battle-creation transactions were
+ * inspected on mainnet and the treasury received nothing in any of them. The
+ * creator PAYS about 0.0039 SOL in rent. Battle creation is a cost.
+ *
+ * That correction reached this file's comments, docs/LAUNCH-FEES.md and the
+ * OBSERVED_CREATION_COST_SOL export, and stopped there - the function kept
+ * summing the fees into the headline. Same shape as the fee rate and the
+ * sell/claim transposition: a correction that landed on the prose and not on
+ * the arithmetic.
+ *
+ * The modelled figures are still returned, because the schedule is the
+ * documented intent and the counterfactual is worth showing. They are just not
+ * income, so they are not in the total.
+ */
 export function platformRevenue(input: {
   volumeSol: number;
   losingPoolSol: number;
@@ -125,9 +148,14 @@ export function platformRevenue(input: {
 }): {
   tradeFeeSol: number;
   settlementFeeSol: number;
+  /** MODELLED. Measured 2026-09-06 as never collected - not in `totalSol`. */
   quickBattleLaunchFeesSol: number;
+  /** MODELLED. Measured 2026-09-06 as never collected - not in `totalSol`. */
   communityBattleLaunchFeesSol: number;
+  /** What the schedule would have produced if launch fees were charged. */
+  modelledLaunchFeesSol: number;
   skipQueueFeeSol: number;
+  /** Measured sources only: trade fees, settlement, skip queue. */
   totalSol: number;
 } {
   const volume = clamp(input.volumeSol);
@@ -146,8 +174,10 @@ export function platformRevenue(input: {
     settlementFeeSol: settlementFee,
     quickBattleLaunchFeesSol: quickLaunchFees,
     communityBattleLaunchFeesSol: communityLaunchFees,
+    modelledLaunchFeesSol: quickLaunchFees + communityLaunchFees,
     skipQueueFeeSol: skipFees,
-    totalSol: tradeFee + settlementFee + quickLaunchFees + communityLaunchFees + skipFees,
+    // Launch fees are deliberately absent. See the doc comment above.
+    totalSol: tradeFee + settlementFee + skipFees,
   };
 }
 

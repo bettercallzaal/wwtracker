@@ -31,6 +31,7 @@ import {
   settlementSplit,
   skipLadder,
   platformRevenue,
+  OBSERVED_CREATION_COST_SOL,
   FEE_SCHEDULE,
 } from "@/lib/feeModel";
 import type { PublicStats } from "@/lib/wavewarzApi";
@@ -315,11 +316,14 @@ export default function FeeModel() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {loaded?.stats && lifetimeBreakdown ? (
               <>
+                {/* The launch-fee tiles used to sit in this row and their
+                    values were added into the total below, which put 1,052.879
+                    SOL on the page against a measured 19.38. They are a model
+                    of an uncharged schedule, so they are out of the row and out
+                    of the total, and labelled underneath. */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
                   <RevenueTile label="TOTAL VOLUME" value={`${fmt(loaded.stats.volume.totalSol, 1)} ◎`} />
                   <RevenueTile label="FROM TRADES" value={`${fmt(lifetimeBreakdown.tradeFeeSol, 3)} ◎`} />
-                  <RevenueTile label="QUICK BATTLES" value={`${fmt(lifetimeBreakdown.quickBattleLaunchFeesSol, 3)} ◎`} />
-                  <RevenueTile label="COMMUNITY" value={`${fmt(lifetimeBreakdown.communityBattleLaunchFeesSol, 3)} ◎`} />
                 </div>
 
                 <div style={{ paddingTop: 8, borderTop: `1px solid ${C.grid}` }}>
@@ -335,6 +339,26 @@ export default function FeeModel() {
                       {fmt(lifetimeBreakdown.totalSol, 3)} ◎
                     </span>
                   </div>
+                  <p style={{ ...metaLabel, fontSize: 10, lineHeight: 1.5, marginTop: 6 }}>
+                    Trade fees only. Settlement and skip-queue revenue are real but are not
+                    separated in live stats, so they are not counted here.
+                  </p>
+                </div>
+
+                <div style={{ paddingTop: 12, borderTop: `1px solid ${C.grid}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ ...metaLabel, fontSize: 12 }}>LAUNCH FEES, IF THEY WERE CHARGED</span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: C.dim, fontVariantNumeric: "tabular-nums" }}>
+                      {fmt(lifetimeBreakdown.modelledLaunchFeesSol, 0)} ◎
+                    </span>
+                  </div>
+                  <p style={{ ...metaLabel, fontSize: 10, lineHeight: 1.5, marginTop: 6 }}>
+                    Not revenue, and not in the total above. Twenty battle-creation transactions
+                    were inspected on mainnet on 2026-09-06 and the treasury received nothing in
+                    any of them - the creator pays about {OBSERVED_CREATION_COST_SOL} SOL in rent,
+                    whoever they are. Battle creation is a cost. This is what the published
+                    schedule would have produced.
+                  </p>
                 </div>
 
                 {lifetimeTradeFeeSplit && (
@@ -370,11 +394,12 @@ export default function FeeModel() {
       )}
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-        {freshness} The fee schedule above is the WaveWarZ reference specification
-        (from CandyToyBox/wavewarz-intelligence). Settlement flows are modeled here based on the
-        design schedule but not yet measured on-chain; skip-queue fees and launch fees are
-        platform revenue and not yet separated in live stats. Trade fees and artist earnings
-        are computed from actual on-chain volume.
+        {freshness} The settlement schedule above is the WaveWarZ reference specification
+        (from CandyToyBox/wavewarz-intelligence) and is modelled, not yet measured on-chain.
+        The trade fee is measured: 1.500% split 67/33. Skip-queue fees are real revenue and
+        are not separated in live stats. Launch fees are NOT revenue - they are scheduled and
+        not collected, measured 2026-09-06. Trade fees and artist earnings are computed from
+        actual on-chain volume.
       </p>
     </div>
   );
