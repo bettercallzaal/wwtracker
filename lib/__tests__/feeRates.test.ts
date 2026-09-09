@@ -14,6 +14,8 @@ import { fileURLToPath } from "node:url";
 //   settlement 5% / 2% / 3% of loser pool  waterfall, winner leg 1,506/1,506
 //   volume, artists, platform revenue      complete scan, 1,643 battles
 
+import { MEASURED_ON_LONG as M_MEASURED_ON_LONG } from "@/lib/measured";
+
 const read = (rel: string) =>
   readFileSync(fileURLToPath(new URL(`../../${rel}`, import.meta.url)), "utf8");
 
@@ -92,7 +94,12 @@ describe("published copy quotes the measured rate", () => {
     // The failure this guards against: a true figure with a stale date reads as
     // invented, because a reader checking it against a snapshot from that date
     // cannot reproduce it.
-    expect(page).toContain("7 September 2026");
+    // Either the date itself or the constant that renders it. The page derives
+    // from lib/measured now, so demanding the literal would force the date back
+    // into hand-typed copy - which is the drift this whole file exists to stop.
+    const dated =
+      page.includes(M_MEASURED_ON_LONG) || page.includes("M.MEASURED_ON_LONG");
+    expect({ dated }).toEqual({ dated: true });
     expect(page).not.toContain("As of July 2026");
   });
 });
@@ -213,7 +220,9 @@ describe("citable facts carry the date they were measured on", () => {
       const at = block.indexOf(row);
       expect(at).toBeGreaterThan(-1);
       const line = block.slice(Math.max(0, at - 200), at + 240);
-      expect(/\d{1,2} Sep 2026|September 2026/.test(line)).toBe(true);
+      expect(
+        /\d{1,2} Sep 2026|September 2026|M\.MEASURED_ON_(SHORT|LONG)/.test(line),
+      ).toBe(true);
     }
   });
 

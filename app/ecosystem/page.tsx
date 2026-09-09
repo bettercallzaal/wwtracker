@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { C, metaLabel } from "@/lib/theme";
+import * as M from "@/lib/measured";
 
 export const metadata: Metadata = {
   title: "The WaveWarZ ecosystem - wwtracker",
@@ -32,7 +33,7 @@ const PRODUCTS: Row[] = [
     what: "Two songs go head to head for a fixed window. Fans trade SOL on a square-root bonding curve on who wins. Settles on chain, no platform token.",
     chain: "Solana",
     owner: "Hurricane",
-    status: "Live since 2025-05-26. 1,643 battles.",
+    status: `Live since 2025-05-26. ${M.BATTLES_ON_CHAIN_FMT} battles.`,
     href: "https://wavewarz.com",
   },
   {
@@ -63,7 +64,7 @@ const ARENAS: Row[] = [
   {
     name: "wavewarz.com",
     what: "Operator zero. Every battle in history was originated here.",
-    status: "Live. 100% of 1,643 battles.",
+    status: `Live. 100% of ${M.BATTLES_ON_CHAIN_FMT} battles.`,
   },
   {
     name: "$ongChainn / WaveWarZ Africa",
@@ -169,14 +170,14 @@ export default function EcosystemPage() {
         </p>
         <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
           {[
-            ["Battle accounts on chain", "1,643"],
+            ["Battle accounts on chain", M.BATTLES_ON_CHAIN_FMT],
             ["Instruction set recovered", "all six, derivable from their names"],
             ["Bonding curve", "supply = sqrt(4.993e8 x pool)"],
             ["Trade fee", "1.500%, split 67/33 between artist and platform"],
             ["Settlement", "winner pool + 40% of loser pool, 1,506 of 1,506"],
             ["Launch fees", "not collected - creating a battle costs the creator"],
-            ["Battles that are one artist's two tracks", "430 of 1,643"],
-            ["Distinct artist wallets, ever", "120"],
+            ["Battles that are one artist's two tracks", `430 of ${M.BATTLES_ON_CHAIN_FMT}`],
+            ["Distinct artist wallets, ever", M.ARTIST_WALLETS_FMT],
             ["Battles originated outside wavewarz.com", "0"],
           ].map(([k, v]) => (
             <div key={k} style={{

@@ -81,3 +81,27 @@ import { SOL_USD as PRICE } from "./price";
 
 /** Volume in USD at the reference price. Derived, never hand-written. */
 export const VOLUME_USD = Math.round(VOLUME_SOL * PRICE);
+
+/**
+ * Comma-formatted forms, for prose.
+ *
+ * These exist because the surfaces that state these facts were retyping them.
+ * On 2026-09-09 a sweep found 18 hand-typed copies of the constants above in
+ * app/case-study/page.tsx alone - including the meta description and both
+ * social cards, which are the highest-reach strings on the site - plus more in
+ * app/ecosystem/page.tsx and lib/surfaces.ts, neither of which imported this
+ * file at all.
+ *
+ * Every one of them was CORRECT that day. That is the point: they were correct
+ * the day #241 landed too, and #243 existed only because a sibling block in the
+ * same file was not. A retyped figure is not wrong yet, it is wrong on the next
+ * re-measure, and the seven defects fixed on 2026-09-09 were all this shape - a
+ * correction reaching one copy and not another.
+ *
+ * So: never write `1,643` in a surface. Write `M.BATTLES_ON_CHAIN_FMT`.
+ */
+const fmt = (n: number) => n.toLocaleString("en-US");
+
+export const BATTLES_ON_CHAIN_FMT = fmt(BATTLES_ON_CHAIN);
+export const BATTLES_PUBLIC_FMT = fmt(BATTLES_PUBLIC);
+export const ARTIST_WALLETS_FMT = fmt(ARTIST_WALLETS);

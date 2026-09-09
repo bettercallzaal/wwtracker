@@ -76,21 +76,56 @@ describe("every surface agrees with the source", () => {
     expect(block).not.toContain("estimated artist earnings");
   });
 
-  it("the case study quotes the same figures as the source", () => {
+  // This used to assert the case study CONTAINED each literal - "1,643",
+  // "928.21", "7 September 2026". That is the weaker half of the property. It
+  // proves the page agrees with the source today and does nothing about
+  // tomorrow: on the next re-measure the constant moves, eighteen hand-typed
+  // copies do not, and the test goes green on a page that has silently gone
+  // stale. Every defect fixed on 2026-09-09 was that exact failure.
+  //
+  // The page derives from lib/measured now, so agreement is structural. What is
+  // worth asserting is that it stayed structural.
+  it("the case study derives its figures rather than retyping them", () => {
     const page = read("app/case-study/page.tsx");
-    for (const value of [
-      M.BATTLES_ON_CHAIN.toLocaleString(),
-      String(M.VOLUME_SOL),
-      String(M.ARTIST_TOTAL_SOL),
-      String(M.ARTIST_FEE_LEG_SOL),
-      String(M.ARTIST_SETTLEMENT_LEG_SOL),
-      String(M.PLATFORM_REVENUE_SOL),
-      String(M.QUEUE_FEES_SOL),
-      String(M.ARTIST_WALLETS),
-      String(M.RANKED_ARTISTS),
-      M.MEASURED_ON_LONG,
+    for (const name of [
+      "BATTLES_ON_CHAIN_FMT",
+      "BATTLES_PUBLIC_FMT",
+      "VOLUME_SOL",
+      "ARTIST_TOTAL_SOL",
+      "ARTIST_FEE_LEG_SOL",
+      "ARTIST_SETTLEMENT_LEG_SOL",
+      "PLATFORM_REVENUE_SOL",
+      "QUEUE_FEES_SOL",
+      "ARTIST_WALLETS_FMT",
+      "RANKED_ARTISTS",
+      "MEASURED_ON_LONG",
+      "MEASURED_ON_SHORT",
     ]) {
-      expect({ value, present: page.includes(value) }).toEqual({ value, present: true });
+      expect({ name, referenced: page.includes(`M.${name}`) }).toEqual({ name, referenced: true });
+    }
+  });
+
+  it("no surface retypes a measured figure it could derive", () => {
+    // The literal forms, in the files that already import lib/measured. A hit
+    // here means a sibling was added by hand next to derived ones - which is
+    // how #243 happened, and it is invisible while the two agree.
+    const LITERALS: Array<[string, string]> = [
+      [M.BATTLES_ON_CHAIN.toLocaleString("en-US"), "M.BATTLES_ON_CHAIN_FMT"],
+      [String(M.VOLUME_SOL), "M.VOLUME_SOL"],
+      [String(M.ARTIST_TOTAL_SOL), "M.ARTIST_TOTAL_SOL"],
+      [String(M.PLATFORM_REVENUE_SOL), "M.PLATFORM_REVENUE_SOL"],
+      [String(M.QUEUE_FEES_SOL), "M.QUEUE_FEES_SOL"],
+      [M.MEASURED_ON_LONG, "M.MEASURED_ON_LONG"],
+    ];
+    for (const rel of ["app/case-study/page.tsx", "app/ecosystem/page.tsx", "lib/surfaces.ts"]) {
+      const src = read(rel);
+      for (const [literal, use] of LITERALS) {
+        for (const line of src.split("\n")) {
+          if (!line.includes(literal)) continue;
+          if (/^\s*(\/\/|\*|\/\*)/.test(line)) continue;
+          expect({ rel, literal, use, retyped: true }).toEqual({ rel, literal, use, retyped: false });
+        }
+      }
     }
   });
 });
