@@ -9,6 +9,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
+  LabelList,
   Legend,
   Line,
   LineChart,
@@ -99,6 +101,20 @@ function tooltipStyle(opts: EmbedOptions) {
   };
 }
 
+/**
+ * The last day a snapshot-backed series actually covers.
+ *
+ * These files are rebuilt on a cadence, not live, so a chart drawn from one
+ * ends days before today while sitting next to a counter that is live. On a
+ * partner's page those two read as a contradiction rather than as two different
+ * questions. Deriving the line from the data means it can never be wrong, and
+ * it travels with a screenshot.
+ */
+function asOf(rows: { date: string }[]): string | undefined {
+  const last = rows[rows.length - 1]?.date;
+  return last ? `Series runs to ${last}. Live totals move ahead of it between rebuilds.` : undefined;
+}
+
 /** Thin out a long daily series so a 320px-tall chart is not drawing 460 points. */
 function thin<T>(rows: T[], max = 180): T[] {
   if (rows.length <= max) return rows;
@@ -119,9 +135,21 @@ interface BalanceRow {
   day_high: number;
 }
 
+/**
+ * The program's first instruction. The treasury wallet existed before WaveWarZ
+ * did, and 176 of its 648 daily rows predate the platform - a flat run at
+ * roughly zero that ate a quarter of the x-axis to say nothing. A chart called
+ * "treasury vs operating floor" is about the platform's operations, so it
+ * starts when the platform did.
+ */
+const PROGRAM_LAUNCH = "2025-05-26";
+
 export function TreasuryFloor({ opts }: { opts: EmbedOptions }) {
   const { data, status } = useJson<{ rows: BalanceRow[] }>("/api/balance");
-  const rows = useMemo(() => thin(data?.rows ?? []), [data]);
+  const rows = useMemo(
+    () => thin((data?.rows ?? []).filter((r) => r.block_date >= PROGRAM_LAUNCH)),
+    [data],
+  );
   const p = opts.palette;
 
   return (
@@ -134,7 +162,12 @@ export function TreasuryFloor({ opts }: { opts: EmbedOptions }) {
       errorNote="Treasury feed unavailable"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={rows} margin={{ top: 4, right: 6, left: -18, bottom: 0 }}>
+        {/* ComposedChart, not AreaChart. AreaChart accepts only Area as a
+            graphical child, so the day_high <Line> below was being dropped on
+            the floor - silently, with no warning: the widget promised "with the
+            intraday high" and drew one series. The missing legend entry is what
+            gave it away. */}
+        <ComposedChart data={rows} margin={{ top: 4, right: 6, left: -18, bottom: 0 }}>
           <defs>
             <linearGradient id="tf" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={opts.accent} stopOpacity={0.35} />
@@ -143,7 +176,18 @@ export function TreasuryFloor({ opts }: { opts: EmbedOptions }) {
           </defs>
           <CartesianGrid stroke={p.line} vertical={false} />
           <XAxis dataKey="block_date" {...axisProps(opts)} minTickGap={40} />
-          <YAxis {...axisProps(opts)} width={44} domain={[0, "auto"]} />
+          <YAxis {...axisProps(opts)} width={46} domain={[0, "auto"]} />
+          {/* Two series, and which is which is the whole reading of the chart. */}
+          <Legend
+            verticalAlign="top"
+            height={22}
+            iconType="plainline"
+            formatter={(value: string) => (
+              <span style={{ color: p.mut, fontFamily: FONTS.mono, fontSize: 10 }}>
+                {value}
+              </span>
+            )}
+          />
           <Tooltip
             {...tooltipStyle(opts)}
             formatter={(v: number | string, name: string) => [
@@ -157,6 +201,7 @@ export function TreasuryFloor({ opts }: { opts: EmbedOptions }) {
             isAnimationActive={false}
             type="monotone"
             dataKey="eod_sol_balance"
+            name="close"
             stroke={opts.accent}
             strokeWidth={2}
             fill="url(#tf)"
@@ -165,6 +210,7 @@ export function TreasuryFloor({ opts }: { opts: EmbedOptions }) {
             isAnimationActive={false}
             type="monotone"
             dataKey="day_high"
+            name="intraday high"
             stroke={p.blue}
             strokeWidth={1}
             dot={false}
@@ -174,14 +220,17 @@ export function TreasuryFloor({ opts }: { opts: EmbedOptions }) {
             stroke={p.red}
             strokeDasharray="4 4"
             label={{
+              // insideTopRight put this directly on the series - the balance
+              // has been sitting just above the floor since April. The left
+              // edge is the one part of the plot the data has left alone.
               value: `${FLOOR_SOL} FLOOR`,
-              position: "insideTopRight",
+              position: "insideTopLeft",
               fill: p.mut,
               fontSize: 9,
               fontFamily: FONTS.mono,
             }}
           />
-        </AreaChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </EmbedShell>
   );
@@ -253,6 +302,7 @@ export function VolumeCumulative({ opts }: { opts: EmbedOptions }) {
       href={`${SITE}/#growth`}
       opts={opts}
       state={series.length ? "ready" : status}
+      note={asOf(rows)}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={series} margin={{ top: 4, right: 6, left: -14, bottom: 0 }}>
@@ -310,6 +360,7 @@ function DailyBars({
       href={href}
       opts={opts}
       state={series.length ? "ready" : status}
+      note={asOf(rows)}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={series} margin={{ top: 4, right: 6, left: -16, bottom: 0 }}>
@@ -372,7 +423,8 @@ interface OnchainDay {
   minted: number;
 }
 
-const ONCHAIN_SOURCE = "Decoded program instructions via Dune - wwtracker";
+const ONCHAIN_SOURCE = "Daily program activity via Dune - wwtracker";
+const CHAIN_SCAN_SOURCE = "Complete chain scan of the WaveWarZ program - wwtracker";
 
 export function ProgramActivity({ opts }: { opts: EmbedOptions }) {
   const { data, status } = useJson<OnchainDay[]>("/ww-onchain-daily.json");
@@ -385,13 +437,28 @@ export function ProgramActivity({ opts }: { opts: EmbedOptions }) {
       href={`${SITE}/#analytics`}
       opts={opts}
       state={series.length ? "ready" : status}
+      note={asOf(data ?? [])}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={series} margin={{ top: 4, right: 6, left: -18, bottom: 0 }}>
+        {/* left:-18 with a 40px axis clipped the hundreds ticks to ":00" and
+            ".50" - the axis was cropping its own labels, which reads as a
+            broken chart rather than a tight one. Give it the room. */}
+        <LineChart data={series} margin={{ top: 4, right: 8, left: -6, bottom: 0 }}>
           <CartesianGrid stroke={opts.palette.line} vertical={false} />
           <XAxis dataKey="date" {...axisProps(opts)} minTickGap={44} />
-          <YAxis {...axisProps(opts)} width={40} />
+          <YAxis {...axisProps(opts)} width={46} />
           <Tooltip {...tooltipStyle(opts)} />
+          {/* Two series and no key is a puzzle, not a chart. */}
+          <Legend
+            verticalAlign="top"
+            height={22}
+            iconType="plainline"
+            formatter={(value: string) => (
+              <span style={{ color: opts.palette.mut, fontFamily: FONTS.mono, fontSize: 10 }}>
+                {value}
+              </span>
+            )}
+          />
           <Line
             isAnimationActive={false}
             type="monotone"
@@ -416,42 +483,52 @@ export function ProgramActivity({ opts }: { opts: EmbedOptions }) {
   );
 }
 
+interface InstructionMixFile {
+  measuredThrough: string;
+  calls: Record<string, number>;
+}
+
+// This widget does NOT read the Dune daily series, and that is deliberate.
+//
+// tools/dune-daydiff.py in wavewarz-protocol shows Dune has `sells` and
+// `claims` TRANSPOSED on 259 of 330 days. Aggregating that file published
+// sellShares 3409 / claimShares 2762 when the program says 2671 / 3390 - the
+// two bars swapped, on a partner's page, in the one widget whose whole claim is
+// that it is decoded straight off the chain.
+//
+// A pair transposition conserves the total, so no aggregate check could see it.
+// The fix is not a smarter check; it is to read the complete chain scan, which
+// is what public/ww-instruction-mix.json is.
 export function InstructionMix({ opts }: { opts: EmbedOptions }) {
-  const { data, status } = useJson<OnchainDay[]>("/ww-onchain-daily.json");
-  const bars = useMemo(() => {
-    if (!data?.length) return [];
-    const t = data.reduce(
-      (a, d) => ({
-        buys: a.buys + d.buys,
-        sells: a.sells + d.sells,
-        claims: a.claims + d.claims,
-        created: a.created + d.created,
-        settled: a.settled + d.settled,
-      }),
-      { buys: 0, sells: 0, claims: 0, created: 0, settled: 0 },
-    );
-    return [
-      { name: "buyShares", calls: t.buys },
-      { name: "sellShares", calls: t.sells },
-      { name: "claimShares", calls: t.claims },
-      { name: "createBattle", calls: t.created },
-      { name: "endBattle", calls: t.settled },
-    ];
-  }, [data]);
+  const { data, status } = useJson<InstructionMixFile>("/ww-instruction-mix.json");
+  const bars = useMemo(
+    () =>
+      data ? Object.entries(data.calls).map(([name, calls]) => ({ name, calls })) : [],
+    [data],
+  );
 
   return (
     <EmbedShell
       title="Instruction mix"
-      source={ONCHAIN_SOURCE}
+      source={CHAIN_SCAN_SOURCE}
       href={`${SITE}/#analytics`}
       opts={opts}
       state={bars.length ? "ready" : status}
+      // A count with no "as of" is a count somebody will still be quoting in
+      // March. endBattle is absent on purpose: the census gives 1,506 battles
+      // with a distribution and 1,550 with a winner decided, and neither is
+      // provably the number of end_battle CALLS.
+      note={
+        data
+          ? `Every call decoded off the program through ${data.measuredThrough}. endBattle omitted - not separable from settlement records.`
+          : undefined
+      }
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={bars}
           layout="vertical"
-          margin={{ top: 4, right: 16, left: 22, bottom: 0 }}
+          margin={{ top: 4, right: 46, left: 22, bottom: 0 }}
         >
           <CartesianGrid stroke={opts.palette.line} horizontal={false} />
           <XAxis type="number" {...axisProps(opts)} />
@@ -461,7 +538,19 @@ export function InstructionMix({ opts }: { opts: EmbedOptions }) {
             cursor={{ fill: opts.palette.blueDim }}
             formatter={(v: number | string) => [num(Number(v)), "calls"]}
           />
-          <Bar isAnimationActive={false} dataKey="calls" fill={opts.accent} radius={[0, 3, 3, 0]} />
+          {/* Screenshotted more than hovered, so the value is on the bar. */}
+          <Bar isAnimationActive={false} dataKey="calls" fill={opts.accent} radius={[0, 3, 3, 0]}>
+            <LabelList
+              dataKey="calls"
+              position="right"
+              formatter={(v: number | string) => num(Number(v))}
+              style={{
+                fill: opts.palette.mut,
+                fontFamily: FONTS.mono,
+                fontSize: 10,
+              }}
+            />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </EmbedShell>
@@ -657,14 +746,71 @@ export function BattleTypeMix({ opts }: { opts: EmbedOptions }) {
 // Leaderboards - live off the public API.
 // ---------------------------------------------------------------------------
 
+/**
+ * A remote image that cannot break the widget.
+ *
+ * Artist avatars and cover art come from Audius content nodes and unavatar,
+ * and those go down: a 22-URL sample on 2026-09-09 had one 502 and one artist
+ * with no picture at all. A bare <img> in that state renders the browser's
+ * broken-image glyph on a partner's page, which looks like our bug. So a
+ * failure collapses to a plain initial tile instead, and the row still reads.
+ */
+function Avatar({
+  src,
+  seed,
+  opts,
+  size = 18,
+}: { src: string | null; seed: string; opts: EmbedOptions; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  const box = {
+    width: size,
+    height: size,
+    borderRadius: 4,
+    flexShrink: 0,
+    objectFit: "cover" as const,
+  };
+
+  if (!src || failed) {
+    return (
+      <span
+        style={{
+          ...box,
+          display: "inline-grid",
+          placeItems: "center",
+          background: opts.palette.card,
+          color: opts.palette.mut,
+          fontFamily: FONTS.mono,
+          fontSize: Math.round(size * 0.5),
+          lineHeight: 1,
+        }}
+      >
+        {seed.trim().slice(0, 1).toUpperCase() || "-"}
+      </span>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="" loading="lazy" style={box} onError={() => setFailed(true)} />
+  );
+}
+
 function Table({
   opts,
   head,
   rows,
+  icons,
+  /**
+   * Column 1 was capped at 150px for wallet addresses, which are 12 characters.
+   * Song titles are not: "Limit Breaker Ft Cannon Jones - K..." was being cut
+   * while a third of the row sat empty. The cap belongs to the content.
+   */
+  nameMaxWidth = 150,
 }: {
   opts: EmbedOptions;
   head: string[];
   rows: (string | number)[][];
+  icons?: (string | null)[];
+  nameMaxWidth?: number;
 }) {
   const p = opts.palette;
   return (
@@ -716,10 +862,21 @@ function Table({
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    maxWidth: ci === 1 ? 150 : undefined,
+                    maxWidth: ci === 1 ? nameMaxWidth : undefined,
                   }}
                 >
-                  {c}
+                  {ci === 1 && icons ? (
+                    <span style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+                      <Avatar src={icons[ri] ?? null} seed={String(c)} opts={opts} />
+                      <span
+                        style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                      >
+                        {c}
+                      </span>
+                    </span>
+                  ) : (
+                    c
+                  )}
                 </td>
               ))}
             </tr>
@@ -734,13 +891,17 @@ interface ArtistRow {
   name: string;
   wins: number;
   losses: number;
+  draws: number;
+  battles: number;
   totalVolumeSol: string;
   totalEarningsSol: string;
+  pfpUrl?: string | null;
 }
 interface TraderRow {
   wallet: string;
   totalVolumeSol: number;
   tradeCount: number;
+  battleCount: number;
   winRate: number;
   netPnlSol: number;
 }
@@ -750,6 +911,7 @@ interface SongRow {
   battles: number;
   winRate: number;
   totalVolumeSol: number;
+  artUrl?: string | null;
 }
 
 export function TopArtists({ opts }: { opts: EmbedOptions }) {
@@ -764,14 +926,23 @@ export function TopArtists({ opts }: { opts: EmbedOptions }) {
       href={`${SITE}/#traders`}
       opts={opts}
       state={rows.length ? "ready" : status}
+      // This board is ordered by RECORD, not by volume, and it was described as
+      // "ranked by volume" until 2026-09-09 - which made the volume column look
+      // broken: AI LUI sits eleventh on 100.39 SOL, above everyone from rank 2
+      // down. The order is the host site's own, and a platform widget that
+      // re-sorts stops agreeing with the board it mirrors. So the label moves,
+      // not the rows.
+      note="Ordered by record, as the platform ranks it - not by the volume column."
     >
       <Table
         opts={opts}
-        head={["#", "Artist", "Rec", "Volume", "Earned"]}
+        head={["#", "Artist", "Rec", "Battles", "Volume", "Earned"]}
+        icons={rows.map((a) => a.pfpUrl ?? null)}
         rows={rows.map((a, i) => [
           i + 1,
           a.name,
-          `${a.wins}-${a.losses}`,
+          a.draws ? `${a.wins}-${a.losses}-${a.draws}` : `${a.wins}-${a.losses}`,
+          a.battles,
           num(Number(a.totalVolumeSol), 2),
           num(Number(a.totalEarningsSol), 3),
         ])}
@@ -833,6 +1004,8 @@ export function TopSongs({ opts }: { opts: EmbedOptions }) {
       <Table
         opts={opts}
         head={["#", "Song", "Battles", "Win %", "Volume"]}
+        icons={rows.map((s) => s.artUrl ?? null)}
+        nameMaxWidth={260}
         rows={rows.map((s, i) => [
           i + 1,
           // Some songTitle values carry trailing whitespace from admin entry.
@@ -854,10 +1027,13 @@ export function TopSongs({ opts }: { opts: EmbedOptions }) {
 // the first one built for an arena rather than for an analytics page.
 //
 // It polls, counts down, and hands off to wavewarz.com to actually trade. It
-// does NOT execute a trade: that needs the program IDL, which is private. The
-// button says "trade on wavewarz.com" rather than "trade", because a button
-// that looks like it trades and then navigates away is worse than an honest
-// link.
+// does NOT execute a trade, and that is a product decision now rather than a
+// technical block: the IDL was recovered and verified 40/40 against mainnet on
+// 2026-09-08 (chain/wavewarz.idl.json in wavewarz-protocol). Signing somebody's
+// transaction from inside an iframe on a third-party page is a different thing
+// to ask for than a chart. The button says "trade on wavewarz.com" rather than
+// "trade", because a button that looks like it trades and then navigates away
+// is worse than an honest link.
 //
 // Designed for the state it is in most of the time - nothing live. Quick
 // battles run about ten minutes on weeknights, so a widget that only looks
@@ -875,12 +1051,9 @@ function BattleSide({
   return (
     <div style={{ flex: 1, minWidth: 0, opacity: dim ? 0.55 : 1 }}>
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-        {art && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={art} alt="" style={{
-            width: 34, height: 34, borderRadius: 5, objectFit: "cover", flexShrink: 0,
-          }} />
-        )}
+        {/* Audius content nodes 502 often enough to matter; a bare img renders
+            the browser's broken-image glyph on a partner's page. */}
+        <Avatar src={art} seed={artist} opts={opts} size={34} />
         <div style={{ minWidth: 0 }}>
           {/* The artist competes; the track is what they entered. The API
               conflates these - `name` is the track - so both are shown, with
@@ -893,8 +1066,11 @@ function BattleSide({
             color: p.mut, fontSize: 11, lineHeight: 1.3,
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }}>{track}</div>
+          {/* The winner used to replace its own pool figure with the word
+              WINNER, so exactly one side showed a number and the two could not
+              be compared - in a widget whose point is the split. Show both. */}
           <div style={{ color: won ? p.green : p.mut, fontFamily: FONTS.mono, fontSize: 10.5, marginTop: 2 }}>
-            {won ? "WINNER" : `${num(pool, 3)} SOL`}
+            {num(pool, 3)} SOL{won ? " - WINNER" : ""}
           </div>
         </div>
       </div>
@@ -990,6 +1166,15 @@ export function LiveBattle({ opts }: { opts: EmbedOptions }) {
               {battle.djWavy && ` / DJ WAVY: ${battle.djWavy === "artist1" ? "A" : "B"}`}
             </div>
           )}
+
+          {/* The finished state left roughly half a 300px box empty, which
+              reads as a widget that failed to load the rest. These are facts
+              we already hold and were throwing away. */}
+          <div style={{ color: p.mut, fontFamily: FONTS.mono, fontSize: 10.5, marginTop: 8 }}>
+            POOL {num(battle.a.poolSol + battle.b.poolSol, 3)} SOL
+            {battle.endsAt && ` / ${battle.live ? "ENDS" : "ENDED"} ${battle.endsAt.slice(0, 10)}`}
+            {` / #${battle.id}`}
+          </div>
 
           <a
             href={battle.url}

@@ -19,7 +19,10 @@
 // can never disagree with it.
 
 export type EmbedSource =
-  /** Dune, over the Solana program or the treasury wallet. Nobody else has this. */
+  /**
+   * Read from the chain itself - either a complete scan of the program, or Dune
+   * over the program and the treasury wallet. Nobody else has this.
+   */
   | "onchain"
   /** wavewarz.info public API - the same numbers the host site already shows. */
   | "platform"
@@ -149,7 +152,7 @@ export const EMBEDS: EmbedWidget[] = [
     slug: "instruction-mix",
     title: "Instruction mix",
     blurb:
-      "Every call to the program, decoded by Anchor discriminator: buys, sells, claims, battles created and settled.",
+      "Every call to the program, decoded by Anchor discriminator: buys, sells, claims and battles created. Read off a complete scan of the program rather than an indexer.",
     category: "Activity",
     source: "onchain",
     form: "bar",
@@ -221,7 +224,7 @@ export const EMBEDS: EmbedWidget[] = [
   {
     slug: "top-artists",
     title: "Top artists",
-    blurb: "Main event artists ranked by volume, with record and earnings.",
+    blurb: "Main event artists as the platform ranks them - by record - with battles, volume and earnings.",
     category: "Leaderboards",
     source: "platform",
     form: "table",
