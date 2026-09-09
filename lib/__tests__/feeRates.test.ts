@@ -139,7 +139,21 @@ describe("the superseded rate does not survive anywhere in copy", () => {
   // every trade" - including one inside the FAQ schema. Guarding the correct
   // number from being compressed does nothing about the wrong number still
   // sitting there, and only one of those two had a test.
-  const SURFACES = ["app/case-study/page.tsx", "lib/embeds.ts", "app/layout.tsx"];
+  // Widened 2026-09-09. This list was three files, and the rate was wrong in
+  // five others the whole time - including lib/feeModel.ts, which every
+  // projection on the site is computed from, and the homepage fee table. A
+  // guard that covers the surfaces somebody remembered is not a guard; these
+  // are now every file that states the rate in words or constants.
+  const SURFACES = [
+    "app/case-study/page.tsx",
+    "app/tournament/page.tsx",
+    "components/Faq.tsx",
+    "components/FeeModel.tsx",
+    "components/HowItWorks.tsx",
+    "lib/embeds.ts",
+    "lib/feeModel.ts",
+    "app/layout.tsx",
+  ];
   const SUPERSEDED = [
     "1% of every trade",
     "1% per trade",
@@ -147,6 +161,19 @@ describe("the superseded rate does not survive anywhere in copy", () => {
     "1 percent of trading volume",
     "0.5% to the platform",
   ];
+
+  it("never encodes the superseded rate as a constant either", () => {
+    // The prose guard would have passed on lib/feeModel.ts forever: it said
+    // `ARTIST_TRADE_FEE = 0.01` and `PLATFORM_TRADE_FEE = 0.005`, which
+    // contains none of the banned phrases and is the same wrong claim.
+    const model = read("lib/feeModel.ts");
+    expect(model).not.toMatch(/ARTIST_TRADE_FEE\s*=\s*0\.01\b/);
+    expect(model).not.toMatch(/PLATFORM_TRADE_FEE\s*=\s*0\.005\b/);
+    // And the primitives are the total and the split, in that order.
+    expect(model).toMatch(/TOTAL_TRADE_FEE\s*=\s*0\.015/);
+    expect(model).toMatch(/ARTIST_SPLIT\s*=\s*0\.67/);
+    expect(model).toMatch(/PLATFORM_SPLIT\s*=\s*0\.33/);
+  });
 
   it("never states the artist rate as the documented 1%", () => {
     for (const rel of SURFACES) {

@@ -315,7 +315,7 @@ export default function TournamentPage() {
               },
               {
                 q: "What is 'loser-earns'?",
-                a: "Every AI artist receives 1% of trading volume on their battles — win or lose. Even the artist who loses the grand final earns SOL from every trade placed against them. No artist walks away empty-handed. Payouts settle automatically onchain (no manual step).",
+                a: "Every AI artist receives 1.005% of trading volume on their battles - win or lose. That is the artist's 67% share of the 1.500% fee every trade pays. Even the artist who loses the grand final earns SOL from every trade placed against them. No artist walks away empty-handed. Payouts settle automatically onchain (no manual step).",
               },
               {
                 q: "Who are GEEK MYTH and Stormbourne?",

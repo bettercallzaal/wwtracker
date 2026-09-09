@@ -42,9 +42,15 @@ export default function HowItWorks() {
       <Section label="WHERE THE MONEY GOES">
         <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: C.mono, fontSize: 13 }}>
           <tbody>
-            <Row k="Each trade -> artist" v="1.0%" />
-            <Row k="Each trade -> platform" v="0.5%" />
-            <Row k="Each trade -> stays in the pool" v="~98.5%" />
+            {/* Three facts, in this order, never compressed to "the trade fee
+                is 1.005%" - that sentence is false and has been written down
+                once already. The total and the split are the measurement; the
+                per-side rates are what they come to. */}
+            <Row k="Each trade -> total fee" v="1.500%" />
+            <Row k="That fee splits, artist / platform" v="67 / 33" />
+            <Row k="So each trade -> artist" v="1.005%" />
+            <Row k="So each trade -> platform" v="0.495%" />
+            <Row k="Each trade -> stays in the pool" v="98.5%" />
             <Row k="Settlement: winning traders (pro-rata)" v="40% of loser pool" />
             <Row k="Settlement: losing traders refund" v="50% of loser pool" />
             <Row k="Settlement: winning artist" v="5% of loser pool" />
@@ -53,8 +59,11 @@ export default function HowItWorks() {
           </tbody>
         </table>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 8 }}>
-          Per the on-chain IDL. So even a losing artist earns, and the platform
-          takes a small cut of every trade plus settlement.
+          Settlement per the on-chain IDL. The trade fee and its split were
+          measured on chain at exact lamports across 14 trades in 7 battles -
+          the platform&apos;s own fee schedule still says 1.00 / 0.50. So even a
+          losing artist earns, and the artist takes twice what the platform does
+          on every trade.
         </p>
       </Section>
 

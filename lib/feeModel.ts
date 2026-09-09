@@ -1,12 +1,32 @@
 // WaveWarZ fee model - calculates where every SOL goes.
 //
-// Reference: CandyToyBox/wavewarz-intelligence CLAUDE.md and public/llms.txt.
-// These figures are the platform's authoritative fee schedule.
+// Settlement and the skip ladder come from CandyToyBox/wavewarz-intelligence's
+// CLAUDE.md and public/llms.txt. The TRADE FEE does not, any more.
+//
+// CORRECTED 2026-09-09. This file said the artist takes 1.0% and the platform
+// 0.5%. Measured on chain at exact lamports across 14 trades in 7 battles, the
+// total fee is 1.500% and it splits 67/33, so the artist takes 1.005% and the
+// platform 0.495%. The PRD, the platform's fee schedule and wavewarz-math.ts
+// all still say 1.00/0.50; the program does not.
+//
+// lib/__tests__/feeRates.test.ts has asserted the corrected figures since it
+// was written - but only against the case-study PROSE. This module and
+// components/HowItWorks.tsx were never brought across, so the homepage table
+// and every projection built on these constants stayed on the old rate. That
+// is the same shape as the instruction-mix defect fixed in PR #265: a
+// correction that reached one consumer and not the other.
+//
+// THE PRIMITIVES ARE THE TOTAL AND THE SPLIT, and the per-side rates derive.
+// That ordering is deliberate and is the ledger's rule. Every mis-statement of
+// this that has actually happened collapsed the three facts into one - "the
+// trade fee is 1.005%" - which is false, and replaces a wrong rate with a
+// differently wrong one. Write the total, then the split, then the result.
+const TOTAL_TRADE_FEE = 0.015; // 1.500% of every trade, measured
+const ARTIST_SPLIT = 0.67; // the artist's share OF that fee
+const PLATFORM_SPLIT = 0.33; // the platform's share OF that fee
 
-// Fee percentages as decimal fractions
-const ARTIST_TRADE_FEE = 0.01; // 1.0% per trade
-const PLATFORM_TRADE_FEE = 0.005; // 0.5% per trade
-const TOTAL_TRADE_FEE = ARTIST_TRADE_FEE + PLATFORM_TRADE_FEE; // 1.5% total
+const ARTIST_TRADE_FEE = TOTAL_TRADE_FEE * ARTIST_SPLIT; // 1.005% of a trade
+const PLATFORM_TRADE_FEE = TOTAL_TRADE_FEE * PLATFORM_SPLIT; // 0.495% of a trade
 
 // Settlement split - applied to the losing pool
 const SETTLEMENT_LOSING_TRADERS = 0.5; // 50% back to losing traders
@@ -133,9 +153,11 @@ export function platformRevenue(input: {
 
 // Export constants for UI display and testing.
 export const FEE_SCHEDULE = {
+  TOTAL_TRADE_FEE,
+  ARTIST_SPLIT,
+  PLATFORM_SPLIT,
   ARTIST_TRADE_FEE,
   PLATFORM_TRADE_FEE,
-  TOTAL_TRADE_FEE,
   SETTLEMENT_LOSING_TRADERS,
   SETTLEMENT_WINNING_TRADERS,
   SETTLEMENT_WINNING_ARTIST,
