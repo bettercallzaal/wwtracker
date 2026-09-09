@@ -8,9 +8,18 @@
 // when the honest figure was ~$96K - a 74% overstatement in a block called
 // CITABLE_FACTS.
 //
-// The convention half-saved it: naming the price basis in the copy is what makes
-// the error catchable by a reader. Naming a basis you did not measure is what
-// made it wrong in the first place.
+// A HAZARD THE CONVENTION CREATES, and the finance lane put it better than I did.
+//
+// Naming a price basis makes an error catchable by a reader WHO CHECKS. It does
+// nothing on a page nobody checks, and it actively helps a wrong number look
+// rigorous: "~$167K at $180/SOL" reads MORE trustworthy than "~$167K", precisely
+// because it shows its working.
+//
+// So showing your working can make a wrong number more persuasive. That is not a
+// caveat on the convention, it is a hazard the convention creates. Naming the
+// basis is necessary and not sufficient. The sufficient half is a test - which is
+// why lib/__tests__/solPrice.test.ts asserts a single definition and a plausible
+// band, rather than trusting the annotation to protect anyone.
 //
 // Measured against the platform's own reported price:
 //   zao-measure --verify "wwtracker: SOL price basis"
