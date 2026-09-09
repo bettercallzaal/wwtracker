@@ -2,7 +2,7 @@
 
 // WaveWarZ fee model - shows where every SOL goes on the platform.
 //
-// Displays the per-trade fee split (1.0% artist vs 0.5% platform), the
+// Displays the per-trade fee split (1.005% artist vs 0.495% platform), the
 // settlement waterfall applied to losing pools, the skip-queue auction ladder,
 // and lifetime platform revenue calculated from real on-chain volume.
 //
@@ -77,11 +77,14 @@ export default function FeeModel() {
     };
   }, []);
 
-  // Prepare visualization data for per-trade split (1% artist, 0.5% platform).
+  // Per-trade split. The labels are derived from FEE_SCHEDULE rather than
+  // typed, because typed copies of this rate are exactly what went wrong: the
+  // measured 1.500%/67-33 correction reached the case-study prose and left the
+  // constants, this chart and the homepage table on 1.00/0.50 until 2026-09-09.
   const tradeData = useMemo(
     () => [
       {
-        label: "Per-Trade Fee Split (1.5%)",
+        label: `Per-Trade Fee Split (${(FEE_SCHEDULE.TOTAL_TRADE_FEE * 100).toFixed(3)}%)`,
         artist: FEE_SCHEDULE.ARTIST_TRADE_FEE * 100,
         platform: FEE_SCHEDULE.PLATFORM_TRADE_FEE * 100,
       },
@@ -156,13 +159,14 @@ export default function FeeModel() {
           WaveWarZ<span style={{ color: C.dim, fontWeight: 400 }}> / fee model</span>
         </h1>
         <p style={{ margin: "8px 0 0", color: C.text, lineHeight: 1.6, maxWidth: 720 }}>
-          Every SOL on WaveWarZ is accounted for. Below is the platform's authoritative fee schedule
-          and where revenue flows. Artists receive 1% of volume automatically on every trade - twice what
-          the platform takes. Settlement bonuses are split among winners, losers, and both artists.
+          Every SOL on WaveWarZ is accounted for. Below is the fee schedule as the program applies
+          it and where revenue flows. Each trade pays 1.500%, split 67/33 in the artist&apos;s favour,
+          so artists receive 1.005% of volume automatically on every trade - just over twice what the
+          platform takes. Settlement bonuses are split among winners, losers, and both artists.
         </p>
       </header>
 
-      {/* Per-trade fee split: 1% artist, 0.5% platform. */}
+      {/* Per-trade fee split: 1.500% total, 67/33 - so 1.005% and 0.495%. */}
       <Panel label="PER-TRADE FEE SPLIT">
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -183,15 +187,24 @@ export default function FeeModel() {
                   formatter={(v: number) => `${v.toFixed(2)}%`}
                 />
                 <Legend wrapperStyle={{ paddingTop: 12, fontFamily: C.mono, fontSize: 12 }} />
-                <Bar dataKey="artist" name="Artist (1.0%)" fill={C.accent} />
-                <Bar dataKey="platform" name="Platform (0.5%)" fill={C.accentDim} />
+                <Bar
+                  dataKey="artist"
+                  name={`Artist (${(FEE_SCHEDULE.ARTIST_TRADE_FEE * 100).toFixed(3)}%)`}
+                  fill={C.accent}
+                />
+                <Bar
+                  dataKey="platform"
+                  name={`Platform (${(FEE_SCHEDULE.PLATFORM_TRADE_FEE * 100).toFixed(3)}%)`}
+                  fill={C.accentDim}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
           <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
-            On every trade, 1.5% total is deducted: 1.0% goes to the artist automatically
-            (on-chain, whether or not they are present), and 0.5% to the platform. The artist
-            receives 2x what the platform keeps, across the entire lifetime of WaveWarZ.
+            On every trade, 1.500% total is deducted. It splits 67/33 in the artist&apos;s
+            favour, so 1.005% reaches the artist automatically - on-chain, whether or not they
+            are present - and 0.495% goes to the platform. Measured at exact lamports across 14
+            trades in 7 battles; the platform&apos;s published schedule still says 1.00 / 0.50.
           </p>
         </div>
       </Panel>
@@ -335,7 +348,7 @@ export default function FeeModel() {
                           alignItems: "center",
                         }}
                       >
-                        <span style={{ color: C.text, fontSize: 13 }}>Total earned by artists (1% of volume)</span>
+                        <span style={{ color: C.text, fontSize: 13 }}>Total earned by artists (1.005% of volume)</span>
                         <span style={{ fontSize: 18, fontWeight: 700, color: C.good, fontVariantNumeric: "tabular-nums" }}>
                           {fmt(lifetimeTradeFeeSplit.artistSol, 3)} ◎
                         </span>

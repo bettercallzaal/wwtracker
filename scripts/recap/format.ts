@@ -35,6 +35,17 @@ const NOT_INCLUDED_PAYOUT = "Per-battle artist payout: only the platform-aggrega
 const NOT_INCLUDED_TRADES = "Notable individual trades: no per-battle trade-level data available";
 
 export function buildMainEventRecap(battle: StoredBattle, context: RecapContext): RecapDraft {
+  // `winner` became nullable when the file moved to the public API, which
+  // returns no side for 239 battles. A recap is an announcement of a result,
+  // so there is nothing to draft yet - and drafting one anyway would put the
+  // word "null" in a post. Fail loudly instead of writing a sentence nobody
+  // can check.
+  if (battle.winner === null) {
+    throw new Error(
+      `battle ${battle.id} has no recorded winner - nothing to recap. ` +
+        `Re-run npm run fetch:battles once the platform declares one.`,
+    );
+  }
   const aName = battleName(battle.aHandle, battle.a);
   const bName = battleName(battle.bHandle, battle.b);
   const side = winnerSide(battle);

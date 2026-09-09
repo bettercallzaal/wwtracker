@@ -11,11 +11,24 @@ import {
 
 describe("feeModel", () => {
   describe("tradeFeeSplit", () => {
-    it("splits 1.5% into 1.0% artist and 0.5% platform", () => {
+    // Three facts, never one. Asserting only "the artist gets 1.005%" passes
+    // while the sentence around it is wrong, which is how the old 1.0 / 0.5
+    // survived in this module after the correction had already landed
+    // elsewhere. The total and the split are the measurement.
+    it("takes 1.500% in total", () => {
+      expect(tradeFeeSplit(100).totalFeeSol).toBeCloseTo(1.5, 10);
+    });
+
+    it("splits that fee 67 / 33, artist to platform", () => {
+      const r = tradeFeeSplit(100);
+      expect(r.artistSol / r.totalFeeSol).toBeCloseTo(0.67, 10);
+      expect(r.platformSol / r.totalFeeSol).toBeCloseTo(0.33, 10);
+    });
+
+    it("so the artist takes 1.005% of a trade and the platform 0.495%", () => {
       const result = tradeFeeSplit(100);
-      expect(result.artistSol).toBeCloseTo(1.0, 10);
-      expect(result.platformSol).toBeCloseTo(0.5, 10);
-      expect(result.totalFeeSol).toBeCloseTo(1.5, 10);
+      expect(result.artistSol).toBeCloseTo(1.005, 10);
+      expect(result.platformSol).toBeCloseTo(0.495, 10);
     });
 
     it("sums to exactly the input volume times 1.5%", () => {
@@ -44,9 +57,13 @@ describe("feeModel", () => {
       expect(tradeFeeSplit(NaN).totalFeeSol).toBeCloseTo(0, 10);
     });
 
-    it("confirms artist gets 2x the platform on every trade", () => {
+    it("gives the artist just over twice the platform, not exactly twice", () => {
+      // 67/33 is 2.03x. The old constants were 1.0 and 0.5, which is exactly
+      // 2x - a rounder number than the program actually produces, and the
+      // roundness is part of why nobody questioned it.
       const result = tradeFeeSplit(1000);
-      expect(result.artistSol).toBeCloseTo(result.platformSol * 2, 10);
+      expect(result.artistSol / result.platformSol).toBeCloseTo(0.67 / 0.33, 10);
+      expect(result.artistSol / result.platformSol).toBeGreaterThan(2);
     });
   });
 
@@ -153,7 +170,7 @@ describe("feeModel", () => {
       const result = platformRevenue(input);
 
       const expected =
-        1000 * 0.005 + // trade fee
+        1000 * 0.015 * 0.33 + // trade fee: 0.495% of volume
         500 * 0.03 + // settlement fee
         10 * 0.69 + // quick battles
         5 * 4 + // community battles
@@ -172,7 +189,7 @@ describe("feeModel", () => {
       };
       const result = platformRevenue(input);
 
-      expect(result.tradeFeeSol).toBeCloseTo(5, 10); // 1000 * 0.5%
+      expect(result.tradeFeeSol).toBeCloseTo(4.95, 10); // 1000 * 0.495%
       expect(result.settlementFeeSol).toBeCloseTo(15, 10); // 500 * 3%
       expect(result.quickBattleLaunchFeesSol).toBeCloseTo(6.9, 10); // 10 * 0.69
       expect(result.communityBattleLaunchFeesSol).toBeCloseTo(20, 10); // 5 * 4
@@ -216,8 +233,11 @@ describe("feeModel", () => {
 
   describe("Fee schedule constants", () => {
     it("exports all required fee percentages", () => {
-      expect(FEE_SCHEDULE.ARTIST_TRADE_FEE).toBe(0.01);
-      expect(FEE_SCHEDULE.PLATFORM_TRADE_FEE).toBe(0.005);
+      expect(FEE_SCHEDULE.TOTAL_TRADE_FEE).toBe(0.015);
+      expect(FEE_SCHEDULE.ARTIST_SPLIT).toBe(0.67);
+      expect(FEE_SCHEDULE.PLATFORM_SPLIT).toBe(0.33);
+      expect(FEE_SCHEDULE.ARTIST_TRADE_FEE).toBeCloseTo(0.01005, 10);
+      expect(FEE_SCHEDULE.PLATFORM_TRADE_FEE).toBeCloseTo(0.00495, 10);
       expect(FEE_SCHEDULE.TOTAL_TRADE_FEE).toBe(0.015);
     });
 
@@ -251,27 +271,29 @@ describe("feeModel", () => {
         skipFeesSol: 15,
       });
 
-      // Trade fees: 10000 * 0.5% = 50 SOL
-      // Launch fees: (50 * 0.69) + (10 * 4) = 34.5 + 40 = 74.5 SOL
+      // Trade fees: 10000 * 0.495% = 49.5 SOL (was 50 at the old 0.5% rate)
+      // Launch fees: (50 * 0.69) + (10 * 4) = 34.5 + 40 = 74.5 SOL - MODELLED,
+      //   not collected: measured 2026-09-06, the treasury receives nothing on
+      //   battle creation.
       // Skip fees: 15 SOL
-      // Total: 50 + 74.5 + 15 = 139.5 SOL
+      // Total: 49.5 + 74.5 + 15 = 139 SOL
 
-      expect(result.tradeFeeSol).toBeCloseTo(50, 10);
+      expect(result.tradeFeeSol).toBeCloseTo(49.5, 10);
       expect(result.quickBattleLaunchFeesSol).toBeCloseTo(34.5, 10);
       expect(result.communityBattleLaunchFeesSol).toBeCloseTo(40, 10);
       expect(result.skipQueueFeeSol).toBeCloseTo(15, 10);
-      expect(result.totalSol).toBeCloseTo(139.5, 10);
+      expect(result.totalSol).toBeCloseTo(139, 10);
     });
 
-    it("shows artist earning 2x platform on every trade over lifetime", () => {
+    it("shows the artist keeping the larger share over a lifetime of volume", () => {
       const volume = 50000; // 50k SOL lifetime volume
       const split = tradeFeeSplit(volume);
 
-      // Artist should earn 0.5 SOL per 100 SOL volume (1%)
-      // Platform should earn 0.25 SOL per 100 SOL volume (0.5%)
-      expect(split.artistSol).toBeCloseTo(500, 10);
-      expect(split.platformSol).toBeCloseTo(250, 10);
-      expect(split.artistSol).toBeCloseTo(split.platformSol * 2, 10);
+      // 1.500% of 50,000 is 750 SOL of fee, split 67/33.
+      expect(split.totalFeeSol).toBeCloseTo(750, 10);
+      expect(split.artistSol).toBeCloseTo(502.5, 10);
+      expect(split.platformSol).toBeCloseTo(247.5, 10);
+      expect(split.artistSol + split.platformSol).toBeCloseTo(split.totalFeeSol, 10);
     });
   });
 });

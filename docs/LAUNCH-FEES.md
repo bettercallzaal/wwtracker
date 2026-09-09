@@ -44,7 +44,7 @@ by the indexer. Creation costs are on the order of half of gross fee income.
 ## Why this matters beyond bookkeeping
 
 **The WBS-1 partner economics are drawn from the wrong pool.** The PRD proposes
-splitting the 0.5% platform trade fee three ways, giving an originating operator
+splitting the 0.495% platform trade fee three ways, giving an originating operator
 0.15%. Across the platform's entire history that is about 1.4 SOL. If launch
 fees had been collected they would have dwarfed the trade fee; they were not, so
 the trade fee really is the revenue line, and it is very small.

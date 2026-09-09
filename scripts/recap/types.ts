@@ -8,7 +8,13 @@ export interface StoredBattle {
   b: string;
   aHandle: string | null;
   bHandle: string | null;
-  winner: string;
+  /**
+   * Null when nobody has been declared the winner yet, or when the platform
+   * has settled the battle without recording a side - 239 of 1,508 as of
+   * 2026-09-09. Previously the whole row was dropped in that case, which is
+   * why the file was missing 213 battles spread across every month.
+   */
+  winner: string | null;
   vol: number;
   margin: number | null;
 }

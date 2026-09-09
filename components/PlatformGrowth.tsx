@@ -98,6 +98,18 @@ export default function PlatformGrowth() {
     };
   }, []);
 
+  // The peak month was written into the caption by hand as "march 2026 (188
+  // battles)". Refreshing the battle file on 2026-09-09 made it 198, and a
+  // hand-typed figure sitting under a chart drawn from the same data is the
+  // cheapest kind of wrong. Derive it.
+  const peakMonth = useMemo(
+    () =>
+      monthStats && monthStats.length
+        ? monthStats.reduce((m, x) => (x.battles > m.battles ? x : m))
+        : null,
+    [monthStats],
+  );
+
   // Volume series: cumulative vol over time (not estimated - WaveWarZ API is authoritative
   // per-battle volume: artist1.volumeSol + artist2.volumeSol summed by day).
   const data = useMemo(() => {
@@ -270,7 +282,8 @@ export default function PlatformGrowth() {
               </div>
               <p style={{ ...metaLabel, fontSize: 10, marginTop: 10, lineHeight: 1.6 }}>
                 battle count per calendar month across quick, main, and community battles.
-                peak: march 2026 (188 battles). source: /ww-battles.json · partial months shown as-is.
+                peak: {peakMonth ? `${peakMonth.label} (${peakMonth.battles} battles)` : "-"}.
+                source: /ww-battles.json · partial months shown as-is.
               </p>
             </Panel>
           )}

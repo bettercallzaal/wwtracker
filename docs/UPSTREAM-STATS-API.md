@@ -46,6 +46,11 @@ Smoke test: `npm run smoke:stats`
   "artistPayouts": {
     "totalSol": 13.3906,                       // Cumulative onchain artist payouts
     "totalUsd": 1017.69,
+    // The rate in this note is UPSTREAM'S, quoted verbatim, and it is wrong:
+    // measured on chain at exact lamports the fee is 1.500% split 67/33, so
+    // 1.005% reaches the artist. Do not "fix" it here - this block documents
+    // what their API returns, and correcting the transcript would hide the
+    // disagreement rather than record it. It is open with Candy.
     "note": "Instant, automatic onchain payouts to artists - 1% of trading volume + settlement bonus"
   },
   "traderClaims": {

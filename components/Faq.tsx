@@ -31,7 +31,7 @@ const FAQS: QA[] = [
   },
   {
     q: "How do artists earn?",
-    a: "1% of trading volume per side on every trade, plus a settlement bonus - the winning artist gets 5% of the loser pool and the losing artist gets 2%.",
+    a: "Every trade pays a 1.500% fee, split 67/33 in the artist's favour - so 1.005% of trading volume per side reaches the artist on every trade. On top of that there is a settlement bonus: the winning artist gets 5% of the loser pool and the losing artist gets 2%.",
   },
   {
     q: "How do I become a WaveWarZ artist?",

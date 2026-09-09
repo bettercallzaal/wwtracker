@@ -149,7 +149,7 @@ sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
 | 01 | What | AboutWaveWarZ.tsx, HowItWorks.tsx, FeeModel.tsx | What WaveWarZ is, battle flow, fee table, live snapshot, addresses, team, links | WW + static + lib/feeModel.ts |
 | 02 | Floor | BalanceDashboard.tsx | Treasury daily close (bars) + intraday high (line) vs 3.5 floor; Day/Week toggle | live /api/balance |
 | 03 | Growth | PlatformGrowth.tsx | Cumulative SOL volume timeline since May 2025 | public/ww-platform-volume.json |
-| 04 | Economics | FeeModel.tsx | Fee schedule: 1.5% per trade (1.0% artist, 0.5% platform), settlement splits | lib/feeModel.ts |
+| 04 | Economics | FeeModel.tsx | Fee schedule: 1.500% per trade split 67/33 (so 1.005% artist, 0.495% platform), settlement splits | lib/feeModel.ts |
 | 05 | Profitability | Profitability.tsx | Floor model, 33/22/22/22 distribution split, recipient cards, distribution history | lib/distributions.ts |
 | 06 | Revenue | WeeklyRevenueAnalytics.tsx | Weekly on-chain fee wallet inflow, the trend, per-battle fee | WW + live API |
 | 07 | The program | BattleLifecycle.tsx, PlatformAnalytics.tsx | State machine funnel (create/mint/trade/settle/claim) with gap analysis + decoded instruction mix | public/ww-onchain-daily.json + WW |
