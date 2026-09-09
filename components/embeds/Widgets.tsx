@@ -29,6 +29,7 @@ import {
   TRADER_TABLE_HEAD,
 } from "@/lib/traderLeaderboard";
 import { FONTS, shortWallet, type EmbedOptions } from "@/lib/embedTheme";
+import { ONCHAIN_DAILY_PATH, correctDuneDays } from "@/lib/onchainDaily";
 import { secondsLeft, poolShare, type WidgetBattle } from "@/lib/liveBattle";
 
 // Every widget is a client component that fetches its own data. That is
@@ -427,8 +428,13 @@ const ONCHAIN_SOURCE = "Daily program activity via Dune - wwtracker";
 const CHAIN_SCAN_SOURCE = "Complete chain scan of the WaveWarZ program - wwtracker";
 
 export function ProgramActivity({ opts }: { opts: EmbedOptions }) {
-  const { data, status } = useJson<OnchainDay[]>("/ww-onchain-daily.json");
-  const series = useMemo(() => thin(data ?? []), [data]);
+  // Through the corrected path even though this chart only plots txs and
+  // unique signers, neither of which is transposed. A widget that reads the raw
+  // file is one edit away from plotting a swapped column, and this file already
+  // produced that bug twice.
+  const { data, status } = useJson<OnchainDay[]>(ONCHAIN_DAILY_PATH);
+  const corrected = useMemo(() => (data ? correctDuneDays(data) : null), [data]);
+  const series = useMemo(() => thin(corrected ?? []), [corrected]);
 
   return (
     <EmbedShell
@@ -437,7 +443,7 @@ export function ProgramActivity({ opts }: { opts: EmbedOptions }) {
       href={`${SITE}/#analytics`}
       opts={opts}
       state={series.length ? "ready" : status}
-      note={asOf(data ?? [])}
+      note={asOf(corrected ?? [])}
     >
       <ResponsiveContainer width="100%" height="100%">
         {/* left:-18 with a 40px axis clipped the hundreds ticks to ":00" and

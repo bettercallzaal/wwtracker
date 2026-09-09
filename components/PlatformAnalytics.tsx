@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { fetchOnchainDaily } from "@/lib/onchainDaily";
 import {
   Bar,
   BarChart,
@@ -72,9 +73,11 @@ export default function PlatformAnalytics() {
     let alive = true;
     // Fetch fresh on-chain daily data: all program instructions decoded by day.
     // Gap-filled from 2025-05-26 (first day) to today with zero values for inactive days.
-    fetch("/ww-onchain-daily.json")
-      .then((r) => r.json())
-      .then((d: OnchainDailyRow[]) => alive && setOnchainDaily(d))
+    // Via lib/onchainDaily, not fetch: the file has sells and claims
+    // transposed, and this panel plots them as two separate stacked series.
+    // Read raw, the red "sells" bar is the claim count and vice versa.
+    fetchOnchainDaily()
+      .then((d) => alive && setOnchainDaily(d as OnchainDailyRow[]))
       .catch(() => {});
     return () => {
       alive = false;

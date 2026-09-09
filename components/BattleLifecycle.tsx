@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { fetchOnchainDaily, type OnchainDay } from "@/lib/onchainDaily";
 import {
   Bar,
   BarChart,
@@ -25,16 +26,12 @@ import { TREASURY_WALLET } from "@/lib/config";
 // battles created but never settled, and settled battles whose winnings nobody
 // has come back for. Neither number appears on any WaveWarZ surface.
 
-interface Day {
-  date: string;
-  txs: number;
-  buys: number;
-  sells: number;
-  claims: number;
-  created: number;
-  settled: number;
-  minted: number;
-}
+// Day comes from lib/onchainDaily, which undoes the sell/claim transposition
+// in the underlying file. Fetching that path directly - as this component did
+// until 2026-09-09 - renders the sell count as claims: 2,762 rather than 3,390,
+// 2.83 buys per sell rather than 3.48, and 1.72 claims per settled battle
+// rather than 2.12. Both ratios below are the point of the section.
+type Day = OnchainDay;
 
 const fmt = (n: number, dp = 0) =>
   n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -44,9 +41,8 @@ export default function BattleLifecycle() {
 
   useEffect(() => {
     let alive = true;
-    fetch("/ww-onchain-daily.json")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: Day[] | null) => alive && setDays(d))
+    fetchOnchainDaily()
+      .then((d) => alive && setDays(d))
       .catch(() => alive && setDays([]));
     return () => {
       alive = false;

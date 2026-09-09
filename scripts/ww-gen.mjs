@@ -50,7 +50,34 @@ const round = (n, dp) => {
 };
 
 // --- daily activity + instruction mix ---------------------------------------
-const onchain = readJson("public/ww-onchain-daily.json");
+// THE SOURCE HAS `sells` AND `claims` TRANSPOSED, and the swap happens HERE, at
+// the read, before anything is derived from it.
+//
+// It used to happen 20 lines further down, inside the `program` object. That
+// looked like a boundary and was not: `timeline` is built above it, from the
+// raw rows, so WW.timeline.trades shipped as buys + CLAIMS. OnChainProof
+// rendered it as "Trades 13,055" when the answer is 12,408 - in the same file
+// whose comment said "corrected here, at the boundary, so a regeneration
+// cannot reintroduce it".
+//
+// Measured 2026-09-08 against a complete chain scan of all 1,643 battles, day
+// by day across the 330 days both cover:
+//
+//   dune.sells == chain.claims AND dune.claims == chain.sells   259 days (78%)
+//   dune.sells == chain.sells  (the straight reading)            22 days (7%)
+//   sells + claims TOTAL agrees                                 259 days
+//
+// The pair total agreeing on exactly the days the swap holds is what makes it a
+// relabel rather than missing data - the decoder sees every instruction and
+// files two of them under each other's name. 35 to 1 against the straight
+// reading.
+//
+// The real fix belongs in whatever produces public/ww-onchain-daily.json, which
+// is upstream of this script and not in this repo. AUDIT.md 3.8 has the working,
+// and lib/onchainDaily.ts is the same correction for anything reading the file
+// in the browser.
+const onchainRaw = readJson("public/ww-onchain-daily.json");
+const onchain = onchainRaw.map((d) => ({ ...d, sells: d.claims, claims: d.sells }));
 const active = onchain.filter((d) => d.txs > 0);
 
 const daily = active.map((d) => ({
@@ -70,33 +97,15 @@ const timeline = active.map((d) => ({
 
 const sum = (f) => onchain.reduce((a, d) => a + f(d), 0);
 
-// THE SOURCE HAS `sells` AND `claims` TRANSPOSED, so they are swapped back here.
-//
-// Measured 2026-09-08 against a complete chain scan of all 1,643 battles, day by
-// day across the 330 days both cover:
-//
-//   dune.sells == chain.claims AND dune.claims == chain.sells   259 days (78%)
-//   dune.sells == chain.sells  (the straight reading)            22 days (7%)
-//   sells + claims TOTAL agrees                                 259 days
-//
-// The pair total agreeing on exactly the days the swap holds is what makes it a
-// relabel rather than missing data - the decoder sees every instruction and
-// files two of them under each other's name. 35 to 1 against the straight
-// reading.
-//
-// It shipped: AboutWaveWarZ rendered "CLAIMS 2,762 / winnings withdrawn" when
-// 2,762 is the sell count and claims are 3,388, and BattleLifecycle's
-// buysPerSell was built on it.
-//
-// Corrected here, at the boundary, so a regeneration cannot reintroduce it. The
-// real fix belongs in whatever produces public/ww-onchain-daily.json - that is
-// upstream of this script and not in this repo. AUDIT.md 3.8 has the working.
+// `onchain` is already corrected at the read, so these are plain sums. Reading
+// across here - sells from d.claims - is what made the correction look done
+// while `timeline` above it was still wrong.
 const program = {
   battlesCreated: sum((d) => d.created),
   battlesSettled: sum((d) => d.settled),
   buys: sum((d) => d.buys),
-  sells: sum((d) => d.claims),
-  claims: sum((d) => d.sells),
+  sells: sum((d) => d.sells),
+  claims: sum((d) => d.claims),
   // Distinct signers cannot be summed across days without double counting, so
   // this comes from the signer list, not from the daily series.
   uniqueTraders: 0,
