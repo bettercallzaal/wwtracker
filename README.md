@@ -17,6 +17,16 @@ the command that produced it, and the roadmap in the order worth doing. If you
 are picking this up cold, that document is the briefing and this file is the
 map.
 
+**Then read the latest session handoff:
+[docs/handoffs/2026-09-09-correction-reach.md](docs/handoffs/2026-09-09-correction-reach.md).**
+The lane is parked for maintenance mode, and that bundle carries the dated work
+that survives the park, the tooling workarounds this repo currently needs, and
+one finding worth knowing before you change anything: on 2026-09-09 the same
+defect was found seven times - a correction that reached one consumer and not
+another. If you are about to fix a figure, check every consumer of it, and put
+the retired value in `lib/__tests__/supersededFigures.test.ts` rather than in a
+per-file check.
+
 The three things to know before touching anything:
 
 1. **wwtracker is the lab. wavewarz.info is production.** Experiments, research
@@ -146,6 +156,9 @@ what happens when a key is missing: [docs/NEWSLETTER.md](docs/NEWSLETTER.md).
 - [docs/UPSTREAM-STATS-API.md](docs/UPSTREAM-STATS-API.md) - the
   `wavewarz.info/api/public/stats` contract this repo **consumes** and does not
   own. Checked by `npm run smoke:stats`.
+- [docs/handoffs/](docs/handoffs/) - session handoffs. Committed rather than
+  left in `.handoffs/`, which is gitignored and therefore invisible from any
+  other machine. Newest first; each one names the date it was written.
 
 ## Tools
 
