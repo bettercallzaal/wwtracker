@@ -29,12 +29,33 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const CHAIN = { buys: 9297, sells: 2671, claims: 3390 };
 
 describe("the sell/claim transposition stays corrected", () => {
-  it("keeps the swap in the generator", () => {
+  it("swaps at the READ, not inside one derived object", () => {
+    // This assertion used to require the cross-mapping `sells: sum(d => d.claims)`
+    // inside the `program` object, and passed while the bug was still live:
+    // `timeline` is built ABOVE that line from the raw rows, so WW.timeline
+    // shipped buys + CLAIMS as its trade count and OnChainProof rendered
+    // "Trades 13,055" for a figure that is 12,408.
+    //
+    // A correction applied to one of the two objects a script emits is not a
+    // correction, so the test now pins the placement rather than the mapping.
     const gen = readFileSync(`${root}scripts/ww-gen.mjs`, "utf8");
-    // The corrected mapping reads across: sells from claims, claims from sells.
-    expect(gen).toMatch(/sells:\s*sum\(\(d\)\s*=>\s*d\.claims\)/);
-    expect(gen).toMatch(/claims:\s*sum\(\(d\)\s*=>\s*d\.sells\)/);
+    const readAt = gen.indexOf("onchainRaw.map");
+    expect(readAt).toBeGreaterThan(-1);
+    expect(gen).toMatch(/sells:\s*d\.claims,\s*claims:\s*d\.sells/);
+    // Everything derived must come after the swap.
+    for (const derived of ["const active =", "const timeline =", "const program = {"]) {
+      expect({ derived, afterSwap: gen.indexOf(derived) > readAt }).toEqual({
+        derived, afterSwap: true,
+      });
+    }
     expect(gen).toContain("TRANSPOSED");
+  });
+
+  it("carries the corrected trade count into the timeline, not just the totals", () => {
+    // buys + sells = 12,408. buys + claims = 13,055, which is what shipped.
+    const trades = WW.timeline.reduce((a, d) => a + d.trades, 0);
+    expect(trades).toBe(WW.program.buys + WW.program.sells);
+    expect(trades).not.toBe(WW.program.buys + WW.program.claims);
   });
 
   it("reports more claims than sells, which is what chain says", () => {
