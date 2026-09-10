@@ -43,6 +43,8 @@ const SUPERSEDED: Array<[string, string]> = [
   ["SongJam", "nothing - SongJam is retired, do not reference it"],
   ["(SANG)", "nothing - SANG was SongJam's token"],
   ["Magnetiq", "nothing - Magnetiq is retired, do not reference it"],
+  // Typed, never measured; shipped a 74% overstatement onto the case study.
+  ["SOL_USD = 180", "the measured price - zao-measure --verify \"wwtracker: SOL price basis\""],
   ["1,500+", "1,643 battle accounts on chain, or 1,501 returned by the public API"],
   ["921+ SOL", "928.21 SOL, measured from the complete scan"],
   ["1,291+", "1,643"],
@@ -194,5 +196,67 @@ describe("retired figures cannot return to a rendered surface", () => {
         }
       }
     }
+  });
+});
+
+// Docs, too. On 2026-09-10 docs/REFRESH.md told the reader to type
+// `SOL_USD = 180` - the figure retired two days earlier after it overstated the
+// case study by 74% - and docs/WAVEWARZ-RESEARCH.md still gave the fee split as
+// 1.0 / 0.5 a day after every rendered surface was corrected. A refresh doc is
+// where a retired value gets re-typed from, and the rendered-code scan above
+// could not see either.
+//
+// Docs legitimately name retired values when explaining a correction, with the
+// old number next to the new one. So this fails CLOSED with a counted exemption
+// list: each (file, value) pair below is allowed up to its count, with a
+// reason. Any new occurrence - a new file, or one more in an exempt file -
+// fails until someone adds it here and says why.
+const DOC_EXEMPT: Record<string, { max: number; why: string }> = {
+  "docs/ARCHITECTURE.md|13,055": { max: 1, why: "history of the transposition fix, old beside new" },
+  "docs/ARCHITECTURE.md|1.72 claims per settled": { max: 1, why: "history of the transposition fix" },
+  "docs/ARCHITECTURE.md|2,762 claims": { max: 1, why: "history of the transposition fix" },
+  "docs/ARCHITECTURE.md|12,408": { max: 1, why: "history of the failed-attempt fix" },
+  "docs/ARCHITECTURE.md|9,646": { max: 2, why: "Dune's own count, labelled as such beside the chain's" },
+  "docs/ARCHITECTURE.md|3,409": { max: 2, why: "Dune's own count, labelled as such beside the chain's" },
+  "docs/AUDIT.md|12,408": { max: 1, why: "the finding that retired it" },
+  "docs/AUDIT.md|9,646": { max: 2, why: "Dune-vs-chain comparison tables in 3.8" },
+  "docs/AUDIT.md|3,409": { max: 2, why: "Dune-vs-chain comparison tables in 3.8" },
+  "docs/AUDIT.md|SOL_USD = 180": { max: 1, why: "the finding that retired it" },
+  "docs/REFRESH.md|SOL_USD = 180": { max: 1, why: "the dated note recording that this doc used to say it" },
+  "docs/UPSTREAM-STATS-API.md|1% of trading volume": { max: 1, why: "verbatim upstream API response - their text, recorded as theirs" },
+};
+
+describe("retired figures cannot return to the docs", () => {
+  const docs = [
+    ...readdirSync(`${root}docs`).filter((f) => f.endsWith(".md")).map((f) => `docs/${f}`),
+    "README.md",
+  ];
+
+  it("finds docs at all, so this cannot pass by finding nothing", () => {
+    expect(docs.length).toBeGreaterThan(10);
+  });
+
+  it("carries no superseded value beyond its counted exemption", () => {
+    const over: string[] = [];
+    for (const f of docs) {
+      let text: string;
+      try { text = readFileSync(`${root}${f}`, "utf8"); } catch { continue; }
+      for (const [bad, replacement] of SUPERSEDED) {
+        const n = text.split(bad).length - 1;
+        const allowed = DOC_EXEMPT[`${f}|${bad}`]?.max ?? 0;
+        if (n > allowed) over.push(`${f}: "${bad}" x${n} (allowed ${allowed}) - use ${replacement}`);
+      }
+    }
+    expect(over).toEqual([]);
+  });
+
+  it("every exemption is still needed, so the list cannot rot into a blanket pass", () => {
+    const stale: string[] = [];
+    for (const [key, { max }] of Object.entries(DOC_EXEMPT)) {
+      const [f, bad] = key.split("|");
+      const n = readFileSync(`${root}${f}`, "utf8").split(bad).length - 1;
+      if (n < max) stale.push(`${key}: allows ${max}, found ${n} - lower it`);
+    }
+    expect(stale).toEqual([]);
   });
 });

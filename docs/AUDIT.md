@@ -365,6 +365,12 @@ Exact on every day, both legs, including the controls. So the Dune series is
 349 failed buys, 91 failed sells and 21 failed claims - **440 failed attempts
 rendered as trades**: "12,408 trades" on the site against 11,968 that happened.
 
+How much of that is measured: the **excess** is measured on every day (Dune minus
+chain, 349 / 91 / 21). That the whole excess is **failed attempts** is measured
+on 16 of 330 days and inferred for the rest. The full-history failed-attempt
+count (`tools/failed-daily.py`) is what would make it measured end to end. Its
+first run died at 1,180 of 1,642 battles; the checkpointed rerun is in progress.
+
 The 4% tolerance in the tests that pinned these figures is what let it ship. The
 error was 3.7%.
 

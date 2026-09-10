@@ -90,8 +90,13 @@ holds the SOL pools. Pools are u64 lamports (/1e9 for SOL).
 
 ### Fees and settlement (per IDL/agent; verify on-chain)
 
-Per trade (buyShares/sellShares): **artist 1.0%**, **platform 0.5%**, ~98.5%
-stays in the bonding-curve pool.
+Per trade (buyShares/sellShares): a **1.500%** fee split 67/33, so **artist
+1.005%**, **platform 0.495%**, and 98.5% stays in the bonding-curve pool.
+Measured on chain at exact lamports across 14 trades in 7 battles.
+
+*(Corrected 2026-09-10. This said artist 1.0% / platform 0.5%, the platform's
+own published schedule. The measured split was corrected in `lib/feeModel.ts`
+and every rendered surface on 2026-09-09 and never reached this doc.)*
 
 At settlement (endBattle), the **loser pool** is split:
 
@@ -108,7 +113,7 @@ Trader payout (claimShares):
 - Losing side: `(tokens/loser_supply) * loser_pool*0.50`
 - ROI = (payout - invested) / invested.
 
-So platform revenue = 0.5% of every trade + 3% of every loser pool. That is what
+So platform revenue = 0.495% of every trade + 3% of every loser pool. That is what
 funds the dev/treasury wallet and its ~3.5 SOL operating floor.
 
 ### Data access (how candy's apps read it)
@@ -256,7 +261,7 @@ Rule: never display an Audius match that isn't confirmed by handle+title.
 ## 7. Open questions / next
 
 - Decode buyShares vs claimShares per battle for true per-battle PnL + win rate.
-- Trace artist payout flows (5%/2% + 1% per trade) to artist wallets.
+- Trace artist payout flows (5%/2% + 1.005% per trade) to artist wallets.
 - Identify the ops-budget wallet and quantify the weekly skim off the 3.5 floor.
 - Confirm the fee/settlement percentages against a real settled battle's vault.
 

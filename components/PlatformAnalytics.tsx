@@ -78,7 +78,9 @@ export default function PlatformAnalytics() {
     // Read raw, the red "sells" bar is the claim count and vice versa.
     fetchOnchainDaily()
       .then((d) => alive && setOnchainDaily(d as OnchainDailyRow[]))
-      .catch(() => {});
+      // Was .catch(() => {}): a failed read or a coverage gap made the section
+      // vanish with nothing anywhere saying why.
+      .catch((e) => console.error("PlatformAnalytics: daily series unavailable -", e));
     return () => {
       alive = false;
     };

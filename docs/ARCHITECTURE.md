@@ -282,11 +282,11 @@ route still works and the chart stays embeddable - it is just undiscoverable.
 The on-chain analytics snapshot includes every call to the WaveWarZ program
 since its first day (2025-05-26), decoded by Anchor discriminator:
 
-- **buyShares**: 28ef8a9a08256a6c (count: 9,646)
-- **sellShares**: b8a4a91061be9410 (count: 2,762)
+- **buyShares**: 28ef8a9a08256a6c (9,297 succeeded; Dune counts 9,646, failed calls included)
+- **sellShares**: b8a4a91061be9410 (2,671 succeeded; Dune counts 2,762)
 - **initBattle**: 756ca69f7868abeb (count: 1,643)
 - **endBattle**: 5091d030ee2adc5e (count: 1,602)
-- **claimShares**: 82831ded3b1c4f3a (count: 3,409)
+- **claimShares**: 82831ded3b1c4f3a (3,388 succeeded; Dune counts 3,409)
 - **initMints**: bd54558e87f81f77 (count: 1,604)
 
 **The sell and claim counts above are corrected.** The raw file has them
