@@ -39,8 +39,16 @@ export const BATTLES_ON_CHAIN = 1643;
  */
 export const BATTLES_PUBLIC = 1501;
 
-/** Lifetime trading volume, buys plus sells, from the complete 15,359-trade scan. */
-export const VOLUME_SOL = 928.21;
+/**
+ * Lifetime trading volume, buys plus sells, from the chain scan - 1,643 of 1,643
+ * battles, 15,374 trade records.
+ *
+ * Was 928.21 until 2026-09-10, from a scan that was really 1,642 battles: battle
+ * 1786157311 sat in the snapshot as a DNS error recorded as done (wavewarz-protocol
+ * PR #11, tools/snapshot-check.py). Filled from the same 2026-09-06 snapshot, so
+ * MEASURED_ON stays; only this figure moved at two decimals.
+ */
+export const VOLUME_SOL = 928.52;
 
 /**
  * To artists, all three legs. Do not quote this without the legs - it lands within

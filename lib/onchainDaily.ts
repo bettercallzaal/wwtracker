@@ -29,7 +29,7 @@
 // if anything fetches that path without going through this module.
 //
 // AND IT COUNTS FAILED TRANSACTIONS. Found 2026-09-10: every surface reading
-// this file rendered 440 failed attempts as trades. Buys, sells and claims now
+// this file rendered 428 failed attempts as trades. Buys, sells and claims now
 // come from the chain scan per day; the measurement and the correction live in
 // lib/onchainCorrect.mjs, shared with scripts/ww-gen.mjs.
 

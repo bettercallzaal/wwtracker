@@ -4,9 +4,9 @@
   "tool": "tools/instruction-mix-from-chain.py",
   "note": "Dune's sells and claims are transposed on 259 of 330 days; this is read off the program.",
   "calls": {
-    "buyShares": 9297,
-    "sellShares": 2671,
-    "claimShares": 3390,
+    "buyShares": 9307,
+    "sellShares": 2673,
+    "claimShares": 3394,
     "createBattle": 1643
   }
 }

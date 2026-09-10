@@ -46,9 +46,9 @@ const SUPERSEDED: Array<[string, string]> = [
   // Typed, never measured; shipped a 74% overstatement onto the case study.
   ["SOL_USD = 180", "the measured price - zao-measure --verify \"wwtracker: SOL price basis\""],
   ["1,500+", "1,643 battle accounts on chain, or 1,501 returned by the public API"],
-  ["921+ SOL", "928.21 SOL, measured from the complete scan"],
+  ["921+ SOL", "928.52 SOL, measured from the complete scan"],
   ["1,291+", "1,643"],
-  ["878+ SOL", "928.21 SOL"],
+  ["878+ SOL", "928.52 SOL"],
   ["13.39 SOL", "13.94 SOL, all legs"],
   ["20.06 SOL", "19.34 SOL of platform revenue"],
   ["2.28% effective fee rate", "the three revenue lines, which behave differently"],
@@ -64,19 +64,23 @@ const SUPERSEDED: Array<[string, string]> = [
   ["0.5% of every trade", "0.495% of every trade"],
   ["1% of volume", "1.005% of volume"],
   ["1% of trading volume", "1.005% of trading volume"],
-  ["13,055", "11,968 trades - 13,055 was buys + CLAIMS, from the transposed file"],
+  ["13,055", "11,980 trades - 13,055 was buys + CLAIMS, from the transposed file"],
   ["2.83 buys per sell", "3.48 buys per sell"],
-  ["1.72 claims per settled", "2.11 claims per settled battle"],
-  ["2,762 claims", "3,388 claims - 2,762 is the SELL count"],
+  ["1.72 claims per settled", "2.12 claims per settled battle"],
+  ["2,762 claims", "3,392 claims - 2,762 is the SELL count"],
   ["1,052.879", "platform revenue is trade fees only; launch fees are not collected"],
   // Retired 2026-09-10. The Dune series counts failed transactions; these are
   // the figures it produced once the transposition was undone, each carrying
   // failed attempts as if they had happened.
-  ["12,408", "11,968 trades - 12,408 counted 440 failed attempts"],
-  ["9,646", "9,297 buys - 9,646 counted 349 failed"],
-  ["3,409", "3,388 claims - 3,409 counted 21 failed"],
+  ["12,408", "11,980 trades - 12,408 counted 428 failed attempts"],
+  ["9,646", "9,307 buys - 9,646 counted 339 failed"],
+  ["3,409", "3,392 claims - the rest of 3,409 were failed attempts"],
   ["3.49 buys per sell", "3.48 buys per sell"],
-  ["2.13 claims per settled", "2.11 claims per settled battle"],
+  ["2.13 claims per settled", "2.12 claims per settled battle"],
+  // Retired 2026-09-10. The "complete" scan was 1,642 of 1,643 battles - one
+  // held a DNS error recorded as done (wavewarz-protocol #11).
+  ["928.21", "928.52 SOL - 928.21 was one battle short"],
+  ["11,968", "11,980 trades - 11,968 was one battle short"],
 ];
 
 function surfaceFiles(dir: string, acc: string[] = []): string[] {
@@ -219,6 +223,7 @@ const DOC_EXEMPT: Record<string, { max: number; why: string }> = {
   "docs/ARCHITECTURE.md|9,646": { max: 2, why: "Dune's own count, labelled as such beside the chain's" },
   "docs/ARCHITECTURE.md|3,409": { max: 2, why: "Dune's own count, labelled as such beside the chain's" },
   "docs/AUDIT.md|12,408": { max: 1, why: "the finding that retired it" },
+  "docs/AUDIT.md|928.21": { max: 1, why: "the snapshot-hole finding that retired it" },
   "docs/AUDIT.md|9,646": { max: 2, why: "Dune-vs-chain comparison tables in 3.8" },
   "docs/AUDIT.md|3,409": { max: 2, why: "Dune-vs-chain comparison tables in 3.8" },
   "docs/AUDIT.md|SOL_USD = 180": { max: 1, why: "the finding that retired it" },

@@ -83,8 +83,9 @@ describe("correcting the Dune series - transposition and failed attempts", () =>
     const sum = (k: "buys" | "sells" | "claims") => fixed.reduce((s, d) => s + d[k], 0);
     // Chain scan through 2026-09-05, the last day both cover. Exact, where it
     // used to be "within 4%" - and 4% is what hid 3.7% of failed attempts.
+    // 9,297 / 2,671 / 3,388 until 2026-09-10: the scan was one battle short.
     expect({ buys: sum("buys"), sells: sum("sells"), claims: sum("claims") })
-      .toEqual({ buys: 9297, sells: 2671, claims: 3388 });
+      .toEqual({ buys: 9307, sells: 2673, claims: 3392 });
   });
 
   it("Dune is never below chain on a complete day, on any leg", () => {
@@ -107,9 +108,14 @@ describe("correcting the Dune series - transposition and failed attempts", () =>
     expect(short).toEqual([]);
   });
 
-  it("puts lifetime failed attempts at 461 - 349 buys, 91 sells, 21 claims", () => {
+  it("puts lifetime failed attempts at 445 - 339 buys, 89 sells, 17 claims", () => {
+    // Matches the full-history failed-attempt count (wavewarz-protocol
+    // tools/failed-daily.py) on every complete day. It said 461 until the
+    // snapshot's missing battle was filled: its 16 real trades were being
+    // counted as failed. Claims net 17 against 18 failed because the Dune file's
+    // last day is partial.
     const fixed = correctDuneDays(DUNE(), CHAIN());
-    expect(fixed.reduce((s, d) => s + d.failedAttempts, 0)).toBe(461);
+    expect(fixed.reduce((s, d) => s + d.failedAttempts, 0)).toBe(445);
   });
 
   it("reports more claims than sells, which is the shape chain has", () => {

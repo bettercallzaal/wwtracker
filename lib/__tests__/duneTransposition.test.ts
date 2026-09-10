@@ -26,7 +26,7 @@ import { WW } from "@/lib/wwData";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
 /** Chain scan totals, 1,643 battles, committed at data/chain-snapshot-2026-09-06. */
-const CHAIN = { buys: 9297, sells: 2671, claims: 3390 };
+const CHAIN = { buys: 9307, sells: 2673, claims: 3394 };
 
 describe("the sell/claim transposition stays corrected", () => {
   it("corrects at the READ, through the shared module, before anything is derived", () => {
@@ -47,7 +47,7 @@ describe("the sell/claim transposition stays corrected", () => {
   });
 
   it("carries the corrected trade count into the timeline, not just the totals", () => {
-    // buys + sells = 11,968. buys + claims shipped once as 13,055, and
+    // buys + sells = 11,980. buys + claims shipped once as 13,055, and
     // failed attempts included shipped as 12,408.
     const trades = WW.timeline.reduce((a, d) => a + d.trades, 0);
     expect(trades).toBe(WW.program.buys + WW.program.sells);
@@ -65,10 +65,10 @@ describe("the sell/claim transposition stays corrected", () => {
     // Was "within 4%", with a buys residual recorded as still open. The residual
     // was failed transactions - 3.7%, just inside the tolerance that hid it.
     // Since 2026-09-10 these three columns come from the chain scan itself, so
-    // the only right answer is exact. Claims are 3,388 here, not the 3,390 in
+    // the only right answer is exact. Claims are 3,392 here, not the 3,394 in
     // CHAIN below: the Dune file stops at 2026-09-05 and two claims landed on
     // the 6th.
     expect({ buys: WW.program.buys, sells: WW.program.sells, claims: WW.program.claims })
-      .toEqual({ buys: CHAIN.buys, sells: CHAIN.sells, claims: 3388 });
+      .toEqual({ buys: CHAIN.buys, sells: CHAIN.sells, claims: 3392 });
   });
 });
