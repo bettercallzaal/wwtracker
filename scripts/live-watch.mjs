@@ -78,16 +78,23 @@ async function probe() {
 // flag `npm run watch:live` passes - never posted a single notification, and
 // the watcher printed nothing to say so. A failed notification still must not
 // stop the watcher, but it now says it failed instead of vanishing.
+//
+// LIVE_WATCH_NOTIFIER swaps osascript for any executable taking the same
+// arguments. It exists so lib/__tests__/liveWatchNotify.test.ts can run the real
+// runner and prove a notification was sent - on Linux CI as well as a Mac -
+// rather than only proving the code compiles.
+const NOTIFIER = process.env.LIVE_WATCH_NOTIFIER || "osascript";
 function notify(title, text) {
-  if (!has("--notify") || process.platform !== "darwin") return;
+  if (!has("--notify")) return;
+  if (!process.env.LIVE_WATCH_NOTIFIER && process.platform !== "darwin") return;
   try {
     const esc = (s) => String(s).replace(/["\\]/g, "\\$&");
-    const r = spawnSync("osascript", [
+    const r = spawnSync(NOTIFIER, [
       "-e",
       `display notification "${esc(text)}" with title "${esc(title)}"`,
     ]);
     if (r.error || r.status !== 0) {
-      console.error(`notify FAILED: ${r.error?.message ?? `osascript exit ${r.status}`}`);
+      console.error(`notify FAILED: ${r.error?.message ?? `${NOTIFIER} exit ${r.status}`}`);
     }
   } catch (err) {
     console.error(`notify FAILED: ${err instanceof Error ? err.message : String(err)}`);
