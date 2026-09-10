@@ -282,11 +282,11 @@ route still works and the chart stays embeddable - it is just undiscoverable.
 The on-chain analytics snapshot includes every call to the WaveWarZ program
 since its first day (2025-05-26), decoded by Anchor discriminator:
 
-- **buyShares**: 28ef8a9a08256a6c (9,297 succeeded; Dune counts 9,646, failed calls included)
-- **sellShares**: b8a4a91061be9410 (2,671 succeeded; Dune counts 2,762)
+- **buyShares**: 28ef8a9a08256a6c (9,307 succeeded; Dune counts 9,646, failed calls included)
+- **sellShares**: b8a4a91061be9410 (2,673 succeeded; Dune counts 2,762)
 - **initBattle**: 756ca69f7868abeb (count: 1,643)
 - **endBattle**: 5091d030ee2adc5e (count: 1,602)
-- **claimShares**: 82831ded3b1c4f3a (3,388 succeeded; Dune counts 3,409)
+- **claimShares**: 82831ded3b1c4f3a (3,392 succeeded; Dune counts 3,409)
 - **initMints**: bd54558e87f81f77 (count: 1,604)
 
 **The sell and claim counts above are corrected.** The raw file has them
@@ -307,9 +307,9 @@ Counts as of 2026-09-05 (last snapshot). The snapshot covers:
 - Total transactions: 20,677
 - Unique traders: 145
 - Battles created / settled / minted: 1,643 / 1,602 / 1,604
-- Buys / sells / claims: 9,297 / 2,671 / 3,388, from the chain scan. Dune's own
+- Buys / sells / claims: 9,307 / 2,673 / 3,392, from the chain scan. Dune's own
   counts, once its transposition is undone, are 9,646 / 2,762 / 3,409 - the
-  difference is 461 failed transactions Dune counts and the chain does not
+  difference is 445 failed transactions Dune counts and the chain does not
   (AUDIT 3.8, measured 2026-09-10). Buys, sells and claims render from
   `public/ww-chain-daily.json` for that reason.
 - Total volume: 921.4852 SOL (confirmed against reported 921.29 SOL)
@@ -330,13 +330,13 @@ battles with no trades, settled battles whose winnings nobody claims.
 As of 2026-09-05:
 - 1,643 battles created
 - 1,604 minted (39 created but never minted)
-- 11,968 trades total (9,297 buys + 2,671 sells)
+- 11,980 trades total (9,307 buys + 2,673 sells)
 - 1,602 settled (41 never settled)
-- 3,388 claims (2.11 per settled battle - traders exit manually, not paid out on settlement)
+- 3,392 claims (2.12 per settled battle - traders exit manually, not paid out on settlement)
 
 Ratios:
 - 3.48 buys per sell (traders hold to settlement rather than trading out)
-- 7.28 trades per created battle
+- 7.29 trades per created battle
 
 Every figure in this block changed on 2026-09-09. The component was reading the
 transposed file directly, so it rendered 13,055 trades, 2,762 claims, 2.83 buys
@@ -346,7 +346,7 @@ correction and got stronger: traders hold even harder than the wrong number
 said.
 
 They changed again on 2026-09-10: the Dune series counts failed transactions, so
-12,408 trades included 440 attempts that never happened. The ratios barely moved
+12,408 trades included 428 attempts that never happened. The ratios barely moved
 (3.49 to 3.48 buys per sell); the counts are now the chain's.
 
 Also shows signer concentration: how much of the program's activity is the

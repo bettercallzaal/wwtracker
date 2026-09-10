@@ -26,7 +26,7 @@ const widgets = readFileSync(`${root}components/embeds/Widgets.tsx`, "utf8");
 const mix = JSON.parse(readFileSync(`${root}public/ww-instruction-mix.json`, "utf8"));
 
 /** Chain scan totals, 1,643 battles, data/chain-snapshot-2026-09-06. */
-const CHAIN = { buyShares: 9297, sellShares: 2671, claimShares: 3390, createBattle: 1643 };
+const CHAIN = { buyShares: 9307, sellShares: 2673, claimShares: 3394, createBattle: 1643 };
 
 describe("the instruction mix embed reads the chain scan, not Dune", () => {
   it("publishes the chain scan's own counts", () => {

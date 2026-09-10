@@ -362,14 +362,24 @@ credit, no key.
 
 Exact on every day, both legs, including the controls. So the Dune series is
 **chain plus failed attempts, with sells and claims swapped.** Lifetime that is
-349 failed buys, 91 failed sells and 21 failed claims - **440 failed attempts
-rendered as trades**: "12,408 trades" on the site against 11,968 that happened.
+339 failed buys, 89 failed sells and 18 failed claims - **428 failed attempts
+rendered as trades**: "12,408 trades" on the site against 11,980 that happened.
 
-How much of that is measured: the **excess** is measured on every day (Dune minus
-chain, 349 / 91 / 21). That the whole excess is **failed attempts** is measured
-on 16 of 330 days and inferred for the rest. The full-history failed-attempt
-count (`tools/failed-daily.py`) is what would make it measured end to end. Its
-first run died at 1,180 of 1,642 battles; the checkpointed rerun is in progress.
+**Now measured end to end, and it found a hole in our own data.** The
+full-history count (`tools/failed-daily.py`, checkpointed - its first run died on
+a DNS error, its second was killed for low memory at 1,002 battles and resumed)
+matched Dune's excess exactly on 466 of 468 days. One miss is the Dune file's
+partial last day. The other, 2026-08-08, was battle `1786157311`, which **our
+"complete" chain snapshot had never scanned**: `trades.json` held a DNS error for
+it, recorded as done and counted among "1,643 battles". Scanned now, it has
+exactly the 10 buys, 2 sells and 4 claims that day was short, and with it every
+complete day matches.
+
+So the figures first published here were off twice over: 440 failed attempts
+became 428, because 12 of the 440 were that battle's real trades, and the chain
+totals were one battle short. The snapshot is filled and
+`tools/snapshot-check.py` now fails on a hole (wavewarz-protocol #11). Volume
+moved 928.21 to 928.52 SOL.
 
 The 4% tolerance in the tests that pinned these figures is what let it ship. The
 error was 3.7%.
