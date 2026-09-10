@@ -64,13 +64,22 @@ failure, so the operator is told which thing broke.
 ## The key is knowingly disclosed through the 13th
 
 `/api/ww/positions` published `SOLANA_RPC_URL` - a keyed endpoint - in its own
-`source` field from 2026-09-06 until PR #245 closed it. The leak is fixed. The
-key is not rotated.
+`source` field from 2026-09-06 until PR #245 closed it. The leak is fixed. **The
+disclosed key has not been deleted.**
 
-**That is a decision, not an oversight.** Zaal's call on the evening of
-2026-09-07: rotate *after* the Grand Final, not before, because that key's budget
-is the only thing keeping `/live` up and a rotation going wrong during the event
-is the worse risk. Recorded in `decisions/grill-2026-09-07-evening.md`.
+*(Corrected 2026-09-10. This said "the key is not rotated", while
+`docs/RECHECK.md` says it was rotated on 2026-09-08 with the old key left live,
+and this lane's own status says "closed, rotated, `/live` restored". RECHECK's
+version has the more specific evidence, so that is the one this now follows.
+The deletion is what is deferred. This also cited
+`decisions/grill-2026-09-07-evening.md`, which has no mention of a key, an RPC or
+a rotation. The call is recorded in the vault at
+`handoffs/archive/MORNING-2026-09-08.md`: "Rotation is deferred past the 13th by
+your own call".)*
+
+**That is a decision, not an oversight.** Zaal's call on 2026-09-07: finish the
+rotation *after* the Grand Final, not before, because that budget is what keeps
+`/live` up and a rotation going wrong during the event is the worse risk.
 **Re-raise on 2026-09-14, not before.**
 
 So for six days the key is disclosed and live, deliberately. What that means for
