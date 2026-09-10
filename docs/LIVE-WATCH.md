@@ -281,3 +281,12 @@ Fixed by importing `spawnSync` at the top, and a failed notification now prints
 `--notify` spawns `osascript`, which exits 0 (on-screen display not observed -
 nobody was at the machine). `lib/__tests__/esmRequire.test.ts` scans every
 tracked `.mjs` for the same defect and fails on the pre-fix file.
+
+**That guard only covers one way of breaking.** `lib/__tests__/liveWatchNotify.test.ts`
+is the test that fails when notify is broken *for any reason*. It runs the real
+runner against a local server, with `LIVE_WATCH_NOTIFIER` pointed at a fake
+that records its calls, so it runs on Linux CI too. It asserts four things:
+an alert reaches the notifier, a healthy check does not, `--notify` off does not,
+and a failing notifier prints `notify FAILED` while the alert and exit 3 still
+stand. Mutation-checked 2026-09-10: reintroducing the shipped `require()` bug
+fails it, and so does gating notify away from alerts.
