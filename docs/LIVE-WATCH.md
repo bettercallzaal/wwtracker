@@ -15,13 +15,15 @@ it down by competing for the same RPC budget.
 | **stdout** | whoever is looking at the terminal | one line per check, **including healthy ones** |
 | **`var/live-watch.log`** | anyone, afterwards | appended, gitignored |
 | **exit code** | a cron, a supervisor | `0` ok, `1` info, `2` warn, `3` alert |
-| **macOS notification** | this machine | `--notify`, and only while it is awake and logged in |
+| **macOS notification** | this machine | `--notify`, and only while it is awake and logged in. **Never fired before 2026-09-10** - see Verified |
+| **GitHub failed-run email** | the account that last changed the cron | the hosted check below, alerts only. **Delivery to a phone UNMEASURED** until the dispatch test is run |
 
-**It does not reach a phone, a channel, or anybody away from this machine.** If
-it needs to, that is a delivery decision with credentials attached, and it is
-Zaal's to make rather than something to assume. Saying so matters more than the
-gap does: a monitor nobody sees is worse than no monitor, because it creates the
-belief that somebody is watching.
+**The local watcher does not reach a phone, a channel, or anybody away from this
+machine.** The hosted check is the one path that can, and it needed no new
+credential - the earlier line here, that any such path was "a delivery decision
+with credentials attached", was wrong for this one. Saying where an alert lands
+matters more than the gap does: a monitor nobody sees is worse than no monitor,
+because it creates the belief that somebody is watching.
 
 **Why the healthy line is printed too.** A watcher that only speaks up when
 something is wrong is silent through its own crash, and silence reads exactly
@@ -191,26 +193,61 @@ Or just keep a terminal open:
 
     npm run watch:live 2>&1 | tee -a var/live-watch.log
 
-**Sleep, measured rather than assumed.** `pmset -g` on 2026-09-08 reports
-`sleep 1` - one minute of idle - held off only by sixteen `caffeinate` processes
-belonging to other lanes. If those stop, this machine sleeps in a minute and
+**Sleep, measured rather than assumed.**
+
+| Measured | `sleep` | Held off by |
+|---|---|---|
+| 2026-09-08 | `1` (one minute of idle) | sixteen `caffeinate` processes, all other lanes' |
+| 2026-09-10 14:17Z | `1` | five `caffeinate` processes, **each asserting for 300 seconds** at a time, plus `powerd` while the display is on |
+
+The setting has not moved and the thing holding it off is thinner than it looked:
+a five-minute assertion that some other process keeps renewing. If nobody is
+working on the night, this machine sleeps a minute after the last one lapses and
 takes the watcher with it.
 
-So each run is wrapped in `caffeinate -s`, which holds off system sleep for the
-duration of that probe rather than depending on somebody else's process. It does
-**not** keep the machine awake between runs and it cannot help if the lid is
-shut. For coverage with nobody at this machine, the answer is still a hosted
-check, and that is a decision with credentials attached.
+*(An earlier version of this paragraph said each run was wrapped in
+`caffeinate -s`. That wrapper was removed - see the section above - and this
+paragraph kept describing it for two days. Same defect class as everything else
+the 2026-09-09 sweep found: a correction that reached one reader and not the
+next.)*
 
-**RE-CHECK BY 2026-09-13.** Run `pmset -g` again before the Grand Final; this
-reasoning is only as good as that setting.
+So a laptop watcher is a best effort, and the coverage with nobody present is the
+hosted check below.
+
+**RE-CHECK BY 2026-09-13.** Run `pmset -g` again on the day; it changes minute to
+minute with whatever else is running.
+
+## The hosted check - coverage when this Mac is asleep
+
+`.github/workflows/live-watch.yml` runs the same probe from GitHub: hourly on
+11-12 September to prove the schedule fires, then **every five minutes from
+20:00 ET on the 12th to 03:55 ET on the 14th**. The start time of the final is
+not in any file this lane can read, so the window is the whole day.
+
+It needs **no new credential**. It reads our own public endpoints, and GitHub
+reports a *failed* scheduled run to the account that last changed its cron. It
+fails on `ALERT` only - `NOT_RUNNING` between battles and `SLOW` / `STALE` pass
+with an annotation - so the only email is one worth reading. During a sustained
+outage that is one email per five-minute run, which on this night is the point.
+
+**UNMEASURED: that the email reaches a phone.** It depends on the account's
+notification settings. Prove it once before the night - Actions, `live-watch`,
+Run workflow, and set `base` to `https://wwtracker.vercel.app/nope`. Both probes
+404, the run fails, and the notification either arrives or it does not. Measured
+locally 2026-09-10: that input produces `HTTP_ERROR` + `PAGE_ERROR` and fails the
+step; the real base passes with `NOT_RUNNING` + `PAGE_OK`.
+
+GitHub's cron can run late under load. Five minutes is the ceiling on resolution,
+not a promise - the laptop watcher is the 60-second view when somebody is here.
+
+## Other ways to run it locally
 
 Simplest, in a terminal that stays open:
 
     npm run watch:live 2>&1 | tee -a var/live-watch.log
 
-Or on a schedule, keying on the exit code so info-level gaps between battles do
-not page anybody:
+Or on a schedule. `--notify` only posts on warn and alert, so info-level gaps
+between battles do not page anybody:
 
     * * * * * cd /path/to/wwtracker && node scripts/live-watch.mjs --notify \
       >> var/live-watch.log 2>&1 || true
@@ -230,3 +267,17 @@ against three real targets rather than assumed:
     node scripts/live-watch.mjs --page .../api/ww/stats      ALERT PAGE_BROKEN       exit 3
     node scripts/live-watch.mjs --page .../nope-not-a-page   ALERT PAGE_ERROR        exit 3
     node scripts/live-watch.mjs --page http://127.0.0.1:9/x  ALERT PAGE_UNREACHABLE  exit 3
+
+**None of those passed `--notify`, and `--notify` was broken.** Found
+2026-09-10: the notification path called `require()` inside an ES module, where
+it does not exist. The `ReferenceError` landed in a catch written so a failed
+notification could never stop the watcher - so it never stopped the watcher, and
+never posted anything either. `npm run watch:live`, the command at the top of
+this file, passes `--notify`. Every alert it would have raised on this machine
+was printed to a terminal and nowhere else.
+
+Fixed by importing `spawnSync` at the top, and a failed notification now prints
+`notify FAILED` instead of vanishing. Verified: an `UNREACHABLE` alert with
+`--notify` spawns `osascript`, which exits 0 (on-screen display not observed -
+nobody was at the machine). `lib/__tests__/esmRequire.test.ts` scans every
+tracked `.mjs` for the same defect and fails on the pre-fix file.

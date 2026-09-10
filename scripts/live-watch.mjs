@@ -30,6 +30,7 @@
 // exactly what it is built to catch, reported as UNAUTHORIZED rather than as a
 // generic failure.
 
+import { spawnSync } from "node:child_process";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { classify, classifyPage, worst, summarise } from "../lib/liveWatch.mjs";
 
@@ -72,17 +73,24 @@ async function probe() {
   }
 }
 
+// Until 2026-09-10 this called `require()`, which does not exist in an ES
+// module. The ReferenceError landed in the catch below, so `--notify` - the
+// flag `npm run watch:live` passes - never posted a single notification, and
+// the watcher printed nothing to say so. A failed notification still must not
+// stop the watcher, but it now says it failed instead of vanishing.
 function notify(title, text) {
   if (!has("--notify") || process.platform !== "darwin") return;
   try {
-    const { spawnSync } = require("node:child_process");
     const esc = (s) => String(s).replace(/["\\]/g, "\\$&");
-    spawnSync("osascript", [
+    const r = spawnSync("osascript", [
       "-e",
       `display notification "${esc(text)}" with title "${esc(title)}"`,
     ]);
-  } catch {
-    // A failed notification must never take the watcher down with it.
+    if (r.error || r.status !== 0) {
+      console.error(`notify FAILED: ${r.error?.message ?? `osascript exit ${r.status}`}`);
+    }
+  } catch (err) {
+    console.error(`notify FAILED: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
