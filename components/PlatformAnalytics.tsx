@@ -430,7 +430,9 @@ export default function PlatformAnalytics() {
       {onchainDaily && (
         <p style={{ margin: 0, fontFamily: C.mono, fontSize: 12, color: C.dim, lineHeight: 1.5 }}>
           On-chain instruction data refreshed from Dune over program {PROGRAM}. Daily activity
-          (txs, battles, trades) comes from decoded on-chain instructions; treasury flow, platform
+          (txs, battles, trades) comes from decoded on-chain instructions - buys, sells and claims
+          from a complete chain scan, because Dune&apos;s counts include failed transactions (its txs
+          still do); treasury flow, platform
           buy volume, and trader PnL are from the {WW.generatedAt || "older"} snapshot (these require
           separate data pipelines). Treasury wallet FNj signs every battle, so it tops raw tx count and
           is excluded from the trader board. See docs/WAVEWARZ-RESEARCH.md.
