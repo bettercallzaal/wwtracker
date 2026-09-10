@@ -123,14 +123,24 @@ worth a fresh credit cycle on its own.
 
 ### SOL/USD reference price (lib/price.ts)
 
-One static reference price for the metadata. Update manually:
+One static reference price, and **every USD figure in the repo derives from it** -
+not just page metadata, as this section used to say. Measure it, never type it:
 
-```javascript
-export const SOL_USD = 180;  // update as needed
-export const SOL_USD_AS_OF = "2026-09-05";
-```
+    zao-measure --verify "wwtracker: SOL price basis"
 
-No component relies on this being current; it's just for the page metadata.
+then set `SOL_USD` and `SOL_USD_AS_OF` in `lib/price.ts` to the measured value
+and date. `lib/__tests__/solPrice.test.ts` asserts one definition and a plausible
+band.
+
+*(Corrected 2026-09-10. The example here was `SOL_USD = 180`, the typed figure
+that shipped a 74% overstatement onto the case study and was retired on
+2026-09-08. A refresh doc is where a retired value gets re-typed from, and the
+retired-figure registry scans rendered code only, so nothing caught it.)*
+
+**When to update.** At the `RE-CHECK BY` date in `lib/price.ts`, or sooner if the
+measured price has moved more than 10% from `SOL_USD`. Every figure is shown as
+`≈ $`, and churning every USD number on the site for a few percent buys nothing.
+Re-checked 2026-09-10: 99.83 against 103.34, -3.4%, left as is.
 
 ## Validation & deploy
 
