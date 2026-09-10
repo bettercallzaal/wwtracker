@@ -1,0 +1,81 @@
+# Hosted watch of /live through the Grand Final, 2026-09-13.
+#
+# The local watcher only runs while this Mac is awake. `pmset -g` on 2026-09-10
+# still reports `sleep 1` - one minute of idle - held off only by other lanes'
+# `caffeinate` processes, each asserting for 300 seconds at a time. If nobody is
+# working on the night, the machine sleeps a minute later and the watcher with
+# it, and that silence reads exactly like a quiet night.
+#
+# This runs the same probe from GitHub instead. It needs no new credential: it
+# reads our own public endpoints, and a FAILED scheduled run is reported by
+# GitHub to the account that last changed the cron below - which reaches a phone,
+# the one thing the local watcher cannot do. That delivery path is UNMEASURED
+# until someone runs the dispatch test in docs/LIVE-WATCH.md.
+#
+# Fails the run on ALERT only. Info (no battle running) and warn (slow, stale)
+# pass with an annotation, so the only notification is one worth reading.
+#
+# RE-CHECK BY 2026-09-20: delete this file. It is scoped to one event, and the
+# date guard below stops it probing after the 14th, but a schedule that fires
+# and does nothing is still clutter.
+name: live-watch
+
+on:
+  schedule:
+    # Hourly on the 11th and 12th (UTC): proves the schedule actually fires
+    # before the night it matters, rather than trusting that it will.
+    - cron: "17 * 11-12 9 *"
+    # Every 5 minutes from 00:00 UTC on the 13th (20:00 ET on the 12th) ...
+    - cron: "*/5 * 13 9 *"
+    # ... through 07:55 UTC on the 14th (03:55 ET). The start time of the final
+    # is not in any file this lane can read, so the window is the whole day.
+    - cron: "*/5 0-7 14 9 *"
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Deployment to probe. Point it at a path that 404s to test the alert reaches you."
+        default: "https://wwtracker.vercel.app"
+        required: true
+
+# Never two probes racing; a slow one is allowed to finish rather than cancelled.
+concurrency:
+  group: live-watch
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: probe /live and /api/ww/positions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            scripts/live-watch.mjs
+            lib/liveWatch.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: probe
+        env:
+          BASE: ${{ github.event.inputs.base || 'https://wwtracker.vercel.app' }}
+        run: |
+          # The cron matches 13 September every year. Only this one counts.
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%Y%m%d)" -gt 20260914 ]; then
+            echo "::notice::live-watch expired after 2026-09-14 - delete .github/workflows/live-watch.yml"
+            exit 0
+          fi
+          set +e
+          node scripts/live-watch.mjs --base "$BASE" --log var/live-watch.log | tee out.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          { echo '```'; cat out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          case "$code" in
+            0|1) exit 0 ;;
+            2) echo "::warning::live-watch WARN - see the lines above"; exit 0 ;;
+            *) echo "::error::live-watch ALERT (exit $code) - /live or its route is failing"; exit 1 ;;
+          esac

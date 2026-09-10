@@ -28,8 +28,11 @@ unless ZAOstock needs it.** Everything in section A is dated and enforced by
 ## A. Tasks to absorb
 
 - [ ] **2026-09-13, before the Grand Final** - re-run `pmset -g` and
-      `zao-measure --verify "wwtracker: trader P&L restore condition"`. Both are
+      `zao-measure --verify "wwtracker: trader P&L restore verdict"`. Both are
       enforced by `validate --strict`; CI fails if either passes unattended.
+      *(Corrected 2026-09-10: this named the "condition" label, which records
+      figures and so says DRIFTED on any movement - it did, with all four
+      conditions PASS. Both re-run early on 09-10: `sleep 1`, SAFE TO SHOW.)*
 - [ ] **2026-09-13** - watch `/live` during the Grand Final:
       `npm run watch:live`. The launchd installer works but nothing has started
       it; that is Zaal's opt-in, not a default.

@@ -42,14 +42,22 @@
 // So the condition is also registered as a live measurement, which hits the real
 // leaderboard and fails if any of the four conditions stops holding:
 //
-//   zao-measure --verify "wwtracker: trader P&L restore condition"
+//   zao-measure --verify "wwtracker: trader P&L restore verdict"
 //
-// It reports HOLDS, or DRIFTED with both values. The script behind it is
+// It reports HOLDS, or DRIFTED if a condition flipped. The script behind it is
 // tools/pnl-restore-check.py in the protocol repo, and it is deliberately NOT
 // run offline - hitting the live site is the entire point, and a snapshot-only
 // check here could never fail.
 //
-// RE-CHECK BY 2026-09-13, before the Grand Final.
+// Use the "verdict" label, not the older "condition" one. That one records the
+// figures too, so it said DRIFTED on 2026-09-10 with all four conditions PASS -
+// the aggregate had moved -21.46 to -20.63 on a night of trading. Re-verified
+// that day: SAFE TO SHOW. The fourth condition is now set-based (no snapshot
+// trader missing from the site); "wallet counts match 157/157" had matched by
+// coincidence, one wallet swapped each way. Protocol PR #8.
+//
+// RE-CHECK BY 2026-09-13, before the Grand Final. Run it on the day - the check
+// compares a live site to a 2026-09-06 snapshot, so it only gets weaker.
 
 /** A row as the upstream leaderboard returns it. */
 export interface TraderLeaderboardRow {
