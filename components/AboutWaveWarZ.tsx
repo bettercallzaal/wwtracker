@@ -30,7 +30,7 @@ export default function AboutWaveWarZ() {
       </header>
 
       {/* live on-chain snapshot */}
-      <Section label="ON-CHAIN SNAPSHOT (DUNE)">
+      <Section label="ON-CHAIN SNAPSHOT">
         <Grid>
           <Stat label="BATTLES" value={fmt(p.battlesCreated)} sub={`${fmt(p.battlesSettled)} settled`} />
           <Stat label="TRADES" value={fmt(p.buys + p.sells)} sub={`${fmt(p.buys)} buy / ${fmt(p.sells)} sell`} />
@@ -47,6 +47,8 @@ export default function AboutWaveWarZ() {
           wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~{S.totalShown.toLocaleString()});
           {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ traded, both sides (the platform reports ${S.totalVolumeSol.toFixed(2)} ◎);` : ""}
           {` app ${S.traderClaimsSol.toFixed(2)} ◎ claimed by traders (${S.withdrawalCount} withdrawals).`}
+          {" "}Trades and claims are from a complete chain scan; the rest is decoded via Dune, whose
+          own trade counts include failed transactions.
         </p>
       </Section>
 

@@ -347,10 +347,38 @@ transactions**, which our scan excludes because it only records trades with
 parsed amounts. The 39 no-mint battles would generate exactly this shape:
 attempted buys that could never succeed.
 
-**UNMEASURED, and not measurable from our side** - the chain snapshot holds only
-successful trades, so it cannot count what it filtered out. Settling it needs one
-Dune query filtering on transaction success, which is a one-line change and a
-credit spend somebody has to choose to make.
+**MEASURED 2026-09-10 - it is failed transactions, and it was measurable from our
+side.** The paragraph that stood here said it was not, because the snapshot only
+holds successful trades. But `getSignaturesForAddress` on each battle vault
+returns failed signatures with `err` set, and the public RPC serves them - no Dune
+credit, no key.
+
+    16 days tested - 4 chosen, 12 drawn at random (seed 20260910), 5 of them
+    days where Dune and chain AGREE on buys, as controls
+
+    failed buy instructions on the vaults   == Dune buy excess          16 of 16
+    failed sell + claim instructions        == Dune sells+claims excess 16 of 16
+    control days                            0 failed buys, 0 excess
+
+Exact on every day, both legs, including the controls. So the Dune series is
+**chain plus failed attempts, with sells and claims swapped.** Lifetime that is
+349 failed buys, 91 failed sells and 21 failed claims - **440 failed attempts
+rendered as trades**: "12,408 trades" on the site against 11,968 that happened.
+
+The 4% tolerance in the tests that pinned these figures is what let it ship. The
+error was 3.7%.
+
+**Fixed at the read, 2026-09-10.** Buys, sells and claims now render from the
+chain scan per day (`public/ww-chain-daily.json`, from wavewarz-protocol
+`tools/chain-daily.py`, offline). Dune is kept for the columns the scan does not
+cover, and checked against the scan: the tests assert Dune is never below chain
+on a complete day, which is the relationship this finding rests on. The swap
+itself moved from an inline copy in `ww-gen.mjs` into `lib/onchainCorrect.mjs`,
+shared by the build and the browser read.
+
+Still open: `txs` almost certainly counts failed transactions too, by an
+UNMEASURED amount - the failed scan counts instructions, not transactions. And the
+guess that the 39 never-minted battles produce the failed buys is untested.
 
 Recorded this way on purpose: a refuted explanation left standing is worse than
 none, because the next reader stops looking.

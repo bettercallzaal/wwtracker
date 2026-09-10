@@ -307,9 +307,11 @@ Counts as of 2026-09-05 (last snapshot). The snapshot covers:
 - Total transactions: 20,677
 - Unique traders: 145
 - Battles created / settled / minted: 1,643 / 1,602 / 1,604
-- Buys / sells / claims: 9,646 / 2,762 / 3,409 (corrected; the chain scan says
-  9,297 / 2,671 / 3,390 - the buys residual is one-directional and still open,
-  see AUDIT 3.8)
+- Buys / sells / claims: 9,297 / 2,671 / 3,388, from the chain scan. Dune's own
+  counts, once its transposition is undone, are 9,646 / 2,762 / 3,409 - the
+  difference is 461 failed transactions Dune counts and the chain does not
+  (AUDIT 3.8, measured 2026-09-10). Buys, sells and claims render from
+  `public/ww-chain-daily.json` for that reason.
 - Total volume: 921.4852 SOL (confirmed against reported 921.29 SOL)
 
 `public/ww-onchain-daily.json` has 468 rows of daily activity from 2025-05-26
@@ -328,13 +330,13 @@ battles with no trades, settled battles whose winnings nobody claims.
 As of 2026-09-05:
 - 1,643 battles created
 - 1,604 minted (39 created but never minted)
-- 12,408 trades total (9,646 buys + 2,762 sells)
+- 11,968 trades total (9,297 buys + 2,671 sells)
 - 1,602 settled (41 never settled)
-- 3,409 claims (2.13 per settled battle - traders exit manually, not paid out on settlement)
+- 3,388 claims (2.11 per settled battle - traders exit manually, not paid out on settlement)
 
 Ratios:
-- 3.49 buys per sell (traders hold to settlement rather than trading out)
-- 7.55 trades per created battle
+- 3.48 buys per sell (traders hold to settlement rather than trading out)
+- 7.28 trades per created battle
 
 Every figure in this block changed on 2026-09-09. The component was reading the
 transposed file directly, so it rendered 13,055 trades, 2,762 claims, 2.83 buys
@@ -342,6 +344,10 @@ per sell and 1.72 claims per settled battle - the claim count was the sell
 count, and both ratios were wrong. The conclusion in brackets survived the
 correction and got stronger: traders hold even harder than the wrong number
 said.
+
+They changed again on 2026-09-10: the Dune series counts failed transactions, so
+12,408 trades included 440 attempts that never happened. The ratios barely moved
+(3.49 to 3.48 buys per sell); the counts are now the chain's.
 
 Also shows signer concentration: how much of the program's activity is the
 treasury wallet (which signs battle creation and settlement by design) versus

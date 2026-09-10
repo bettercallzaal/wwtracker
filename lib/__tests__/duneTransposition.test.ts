@@ -29,30 +29,26 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const CHAIN = { buys: 9297, sells: 2671, claims: 3390 };
 
 describe("the sell/claim transposition stays corrected", () => {
-  it("swaps at the READ, not inside one derived object", () => {
-    // This assertion used to require the cross-mapping `sells: sum(d => d.claims)`
-    // inside the `program` object, and passed while the bug was still live:
-    // `timeline` is built ABOVE that line from the raw rows, so WW.timeline
-    // shipped buys + CLAIMS as its trade count and OnChainProof rendered
-    // "Trades 13,055" for a figure that is 12,408.
-    //
-    // A correction applied to one of the two objects a script emits is not a
-    // correction, so the test now pins the placement rather than the mapping.
+  it("corrects at the READ, through the shared module, before anything is derived", () => {
+    // This used to require the inline swap `sells: d.claims, claims: d.sells`
+    // in ww-gen.mjs. On 2026-09-10 the swap moved into lib/onchainCorrect.mjs,
+    // shared with the browser read, so the build and the read cannot carry two
+    // copies that drift. The test pins the placement: every derived object must
+    // be built after the corrected read.
     const gen = readFileSync(`${root}scripts/ww-gen.mjs`, "utf8");
-    const readAt = gen.indexOf("onchainRaw.map");
+    const readAt = gen.indexOf("const onchain = correctDays(onchainRaw");
     expect(readAt).toBeGreaterThan(-1);
-    expect(gen).toMatch(/sells:\s*d\.claims,\s*claims:\s*d\.sells/);
-    // Everything derived must come after the swap.
     for (const derived of ["const active =", "const timeline =", "const program = {"]) {
-      expect({ derived, afterSwap: gen.indexOf(derived) > readAt }).toEqual({
-        derived, afterSwap: true,
+      expect({ derived, afterRead: gen.indexOf(derived) > readAt }).toEqual({
+        derived, afterRead: true,
       });
     }
     expect(gen).toContain("TRANSPOSED");
   });
 
   it("carries the corrected trade count into the timeline, not just the totals", () => {
-    // buys + sells = 12,408. buys + claims = 13,055, which is what shipped.
+    // buys + sells = 11,968. buys + claims shipped once as 13,055, and
+    // failed attempts included shipped as 12,408.
     const trades = WW.timeline.reduce((a, d) => a + d.trades, 0);
     expect(trades).toBe(WW.program.buys + WW.program.sells);
     expect(trades).not.toBe(WW.program.buys + WW.program.claims);
@@ -65,14 +61,14 @@ describe("the sell/claim transposition stays corrected", () => {
     expect(CHAIN.claims).toBeGreaterThan(CHAIN.sells);
   });
 
-  it("lands within 4% of the chain scan on every leg", () => {
-    // Not exact - there is a residual on buys that is not the transposition and
-    // is recorded as still open. But a leg being 27% out was the transposition,
-    // and it is gone.
-    for (const k of ["buys", "sells", "claims"] as const) {
-      const drift = Math.abs(WW.program[k] - CHAIN[k]) / CHAIN[k];
-      expect({ leg: k, within4pc: drift < 0.04, drift: +(drift * 100).toFixed(1) })
-        .toEqual({ leg: k, within4pc: true, drift: +(drift * 100).toFixed(1) });
-    }
+  it("matches the chain scan exactly on every leg", () => {
+    // Was "within 4%", with a buys residual recorded as still open. The residual
+    // was failed transactions - 3.7%, just inside the tolerance that hid it.
+    // Since 2026-09-10 these three columns come from the chain scan itself, so
+    // the only right answer is exact. Claims are 3,388 here, not the 3,390 in
+    // CHAIN below: the Dune file stops at 2026-09-05 and two claims landed on
+    // the 6th.
+    expect({ buys: WW.program.buys, sells: WW.program.sells, claims: WW.program.claims })
+      .toEqual({ buys: CHAIN.buys, sells: CHAIN.sells, claims: 3388 });
   });
 });

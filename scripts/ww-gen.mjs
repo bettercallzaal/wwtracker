@@ -29,6 +29,7 @@
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { correctDays } from "../lib/onchainCorrect.mjs";
 
 const DUNE_DIR = process.argv[2] ?? "/tmp/ww-dune";
 
@@ -77,7 +78,12 @@ const round = (n, dp) => {
 // and lib/onchainDaily.ts is the same correction for anything reading the file
 // in the browser.
 const onchainRaw = readJson("public/ww-onchain-daily.json");
-const onchain = onchainRaw.map((d) => ({ ...d, sells: d.claims, claims: d.sells }));
+// Both corrections - the transposition and the failed attempts - from the one
+// module the browser read also uses. This line used to carry its own copy of
+// the swap, which is how the build and the read could disagree at all. Buys,
+// sells and claims come from the chain scan; correctDays throws if the Dune
+// file runs past what that scan covers.
+const onchain = correctDays(onchainRaw, readJson("public/ww-chain-daily.json"));
 const active = onchain.filter((d) => d.txs > 0);
 
 const daily = active.map((d) => ({

@@ -29,7 +29,7 @@ import {
   TRADER_TABLE_HEAD,
 } from "@/lib/traderLeaderboard";
 import { FONTS, shortWallet, type EmbedOptions } from "@/lib/embedTheme";
-import { ONCHAIN_DAILY_PATH, correctDuneDays } from "@/lib/onchainDaily";
+import { CHAIN_DAILY_PATH, ONCHAIN_DAILY_PATH, correctDuneDays, type ChainDaily } from "@/lib/onchainDaily";
 import { secondsLeft, poolShare, type WidgetBattle } from "@/lib/liveBattle";
 
 // Every widget is a client component that fetches its own data. That is
@@ -433,7 +433,11 @@ export function ProgramActivity({ opts }: { opts: EmbedOptions }) {
   // file is one edit away from plotting a swapped column, and this file already
   // produced that bug twice.
   const { data, status } = useJson<OnchainDay[]>(ONCHAIN_DAILY_PATH);
-  const corrected = useMemo(() => (data ? correctDuneDays(data) : null), [data]);
+  const chain = useJson<ChainDaily>(CHAIN_DAILY_PATH);
+  const corrected = useMemo(
+    () => (data && chain.data ? correctDuneDays(data, chain.data) : null),
+    [data, chain.data],
+  );
   const series = useMemo(() => thin(corrected ?? []), [corrected]);
 
   return (
@@ -442,7 +446,7 @@ export function ProgramActivity({ opts }: { opts: EmbedOptions }) {
       source={ONCHAIN_SOURCE}
       href={`${SITE}/#analytics`}
       opts={opts}
-      state={series.length ? "ready" : status}
+      state={series.length ? "ready" : chain.status === "error" ? "error" : status}
       note={asOf(corrected ?? [])}
     >
       <ResponsiveContainer width="100%" height="100%">

@@ -207,7 +207,8 @@ export default function OnChainProof() {
         </h1>
         <p style={{ margin: "8px 0 0", color: C.text, lineHeight: 1.6, maxWidth: 720 }}>
           Every pool, fee, and payout settles on-chain, so here is the whole run in one
-          place - volume, treasury, battles, trades - decoded from program 9TUf via Dune.
+          place - volume, treasury, battles, trades - decoded from program 9TUf. Trades come from a
+          complete chain scan; Dune, which counts failed transactions as trades, supplies the rest.
           Each line is scaled to its own peak so they share one axis; hover for the real number.
         </p>
       </header>
@@ -399,7 +400,7 @@ export default function OnChainProof() {
       <p style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, margin: 0 }}>
         {balLive ? "treasury live from Solana." : "treasury on sample data (API unset)."}{" "}
         {liveStats ? "volume/battles/payouts live from WaveWarZ's API." : "volume and battles from the baked Dune snapshot."}{" "}
-        trades and traders are decoded from the program via Dune ({fmt(tot.activeDays)} active days
+        trades are from a complete chain scan; traders are decoded via Dune ({fmt(tot.activeDays)} active days
         through {tot.lastDay}, generated {WW.generatedAt}). each line is indexed to its own peak so
         they share one axis - the Growth and Floor sections show the same series at true scale.
       </p>
