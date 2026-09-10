@@ -54,11 +54,19 @@ const SUPERSEDED: Array<[string, string]> = [
   ["0.5% of every trade", "0.495% of every trade"],
   ["1% of volume", "1.005% of volume"],
   ["1% of trading volume", "1.005% of trading volume"],
-  ["13,055", "12,408 trades - 13,055 was buys + CLAIMS, from the transposed file"],
-  ["2.83 buys per sell", "3.49 buys per sell"],
-  ["1.72 claims per settled", "2.13 claims per settled battle"],
-  ["2,762 claims", "3,409 claims - 2,762 is the SELL count"],
+  ["13,055", "11,968 trades - 13,055 was buys + CLAIMS, from the transposed file"],
+  ["2.83 buys per sell", "3.48 buys per sell"],
+  ["1.72 claims per settled", "2.11 claims per settled battle"],
+  ["2,762 claims", "3,388 claims - 2,762 is the SELL count"],
   ["1,052.879", "platform revenue is trade fees only; launch fees are not collected"],
+  // Retired 2026-09-10. The Dune series counts failed transactions; these are
+  // the figures it produced once the transposition was undone, each carrying
+  // failed attempts as if they had happened.
+  ["12,408", "11,968 trades - 12,408 counted 440 failed attempts"],
+  ["9,646", "9,297 buys - 9,646 counted 349 failed"],
+  ["3,409", "3,388 claims - 3,409 counted 21 failed"],
+  ["3.49 buys per sell", "3.48 buys per sell"],
+  ["2.13 claims per settled", "2.11 claims per settled battle"],
 ];
 
 function surfaceFiles(dir: string, acc: string[] = []): string[] {

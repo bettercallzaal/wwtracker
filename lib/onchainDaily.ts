@@ -27,6 +27,13 @@
 // it, because the correction lived in a build script rather than at the read.
 // So it lives here now, and lib/__tests__/onchainDaily.test.ts fails the build
 // if anything fetches that path without going through this module.
+//
+// AND IT COUNTS FAILED TRANSACTIONS. Found 2026-09-10: every surface reading
+// this file rendered 440 failed attempts as trades. Buys, sells and claims now
+// come from the chain scan per day; the measurement and the correction live in
+// lib/onchainCorrect.mjs, shared with scripts/ww-gen.mjs.
+
+import { correctDays } from "./onchainCorrect.mjs";
 
 /** A day as the Dune-derived file stores it - `sells` and `claims` swapped. */
 export interface RawOnchainDay {
@@ -41,30 +48,43 @@ export interface RawOnchainDay {
   minted: number;
 }
 
-/** A day with the two instruction counts back under their real names. */
-export type OnchainDay = RawOnchainDay;
+/**
+ * A day with buys, sells and claims from the chain scan, and the rest from
+ * Dune. `failedAttempts` is Dune's excess over chain for that day.
+ */
+export type OnchainDay = RawOnchainDay & { failedAttempts: number };
+
+/** Successful instructions per UTC day, from the chain scan. */
+export interface ChainDay {
+  date: string;
+  buys: number;
+  sells: number;
+  claims: number;
+}
+
+export interface ChainDaily {
+  measuredThrough: string;
+  days: ChainDay[];
+}
 
 export const ONCHAIN_DAILY_PATH = "/ww-onchain-daily.json";
+export const CHAIN_DAILY_PATH = "/ww-chain-daily.json";
 
 /**
- * Swap the two transposed columns back.
- *
- * `txs`, `traders`, `created`, `settled` and `minted` are untouched - the
- * transposition is only between sells and claims, and `created` agrees with the
- * chain census exactly at 1,643, which is the evidence that the rest of the
- * decode is sound.
+ * Both corrections, from lib/onchainCorrect.mjs - the same module the build
+ * script imports, so the read and the build cannot drift apart again. See that
+ * file for the measurements.
  */
-export function correctDuneDay(d: RawOnchainDay): OnchainDay {
-  return { ...d, sells: d.claims, claims: d.sells };
+export function correctDuneDays(rows: RawOnchainDay[], chain: ChainDaily): OnchainDay[] {
+  return correctDays(rows, chain) as OnchainDay[];
 }
 
-export function correctDuneDays(rows: RawOnchainDay[]): OnchainDay[] {
-  return rows.map(correctDuneDay);
-}
-
-/** Fetch the daily series with the transposition already undone. */
+/** Fetch the daily series with both corrections already applied. */
 export async function fetchOnchainDaily(): Promise<OnchainDay[]> {
-  const res = await fetch(ONCHAIN_DAILY_PATH);
+  const [res, cres] = await Promise.all([fetch(ONCHAIN_DAILY_PATH), fetch(CHAIN_DAILY_PATH)]);
   if (!res.ok) throw new Error(`ww-onchain-daily.json returned HTTP ${res.status}`);
-  return correctDuneDays((await res.json()) as RawOnchainDay[]);
+  // No fallback to Dune's own counts: that would be rendering failed attempts
+  // as trades, which is the bug this exists to stop.
+  if (!cres.ok) throw new Error(`ww-chain-daily.json returned HTTP ${cres.status}`);
+  return correctDuneDays((await res.json()) as RawOnchainDay[], (await cres.json()) as ChainDaily);
 }

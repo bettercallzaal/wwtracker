@@ -83,6 +83,8 @@ if (Array.isArray(platVol)) {
 // program's first day (2025-05-26) to today. Replaces the stale lib/wwData.ts snapshot for
 // on-chain activity charts and summaries.
 const onchainDaily = json("public/ww-onchain-daily.json");
+// Buys, sells and claims render from this, not from Dune (lib/onchainCorrect.mjs).
+const chainDaily = json("public/ww-chain-daily.json");
 if (Array.isArray(onchainDaily)) {
   onchainDaily.length >= 300 ? ok(`ww-onchain-daily rows ${onchainDaily.length}`) : bad(`ww-onchain-daily rows ${onchainDaily.length} (expected >= 300)`);
   const badRow = onchainDaily.find((r) => !r || !r.date || r.txs == null);
@@ -170,6 +172,7 @@ const datasets = [
   ["public/ww-battles.json", Array.isArray(battles) ? newest(battles.map((b) => b.date)) : null],
   ["public/ww-platform-volume.json", Array.isArray(platVol) ? newest(platVol.map((r) => r.date)) : null],
   ["public/ww-onchain-daily.json", Array.isArray(onchainDaily) ? newest(onchainDaily.map((r) => r.date)) : null],
+  ["public/ww-chain-daily.json", chainDaily?.measuredThrough ?? null],
 ];
 
 for (const name of ["ww-skips", "ww-queue", "ww-wavysplit"]) {
