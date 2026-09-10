@@ -35,6 +35,14 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 
 /** Value, and what replaced it - the message a failure should print. */
 const SUPERSEDED: Array<[string, string]> = [
+  // Retired 2026-07-31 by Zaal: "no longer working with magnetiq please do not
+  // reference it again or songjam". SANG was defined only as SongJam's token,
+  // so naming it names them. Still rendered in AboutWaveWarZ's ecosystem list
+  // until 2026-09-10. Names rather than figures, but the same failure: a value
+  // that was retired and kept rendering.
+  ["SongJam", "nothing - SongJam is retired, do not reference it"],
+  ["(SANG)", "nothing - SANG was SongJam's token"],
+  ["Magnetiq", "nothing - Magnetiq is retired, do not reference it"],
   ["1,500+", "1,643 battle accounts on chain, or 1,501 returned by the public API"],
   ["921+ SOL", "928.21 SOL, measured from the complete scan"],
   ["1,291+", "1,643"],

@@ -117,7 +117,6 @@ export default function AboutWaveWarZ() {
         </p>
         <ul style={listStyle}>
           <li><b>ZABAL</b> - streaming + coordination engine across the ecosystem.</li>
-          <li><b>SongJam</b> (SANG) - leaderboard + Web2-to-Farcaster infra.</li>
           <li><b>ZAO Fractals</b> - weekly community governance ritual.</li>
         </ul>
         <p style={{ ...metaLabel, fontSize: 11 }}>
