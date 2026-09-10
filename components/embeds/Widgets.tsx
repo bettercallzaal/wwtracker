@@ -434,10 +434,18 @@ export function ProgramActivity({ opts }: { opts: EmbedOptions }) {
   // produced that bug twice.
   const { data, status } = useJson<OnchainDay[]>(ONCHAIN_DAILY_PATH);
   const chain = useJson<ChainDaily>(CHAIN_DAILY_PATH);
-  const corrected = useMemo(
-    () => (data && chain.data ? correctDuneDays(data, chain.data) : null),
-    [data, chain.data],
-  );
+  // correctDuneDays throws when the Dune file outruns the chain file. Inside a
+  // render that would take the embed down on a partner's page; caught here it
+  // becomes the widget's own error state instead. CI keeps the committed files
+  // covered (onchainDaily.test.ts), so this is the path for a bad deploy.
+  const { corrected, failed } = useMemo(() => {
+    if (!data || !chain.data) return { corrected: null, failed: false };
+    try {
+      return { corrected: correctDuneDays(data, chain.data), failed: false };
+    } catch {
+      return { corrected: null, failed: true };
+    }
+  }, [data, chain.data]);
   const series = useMemo(() => thin(corrected ?? []), [corrected]);
 
   return (
@@ -446,7 +454,7 @@ export function ProgramActivity({ opts }: { opts: EmbedOptions }) {
       source={ONCHAIN_SOURCE}
       href={`${SITE}/#analytics`}
       opts={opts}
-      state={series.length ? "ready" : chain.status === "error" ? "error" : status}
+      state={series.length ? "ready" : failed || chain.status === "error" ? "error" : status}
       note={asOf(corrected ?? [])}
     >
       <ResponsiveContainer width="100%" height="100%">
