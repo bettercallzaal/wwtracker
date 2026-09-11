@@ -246,8 +246,27 @@ Run workflow, and set `base` to `https://wwtracker.vercel.app/nope`. Both probes
 locally 2026-09-10: that input produces `HTTP_ERROR` + `PAGE_ERROR` and fails the
 step; the real base passes with `NOT_RUNNING` + `PAGE_OK`.
 
-GitHub's cron can run late under load. Five minutes is the ceiling on resolution,
-not a promise - the laptop watcher is the 60-second view when somebody is here.
+**Do not rely on the schedule. Measured 2026-09-11, it is hours late or absent.**
+The line that stood here said GitHub's cron "can run late" and called five
+minutes the ceiling on resolution. Both undersold it:
+
+| Schedule | Set for | Actually fired |
+|---|---|---|
+| `checks.yml`, daily | 08:30 UTC | 12:14 - 14:21 UTC, every day for five days: **4-6 hours late** |
+| this workflow, hourly on the 11th | 00:17, 01:17 UTC | **no run at all** as of 01:29 UTC |
+
+A five-minute schedule running four hours late watches the final after it ends.
+
+**The path to rely on is a dispatched loop.** Started by hand, it probes every
+60 seconds for up to 340 minutes and fails - which is what sends the email - at
+the first sustained `ALERT`. It does not wait on the scheduler:
+
+    gh workflow run live-watch.yml -R bettercallzaal/wwtracker -f minutes=340
+
+Start it within the hour before the final begins; 340 minutes covers a
+five-and-a-half-hour window. Measured locally: `minutes=1` against the real site
+runs two probes and passes in 64s; against `/nope` it fails on the first probe
+in 8s. The schedule stays as a backup that costs nothing on a public repo.
 
 ## Other ways to run it locally
 

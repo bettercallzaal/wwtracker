@@ -36,6 +36,10 @@ on:
         description: "Deployment to probe. Point it at a path that 404s to test the alert reaches you."
         default: "https://wwtracker.vercel.app"
         required: true
+      minutes:
+        description: "0 = one probe. N = probe every 60s for N minutes (max 340), failing at the first ALERT."
+        default: "0"
+        required: true
 
 # Never two probes racing; a slow one is allowed to finish rather than cancelled.
 concurrency:
@@ -49,7 +53,9 @@ jobs:
   probe:
     name: probe /live and /api/ww/positions
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Room for the dispatched loop (340 min) - scheduled single probes still
+    # finish in seconds.
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v5
         with:
@@ -63,19 +69,33 @@ jobs:
       - name: probe
         env:
           BASE: ${{ github.event.inputs.base || 'https://wwtracker.vercel.app' }}
+          MINUTES: ${{ github.event.inputs.minutes || '0' }}
         run: |
           # The cron matches 13 September every year. Only this one counts.
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%Y%m%d)" -gt 20260914 ]; then
             echo "::notice::live-watch expired after 2026-09-14 - delete .github/workflows/live-watch.yml"
             exit 0
           fi
-          set +e
-          node scripts/live-watch.mjs --base "$BASE" --log var/live-watch.log | tee out.txt
-          code=${PIPESTATUS[0]}
-          set -e
-          { echo '```'; cat out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-          case "$code" in
-            0|1) exit 0 ;;
-            2) echo "::warning::live-watch WARN - see the lines above"; exit 0 ;;
-            *) echo "::error::live-watch ALERT (exit $code) - /live or its route is failing"; exit 1 ;;
-          esac
+          # MINUTES > 0 is the dispatched loop - the path to rely on during the
+          # final, because GitHub's scheduler is not. Measured 2026-09-11: the
+          # daily checks.yml schedule (08:30 UTC) has fired 4-6 hours late every
+          # day, and this workflow's first two hourly slots produced no run at
+          # all. A run started by hand, probing every 60s, does not wait on it.
+          MINUTES="${MINUTES:-0}"
+          if [ "$MINUTES" -gt 340 ]; then MINUTES=340; fi
+          end=$(( $(date +%s) + MINUTES * 60 ))
+          while :; do
+            set +e
+            node scripts/live-watch.mjs --base "$BASE" --log var/live-watch.log | tee -a out.txt
+            code=${PIPESTATUS[0]}
+            set -e
+            case "$code" in
+              0|1) ;;
+              2) echo "::warning::live-watch WARN - see the lines above" ;;
+              *) { echo '```'; tail -40 out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+                 echo "::error::live-watch ALERT (exit $code) - /live or its route is failing"; exit 1 ;;
+            esac
+            [ "$(date +%s)" -ge "$end" ] && break
+            sleep 60
+          done
+          { echo '```'; tail -40 out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
