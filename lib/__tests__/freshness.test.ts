@@ -53,6 +53,7 @@ import { fileURLToPath } from "node:url";
 import { BATTLES_AS_OF } from "@/lib/freshness";
 import { SOL_USD_AS_OF } from "@/lib/price";
 import { WW } from "@/lib/wwData";
+import { LEADERBOARD_AS_OF } from "@/lib/leaderboard";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const json = (rel: string) => JSON.parse(readFileSync(`${root}${rel}`, "utf8"));
@@ -68,15 +69,17 @@ const SOURCE: Record<string, () => string> = {
   "platform volume timeline (per-battle, from 2025-05-28)": () => newest(json("public/ww-platform-volume.json"))!,
   "program + treasury snapshot (lib/wwData.ts)": () => WW.platformStats.lastDay,
   "SOL/USD reference price": () => SOL_USD_AS_OF,
+  "artist roster for static routes (lib/leaderboard.ts)": () => LEADERBOARD_AS_OF,
   "battle history file (recap tooling, npm run fetch:battles)": () =>
     (json("public/ww-battles.json") as Array<{ date: string }>).map((b) => iso(b.date)).sort().at(-1)!,
 };
 
 describe("every freshness stamp is its source's own date", () => {
-  it("has a source for every dated entry except the ones with none to read", () => {
-    // The artist roster's only date is a comment in lib/leaderboard.ts.
+  it("has a source for every dated entry", () => {
+    // The artist roster was the one exemption - its date lived only in a
+    // comment - until LEADERBOARD_AS_OF made it a value (2026-09-11).
     const dated = Object.entries(FRESHNESS).filter(([, v]) => /^\d{4}-/.test(v)).map(([k]) => k);
-    const unsourced = dated.filter((k) => !SOURCE[k] && !k.startsWith("artist roster"));
+    const unsourced = dated.filter((k) => !SOURCE[k]);
     expect(unsourced).toEqual([]);
   });
 
