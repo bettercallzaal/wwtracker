@@ -74,6 +74,9 @@ jobs:
           # The cron matches 13 September every year. Only this one counts.
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%Y%m%d)" -gt 20260914 ]; then
             echo "::notice::live-watch expired after 2026-09-14 - delete .github/workflows/live-watch.yml"
+            # A green run here probed NOTHING. Say so where a green check is
+            # read, so it cannot pass for "site up".
+            echo "**RETIRED - dispatch only.** This scheduled run probed nothing: the watch window ended 2026-09-14. A green check here does not mean /live is up." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           # MINUTES > 0 is the dispatched loop - the path to rely on during the
@@ -83,6 +86,11 @@ jobs:
           # all. A run started by hand, probing every 60s, does not wait on it.
           MINUTES="${MINUTES:-0}"
           if [ "$MINUTES" -gt 340 ]; then MINUTES=340; fi
+          # A DEADLINE, not a count, on purpose. A slow probe (up to ~10s with
+          # retries) then means fewer probes, never a longer run - so the job
+          # always ends inside its 350-minute timeout. A counted loop of N
+          # probes would run N x (60s + probe time) and could be killed by the
+          # timeout mid-watch, silently. Do not "fix" this into a counter.
           end=$(( $(date +%s) + MINUTES * 60 ))
           while :; do
             set +e
@@ -90,6 +98,11 @@ jobs:
             code=${PIPESTATUS[0]}
             set -e
             case "$code" in
+              # 1 is the watcher's INFO level: NOT_RUNNING (no battle in
+              # progress - normal between battles), TRUNCATED (a side hit the
+              # 20-holder read cap) or FLAPPED (failed, then recovered). Each is
+              # printed on its line above and kept in the summary; none is a
+              # reason to page anyone, so it passes quietly by design.
               0|1) ;;
               2) echo "::warning::live-watch WARN - see the lines above" ;;
               *) { echo '```'; tail -40 out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
