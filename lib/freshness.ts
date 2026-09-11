@@ -12,6 +12,15 @@
 // file "16 days old" when it was three; and the SOL/USD row said 2026-09-05
 // against lib/price.ts's 2026-09-08. Same shape as every other drift on this
 // site - a stamp nobody re-derived when the thing it describes moved.
+//
+// WHY THESE ARE LITERALS AND NOT DERIVED. This module is imported by client
+// components (FreshnessBanner, AppShell). Deriving the dates here means
+// importing the data files, and those ship to every visitor: about 110 KB for
+// the three series behind DATA_AS_OF, 520 KB with the battle file behind
+// BATTLES_AS_OF - against a 261 KB first load. Measured 2026-09-11. So they
+// stay literals, and freshness.test.ts derives each one from its source in CI
+// and fails the moment a literal and its source disagree. The drift was
+// thought about; the maintenance is "update the literal the test names".
 export const DATA_AS_OF = "2026-09-05";
 
 /** The battle-history file's own date - what /api/battles/stats is computed from. */

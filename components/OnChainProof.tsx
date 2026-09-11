@@ -88,12 +88,17 @@ export default function OnChainProof() {
         setBal(st.rows);
         setBalLive(st.live);
         setBalWhy(st.live ? "" : st.reason);
+        // The specific reason is for whoever debugs it, not for a visitor - it
+        // names the vendor and its config state. Console and tooltip only.
+        if (!st.live) console.warn(`OnChainProof: treasury unavailable - ${st.reason}`);
       })
       .catch((e) => {
         if (!alive) return;
         setBal([]);
         setBalLive(false);
-        setBalWhy(`unreachable: ${e instanceof Error ? e.message : String(e)}`);
+        const why = `unreachable: ${e instanceof Error ? e.message : String(e)}`;
+        setBalWhy(why);
+        console.warn(`OnChainProof: treasury unavailable - ${why}`);
       });
     getPublicStats()
       .then((s) => alive && setLiveStats(s))
@@ -191,7 +196,9 @@ export default function OnChainProof() {
       k: "Treasury now",
       v: balLive && latest?.bal != null ? fmt(latest.bal, 2) : "-",
       u: "SOL",
-      s: balLive ? `floor ${FLOOR_SOL} / peak ${fmt(peaks.bal, 2)}` : `unavailable - ${balWhy}`,
+      // Public copy stays short; the reason goes in the tooltip (`why`).
+      s: balLive ? `floor ${FLOOR_SOL} / peak ${fmt(peaks.bal, 2)}` : "treasury unavailable",
+      why: balLive ? undefined : balWhy,
     },
     {
       k: "Battles",
@@ -269,6 +276,7 @@ export default function OnChainProof() {
         {tiles.map((t) => (
           <div
             key={t.k}
+            title={"why" in t ? t.why : undefined}
             style={{ background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 12, padding: "14px 14px 12px" }}
           >
             <div style={{ ...metaLabel, fontSize: 10 }}>{t.k.toUpperCase()}</div>
@@ -412,7 +420,7 @@ export default function OnChainProof() {
       </ScaleCard>
 
       <p style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, margin: 0 }}>
-        {balLive ? "treasury live from Solana." : `treasury unavailable (${balWhy}).`}{" "}
+        {balLive ? "treasury live from Solana." : "treasury unavailable."}{" "}
         {liveStats ? "volume/battles/payouts live from WaveWarZ's API." : "volume and battles from the baked Dune snapshot."}{" "}
         trades are from a complete chain scan; traders are decoded via Dune ({fmt(tot.activeDays)} active days
         through {tot.lastDay}, generated {WW.generatedAt}). each line is indexed to its own peak so
