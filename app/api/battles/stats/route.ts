@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { DATA_AS_OF } from "@/lib/freshness";
+import { BATTLES_AS_OF } from "@/lib/freshness";
 
 // Revalidate every 60s — matches wavewarz.info/api/public/stats cache TTL.
 export const revalidate = 60;
@@ -93,11 +93,13 @@ export async function GET(): Promise<NextResponse> {
   const payload: StatsPayload = {
     source: "wwtracker-local",
     stale: true,
-    asOf: DATA_AS_OF,
+    // The battle file's own date. This read DATA_AS_OF - the oldest baked
+    // dataset on the homepage - which was never the battle file's date.
+    asOf: BATTLES_AS_OF,
     liveTotals: "/api/ww/stats",
     note:
       "HISTORICAL ANALYTICS, NOT LIVE. Computed from a frozen battle snapshot " +
-      `(public/ww-battles.json, as of ${DATA_AS_OF}). These figures do not update - ` +
+      `(public/ww-battles.json, as of ${BATTLES_AS_OF}). These figures do not update - ` +
       "for live platform totals use /api/ww/stats. This endpoint exists for the " +
       "richer per-battle breakdowns (top battle, by-type, avg per battle) that the " +
       "live stats endpoint does not compute.",

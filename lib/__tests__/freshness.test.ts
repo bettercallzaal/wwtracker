@@ -43,3 +43,61 @@ describe("FRESHNESS", () => {
     }
   });
 });
+
+// Every stamp against its source. These were typed by hand until 2026-09-11 and
+// had drifted three ways at once (DATA_AS_OF 08-25 against data running to
+// 09-05, a banner calling a 3-day-old file 16 days old, and SOL/USD a stamp
+// behind lib/price.ts). A stamp that nobody re-derives is a guess with a date on.
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { BATTLES_AS_OF } from "@/lib/freshness";
+import { SOL_USD_AS_OF } from "@/lib/price";
+import { WW } from "@/lib/wwData";
+
+const root = fileURLToPath(new URL("../../", import.meta.url));
+const json = (rel: string) => JSON.parse(readFileSync(`${root}${rel}`, "utf8"));
+const newest = (rows: Array<{ date?: string }>) =>
+  rows.map((r) => r.date).filter((d): d is string => !!d).sort().at(-1);
+// ww-battles.json dates read "Sep 8, 2026"; everything else is ISO.
+const iso = (d: string) => new Date(`${d} UTC`).toISOString().slice(0, 10);
+
+const SOURCE: Record<string, () => string> = {
+  "on-chain daily activity (Dune, from 2025-05-26)": () => newest(json("public/ww-onchain-daily.json"))!,
+  "buys, sells, claims per day (chain scan)": () => json("public/ww-chain-daily.json").measuredThrough,
+  "instruction mix (chain scan)": () => json("public/ww-instruction-mix.json").measuredThrough,
+  "platform volume timeline (per-battle, from 2025-05-28)": () => newest(json("public/ww-platform-volume.json"))!,
+  "program + treasury snapshot (lib/wwData.ts)": () => WW.platformStats.lastDay,
+  "SOL/USD reference price": () => SOL_USD_AS_OF,
+  "battle history file (recap tooling, npm run fetch:battles)": () =>
+    (json("public/ww-battles.json") as Array<{ date: string }>).map((b) => iso(b.date)).sort().at(-1)!,
+};
+
+describe("every freshness stamp is its source's own date", () => {
+  it("has a source for every dated entry except the ones with none to read", () => {
+    // The artist roster's only date is a comment in lib/leaderboard.ts.
+    const dated = Object.entries(FRESHNESS).filter(([, v]) => /^\d{4}-/.test(v)).map(([k]) => k);
+    const unsourced = dated.filter((k) => !SOURCE[k] && !k.startsWith("artist roster"));
+    expect(unsourced).toEqual([]);
+  });
+
+  for (const [key, derive] of Object.entries(SOURCE)) {
+    it(`"${key}" matches its source`, () => {
+      expect(FRESHNESS[key]).toBe(derive());
+    });
+  }
+
+  it("DATA_AS_OF is the oldest dated dataset the homepage bakes", () => {
+    // The artist roster feeds only the static /artist/* routes.
+    const homepage = Object.entries(FRESHNESS)
+      .filter(([k, v]) => /^\d{4}-/.test(v) && !k.startsWith("artist roster"))
+      .map(([, v]) => v)
+      .sort();
+    expect(DATA_AS_OF).toBe(homepage[0]);
+  });
+
+  it("the battle stats endpoint is stamped with the battle file's date", () => {
+    expect(BATTLES_AS_OF).toBe(SOURCE["battle history file (recap tooling, npm run fetch:battles)"]());
+    const route = readFileSync(`${root}app/api/battles/stats/route.ts`, "utf8");
+    expect(route).toContain("asOf: BATTLES_AS_OF");
+  });
+});
