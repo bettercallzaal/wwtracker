@@ -17,6 +17,7 @@ import { C, metaLabel } from "@/lib/theme";
 import { WW } from "@/lib/wwData";
 import { FLOOR_SOL } from "@/lib/config";
 import { getPublicStats, type PublicStats } from "@/lib/wavewarzApi";
+import { classifyBalanceResponse } from "@/lib/balanceResponse";
 
 // The overview overlays four on-chain series that live on wildly different
 // scales (325 SOL of volume vs a ~3.5 SOL treasury vs thousands of trades).
@@ -70,19 +71,30 @@ const shortDate = (d: string) => {
 export default function OnChainProof() {
   const [bal, setBal] = useState<BalanceRow[] | null>(null);
   const [balLive, setBalLive] = useState(false);
+  // Why the treasury is not live, shown on the tile instead of a bare "-".
+  const [balWhy, setBalWhy] = useState("loading");
   const [active, setActive] = useState<Set<SeriesDef["id"]>>(new Set(["vol", "bal", "btl", "trd"]));
   const [liveStats, setLiveStats] = useState<PublicStats | null>(null);
 
   useEffect(() => {
     let alive = true;
+    // Live only on an explicit "live" answer with rows - see lib/balanceResponse.
+    // This used to read `source !== "sample"`, so a 503 error body with no
+    // source reported the treasury as live while the tile showed "-".
     fetch("/api/balance", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d: { rows?: BalanceRow[]; source?: string }) => {
+      .then(async (r) => classifyBalanceResponse(r.status, await r.json().catch(() => null)))
+      .then((st) => {
         if (!alive) return;
-        setBal(d.rows ?? []);
-        setBalLive(d.source !== "sample");
+        setBal(st.rows);
+        setBalLive(st.live);
+        setBalWhy(st.live ? "" : st.reason);
       })
-      .catch(() => alive && setBal([]));
+      .catch((e) => {
+        if (!alive) return;
+        setBal([]);
+        setBalLive(false);
+        setBalWhy(`unreachable: ${e instanceof Error ? e.message : String(e)}`);
+      });
     getPublicStats()
       .then((s) => alive && setLiveStats(s))
       .catch(() => {});
@@ -177,9 +189,9 @@ export default function OnChainProof() {
     },
     {
       k: "Treasury now",
-      v: latest?.bal != null ? fmt(latest.bal, 2) : "-",
+      v: balLive && latest?.bal != null ? fmt(latest.bal, 2) : "-",
       u: "SOL",
-      s: `floor ${FLOOR_SOL} / peak ${fmt(peaks.bal, 2)}`,
+      s: balLive ? `floor ${FLOOR_SOL} / peak ${fmt(peaks.bal, 2)}` : `unavailable - ${balWhy}`,
     },
     {
       k: "Battles",
@@ -298,7 +310,9 @@ export default function OnChainProof() {
               <span style={{ width: 11, height: 11, borderRadius: 3, background: s.color, display: "inline-block" }} />
               {s.name}
               <b style={{ color: C.text, fontWeight: 600 }}>
-                {fmt(peakVal, s.dp)}
+                {/* A treasury that did not load has no peak - "0.00 SOL" read as a
+                    real, empty treasury. */}
+                {s.id === "bal" && !balLive ? "-" : fmt(peakVal, s.dp)}
                 {s.unit}
               </b>
             </button>
@@ -398,7 +412,7 @@ export default function OnChainProof() {
       </ScaleCard>
 
       <p style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, margin: 0 }}>
-        {balLive ? "treasury live from Solana." : "treasury on sample data (API unset)."}{" "}
+        {balLive ? "treasury live from Solana." : `treasury unavailable (${balWhy}).`}{" "}
         {liveStats ? "volume/battles/payouts live from WaveWarZ's API." : "volume and battles from the baked Dune snapshot."}{" "}
         trades are from a complete chain scan; traders are decoded via Dune ({fmt(tot.activeDays)} active days
         through {tot.lastDay}, generated {WW.generatedAt}). each line is indexed to its own peak so
