@@ -1,7 +1,7 @@
 "use client";
 
 import { C } from "@/lib/theme";
-import { DATA_AS_OF } from "@/lib/freshness";
+import { DATA_AS_OF, OLDEST_BAKED } from "@/lib/freshness";
 
 // Shows only when the baked snapshot is more than a couple days old, so the
 // dashboard can never silently present frozen data as if it were live. Once the
@@ -43,9 +43,8 @@ export default function FreshnessBanner() {
         baked data through {DATA_AS_OF}
       </span>
       <span style={{ color: C.dim }}>
-        the treasury series, platform totals and leaderboards on this page are live. what is
-        baked is the battle-history file, {stale} days old - refresh it with{" "}
-        <code>npm run fetch:battles</code>. see docs/REFRESH.md.
+        the treasury series, platform totals and leaderboards on this page are live. the oldest
+        baked data is the {OLDEST_BAKED}, {stale} days old. see docs/REFRESH.md.
       </span>
     </div>
   );
