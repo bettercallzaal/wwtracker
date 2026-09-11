@@ -69,3 +69,17 @@ describe("the homepage tile uses it", () => {
     expect(src).not.toMatch(/source\s*!==\s*"sample"/);
   });
 });
+
+describe("the reason is for debugging, not for visitors", () => {
+  it("OnChainProof never interpolates the reason into rendered copy", () => {
+    // Vault, reviewing #280: the reason names the vendor and its config state
+    // ("Dune not configured") or a bare "Failed to fetch". The tile says
+    // "treasury unavailable"; the reason goes to the tooltip and the console.
+    const src = readFileSync(`${root}components/OnChainProof.tsx`, "utf8")
+      .split("\n")
+      .filter((l) => !l.trimStart().startsWith("//"))
+      .join("\n");
+    expect(src).not.toMatch(/\$\{balWhy\}/);
+    expect(src).toContain('"treasury unavailable"');
+  });
+});
