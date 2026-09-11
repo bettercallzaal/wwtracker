@@ -6,6 +6,7 @@ import { C, metaLabel } from "@/lib/theme";
 import { AUDIUS_ID_BY_HANDLE, ROSTER, X_TO_AUDIUS_HANDLE, AUDIUS_TO_X_HANDLE } from "@/lib/artists";
 import { useSongsByArtist } from "@/lib/songs";
 import { LEADERBOARD } from "@/lib/leaderboard";
+import { artistTiles, type BoardState } from "@/lib/artistBoard";
 
 /** One artist's row on the platform's own leaderboard, live. */
 interface LiveArtist {
@@ -77,7 +78,8 @@ export default function ArtistPage() {
   // tooling, but its STATS are a 2026-06-15 snapshot and were being rendered as
   // if current. The displayed figures come from the platform's live board now;
   // the snapshot is only used to find which row this handle is.
-  const [liveArtist, setLiveArtist] = useState<LiveArtist | null>(null);
+  // loading -> live, or loading -> snapshot WITH its date and why. See lib/artistBoard.
+  const [board, setBoard] = useState<BoardState>({ kind: "loading" });
   const lb = useMemo(() => {
     const lower = handle.toLowerCase();
     const direct = LEADERBOARD.find((a) => a.handle.toLowerCase() === lower);
@@ -85,15 +87,19 @@ export default function ArtistPage() {
     const xHandle = audiusHandle ? AUDIUS_TO_X_HANDLE[audiusHandle] : undefined;
     return xHandle ? LEADERBOARD.find((a) => a.handle.toLowerCase() === xHandle.toLowerCase()) ?? null : null;
   }, [handle, audiusHandle]);
+  const tiles = useMemo(() => (lb ? artistTiles(board, lb) : null), [board, lb]);
   const rosterNote = useMemo(() => ROSTER.find((a) => a.handle.toLowerCase() === handle.toLowerCase())?.note ?? null, [handle]);
 
   useEffect(() => {
     if (!lb?.wallet) return;
     let alive = true;
     fetch("/api/ww/leaderboards/artists?limit=500")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (!r.ok) throw new Error(`live leaderboard HTTP ${r.status}`);
+        return r.json();
+      })
       .then((j) => {
-        if (!alive || !j) return;
+        if (!alive) return;
         const rows: (LiveArtist & { name: string; twitterHandle: string | null })[] =
           (j?.data?.artists ?? []).map((a: Record<string, unknown>, i: number) => ({
             rank: i + 1,
@@ -109,10 +115,16 @@ export default function ArtistPage() {
         const hit =
           rows.find((r) => (r.twitterHandle ?? "").toLowerCase() === want) ??
           rows.find((r) => r.name.toLowerCase() === (lb.name ?? "").toLowerCase());
-        if (hit) setLiveArtist(hit);
+        if (hit) setBoard({ kind: "live", row: hit });
+        else {
+          console.warn(`artist page: ${lb.handle} is not on the live leaderboard - showing the snapshot`);
+          setBoard({ kind: "snapshot", reason: "this artist was not found on the live leaderboard" });
+        }
       })
-      .catch(() => {
-        /* the page still renders; the tiles just fall back to the snapshot */
+      .catch((e) => {
+        // The page still renders, but the tiles now SAY they are the snapshot.
+        console.warn(`artist page: live leaderboard unavailable - ${e instanceof Error ? e.message : String(e)}`);
+        if (alive) setBoard({ kind: "snapshot", reason: "the live leaderboard did not answer" });
       });
     return () => {
       alive = false;
@@ -189,7 +201,7 @@ export default function ArtistPage() {
         <div>
           <h1 style={{ margin: 0, fontSize: "clamp(22px,5vw,30px)" }}>{user?.name || handle}</h1>
           <div style={{ fontFamily: C.mono, fontSize: 13, color: C.dim }}>
-            @{handle}{liveArtist ? ` - leaderboard #${liveArtist.rank}` : lb ? ` - leaderboard #${lb.rank}` : ""}
+            @{handle}{tiles?.rank ? ` - leaderboard ${tiles.rank}` : ""}
           </div>
           {rosterNote && (
             <div style={{ fontFamily: C.mono, fontSize: 12, color: C.dim, marginTop: 4, fontStyle: "italic" }}>
@@ -202,10 +214,10 @@ export default function ArtistPage() {
       {/* stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12 }}>
         {lb && <>
-          <Tile label="MAIN-EVENT REC" value={liveArtist ? `${liveArtist.wins}W-${liveArtist.losses}L` : lb.rec} />
-          <Tile label="WIN %" value={`${Math.round(liveArtist ? liveArtist.winRate : lb.win)}%`} />
-          <Tile label="VOLUME" value={`${fmt(liveArtist ? Number(liveArtist.totalVolumeSol) : lb.vol)} ◎`} />
-          <Tile label="EARNINGS" value={`${fmt(liveArtist ? Number(liveArtist.totalEarningsSol) : lb.earn, 3)} ◎`} />
+          <Tile label="MAIN-EVENT REC" value={tiles!.rec} />
+          <Tile label="WIN %" value={tiles!.win} />
+          <Tile label="VOLUME" value={tiles!.vol} />
+          <Tile label="EARNINGS" value={tiles!.earn} />
         </>}
         {user && <>
           <Tile label="AUDIUS FOLLOWERS" value={fmt(user.follower_count, 0)} />
@@ -222,6 +234,9 @@ export default function ArtistPage() {
           )}
         </>}
       </div>
+      {tiles?.note && (
+        <p style={{ fontFamily: C.mono, fontSize: 11, color: C.dim, margin: "-4px 0 0" }}>{tiles.note}</p>
+      )}
 
       {/* charting songs */}
       {songs.length > 0 && (

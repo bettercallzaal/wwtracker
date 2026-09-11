@@ -2,6 +2,9 @@
 // Extracted from wavewarz.info/leaderboards/artists via per-cell DOM read.
 // Snapshot 2026-06-15. Ranked by Main Event wins.
 
+/** The day LEADERBOARD's stats were read. Anything showing them must say so. */
+export const LEADERBOARD_AS_OF = "2026-06-15";
+
 export interface LbArtist {
   rank: number; name: string; handle: string; wallet: string;
   events: number | null; rec: string; win: number;
