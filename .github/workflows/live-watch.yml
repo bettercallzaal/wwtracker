@@ -8,9 +8,15 @@
 #
 # This runs the same probe from GitHub instead. It needs no new credential: it
 # reads our own public endpoints, and a FAILED scheduled run is reported by
-# GitHub to the account that last changed the cron below - which reaches a phone,
-# the one thing the local watcher cannot do. That delivery path is UNMEASURED
-# until someone runs the dispatch test in docs/LIVE-WATCH.md.
+# GitHub to the account that last changed the cron below - which CAN reach a
+# phone, the one thing the local watcher cannot do.
+#
+# BUT THAT DELIVERY PATH WAS MEASURED 2026-09-12 AND IT DOES NOT ARRIVE. The
+# dispatch test ran (34714552200) and failed as designed; no notification came,
+# because the account has neither email nor GitHub Mobile notifications enabled.
+# So until that is turned on, every probe below can fire correctly and a real
+# outage still reaches nobody - the run failing and the alert being delivered are
+# two separate things, and only the first one works. See docs/LIVE-WATCH.md.
 #
 # Fails the run on ALERT only. Info (no battle running) and warn (slow, stale)
 # pass with an annotation, so the only notification is one worth reading.

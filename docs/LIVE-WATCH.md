@@ -16,7 +16,7 @@ it down by competing for the same RPC budget.
 | **`var/live-watch.log`** | anyone, afterwards | appended, gitignored |
 | **exit code** | a cron, a supervisor | `0` ok, `1` info, `2` warn, `3` alert |
 | **macOS notification** | this machine | `--notify`, and only while it is awake and logged in. **Never fired before 2026-09-10** - see Verified |
-| **GitHub failed-run email** | the account that last changed the cron | the hosted check below, alerts only. **Delivery to a phone UNMEASURED** until the dispatch test is run |
+| **GitHub failed-run email** | the account that last changed the cron | the hosted check below, alerts only. **MEASURED 2026-09-12 and it does NOT arrive** - no email or GitHub Mobile notification is configured, so a failed run reaches nobody. See below |
 
 **The local watcher does not reach a phone, a channel, or anybody away from this
 machine.** The hosted check is the one path that can, and it needed no new
@@ -239,12 +239,35 @@ fails on `ALERT` only - `NOT_RUNNING` between battles and `SLOW` / `STALE` pass
 with an annotation - so the only email is one worth reading. During a sustained
 outage that is one email per five-minute run, which on this night is the point.
 
-**UNMEASURED: that the email reaches a phone.** It depends on the account's
-notification settings. Prove it once before the night - Actions, `live-watch`,
-Run workflow, and set `base` to `https://wwtracker.vercel.app/nope`. Both probes
-404, the run fails, and the notification either arrives or it does not. Measured
-locally 2026-09-10: that input produces `HTTP_ERROR` + `PAGE_ERROR` and fails the
-step; the real base passes with `NOT_RUNNING` + `PAGE_OK`.
+**MEASURED 2026-09-12, AND THE ANSWER IS NO: the alert does not reach a phone as
+configured.** The test was run - dispatch `34714552200` at 19:34:30Z against
+`/nope`, which failed exactly as designed with `ALERT HTTP_ERROR` and
+`ALERT PAGE_ERROR`, both at 3/3 attempts, `exit 3`. **The run failed and nothing
+arrived.** GitHub delivers a failed-run alert by email or through the GitHub Mobile
+app, and neither is set up on the account, so the notification had nowhere to go.
+
+**What that changes, and it is not small: the hosted watch currently has no output.**
+Every probe below can fire on time and a real outage still reaches nobody. The two
+halves of this path fail independently - the run failing is measured and works, the
+delivery is measured and does not - and a green run history says nothing about the
+second. That is the whole reason this line was written as UNMEASURED rather than
+assumed, and it turns out to have been the half that was broken.
+
+**Reported to this lane by the dotfiles lane, which has the account in front of it;
+not independently verified here**, because notification settings are not readable
+through the API. What IS verified here is the first half: the run failed, with the
+log lines above.
+
+**Until the account has email or GitHub Mobile notifications enabled, the dispatched
+loop is not the primary coverage - it is the only coverage, and it is silent too.**
+A dispatched run that fails alerts through the same path. Someone has to watch the
+run itself.
+
+The test to repeat once notifications are on, because a fix is not a measurement:
+Actions, `live-watch`, Run workflow, `base` = `https://wwtracker.vercel.app/nope`.
+Both probes 404, the run fails, and the notification either arrives or it does not.
+Measured locally 2026-09-10: that input produces `HTTP_ERROR` + `PAGE_ERROR` and
+fails the step; the real base passes with `NOT_RUNNING` + `PAGE_OK`.
 
 **Do not rely on the schedule. Measured 2026-09-11, it is hours late or absent.**
 The line that stood here said GitHub's cron "can run late" and called five
