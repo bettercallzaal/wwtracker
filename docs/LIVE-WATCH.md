@@ -255,7 +255,29 @@ minutes the ceiling on resolution. Both undersold it:
 | `checks.yml`, daily | 08:30 UTC | 12:14 - 14:21 UTC, every day for five days: **4-6 hours late** |
 | this workflow, hourly on the 11th | 00:17, 01:17 UTC | **no run at all** as of 01:29 UTC |
 
-A five-minute schedule running four hours late watches the final after it ends.
+**Re-measured 2026-09-12 13:4x UTC, with 38 hourly slots now elapsed, and it is
+worse than "late" - the cadence is not hourly at all.** Nine scheduled runs fired in
+those 38 slots, a 23.7% fire rate, and the gaps between consecutive runs are
+5.05, 4.76, 4.09, 3.20, 2.57, 4.36, 4.67 and 4.30 hours:
+
+    the cron asks for            one run per hour
+    the effective cadence is     one run per 4.1 hours (median 4.3)
+
+That is not jitter around an hourly schedule, it is a different schedule. Every one
+of the nine passed, so nothing looks wrong from the outside.
+
+**What that means for the 13th, which is the only number that matters here.** The
+`*/5` cron nominally promises 96 probes across an eight-hour final window. At the
+measured cadence it delivers about **two**:
+
+| | Probes in an 8-hour window |
+|---|---|
+| What `*/5 * 13 9 *` promises | 96 |
+| What the measured cadence delivers | **1.9** |
+
+A five-minute schedule running four hours late watches the final after it ends. So
+the dispatched loop below is not a belt-and-braces addition to the schedule - it is
+the coverage. The schedule is decoration that costs nothing.
 
 **The path to rely on is a dispatched loop.** Started by hand, it probes every
 60 seconds for up to 340 minutes and fails - which is what sends the email - at
