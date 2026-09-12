@@ -8,9 +8,16 @@
 #
 # This runs the same probe from GitHub instead. It needs no new credential: it
 # reads our own public endpoints, and a FAILED scheduled run is reported by
-# GitHub to the account that last changed the cron below - which reaches a phone,
-# the one thing the local watcher cannot do. That delivery path is UNMEASURED
-# until someone runs the dispatch test in docs/LIVE-WATCH.md.
+# GitHub to the account that last changed the cron below - which CAN reach a
+# phone, the one thing the local watcher cannot do.
+#
+# BUT THAT DELIVERY PATH WAS MEASURED 2026-09-12 AND IT DOES NOT ARRIVE. The
+# dispatch test ran (34714552200) and failed as designed and NO NOTIFICATION CAME -
+# that half is measured. The CAUSE is reported by the dotfiles lane and not verified
+# here: the account has neither email nor GitHub Mobile notifications enabled.
+# So until that is turned on, every probe below can fire correctly and a real
+# outage still reaches nobody - the run failing and the alert being delivered are
+# two separate things, and only the first one works. See docs/LIVE-WATCH.md.
 #
 # Fails the run on ALERT only. Info (no battle running) and warn (slow, stale)
 # pass with an annotation, so the only notification is one worth reading.
@@ -83,12 +90,15 @@ jobs:
           # final, because GitHub's scheduler is not. Measured 2026-09-11: the
           # daily checks.yml schedule (08:30 UTC) has fired 4-6 hours late every
           # day, and this workflow's first two hourly slots produced no run at
-          # all. RE-MEASURED 2026-09-12 over 38 elapsed hourly slots: 9 runs
-          # fired, gaps of 2.6 to 5.1 hours, so the effective cadence is one run
-          # per 4.1 hours against a cron asking for one per hour. The */5 crons
-          # below therefore deliver about TWO probes across an 8-hour final
-          # window, not the 96 they promise. A run started by hand, probing every
-          # 60s, does not wait on any of that. See docs/LIVE-WATCH.md.
+          # all. RE-MEASURED 2026-09-12 21:0x over 45 elapsed hourly slots: 11
+          # runs fired (24.4%), gaps of 2.2 to 5.1 hours, so the effective cadence
+          # is one run per 3.9 hours against a cron asking for one per hour. What
+          # the */5 crons below deliver across an 8-hour final window depends on
+          # which model holds - 2 if the effective cadence is fixed, 23 if the
+          # DROP RATE is fixed - and only the hourly cron has been measured, so
+          # both are carried in docs/LIVE-WATCH.md rather than one being stated as
+          # fact. Either way it is not the 96 they promise. A run started by hand,
+          # probing every 60s, does not wait on any of that.
           MINUTES="${MINUTES:-0}"
           if [ "$MINUTES" -gt 340 ]; then MINUTES=340; fi
           # A DEADLINE, not a count, on purpose. A slow probe (up to ~10s with
