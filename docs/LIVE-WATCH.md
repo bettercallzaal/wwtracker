@@ -255,29 +255,47 @@ minutes the ceiling on resolution. Both undersold it:
 | `checks.yml`, daily | 08:30 UTC | 12:14 - 14:21 UTC, every day for five days: **4-6 hours late** |
 | this workflow, hourly on the 11th | 00:17, 01:17 UTC | **no run at all** as of 01:29 UTC |
 
-**Re-measured 2026-09-12 13:4x UTC, with 38 hourly slots now elapsed, and it is
-worse than "late" - the cadence is not hourly at all.** Nine scheduled runs fired in
-those 38 slots, a 23.7% fire rate, and the gaps between consecutive runs are
-5.05, 4.76, 4.09, 3.20, 2.57, 4.36, 4.67 and 4.30 hours:
+**Re-measured 2026-09-12 21:0x UTC, with 45 hourly slots now elapsed, and it is
+worse than "late" - the cadence is not hourly at all.** Eleven scheduled runs fired in
+those 45 slots, a **24.4%** fire rate, and the ten gaps between consecutive runs sum to
+38.71 hours - mean 3.87, median 4.20, longest 5.05, shortest 2.18:
 
     the cron asks for            one run per hour
-    the effective cadence is     one run per 4.1 hours (median 4.3)
+    the effective cadence is     one run per 3.9 hours (median 4.2)
 
 That is not jitter around an hourly schedule, it is a different schedule. Every one
-of the nine passed, so nothing looks wrong from the outside.
+of the eleven passed, so nothing looks wrong from the outside. (Superseded the
+13:4x measurement of nine runs in 38 slots, 23.7%, which the extra seven hours barely
+moved.)
 
 **What that means for the 13th, which is the only number that matters here.** The
-`*/5` cron nominally promises 96 probes across an eight-hour final window. At the
-measured cadence it delivers about **two**:
+`*/5` cron nominally promises 96 probes across an eight-hour final window. **Two models
+fit the data and they differ by more than tenfold, so both are given rather than one
+being passed off as the measurement:**
 
 | | Probes in an 8-hour window |
 |---|---|
 | What `*/5 * 13 9 *` promises | 96 |
-| What the measured cadence delivers | **1.9** |
+| If the effective cadence is fixed at ~3.9h regardless of what is asked | **2.1** |
+| If the drop rate is fixed at ~24.4% of what is asked | **23** |
 
-A five-minute schedule running four hours late watches the final after it ends. So
-the dispatched loop below is not a belt-and-braces addition to the schedule - it is
-the coverage. The schedule is decoration that costs nothing.
+**Only the hourly cron has been measured**, and projecting from it to a five-minute cron
+requires assuming which of those two holds. The first says GitHub delivers a roughly
+constant number of runs per repository per hour and ignores the rest; the second says it
+drops a roughly constant fraction. Nothing observed here distinguishes them - this is the
+same trap as a correct figure under the wrong denominator, so the assumption is named
+instead of buried in a single number.
+
+**It becomes measurable at 00:00 UTC on the 13th** - 20:00 ET on the 12th - when the
+`*/5` window opens. Count the scheduled runs in the first hour: about 3 means the
+fraction model, about 12 means the promise is kept, about 0 to 1 means the fixed-cadence
+model. Replace this table with that count.
+
+**The decision does not wait on that, because both models give the same answer.** 2 or 23,
+a five-minute schedule delivering a probe every 20 minutes at best - and running hours
+late at worst - watches the final after it ends. So the dispatched loop below is not a
+belt-and-braces addition to the schedule; it is the coverage. The schedule is decoration
+that costs nothing.
 
 **The path to rely on is a dispatched loop.** Started by hand, it probes every
 60 seconds for up to 340 minutes and fails - which is what sends the email - at

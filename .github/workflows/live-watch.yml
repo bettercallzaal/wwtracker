@@ -83,12 +83,15 @@ jobs:
           # final, because GitHub's scheduler is not. Measured 2026-09-11: the
           # daily checks.yml schedule (08:30 UTC) has fired 4-6 hours late every
           # day, and this workflow's first two hourly slots produced no run at
-          # all. RE-MEASURED 2026-09-12 over 38 elapsed hourly slots: 9 runs
-          # fired, gaps of 2.6 to 5.1 hours, so the effective cadence is one run
-          # per 4.1 hours against a cron asking for one per hour. The */5 crons
-          # below therefore deliver about TWO probes across an 8-hour final
-          # window, not the 96 they promise. A run started by hand, probing every
-          # 60s, does not wait on any of that. See docs/LIVE-WATCH.md.
+          # all. RE-MEASURED 2026-09-12 21:0x over 45 elapsed hourly slots: 11
+          # runs fired (24.4%), gaps of 2.2 to 5.1 hours, so the effective cadence
+          # is one run per 3.9 hours against a cron asking for one per hour. What
+          # the */5 crons below deliver across an 8-hour final window depends on
+          # which model holds - 2 if the effective cadence is fixed, 23 if the
+          # DROP RATE is fixed - and only the hourly cron has been measured, so
+          # both are carried in docs/LIVE-WATCH.md rather than one being stated as
+          # fact. Either way it is not the 96 they promise. A run started by hand,
+          # probing every 60s, does not wait on any of that.
           MINUTES="${MINUTES:-0}"
           if [ "$MINUTES" -gt 340 ]; then MINUTES=340; fi
           # A DEADLINE, not a count, on purpose. A slow probe (up to ~10s with
