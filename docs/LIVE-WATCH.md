@@ -290,6 +290,25 @@ five-and-a-half-hour window. Measured locally: `minutes=1` against the real site
 runs two probes and passes in 64s; against `/nope` it fails on the first probe
 in 8s. The schedule stays as a backup that costs nothing on a public repo.
 
+**Two dispatches CHAIN, so the timing does not have to be precise.** The
+`concurrency` block uses one group with `cancel-in-progress: false`, which means a
+second dispatch does not race the first and is not discarded - it sits pending and
+starts when the first finishes. So firing it twice gives about **11 hours 20 minutes
+of unbroken 60-second probing**, back to back, with no gap to time:
+
+    gh workflow run live-watch.yml -R bettercallzaal/wwtracker -f minutes=340
+    gh workflow run live-watch.yml -R bettercallzaal/wwtracker -f minutes=340
+
+That matters because 340 minutes is the ceiling per run - the job's `timeout-minutes`
+is 350 and the script caps `minutes` at 340 - so a single dispatch started an hour
+early runs out an hour early. Two removes the guesswork: start them whenever, well
+before the final, and the window covers the whole evening either way. The only cost
+is Actions minutes on a public repo, which are free.
+
+Do NOT try to raise `minutes` above 340 to get the same effect. The cap exists
+because the deadline loop must end inside the job timeout; a longer value is clamped,
+so it would silently give the same 340 while reading as more.
+
 ## Other ways to run it locally
 
 Simplest, in a terminal that stays open:
