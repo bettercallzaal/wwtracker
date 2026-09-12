@@ -12,8 +12,9 @@
 # phone, the one thing the local watcher cannot do.
 #
 # BUT THAT DELIVERY PATH WAS MEASURED 2026-09-12 AND IT DOES NOT ARRIVE. The
-# dispatch test ran (34714552200) and failed as designed; no notification came,
-# because the account has neither email nor GitHub Mobile notifications enabled.
+# dispatch test ran (34714552200) and failed as designed and NO NOTIFICATION CAME -
+# that half is measured. The CAUSE is reported by the dotfiles lane and not verified
+# here: the account has neither email nor GitHub Mobile notifications enabled.
 # So until that is turned on, every probe below can fire correctly and a real
 # outage still reaches nobody - the run failing and the alert being delivered are
 # two separate things, and only the first one works. See docs/LIVE-WATCH.md.
