@@ -366,6 +366,24 @@ holds the group, scheduled probes queue rather than run:
     another run joins the group  ->  the WAITING one is CANCELLED, not kept
     the dispatch ends            ->  whatever is still queued starts, probing the site as it is THEN
 
+**THE RULE RUNS BOTH WAYS, AND IT MAKES CHAINING UNSAFE. Added 2026-09-13 16:0x, review-2's
+finding, verified here.** If a newer run cancels an older PENDING one regardless of type, then a
+SECOND DISPATCH WAITING IN THE QUEUE IS CANCELLED BY THE NEXT `*/5` SCHEDULED RUN - and replaced
+by a probe that takes seconds. The chain does not merely fail to extend coverage; it converts
+340 minutes of intended coverage into one probe, and the run history still looks busy.
+
+Measured on the 13th: three scheduled runs created against roughly 192 slots, and **two of the
+three were cancelled while pending**, each in the second a newer run was created (07:00:02 and
+12:51:27). Today's chain survived by **seven minutes**: dispatch 2 was pending 07:00 to 07:36,
+and the next scheduled run was created 07:43.
+
+**So do not chain during an event.** Dispatch ONE run when nothing else is running, let it
+finish, then dispatch again. A pending dispatch is not coverage that is waiting, it is coverage
+that can be deleted by the cron it was meant to replace.
+
+After the event, the fix is structural rather than procedural: delete the `*/5` lines, or give
+scheduled runs their own `concurrency` group so they cannot evict a dispatch.
+
 **Corrected 07:00Z: a queued run is cancelled when another joins the group, not kept.**
 This section first said scheduled runs "queue behind" the dispatch. Measured: scheduled run
 `34734100789` sat pending from 02:52:17Z and its conclusion is **`cancelled`, updated
