@@ -367,7 +367,12 @@ holds the group, scheduled probes queue rather than run:
     the dispatch ends            ->  whatever is still queued starts, probing the site as it is THEN
 
 **THE RULE RUNS BOTH WAYS, AND IT MAKES CHAINING UNSAFE. Added 2026-09-13 16:0x, review-2's
-finding, verified here.** If a newer run cancels an older PENDING one regardless of type, then a
+finding. The cancellations below are OBSERVED; the chained-dispatch case is DEDUCED from them and
+from GitHub's documented concurrency rule, and has NOT been seen happen.** The distinction matters
+because the recommendation rests on the deduction: what was observed is a scheduled run killed by a
+dispatch, and a scheduled run killed by another scheduled run. Nobody has watched a schedule kill a
+pending dispatch. It follows from the same rule in the other direction, which is enough to change
+the plan and not enough to call it measured. If a newer run cancels an older PENDING one regardless of type, then a
 SECOND DISPATCH WAITING IN THE QUEUE IS CANCELLED BY THE NEXT `*/5` SCHEDULED RUN - and replaced
 by a probe that takes seconds. The chain does not merely fail to extend coverage; it converts
 340 minutes of intended coverage into one probe, and the run history still looks busy.
