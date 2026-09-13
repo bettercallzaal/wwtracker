@@ -322,6 +322,27 @@ Checked before concluding, so this is not a config fault being read as a schedul
 the cron on main is `*/5 * 13 9 *`, `gh workflow view` reports `active`, and a dispatched
 run on the same file worked minutes earlier.
 
+**Updated 02:55Z, and the wording matters: the window has now CREATED one run and still
+EXECUTED none.** Run `34734100789` was created 02:52:17Z - the first in 2h52m of a cron
+asking for 34 - and it is `pending`, not running.
+
+**It is queued behind the dispatched loop, because both share one `concurrency` group.**
+`group: live-watch` with `cancel-in-progress: false` is what makes two dispatches chain
+instead of racing, and it applies to scheduled runs too. So while a 340-minute dispatch
+holds the group, scheduled probes queue rather than run:
+
+    a long dispatch is running   ->  every scheduled run waits, however many fire
+    the dispatch ends            ->  a queued run starts, probing the site as it is THEN
+
+That is the right trade during the final - the dispatch probes every 60 seconds, far
+better than the schedule ever offered - but two things follow. **A "pending" run is not
+coverage**, so counting created runs would overstate what is watching. And a run that
+queues for hours reports on the moment it finally starts, not the moment it was due, so
+its timestamp describes the queue and not the site.
+
+The count that matters is therefore runs EXECUTED in the window, and while a dispatch is
+up that number is zero by design rather than by scheduler failure.
+
 **The decision does not wait on that, because both models give the same answer.** 2 or 23,
 a five-minute schedule delivering a probe every 20 minutes at best - and running hours
 late at worst - watches the final after it ends. So the dispatched loop below is not a
