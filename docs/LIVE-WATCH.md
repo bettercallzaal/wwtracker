@@ -182,7 +182,20 @@ the job, waits, and fails loudly with the exit code and an EX_CONFIG hint if
 nothing appears. Verified end to end - it reported VERIFIED with real output, and
 the first line it caught was a genuine `PAGE_SLOW` at 4961ms.
 
-**RE-CHECK BY 2026-09-13.**
+**RE-CHECKED 2026-09-13 04:31Z: the installer still verifies, and NOTHING IS INSTALLED.**
+`launchctl list` shows no `live-watch` job loaded on this machine, and the newest line in
+`var/live-watch.log` is 2026-09-12T22:13:49Z - a manual smoke test, not a scheduled run.
+
+So on the night this file was written for, the local watcher is not watching. That is the
+section heading below stated as a measurement rather than a warning: **merging a watcher is
+not watching, and neither is verifying its installer.** The installer was proven to work
+once, which is a different claim from the job being loaded now, and only the second one
+watches anything.
+
+Consequence for tonight, stated where it is read: **the hosted dispatch is the only probe
+running**, and the local path contributes nothing regardless of what `pmset` says.
+
+**RE-CHECK BY 2026-09-14.**
 
 ## Running it unattended
 
@@ -223,8 +236,26 @@ next.)*
 So a laptop watcher is a best effort, and the coverage with nobody present is the
 hosted check below.
 
-**RE-CHECK BY 2026-09-13.** Run `pmset -g` again on the day; it changes minute to
-minute with whatever else is running.
+**RE-CHECKED 2026-09-13 04:30Z, and the `sleep 1` figure was reading one profile as
+though it were the setting.** `pmset -g` reports the ACTIVE power source only. Read
+per profile with `pmset -g custom`:
+
+    Battery Power    sleep 1     one minute of idle, as recorded
+    AC Power         sleep 0     never idle-sleeps, displaysleep 0 as well
+
+So the local watcher's fragility is **conditional on the power source**, not a property
+of the machine. On AC it survives an unattended night; on battery it dies about a minute
+after the last `caffeinate` assertion drops. The active reading at 04:30Z was
+`sleep 0 (sleep prevented by powerd, AddressBookSourceSync, caffeinate)`, which is the
+AC profile plus three assertions - and quoting that alone would have been just as
+misleading in the opposite direction.
+
+Same shape as the other figures corrected this week: a number that is correct under one
+denominator and silently wrong under another. The honest statement is "1 minute on
+battery, never on AC", and neither half stands alone.
+
+**RE-CHECK BY 2026-09-14**, after the final, and read `pmset -g custom` rather than
+`pmset -g`.
 
 ## The hosted check - coverage when this Mac is asleep
 
@@ -293,28 +324,140 @@ of the eleven passed, so nothing looks wrong from the outside. (Superseded the
 13:4x measurement of nine runs in 38 slots, 23.7%, which the extra seven hours barely
 moved.)
 
-**What that means for the 13th, which is the only number that matters here.** The
-`*/5` cron nominally promises 96 probes across an eight-hour final window. **Two models
-fit the data and they differ by more than tenfold, so both are given rather than one
-being passed off as the measurement:**
+**MEASURED 2026-09-13 01:43 UTC, and it is worse than either projection: the `*/5`
+window has delivered ZERO runs in its first 1h43m.** It promised 20 in that span, and 12
+in the first hour alone.
 
-| | Probes in an 8-hour window |
+| | Runs |
 |---|---|
-| What `*/5 * 13 9 *` promises | 96 |
-| If the effective cadence is fixed at ~3.9h regardless of what is asked | **2.1** |
-| If the drop rate is fixed at ~24.4% of what is asked | **23** |
+| What `*/5 * 13 9 *` promised by 01:43Z | 20 |
+| **Actually fired** | **0** |
+| Projected here beforehand, fixed-cadence model | 0 to 1 in the first hour |
+| Projected here beforehand, fixed-fraction model | about 3 in the first hour |
 
-**Only the hourly cron has been measured**, and projecting from it to a five-minute cron
-requires assuming which of those two holds. The first says GitHub delivers a roughly
-constant number of runs per repository per hour and ignores the rest; the second says it
-drops a roughly constant fraction. Nothing observed here distinguishes them - this is the
-same trap as a correct figure under the wrong denominator, so the assumption is named
-instead of buried in a single number.
+**The fixed-cadence model was right and the fraction model is dead.** GitHub delivers
+roughly one scheduled run per repository per several hours whatever the cron asks for; it
+does not drop a constant fraction. Across an eight-hour final window that is about **2
+probes, not 23**. (The two projections are kept above rather than deleted, because which
+one survived is the useful part; a table that only shows the winner teaches nobody.)
 
-**It becomes measurable at 00:00 UTC on the 13th** - 20:00 ET on the 12th - when the
-`*/5` window opens. Count the scheduled runs in the first hour: about 3 means the
-fraction model, about 12 means the promise is kept, about 0 to 1 means the fixed-cadence
-model. Replace this table with that count.
+**AND THE HARDER FACT, which the probe count obscures: the hosted watch has been DARK
+since 00:00Z.** The hourly cron is scoped `17 * 11-12 9 *` - days 11 and 12 only - so it
+stopped at the end of the 12th. From 00:00Z on the 13th, `*/5` is the ONLY schedule, and
+it has produced nothing. Last scheduled run of any kind: **23:59:53Z on the 12th.** So
+the transition into the intensive window is a transition into no coverage at all, and
+nothing about it looks broken from the outside - the workflow is `active`, the cron is
+valid, and the run history simply stops.
+
+Checked before concluding, so this is not a config fault being read as a scheduler fault:
+the cron on main is `*/5 * 13 9 *`, `gh workflow view` reports `active`, and a dispatched
+run on the same file worked minutes earlier.
+
+**Updated 02:55Z, and the wording matters: the window has now CREATED one run and still
+EXECUTED none.** Run `34734100789` was created 02:52:17Z - the first in 2h52m of a cron
+asking for 34 - and it is `pending`, not running.
+
+**It is queued behind the dispatched loop, because both share one `concurrency` group.**
+`group: live-watch` with `cancel-in-progress: false` is what makes two dispatches chain
+instead of racing, and it applies to scheduled runs too. So while a 340-minute dispatch
+holds the group, scheduled probes queue rather than run:
+
+    a long dispatch is running   ->  a scheduled run is created and waits
+    another run joins the group  ->  the WAITING one is CANCELLED, not kept
+    the dispatch ends            ->  whatever is still queued starts, probing the site as it is THEN
+
+**THE RULE RUNS BOTH WAYS, AND IT MAKES CHAINING UNSAFE. Added 2026-09-13 16:0x, review-2's
+finding. The cancellations below are OBSERVED; the chained-dispatch case is DEDUCED from them and
+from GitHub's documented concurrency rule, and has NOT been seen happen.** The distinction matters
+because the recommendation rests on the deduction: what was observed is a scheduled run killed by a
+dispatch, and a scheduled run killed by another scheduled run. Nobody has watched a schedule kill a
+pending dispatch. It follows from the same rule in the other direction, which is enough to change
+the plan and not enough to call it measured. If a newer run cancels an older PENDING one regardless of type, then a
+SECOND DISPATCH WAITING IN THE QUEUE IS CANCELLED BY THE NEXT `*/5` SCHEDULED RUN - and replaced
+by a probe that takes seconds. The chain does not merely fail to extend coverage; it converts
+340 minutes of intended coverage into one probe, and the run history still looks busy.
+
+Measured on the 13th: three scheduled runs created against roughly 192 slots, and **two of the
+three were cancelled while pending**, each in the second a newer run was created (07:00:02 and
+12:51:27). Today's chain survived by **seven minutes**: dispatch 2 was pending 07:00 to 07:36,
+and the next scheduled run was created 07:43.
+
+**So do not chain during an event.** Dispatch ONE run when nothing else is running, let it
+finish, then dispatch again. A pending dispatch is not coverage that is waiting, it is coverage
+that can be deleted by the cron it was meant to replace.
+
+After the event, the fix is structural rather than procedural: delete the `*/5` lines, or give
+scheduled runs their own `concurrency` group so they cannot evict a dispatch.
+
+**Corrected 07:00Z: a queued run is cancelled when another joins the group, not kept.**
+This section first said scheduled runs "queue behind" the dispatch. Measured: scheduled run
+`34734100789` sat pending from 02:52:17Z and its conclusion is **`cancelled`, updated
+07:00:02Z** - the same second a second dispatch was created. So `cancel-in-progress: false`
+protects a RUNNING run only; GitHub keeps at most one pending run per group and discards the
+older one. The schedule therefore contributes nothing at all while a dispatch is up, which is
+stronger than "it waits its turn".
+
+That is the right trade during the final - the dispatch probes every 60 seconds, far
+better than the schedule ever offered - but two things follow. **A "pending" run is not
+coverage**, so counting created runs would overstate what is watching. And a run that
+queues for hours reports on the moment it finally starts, not the moment it was due, so
+its timestamp describes the queue and not the site.
+
+The count that matters is therefore runs EXECUTED in the window, and while a dispatch is
+up that number is zero by design rather than by scheduler failure.
+
+**MEASURED 07:45Z, the dispatched path against the same eight hours: it delivers exactly what
+it promises.** Run `34731726081` ran its full 340 minutes and completed `success`. Its log:
+
+    340   INFO  NOT_RUNNING     one probe per minute, no drift
+    340   OK    PAGE_OK         /live rendered 200 on every one
+      0   WARN or ALERT         nothing to report across 5h41m
+    01:55:27Z first probe, 07:36:00Z last
+
+So the comparison is not close, and it is now measured on both sides rather than projected on
+one: **340 probes from one dispatch against about 2 from the schedule over a comparable
+window.** A deadline loop inside a single job is two orders of magnitude better than asking
+GitHub's scheduler for the same coverage, because it asks once.
+
+**And the second dispatch, 07:36:10Z to 13:16:50Z, is the first run to catch anything at all:**
+
+    340   INFO  NOT_RUNNING
+    340   OK    PAGE_OK
+      2   INFO  FLAPPED      11:16:10Z and 13:06:48Z, each "recovered after 1 failed attempt"
+
+**That is the retry rule earning its keep, measured rather than argued.** Two probes failed and
+came back on the next attempt inside the same ten-second window. On a monitor that alarms on one
+failed request, those two transients would have produced **four notifications** - two alarms and
+two recoveries - for something that was never broken, on the day of the event. Instead they are
+two info lines, and they are still visible, which is the whole point of reporting a recovery at
+all rather than hiding it.
+
+If FLAPPED starts repeating rather than appearing twice in six hours, that is a different signal
+and the doc already says so. Two in 680 probes is weather.
+
+One more thing that log says, which no count of runs would: **no battle was running for the
+entire 5h41m.** Every probe returned `NOT_RUNNING`. A watch is only as informative as the
+period it covers, and this one covered a quiet stretch - which is a fact about the night, not
+a fact about the watcher, and worth separating from "the watcher reported nothing wrong".
+
+**And the missing runs were never CREATED, which rules out the obvious alternative.** The
+dotfiles lane suggested the pattern might be GitHub creating a run per slot and failing to
+allocate a runner - which would look identical from a completed-run count, and would mean
+both models here are measuring the wrong variable. It is testable and it does not hold:
+
+    runs ever created for this workflow, all time     17
+    hourly slots elapsed 11-12 September alone        45
+    runs in any state other than completed, ever       2   (today's dispatch and its queued run)
+
+Seventeen total against forty-five slots plus a five-minute window. If slots were being
+created and left unallocated, `gh run list` would show dozens or hundreds of `queued` runs,
+historically and now. There are two, both from today, both explained. **So GitHub declines to
+create the run at all** - the throttle is at scheduling, not at runner allocation, and the
+effective-cadence model stands.
+
+Worth keeping as a method note rather than only a result: the distinction is invisible in a
+count of completed runs, and the way to separate them is the TOTAL created count, which no
+amount of staring at the successful runs would have produced.
 
 **The decision does not wait on that, because both models give the same answer.** 2 or 23,
 a five-minute schedule delivering a probe every 20 minutes at best - and running hours
