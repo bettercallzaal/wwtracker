@@ -374,6 +374,25 @@ its timestamp describes the queue and not the site.
 The count that matters is therefore runs EXECUTED in the window, and while a dispatch is
 up that number is zero by design rather than by scheduler failure.
 
+**And the missing runs were never CREATED, which rules out the obvious alternative.** The
+dotfiles lane suggested the pattern might be GitHub creating a run per slot and failing to
+allocate a runner - which would look identical from a completed-run count, and would mean
+both models here are measuring the wrong variable. It is testable and it does not hold:
+
+    runs ever created for this workflow, all time     17
+    hourly slots elapsed 11-12 September alone        45
+    runs in any state other than completed, ever       2   (today's dispatch and its queued run)
+
+Seventeen total against forty-five slots plus a five-minute window. If slots were being
+created and left unallocated, `gh run list` would show dozens or hundreds of `queued` runs,
+historically and now. There are two, both from today, both explained. **So GitHub declines to
+create the run at all** - the throttle is at scheduling, not at runner allocation, and the
+effective-cadence model stands.
+
+Worth keeping as a method note rather than only a result: the distinction is invisible in a
+count of completed runs, and the way to separate them is the TOTAL created count, which no
+amount of staring at the successful runs would have produced.
+
 **The decision does not wait on that, because both models give the same answer.** 2 or 23,
 a five-minute schedule delivering a probe every 20 minutes at best - and running hours
 late at worst - watches the final after it ends. So the dispatched loop below is not a
