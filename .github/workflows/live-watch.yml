@@ -92,13 +92,17 @@ jobs:
           # day, and this workflow's first two hourly slots produced no run at
           # all. RE-MEASURED 2026-09-12 21:0x over 45 elapsed hourly slots: 11
           # runs fired (24.4%), gaps of 2.2 to 5.1 hours, so the effective cadence
-          # is one run per 3.9 hours against a cron asking for one per hour. What
-          # the */5 crons below deliver across an 8-hour final window depends on
-          # which model holds - 2 if the effective cadence is fixed, 23 if the
-          # DROP RATE is fixed - and only the hourly cron has been measured, so
-          # both are carried in docs/LIVE-WATCH.md rather than one being stated as
-          # fact. Either way it is not the 96 they promise. A run started by hand,
-          # probing every 60s, does not wait on any of that.
+          # is one run per 3.9 hours against a cron asking for one per hour.
+          #
+          # AND THE */5 WINDOW IS NOW MEASURED, 2026-09-13 01:43 UTC: ZERO runs in
+          # its first 1h43m, against 20 promised. So the effective cadence holds
+          # whatever the cron asks - about 2 probes across the 8-hour window, not
+          # the 96 promised and not the 23 a constant-drop-rate model predicted.
+          # Worse, the hourly cron above is scoped to days 11-12, so from 00:00Z on
+          # the 13th */5 is the ONLY schedule and it has fired nothing: the watch is
+          # DARK during the window it exists for, and nothing looks broken from
+          # outside. A run started by hand, probing every 60s, does not wait on any
+          # of that - it is the only coverage there is.
           MINUTES="${MINUTES:-0}"
           if [ "$MINUTES" -gt 340 ]; then MINUTES=340; fi
           # A DEADLINE, not a count, on purpose. A slow probe (up to ~10s with

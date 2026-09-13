@@ -293,28 +293,34 @@ of the eleven passed, so nothing looks wrong from the outside. (Superseded the
 13:4x measurement of nine runs in 38 slots, 23.7%, which the extra seven hours barely
 moved.)
 
-**What that means for the 13th, which is the only number that matters here.** The
-`*/5` cron nominally promises 96 probes across an eight-hour final window. **Two models
-fit the data and they differ by more than tenfold, so both are given rather than one
-being passed off as the measurement:**
+**MEASURED 2026-09-13 01:43 UTC, and it is worse than either projection: the `*/5`
+window has delivered ZERO runs in its first 1h43m.** It promised 20 in that span, and 12
+in the first hour alone.
 
-| | Probes in an 8-hour window |
+| | Runs |
 |---|---|
-| What `*/5 * 13 9 *` promises | 96 |
-| If the effective cadence is fixed at ~3.9h regardless of what is asked | **2.1** |
-| If the drop rate is fixed at ~24.4% of what is asked | **23** |
+| What `*/5 * 13 9 *` promised by 01:43Z | 20 |
+| **Actually fired** | **0** |
+| Projected here beforehand, fixed-cadence model | 0 to 1 in the first hour |
+| Projected here beforehand, fixed-fraction model | about 3 in the first hour |
 
-**Only the hourly cron has been measured**, and projecting from it to a five-minute cron
-requires assuming which of those two holds. The first says GitHub delivers a roughly
-constant number of runs per repository per hour and ignores the rest; the second says it
-drops a roughly constant fraction. Nothing observed here distinguishes them - this is the
-same trap as a correct figure under the wrong denominator, so the assumption is named
-instead of buried in a single number.
+**The fixed-cadence model was right and the fraction model is dead.** GitHub delivers
+roughly one scheduled run per repository per several hours whatever the cron asks for; it
+does not drop a constant fraction. Across an eight-hour final window that is about **2
+probes, not 23**. (The two projections are kept above rather than deleted, because which
+one survived is the useful part; a table that only shows the winner teaches nobody.)
 
-**It becomes measurable at 00:00 UTC on the 13th** - 20:00 ET on the 12th - when the
-`*/5` window opens. Count the scheduled runs in the first hour: about 3 means the
-fraction model, about 12 means the promise is kept, about 0 to 1 means the fixed-cadence
-model. Replace this table with that count.
+**AND THE HARDER FACT, which the probe count obscures: the hosted watch has been DARK
+since 00:00Z.** The hourly cron is scoped `17 * 11-12 9 *` - days 11 and 12 only - so it
+stopped at the end of the 12th. From 00:00Z on the 13th, `*/5` is the ONLY schedule, and
+it has produced nothing. Last scheduled run of any kind: **23:59:53Z on the 12th.** So
+the transition into the intensive window is a transition into no coverage at all, and
+nothing about it looks broken from the outside - the workflow is `active`, the cron is
+valid, and the run history simply stops.
+
+Checked before concluding, so this is not a config fault being read as a scheduler fault:
+the cron on main is `*/5 * 13 9 *`, `gh workflow view` reports `active`, and a dispatched
+run on the same file worked minutes earlier.
 
 **The decision does not wait on that, because both models give the same answer.** 2 or 23,
 a five-minute schedule delivering a probe every 20 minutes at best - and running hours
