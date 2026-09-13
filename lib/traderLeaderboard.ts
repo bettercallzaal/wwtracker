@@ -56,8 +56,13 @@
 // trader missing from the site); "wallet counts match 157/157" had matched by
 // coincidence, one wallet swapped each way. Protocol PR #8.
 //
-// RE-CHECK BY 2026-09-13, before the Grand Final. Run it on the day - the check
-// compares a live site to a 2026-09-06 snapshot, so it only gets weaker.
+// RE-CHECKED 2026-09-13 04:30Z, before the Grand Final: HOLDS, recorded
+// 2026-09-10T14:35Z. All four conditions PASS - site aggregate negative, no wallet
+// shown profitable while down, largest single delta under 1 SOL, no snapshot trader
+// missing from the site. So the column is still safe to show during the final.
+//
+// RE-CHECK BY 2026-09-20. The check compares a live site to a 2026-09-06 snapshot,
+// so it only gets weaker with time, and a HOLDS today says nothing about next week.
 
 /** A row as the upstream leaderboard returns it. */
 export interface TraderLeaderboardRow {

@@ -182,7 +182,20 @@ the job, waits, and fails loudly with the exit code and an EX_CONFIG hint if
 nothing appears. Verified end to end - it reported VERIFIED with real output, and
 the first line it caught was a genuine `PAGE_SLOW` at 4961ms.
 
-**RE-CHECK BY 2026-09-13.**
+**RE-CHECKED 2026-09-13 04:31Z: the installer still verifies, and NOTHING IS INSTALLED.**
+`launchctl list` shows no `live-watch` job loaded on this machine, and the newest line in
+`var/live-watch.log` is 2026-09-12T22:13:49Z - a manual smoke test, not a scheduled run.
+
+So on the night this file was written for, the local watcher is not watching. That is the
+section heading below stated as a measurement rather than a warning: **merging a watcher is
+not watching, and neither is verifying its installer.** The installer was proven to work
+once, which is a different claim from the job being loaded now, and only the second one
+watches anything.
+
+Consequence for tonight, stated where it is read: **the hosted dispatch is the only probe
+running**, and the local path contributes nothing regardless of what `pmset` says.
+
+**RE-CHECK BY 2026-09-14.**
 
 ## Running it unattended
 
@@ -223,8 +236,26 @@ next.)*
 So a laptop watcher is a best effort, and the coverage with nobody present is the
 hosted check below.
 
-**RE-CHECK BY 2026-09-13.** Run `pmset -g` again on the day; it changes minute to
-minute with whatever else is running.
+**RE-CHECKED 2026-09-13 04:30Z, and the `sleep 1` figure was reading one profile as
+though it were the setting.** `pmset -g` reports the ACTIVE power source only. Read
+per profile with `pmset -g custom`:
+
+    Battery Power    sleep 1     one minute of idle, as recorded
+    AC Power         sleep 0     never idle-sleeps, displaysleep 0 as well
+
+So the local watcher's fragility is **conditional on the power source**, not a property
+of the machine. On AC it survives an unattended night; on battery it dies about a minute
+after the last `caffeinate` assertion drops. The active reading at 04:30Z was
+`sleep 0 (sleep prevented by powerd, AddressBookSourceSync, caffeinate)`, which is the
+AC profile plus three assertions - and quoting that alone would have been just as
+misleading in the opposite direction.
+
+Same shape as the other figures corrected this week: a number that is correct under one
+denominator and silently wrong under another. The honest statement is "1 minute on
+battery, never on AC", and neither half stands alone.
+
+**RE-CHECK BY 2026-09-14**, after the final, and read `pmset -g custom` rather than
+`pmset -g`.
 
 ## The hosted check - coverage when this Mac is asleep
 
