@@ -362,8 +362,17 @@ asking for 34 - and it is `pending`, not running.
 instead of racing, and it applies to scheduled runs too. So while a 340-minute dispatch
 holds the group, scheduled probes queue rather than run:
 
-    a long dispatch is running   ->  every scheduled run waits, however many fire
-    the dispatch ends            ->  a queued run starts, probing the site as it is THEN
+    a long dispatch is running   ->  a scheduled run is created and waits
+    another run joins the group  ->  the WAITING one is CANCELLED, not kept
+    the dispatch ends            ->  whatever is still queued starts, probing the site as it is THEN
+
+**Corrected 07:00Z: a queued run is cancelled when another joins the group, not kept.**
+This section first said scheduled runs "queue behind" the dispatch. Measured: scheduled run
+`34734100789` sat pending from 02:52:17Z and its conclusion is **`cancelled`, updated
+07:00:02Z** - the same second a second dispatch was created. So `cancel-in-progress: false`
+protects a RUNNING run only; GitHub keeps at most one pending run per group and discards the
+older one. The schedule therefore contributes nothing at all while a dispatch is up, which is
+stronger than "it waits its turn".
 
 That is the right trade during the final - the dispatch probes every 60 seconds, far
 better than the schedule ever offered - but two things follow. **A "pending" run is not
