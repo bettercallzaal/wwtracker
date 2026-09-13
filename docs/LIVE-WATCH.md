@@ -396,6 +396,22 @@ one: **340 probes from one dispatch against about 2 from the schedule over a com
 window.** A deadline loop inside a single job is two orders of magnitude better than asking
 GitHub's scheduler for the same coverage, because it asks once.
 
+**And the second dispatch, 07:36:10Z to 13:16:50Z, is the first run to catch anything at all:**
+
+    340   INFO  NOT_RUNNING
+    340   OK    PAGE_OK
+      2   INFO  FLAPPED      11:16:10Z and 13:06:48Z, each "recovered after 1 failed attempt"
+
+**That is the retry rule earning its keep, measured rather than argued.** Two probes failed and
+came back on the next attempt inside the same ten-second window. On a monitor that alarms on one
+failed request, those two transients would have produced **four notifications** - two alarms and
+two recoveries - for something that was never broken, on the day of the event. Instead they are
+two info lines, and they are still visible, which is the whole point of reporting a recovery at
+all rather than hiding it.
+
+If FLAPPED starts repeating rather than appearing twice in six hours, that is a different signal
+and the doc already says so. Two in 680 probes is weather.
+
 One more thing that log says, which no count of runs would: **no battle was running for the
 entire 5h41m.** Every probe returned `NOT_RUNNING`. A watch is only as informative as the
 period it covers, and this one covered a quiet stretch - which is a fact about the night, not
