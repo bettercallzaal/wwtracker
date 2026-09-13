@@ -383,6 +383,24 @@ its timestamp describes the queue and not the site.
 The count that matters is therefore runs EXECUTED in the window, and while a dispatch is
 up that number is zero by design rather than by scheduler failure.
 
+**MEASURED 07:45Z, the dispatched path against the same eight hours: it delivers exactly what
+it promises.** Run `34731726081` ran its full 340 minutes and completed `success`. Its log:
+
+    340   INFO  NOT_RUNNING     one probe per minute, no drift
+    340   OK    PAGE_OK         /live rendered 200 on every one
+      0   WARN or ALERT         nothing to report across 5h41m
+    01:55:27Z first probe, 07:36:00Z last
+
+So the comparison is not close, and it is now measured on both sides rather than projected on
+one: **340 probes from one dispatch against about 2 from the schedule over a comparable
+window.** A deadline loop inside a single job is two orders of magnitude better than asking
+GitHub's scheduler for the same coverage, because it asks once.
+
+One more thing that log says, which no count of runs would: **no battle was running for the
+entire 5h41m.** Every probe returned `NOT_RUNNING`. A watch is only as informative as the
+period it covers, and this one covered a quiet stretch - which is a fact about the night, not
+a fact about the watcher, and worth separating from "the watcher reported nothing wrong".
+
 **And the missing runs were never CREATED, which rules out the obvious alternative.** The
 dotfiles lane suggested the pattern might be GitHub creating a run per slot and failing to
 allocate a runner - which would look identical from a completed-run count, and would mean
