@@ -22,21 +22,38 @@
 # Fails the run on ALERT only. Info (no battle running) and warn (slow, stale)
 # pass with an annotation, so the only notification is one worth reading.
 #
-# RE-CHECK BY 2026-09-20: delete this file. It is scoped to one event, and the
-# date guard below stops it probing after the 14th, but a schedule that fires
-# and does nothing is still clutter.
+# RE-CHECKED 2026-09-17, and THE CLAIM CHANGED rather than the date.
+#
+# This used to say "delete this file, it is scoped to one event". That was right
+# when the whole file was event-scoped. It is not right now, and two measurements
+# say why.
+#
+# First, the event never happened. The Grand Final was moved off the 13th and then
+# cancelled outright (Zaal, 2026-09-13: "it moved to next week", then "Cancel it"),
+# so every schedule below is pointed at a night that did not occur.
+#
+# Second, the schedules are NOT recurring clutter, which is what the old claim
+# assumed. Every cron here carries a month field of 9, so they do not fire monthly
+# - the next firing of `17 * 11-12 9 *` is 2027-09-11. Checked rather than assumed,
+# because "it will fire again next month" was my first reading and it was wrong.
+#
+# So the scheduled half is dead until next September and aimed at nothing, while
+# `workflow_dispatch` is the half that has actually been used - it is how the
+# alert-delivery test ran on 2026-09-12 (dispatch 34714552200), which is what
+# established that the run fails correctly and notifies nobody.
+#
+# The schedules are removed and the dispatch is kept. Deleting the file would
+# throw away the working half to tidy the dead one.
+#
+# INVALIDATED BY: a rescheduled final, which needs new cron dates rather than this
+# file back. RE-CHECK BY 2026-10-17.
 name: live-watch
 
 on:
-  schedule:
-    # Hourly on the 11th and 12th (UTC): proves the schedule actually fires
-    # before the night it matters, rather than trusting that it will.
-    - cron: "17 * 11-12 9 *"
-    # Every 5 minutes from 00:00 UTC on the 13th (20:00 ET on the 12th) ...
-    - cron: "*/5 * 13 9 *"
-    # ... through 07:55 UTC on the 14th (03:55 ET). The start time of the final
-    # is not in any file this lane can read, so the window is the whole day.
-    - cron: "*/5 0-7 14 9 *"
+  # No schedule. The three crons that were here covered the 11th to the 14th of
+  # September for a final that was cancelled; they are in git history if a
+  # rescheduled event ever wants them as a starting point. Re-adding a schedule
+  # means picking dates for an event that exists, not restoring these.
   workflow_dispatch:
     inputs:
       base:
@@ -78,14 +95,17 @@ jobs:
           BASE: ${{ github.event.inputs.base || 'https://wwtracker.vercel.app' }}
           MINUTES: ${{ github.event.inputs.minutes || '0' }}
         run: |
-          # The cron matches 13 September every year. Only this one counts.
-          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%Y%m%d)" -gt 20260914 ]; then
-            echo "::notice::live-watch expired after 2026-09-14 - delete .github/workflows/live-watch.yml"
-            # A green run here probed NOTHING. Say so where a green check is
-            # read, so it cannot pass for "site up".
-            echo "**RETIRED - dispatch only.** This scheduled run probed nothing: the watch window ended 2026-09-14. A green check here does not mean /live is up." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
+          # The hardcoded expiry that used to live here is gone with the schedules
+          # it was guarding, and removing it was NOT tidying - it had become a
+          # trap. It skipped any scheduled run dated after 2026-09-14, so the
+          # moment someone re-added a schedule for a rescheduled final it would
+          # have silently no-opped every probe while the workflow still went
+          # green. A guard outliving the thing it guards is worse than no guard,
+          # because it is invisible and it reads as passing.
+          #
+          # Nothing is scheduled now, so there is nothing to expire. If a schedule
+          # is ever added back, it needs dates for an event that exists - and no
+          # expiry unless that event has an end.
           # MINUTES > 0 is the dispatched loop - the path to rely on during the
           # final, because GitHub's scheduler is not. Measured 2026-09-11: the
           # daily checks.yml schedule (08:30 UTC) has fired 4-6 hours late every
