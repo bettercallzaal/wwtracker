@@ -98,6 +98,47 @@ trades - the most holders any side has ever ended with is **18**, so the flag ha
 never yet been true. It is published because the first battle large enough to
 trip it will be the first one anybody is watching live.
 
+### `POST /api/ww/trade` - NOT for embedding
+
+**Every other endpoint on this page is yours to call. This one is not.** It is
+same-origin only: it sends no CORS headers, so a browser on another site will
+refuse the response. It is listed here because an undocumented route is worse
+than a documented refusal, not because it is available.
+
+It exists because the trading widget has to reach an RPC and ours is keyed. The
+key stays on the server and the browser posts through it. Three actions:
+
+| action | does | returns |
+|---|---|---|
+| `prepare` | fetches a recent blockhash to build against | `blockhash`, `lastValidBlockHeight` |
+| `preflight` | simulates a signed transaction, never sends | `would-succeed` or `would-fail` with the program's own error |
+| `send` | simulates, then sends only if it would succeed | `sent` with a `signature`, or `would-fail` and nothing spent |
+
+It refuses to forward anything that is not a WaveWarZ trade. Every instruction
+must target the WaveWarZ program, ComputeBudget, or Lighthouse (which Phantom
+injects when it signs), and at least one must be a buy, sell or claim -
+identified by discriminator, so `initializeBattle` and `endBattle` are refused.
+A refusal is a `403` with the reason. See `lib/ww/relayPolicy.ts`.
+
+`send` simulates first on purpose. A transaction that will fail still costs a
+fee, and simulating turns `custom program error: 0x1771` into
+`Battle has already ended.` for one extra call.
+
+**Legacy transactions only.** A versioned (v0) transaction is refused with a
+`403`. The policy resolves programs from the static account-keys array, which an
+address lookup table defeats, and lookup tables cannot be resolved without an
+on-chain fetch - so refusing is the correct answer rather than guessing.
+
+**Rate limited**, because CORS stops browsers and not `curl`. 20 requests a
+minute per caller and a hard global ceiling across all callers, returning `429`
+with `Retry-After`. The limit protects the RPC key, not the relay: that key is
+what keeps `/live` up, and an unmetered relay is a way to exhaust it that looks
+like a broken deployment rather than an attack. The budget is in memory, so it is
+per server instance - a mitigation, not a guarantee, and the honest fix is shared
+storage.
+
+---
+
 ---
 
 ## The response shape, and the one rule
