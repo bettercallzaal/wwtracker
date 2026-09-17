@@ -12,7 +12,12 @@
  * mainnet for all 1,679 battles. The port is checked against a real on-chain
  * transaction rather than against the Python - see __tests__/wwInstructions.test.ts.
  */
-import { createHash } from "node:crypto";
+import { sha256 } from "./sha256";
+
+// NOT node:crypto. That is Node-only, so it breaks the moment a bundler is asked
+// to put this in a browser - which is exactly what happened the first time the
+// widget was built, and which no test in this repo could have caught because
+// vitest runs in Node. See lib/ww/sha256.ts.
 
 const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
@@ -107,10 +112,7 @@ export function findPda(
 ): { address: string; bump: number } {
   const prog = b58decode(programId);
   for (let bump = 255; bump >= 0; bump--) {
-    const h = createHash("sha256")
-      .update(concat([...seeds, Uint8Array.from([bump]), prog, MARKER]))
-      .digest();
-    const bytes = new Uint8Array(h);
+    const bytes = sha256(concat([...seeds, Uint8Array.from([bump]), prog, MARKER]));
     if (!onCurve(bytes)) return { address: b58encode(bytes), bump };
   }
   throw new Error("no off-curve address found");
