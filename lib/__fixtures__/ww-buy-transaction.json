@@ -1,0 +1,32 @@
+{
+ "_what": "One real mainnet buyShares transaction, and the raw battle account it traded against. The fixture for lib/ww/instructions.ts: the builder must reproduce these bytes and these accounts exactly.",
+ "_source": "Fetched from mainnet 2026-09-17 via getTransaction and getAccountInfo. All of it is public chain data.",
+ "battle_id": 1784504890,
+ "signature": "4XqZHbqdYF8PWSr9U5ffuJiiJseuj2xKJg3uxoU5A11ch7zUgqGgh2A7gMRFtocTnZywTAG1uBEttvRKf1wiKaFY",
+ "slot": 433994465,
+ "block_time": 1784505791,
+ "program_id": "9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo",
+ "instruction_data_hex": "28ef8a9a08256a6c80c3c9010000000000503c55000000000035665d6a00000000",
+ "decoded_args": {
+  "amount_lamports": 30000000,
+  "artist_a": false,
+  "min_tokens_out": 5586000,
+  "deadline": 1784505909
+ },
+ "accounts_in_order": [
+  "2g6DWxVcuB73Bu1oYC941DmSi9rLmVVkLLPrkXe1ukpi",
+  "5uzWtYkS6z3dBcSv8WZecuAsfZxR6mAPoWbEVvbXDrDf",
+  "7YRzUWEftY5Q82Awzw2u28rEMvjvznkrYpudq3x1qa81",
+  "7dnH5sVcTiPdmQofcUcrFYd1dChwEUgUHVzVnUqFYGoN",
+  "Bqn65F3HcsJYuMvZiTbhdPaayHdseXbASsqWbATFKnSv",
+  "HegpwNycqbtc8GCPEkNCK9ToWPiuccw1wRewvi4Dsjkp",
+  "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+  "B97zbRCUf2jhPj6Cs2QXc9EGyWdNDvQ6ExUeB7sxrTSA",
+  "23oqJnEJhJ3qLTq5MjKYPgLDYjfpRmvWWzMA3Zq6NGmg",
+  "2qWFQq8noD2QXsytkTeGtkcReDG7TvZvia765WeEdWWx",
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  "11111111111111111111111111111111",
+  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+ ],
+ "battle_account_base64": "UZR5Rz+mdBg6Yl1qAAAAAP/7//86Yl1qAAAAAL5lXWoAAAAAlqlsOFf9E4snqneQnnM+WiBfuR5iS41iTSRhlaUGyjMPk8155BaN1lL8rUkNs+2qbkFUlGdFpbUj+XCyBBwN09WU7OESk4P3WA7GxW9dWBa95rhDvKRgmt8buSnmsqMiSQH7iRf0No+aMhyRAvH8/ne/rpyRbIAT5ckxOEK03gJhM2JMd7AkZ6NjHup5jQKUUpwsuIs1rKf9z+yW/sJ0msD5L9kAAAAAoLTSSwAAAACwTyovBgAAALCQhMEAAAAAsE8qLwYAAACwkITBAAAAAAEBAAEBkImSfAYAAADVlOzhEpOD91gOxsVvXVgWvea4Q7ykYJrfG7kp5rKjIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+}
