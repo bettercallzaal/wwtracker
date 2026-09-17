@@ -51,15 +51,26 @@ export function encodeCompactU16(n: number): Uint8Array {
   return Uint8Array.from(out);
 }
 
+/**
+ * Reading past the end must throw, not return a plausible number. `bytes[i]` on
+ * a truncated buffer is `undefined`, and `undefined & 0x7f` is 0 - so without
+ * this check the loop terminates cleanly and yields a wrong length, which the
+ * caller then trusts. A module whose purpose is showing someone what they are
+ * about to sign cannot fail that way on malformed input.
+ */
 export function decodeCompactU16(bytes: Uint8Array, at: number): [number, number] {
   let n = 0;
   let shift = 0;
   let i = at;
   for (;;) {
+    if (i >= bytes.length) {
+      throw new Error(`compact-u16 ran past the end of the buffer at byte ${i}`);
+    }
     const c = bytes[i++];
     n |= (c & 0x7f) << shift;
     if ((c & 0x80) === 0) break;
     shift += 7;
+    if (shift > 14) throw new Error("compact-u16 longer than three bytes");
   }
   return [n, i];
 }
@@ -112,6 +123,12 @@ export function compileAccounts(
   instructions: Instruction[],
 ): CompiledAccount[] {
   const merged = new Map<string, CompiledAccount>();
+  // The merge takes the STRONGEST flags, never the latest: an account that is
+  // writable in one instruction and readonly in another must end up writable, or
+  // the instruction that writes it fails at runtime. Every real WaveWarZ
+  // instruction is flag-consistent per account, so this branch only ever runs in
+  // the trivial case and no fixture can exercise it - see the synthetic
+  // conflicting-flags test, which is the only way that case exists here.
   const see = (m: CompiledAccount) => {
     const prev = merged.get(m.pubkey);
     if (prev) {

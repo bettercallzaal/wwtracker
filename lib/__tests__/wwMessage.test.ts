@@ -56,6 +56,31 @@ describe("compact-u16", () => {
     expect(() => encodeCompactU16(65536)).toThrow(/out of range/);
     expect(() => encodeCompactU16(-1)).toThrow(/out of range/);
   });
+
+  /**
+   * `bytes[i]` past the end is `undefined`, and `undefined & 0x7f` is 0 - so an
+   * unguarded decoder terminates cleanly on a truncated buffer and returns a
+   * wrong-but-plausible length that the caller then trusts. Silently succeeding
+   * on malformed input is the wrong failure mode for a parser whose output a
+   * person is asked to approve.
+   */
+  it("throws when the length prefix runs past the end of the buffer", () => {
+    expect(() => decodeCompactU16(Uint8Array.from([0x80]), 0)).toThrow(/past the end/);
+    expect(() => decodeCompactU16(new Uint8Array(0), 0)).toThrow(/past the end/);
+    expect(() => decodeCompactU16(Uint8Array.from([0x01, 0x80]), 1)).toThrow(
+      /past the end/,
+    );
+  });
+
+  it("refuses a continuation longer than compact-u16 allows", () => {
+    expect(() => decodeCompactU16(Uint8Array.from([0x80, 0x80, 0x80, 0x01]), 0)).toThrow(
+      /longer than three bytes/,
+    );
+  });
+
+  it("propagates the error up through parseMessage on a truncated message", () => {
+    expect(() => parseMessage(raw.slice(0, 3))).toThrow(/past the end/);
+  });
 });
 
 describe("parsing the real transaction", () => {
@@ -205,6 +230,57 @@ describe("compiling a message we build ourselves", () => {
     expect(back.accounts.map((a) => [a.isSigner, a.isWritable])).toEqual(
       accounts.map((a) => [a.isSigner, a.isWritable]),
     );
+  });
+
+  /**
+   * The dedup merge takes the strongest flags, never the latest. No fixture can
+   * show this: every real WaveWarZ instruction is flag-consistent per account,
+   * so the merge only ever runs in the trivial case where both sides agree, and
+   * `&&=` or last-write-wins would pass the whole suite. Same shape as the
+   * four-group bug in this file - a branch no real input reaches - and found the
+   * same way, by asking rather than by a test going red.
+   *
+   * It matters at runtime: an account marked readonly because the readonly
+   * instruction was compiled last makes the instruction that writes it fail.
+   */
+  it("merges conflicting flags for one account by taking the strongest", () => {
+    const shared = buyFixture.accounts_in_order[1];
+    const writesIt = {
+      programId: PROGRAM_ID,
+      keys: [{ pubkey: shared, isSigner: false, isWritable: true }],
+      data: new Uint8Array([1]),
+    };
+    const readsIt = {
+      programId: PROGRAM_ID,
+      keys: [{ pubkey: shared, isSigner: false, isWritable: false }],
+      data: new Uint8Array([2]),
+    };
+
+    for (const order of [
+      [writesIt, readsIt],
+      [readsIt, writesIt], // the order that last-write-wins would get wrong
+    ]) {
+      const account = compileAccounts(trader, order).find((a) => a.pubkey === shared)!;
+      expect(account.isWritable).toBe(true);
+    }
+
+    // Same for the signer flag, and it must survive into the serialized header.
+    const signsIt = {
+      programId: PROGRAM_ID,
+      keys: [{ pubkey: shared, isSigner: true, isWritable: false }],
+      data: new Uint8Array([3]),
+    };
+    const compiled = compileAccounts(trader, [readsIt, signsIt]).find(
+      (a) => a.pubkey === shared,
+    )!;
+    expect(compiled.isSigner).toBe(true);
+
+    const back = parseMessage(serializeMessage(trader, blockhash, [readsIt, signsIt]));
+    const roundTripped = back.accounts.find((a) => a.pubkey === shared)!;
+    expect(roundTripped.isSigner).toBe(true);
+    // Both instructions must still point at that one account, not two entries.
+    expect(back.accounts.filter((a) => a.pubkey === shared)).toHaveLength(1);
+    expect(back.instructions.every((ix) => ix.keys[0].pubkey === shared)).toBe(true);
   });
 
   it("never marks a program id writable or signing", () => {
