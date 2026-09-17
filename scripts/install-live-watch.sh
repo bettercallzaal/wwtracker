@@ -32,8 +32,16 @@
 # So: no wrapper. If the machine sleeps, the watch stops, and the honest answer
 # for coverage with nobody present is a hosted check.
 #
-# RE-CHECK BY 2026-09-13: run `pmset -g` again before the Grand Final. This
-# reasoning is only as good as that setting.
+# RE-VERIFIED 2026-09-17 with `pmset -g custom`: Battery `sleep 1`, AC `sleep 0`.
+# Unchanged, so the reasoning above still holds.
+#
+# The date on this used to read "before the Grand Final", an event that moved and
+# was then cancelled - so it was anchored to something that never happened while
+# the setting it actually depends on was never in question. Anchored to the
+# setting now.
+#
+# INVALIDATED BY: `pmset -g custom` reporting anything but `sleep 1` on Battery or
+# `sleep 0` on AC. RE-CHECK BY 2026-10-17.
 set -euo pipefail
 
 LABEL="com.zao.wwtracker.livewatch"

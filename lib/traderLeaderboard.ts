@@ -61,8 +61,20 @@
 // shown profitable while down, largest single delta under 1 SOL, no snapshot trader
 // missing from the site. So the column is still safe to show during the final.
 //
-// RE-CHECK BY 2026-09-20. The check compares a live site to a 2026-09-06 snapshot,
-// so it only gets weaker with time, and a HOLDS today says nothing about next week.
+// RE-CHECKED 2026-09-17: HOLDS. `tools/pnl-restore-check.py` against the committed
+// snapshot, all four conditions PASS - site aggregate -21.38 SOL, 0 wallets shown
+// profitable while down, largest single delta 0.70 SOL (FeXBfG1HsyUp), 0 snapshot
+// traders missing (site 157, chain 157). VERDICT: SAFE TO SHOW.
+//
+// The snapshot is now 11.2 days old against 7 at the last check, and the tool
+// reports that age itself - which is the number that decides this, not the
+// calendar. One site wallet the snapshot has never seen, unchanged.
+//
+// RE-CHECK BY 2026-09-27, deliberately the shortest date in this repo. The check
+// compares a live site to a frozen 2026-09-06 snapshot, so it only gets weaker
+// with time and a HOLDS today says nothing about next week. INVALIDATED BY: any
+// condition flipping, or the snapshot passing about three weeks old, whichever
+// comes first - past that the comparison is too weak to carry the column.
 
 /** A row as the upstream leaderboard returns it. */
 export interface TraderLeaderboardRow {

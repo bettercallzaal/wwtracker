@@ -192,10 +192,20 @@ not watching, and neither is verifying its installer.** The installer was proven
 once, which is a different claim from the job being loaded now, and only the second one
 watches anything.
 
-Consequence for tonight, stated where it is read: **the hosted dispatch is the only probe
-running**, and the local path contributes nothing regardless of what `pmset` says.
+Consequence, stated where it is read: **the hosted dispatch is the only probe running**, and
+the local path contributes nothing regardless of what `pmset` says.
 
-**RE-CHECK BY 2026-09-14.**
+**RE-VERIFIED 2026-09-17: still true.** `launchctl list` finds no
+`com.zao.wwtracker.livewatch` job, so nothing local is running and the claim holds exactly as
+written.
+
+*("Consequence for tonight" until 2026-09-17. The date on this claim was anchored to the Grand
+Final on the 13th, which Zaal moved and then cancelled - so the claim outlived the event it was
+scoped to and the anchor was the stale part, not the fact. Re-anchored to the condition.)*
+
+**INVALIDATED BY:** anyone running `./scripts/install-live-watch.sh`. There is no other way for
+a local job to appear, so that command is the whole condition - `launchctl list | grep
+livewatch` returning a line is the check. **RE-CHECK BY 2026-10-17.**
 
 ## Running it unattended
 
@@ -254,8 +264,15 @@ Same shape as the other figures corrected this week: a number that is correct un
 denominator and silently wrong under another. The honest statement is "1 minute on
 battery, never on AC", and neither half stands alone.
 
-**RE-CHECK BY 2026-09-14**, after the final, and read `pmset -g custom` rather than
-`pmset -g`.
+**RE-VERIFIED 2026-09-17** with `pmset -g custom`, which is the reading that separates the two
+profiles rather than showing the active one. Unchanged: **Battery `sleep 1`, AC `sleep 0`** -
+one minute on battery, never on AC. Both halves of the honest statement still hold.
+
+*(The date here said "after the final". The final moved and was cancelled, so re-anchored to
+the setting itself, which is what the reasoning actually depends on.)*
+
+**INVALIDATED BY:** `pmset -g custom` reporting anything other than `sleep 1` on Battery or
+`sleep 0` on AC. **RE-CHECK BY 2026-10-17.**
 
 ## The hosted check - coverage when this Mac is asleep
 

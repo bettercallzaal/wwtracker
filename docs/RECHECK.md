@@ -40,7 +40,24 @@ Two things follow, and both need doing rather than remembering:
 - create a **second** key so the scan tooling stops sharing a budget with the
   production page - `WW_RPC_RPS` is 6 only because they share one
 
-**RE-CHECK BY 2026-09-14**
+**RE-CHECKED 2026-09-17: STILL OPEN, and the date moving is not progress.**
+Production is healthy - `/api/ww/positions?battleId=1789184502` returns
+`status: live` with no `UNAUTHORIZED`, so the key production runs on is intact.
+Neither remaining step has happened. Both are Zaal's hands at
+`dashboard.helius.dev` and neither is checkable from here by design: confirming
+the old key returns 401 means using a disclosed secret, which this lane does not
+do.
+
+One thing that changed since 09-14 and is worth recording: the local check that
+used to confirm step 5 - reading the mtime of `~/.zao/private/wavewarz.env` - is
+now refused by this machine's permission layer. So the evidence for "not done"
+is weaker than it was, not stronger. It is inference from nobody reporting it
+done, rather than a file timestamp.
+
+**INVALIDATED BY:** Zaal deleting the disclosed key and creating `wwtracker-scans`.
+**RE-CHECK BY 2026-10-17** - a month, because four re-checks have now moved this
+date without the work moving, and a shorter interval has only ever produced
+another date change.
 
 ### The ~20k/day Helius usage threshold is a per-key derivation
 
@@ -55,7 +72,20 @@ includes traffic that is not ours and fails in the direction that *hides* a thef
 `wavewarzapp` was measured on 2026-09-08 and defines no environment variables at
 all, so it is not a contributor - but that was one project of 35+.
 
-**RE-CHECK BY 2026-09-14**
+**RE-CHECKED 2026-09-17: the uncertainty is unchanged, and that is the finding.**
+Nothing has established the dashboard's reporting scope, so the comparison is
+still capable of failing in the direction that hides a theft. No new measurement
+was available: the scope question can only be answered at the Helius dashboard,
+which is Zaal's.
+
+Relevant and NOT the same thing: Candy hit `429 max usage reached` on her own
+Helius plan between 09-11 and 09-16 (wavewarz-protocol #28), which left 21 battles
+unhydrated until she fixed the billing. That is her account, not ours, and it is
+recorded here only so a later reader does not mistake it for evidence about this
+threshold. It says nothing about our key.
+
+**INVALIDATED BY:** anyone establishing whether Helius reports per-key or
+per-account. **RE-CHECK BY 2026-10-17.**
 
 ### The three skip/queue datasets are knowingly parked
 
