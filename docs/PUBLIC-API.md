@@ -98,6 +98,34 @@ trades - the most holders any side has ever ended with is **18**, so the flag ha
 never yet been true. It is published because the first battle large enough to
 trip it will be the first one anybody is watching live.
 
+### `POST /api/ww/trade` - NOT for embedding
+
+**Every other endpoint on this page is yours to call. This one is not.** It is
+same-origin only: it sends no CORS headers, so a browser on another site will
+refuse the response. It is listed here because an undocumented route is worse
+than a documented refusal, not because it is available.
+
+It exists because the trading widget has to reach an RPC and ours is keyed. The
+key stays on the server and the browser posts through it. Three actions:
+
+| action | does | returns |
+|---|---|---|
+| `prepare` | fetches a recent blockhash to build against | `blockhash`, `lastValidBlockHeight` |
+| `preflight` | simulates a signed transaction, never sends | `would-succeed` or `would-fail` with the program's own error |
+| `send` | simulates, then sends only if it would succeed | `sent` with a `signature`, or `would-fail` and nothing spent |
+
+It refuses to forward anything that is not a WaveWarZ trade. Every instruction
+must target the WaveWarZ program, ComputeBudget, or Lighthouse (which Phantom
+injects when it signs), and at least one must be a buy, sell or claim -
+identified by discriminator, so `initializeBattle` and `endBattle` are refused.
+A refusal is a `403` with the reason. See `lib/ww/relayPolicy.ts`.
+
+`send` simulates first on purpose. A transaction that will fail still costs a
+fee, and simulating turns `custom program error: 0x1771` into
+`Battle has already ended.` for one extra call.
+
+---
+
 ---
 
 ## The response shape, and the one rule
