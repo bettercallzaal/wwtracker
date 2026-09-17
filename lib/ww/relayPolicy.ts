@@ -27,8 +27,33 @@
  * injects Lighthouse (`L2TExMF...`) assertions into a transaction BEFORE it
  * signs, so they are inside the signed message and a policy that rejected them
  * would reject every real Phantom trade. Measured on the mainnet buy in
- * `lib/__fixtures__`: six instructions, three of them Lighthouse. They assert
- * post-transaction state and cannot move funds - that is their entire purpose.
+ * `lib/__fixtures__`: six instructions, three of them Lighthouse.
+ *
+ * WHAT ACTUALLY MAKES THAT SAFE IS NOT LIGHTHOUSE'S BEHAVIOUR. The first version
+ * of this comment defended the entry by saying Lighthouse only asserts and
+ * cannot move funds. True of its documented instruction set, and the wrong
+ * argument: it rests on a belief about somebody else's program.
+ *
+ * The property that holds regardless is structural. THE RELAY NEVER SIGNS. The
+ * server has `SOLANA_RPC_URL` and no keypair; it forwards already-signed bytes
+ * with `sigVerify: false`, and the fee payer is `accounts[0]`, which must have
+ * signed. So the caller is the sole signer and the sole payer, and any funds a
+ * smuggled instruction could move are the caller's own. That stays true even if
+ * the belief about Lighthouse is wrong, which is what makes it the better
+ * argument. (Non-author security review, 2026-09-17.)
+ *
+ * TWO LIMITS OF THIS POLICY, both real, both bounded by the same property:
+ *
+ *   - Lighthouse is matched on PROGRAM ID ONLY. A Lighthouse instruction with
+ *     arbitrary data and arbitrary accounts passes. Demonstrated by review.
+ *   - A trade is matched on DISCRIMINATOR ONLY. A buy naming an attacker-chosen
+ *     battle, vault or recipient passes, because the accounts are never checked
+ *     against the battle id they claim.
+ *
+ * Neither is fixed in code, deliberately: validating accounts here would mean
+ * re-deriving PDAs per request and would still not stop a caller spending their
+ * own money badly. They are written down because a future reader who assumes
+ * this policy validates more than it does would be wrong.
  */
 import { parseMessage } from "./message";
 import { PROGRAM_ID } from "./pda";
@@ -63,6 +88,29 @@ const hex8 = (data: Uint8Array) => Buffer.from(data.slice(0, 8)).toString("hex")
  * malformed transaction deserves to be told which rule it broke.
  */
 export function decideRelay(messageBytes: Uint8Array): RelayDecision {
+  /**
+   * Versioned (v0) transactions are refused BY DESIGN, not by accident.
+   *
+   * `parseMessage` is legacy-only: it resolves every program by indexing the
+   * static account-keys array, which is exactly what a v0 address lookup table
+   * defeats - in v0 a program can live in an ALT, and resolving it needs an
+   * on-chain fetch an offline parser cannot make. So a crafted message could
+   * parse cleanly here as all-allowed legacy while the runtime reads the same
+   * bytes as v0 and executes instructions this policy never saw.
+   *
+   * A v0 message already failed, but only because the 0x80 version byte
+   * happened to break compact-u16 alignment - "unparseable message", by luck.
+   * Luck is not a defence and a future parser change could remove it. Supporting
+   * v0 is not the answer either: ALTs cannot be resolved offline, so refusing is
+   * correct. (Non-author security review, 2026-09-17.)
+   */
+  if (messageBytes.length > 0 && (messageBytes[0] & 0x80) !== 0) {
+    return {
+      ok: false,
+      reason: "versioned transactions not supported - send a legacy transaction",
+    };
+  }
+
   let message;
   try {
     message = parseMessage(messageBytes);

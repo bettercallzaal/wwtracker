@@ -115,6 +115,42 @@ describe("what it refuses", () => {
     expect(d.reason).toMatch(/program not allowed/);
   });
 
+  /**
+   * Versioned transactions, refused by design rather than by luck.
+   *
+   * parseMessage is legacy-only - it resolves programs by indexing the static
+   * account-keys array, which a v0 address lookup table defeats. Before this
+   * check a v0 message failed only because the 0x80 version byte broke
+   * compact-u16 alignment, i.e. accidentally. The danger is a message that
+   * parses as all-allowed legacy while the runtime executes it as v0.
+   */
+  it("refuses a versioned transaction, naming the reason rather than failing to parse", () => {
+    const legacy = build([
+      buySharesInstruction({
+        battleId: buyFixture.battle_id, trader, battle, artistA: true,
+        amountLamports: 1, minTokensOut: 0, deadline: 1,
+      }),
+    ]);
+    // The same bytes with the v0 version byte in front.
+    const versioned = Uint8Array.from([0x80, ...legacy]);
+    const d = decideRelay(versioned);
+    expect(d.ok).toBe(false);
+    if (d.ok) return;
+    expect(d.reason).toMatch(/versioned transactions not supported/);
+    // and the legacy original is still allowed, so the check is not just
+    // rejecting everything
+    expect(decideRelay(legacy).ok).toBe(true);
+  });
+
+  it("refuses any high-bit version byte, not only 0x80", () => {
+    for (const v of [0x80, 0x81, 0xff]) {
+      const d = decideRelay(Uint8Array.from([v, 1, 0, 6]));
+      expect(d.ok).toBe(false);
+      if (d.ok) return;
+      expect(d.reason).toMatch(/versioned/);
+    }
+  });
+
   it("refuses an unparseable message rather than guessing", () => {
     const d = decideRelay(Uint8Array.from([1, 0, 6, 200]));
     expect(d.ok).toBe(false);

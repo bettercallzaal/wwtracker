@@ -27,7 +27,8 @@
 // "custom program error: 0x1771" - at the cost of one extra RPC call.
 
 import { decideRelay, splitTransaction } from "@/lib/ww/relayPolicy";
-import { redactUrl } from "@/lib/redact";
+import { RelayBudget, callerKey } from "@/lib/ww/rateLimit";
+import { redactUrl, redactSecrets } from "@/lib/redact";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 const RPC_SOURCE = redactUrl(RPC);
@@ -36,6 +37,22 @@ export const dynamic = "force-dynamic";
 
 /** Big enough for a signed transaction with guards, small enough to refuse a flood. */
 const MAX_TRANSACTION_BYTES = 1600;
+
+/**
+ * Module scope, so it survives between requests on one instance. Per instance
+ * is the known limit of doing this in memory - see lib/ww/rateLimit.ts.
+ */
+const budget = new RelayBudget();
+
+/**
+ * `prepare` needs no transaction and spends an RPC call, which made it the
+ * cheapest thing on this route to abuse. A blockhash stays valid for about a
+ * minute, so serving one a few seconds old costs a caller nothing and collapses
+ * any number of calls into one upstream request. That removes the amplification
+ * rather than merely rationing it, which is the better fix where it is available.
+ */
+const BLOCKHASH_CACHE_MS = 8_000;
+let blockhashCache: { at: number; value: { blockhash: string; lastValidBlockHeight: number } } | null = null;
 
 type Json = Record<string, unknown>;
 
@@ -53,12 +70,12 @@ async function rpc<T>(method: string, params: unknown[]): Promise<T> {
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
     cache: "no-store",
   });
-  if (!res.ok) throw new Error(`rpc ${method}: HTTP ${res.status}`);
+  if (!res.ok) throw new Error(redactSecrets(`rpc ${method}: HTTP ${res.status}`));
   const body = await res.json();
   if (body.error) {
     // The RPC echoes back parts of the request in some errors, and the request
     // never contains the key - but the URL does, so nothing here interpolates it.
-    throw new Error(`rpc ${method}: ${JSON.stringify(body.error).slice(0, 200)}`);
+    throw new Error(redactSecrets(`rpc ${method}: ${JSON.stringify(body.error).slice(0, 200)}`));
   }
   return body.result as T;
 }
@@ -116,15 +133,38 @@ export async function POST(request: Request) {
 
   const action = body.action;
 
+  // Every action below can cause an upstream call, so the budget is taken before
+  // any of them - including for a request that later turns out to be malformed.
+  // Charging only well-formed requests would leave a free channel open.
+  const spend = budget.take(callerKey(request.headers));
+  if (!spend.allowed) {
+    return new Response(
+      JSON.stringify({ status: "rate-limited", error: spend.reason, source: RPC_SOURCE }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+          "Retry-After": String(spend.retryAfter),
+        },
+      },
+    );
+  }
+
   if (action === "prepare") {
+    const now = Date.now();
+    if (blockhashCache && now - blockhashCache.at < BLOCKHASH_CACHE_MS) {
+      return json(200, { status: "ok", ...blockhashCache.value, cached: true });
+    }
     try {
       const { value } = await rpc<{ value: { blockhash: string; lastValidBlockHeight: number } }>(
         "getLatestBlockhash",
         [{ commitment: "confirmed" }],
       );
-      return json(200, { status: "ok", ...value });
+      blockhashCache = { at: now, value };
+      return json(200, { status: "ok", ...value, cached: false });
     } catch (err) {
-      return json(502, { status: "error", error: (err as Error).message });
+      return json(502, { status: "error", error: redactSecrets((err as Error).message) });
     }
   }
 
@@ -138,7 +178,7 @@ export async function POST(request: Request) {
     tx = decodeTransaction(body.transaction);
     ({ message } = splitTransaction(tx));
   } catch (err) {
-    return json(400, { status: "error", error: (err as Error).message });
+    return json(400, { status: "error", error: redactSecrets((err as Error).message) });
   }
 
   const decision = decideRelay(message);
@@ -152,7 +192,7 @@ export async function POST(request: Request) {
   try {
     sim = await simulate(tx);
   } catch (err) {
-    return json(502, { status: "error", error: (err as Error).message });
+    return json(502, { status: "error", error: redactSecrets((err as Error).message) });
   }
 
   const wouldFail = readableError(sim);
@@ -183,7 +223,7 @@ export async function POST(request: Request) {
     ]);
     return json(200, { status: "sent", signature, trades: decision.trades, sent: true });
   } catch (err) {
-    return json(502, { status: "error", error: (err as Error).message, sent: false });
+    return json(502, { status: "error", error: redactSecrets((err as Error).message), sent: false });
   }
 }
 

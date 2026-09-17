@@ -124,6 +124,19 @@ A refusal is a `403` with the reason. See `lib/ww/relayPolicy.ts`.
 fee, and simulating turns `custom program error: 0x1771` into
 `Battle has already ended.` for one extra call.
 
+**Legacy transactions only.** A versioned (v0) transaction is refused with a
+`403`. The policy resolves programs from the static account-keys array, which an
+address lookup table defeats, and lookup tables cannot be resolved without an
+on-chain fetch - so refusing is the correct answer rather than guessing.
+
+**Rate limited**, because CORS stops browsers and not `curl`. 20 requests a
+minute per caller and a hard global ceiling across all callers, returning `429`
+with `Retry-After`. The limit protects the RPC key, not the relay: that key is
+what keeps `/live` up, and an unmetered relay is a way to exhaust it that looks
+like a broken deployment rather than an attack. The budget is in memory, so it is
+per server instance - a mitigation, not a guarantee, and the honest fix is shared
+storage.
+
 ---
 
 ---
