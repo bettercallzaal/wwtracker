@@ -98,6 +98,21 @@ trades - the most holders any side has ever ended with is **18**, so the flag ha
 never yet been true. It is published because the first battle large enough to
 trip it will be the first one anybody is watching live.
 
+### `GET /api/ww/battle-account?battleId=<id>` - NOT for embedding
+
+Same-origin only, like `/api/ww/trade`. It returns the raw Battle account as
+base64, plus the two pool figures and the end time decoded from it.
+
+It exists for the trading widget, which needs three wallets that live at fixed
+offsets in that account and puts them straight into an instruction's account
+list. Returning the bytes lets one tested decoder read them, rather than trusting
+this route to re-describe the layout. A battle with no account returns `404`
+`not-found` rather than a zero-filled object - a derived address always looks
+valid, so "no account here" is the only honest answer.
+
+If you want battle data to embed, use `/api/ww/battle` or `/api/ww/positions`,
+which are public, cached and CORS-open.
+
 ### `POST /api/ww/trade` - NOT for embedding
 
 **Every other endpoint on this page is yours to call. This one is not.** It is
