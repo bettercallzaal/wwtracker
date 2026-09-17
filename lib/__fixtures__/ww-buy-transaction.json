@@ -1,6 +1,6 @@
 {
  "_what": "One real mainnet buyShares transaction, and the raw battle account it traded against. The fixture for lib/ww/instructions.ts: the builder must reproduce these bytes and these accounts exactly.",
- "_source": "Fetched from mainnet 2026-09-17 via getTransaction and getAccountInfo. All of it is public chain data.",
+ "_source": "Captured by scripts/capture-ww-fixtures.ts. Re-derivable with --check. All of it is public chain data.",
  "battle_id": 1784504890,
  "signature": "4XqZHbqdYF8PWSr9U5ffuJiiJseuj2xKJg3uxoU5A11ch7zUgqGgh2A7gMRFtocTnZywTAG1uBEttvRKf1wiKaFY",
  "slot": 433994465,
