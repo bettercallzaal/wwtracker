@@ -23,8 +23,14 @@ import {
   parseMessage,
   serializeMessage,
 } from "../ww/message";
-import { battleAccountsFromRaw, buySharesInstruction, claimSharesInstruction, sellSharesInstruction } from "../ww/instructions";
-import { PROGRAM_ID } from "../ww/pda";
+import {
+  battleAccountsFromRaw,
+  buySharesInstruction,
+  claimSharesInstruction,
+  sellSharesInstruction,
+  traderTokenAccountInstructions,
+} from "../ww/instructions";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, PROGRAM_ID } from "../ww/pda";
 
 const realMessage = new Uint8Array(Buffer.from(fixture.message_base64, "base64"));
 const battle = battleAccountsFromRaw(
@@ -49,6 +55,59 @@ describe("the real Phantom-signed trade is allowed", () => {
     const lighthouse = m.instructions.filter((ix) => ix.programId === LIGHTHOUSE_PROGRAM_ID);
     expect(lighthouse.length).toBe(3);
     expect(ALLOWED_PROGRAMS.has(LIGHTHOUSE_PROGRAM_ID)).toBe(true);
+  });
+});
+
+describe("a first-time trader's transaction is allowed", () => {
+  /**
+   * The shape that the policy refused until 2026-09-17, and the reason it is
+   * worth its own describe block: a wallet's first trade in a battle creates its
+   * two token accounts in the same transaction, because the WaveWarZ program does
+   * not create them. Every returning trader was fine. Only new ones broke, which
+   * is the worst bug shape there is - it works for whoever tests it.
+   */
+  const build = (ixs: Parameters<typeof serializeMessage>[2]) =>
+    serializeMessage(trader, blockhash, ixs);
+  const buy = buySharesInstruction({
+    battleId: buyFixture.battle_id, trader, battle, artistA: true,
+    amountLamports: 10_000_000, minTokensOut: 1, deadline: 1,
+  });
+  const creations = traderTokenAccountInstructions(buyFixture.battle_id, trader);
+
+  it("allows two ATA creations followed by a buy", () => {
+    const d = decideRelay(build([...creations, buy]));
+    expect(d.ok).toBe(true);
+    if (!d.ok) return;
+    expect(d.trades).toEqual(["buyShares"]);
+    expect(d.instructionCount).toBe(3);
+  });
+
+  it("allows it BECAUSE the ATA program is allowed - the red control", () => {
+    expect(ALLOWED_PROGRAMS.has(ASSOCIATED_TOKEN_PROGRAM_ID)).toBe(true);
+    // What the policy did before the entry existed: same message, same caller,
+    // refused on the first instruction.
+    const withoutEntry = new Set(
+      [...ALLOWED_PROGRAMS].filter((p) => p !== ASSOCIATED_TOKEN_PROGRAM_ID),
+    );
+    expect(withoutEntry.has(creations[0].programId)).toBe(false);
+  });
+
+  it("still refuses ATA creations with no trade attached", () => {
+    // The entry widens what may accompany a trade; it does not turn the relay
+    // into a free account-creation service.
+    const d = decideRelay(build(creations));
+    expect(d.ok).toBe(false);
+    if (d.ok) return;
+    expect(d.reason).toMatch(/no WaveWarZ trade/);
+  });
+
+  it("allows the whole realistic first trade: compute budget, both creations, buy", () => {
+    const d = decideRelay(
+      build([computeUnitLimitInstruction(200_000), ...creations, buy]),
+    );
+    expect(d.ok).toBe(true);
+    if (!d.ok) return;
+    expect(d.instructionCount).toBe(4);
   });
 });
 

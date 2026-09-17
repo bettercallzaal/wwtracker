@@ -1,5 +1,6 @@
 /**
- * The three instructions a trading widget needs: buy, sell, claim.
+ * The instructions a trading widget needs: buy, sell, claim, and the token
+ * account creation that has to come before a wallet's first trade in a battle.
  *
  * Each builder returns the standard instruction shape - a program id, an ordered
  * account list with its writable and signer flags, and the data bytes - and
@@ -192,6 +193,99 @@ export function claimSharesInstruction(p: {
     ],
     data: Uint8Array.from(DISCRIMINATOR.claimShares),
   };
+}
+
+/**
+ * Create the trader's associated token account for one mint, or do nothing if it
+ * already exists.
+ *
+ * WHY THIS IS NEEDED AT ALL, and why no test in this repo found that out.
+ * `buyShares` lists `associatedTokenProgram` among its accounts, which reads like
+ * the program creates the trader's token accounts by CPI. It does not. A first
+ * trade from a wallet that has never held either side of that battle fails with
+ * Anchor's "The program expected this account to be already initialized" after
+ * about 9,700 compute units - before it ever reaches the battle logic.
+ *
+ * Measured, not assumed, twice over. All thirteen accounts of the failing buy
+ * were checked on mainnet: eleven exist, and the two missing ones are exactly the
+ * trader's two token accounts. Then thirteen real transactions against the same
+ * battle PDA were read: four of them prepend TWO ATA instructions before the
+ * WaveWarZ one, nine do not - the four are the first-time traders. So the client
+ * creates these accounts, and every working client on chain already does.
+ *
+ * THE FIXTURE COULD NOT HAVE CAUGHT THIS. `__fixtures__/ww-buy-transaction.json`
+ * is a real mainnet buy whose trader had already traded that battle, so his token
+ * accounts existed and his transaction has no ATA instruction in it. The fixture
+ * is real, it reproduces exactly, and it was captured from a starting state that
+ * hid a requirement. A real example is evidence about the state it came from.
+ *
+ * WHY IDEMPOTENT RATHER THAN THE PLAIN `Create` THE CHAIN SAMPLES USE. Plain
+ * `Create` fails the whole transaction if the account already exists, so a client
+ * using it must check first - and a check is a fact about the moment it was made.
+ * The widget rebuilds its transaction immediately before signing (the blockhash
+ * goes stale), and between check and signature the same wallet can trade the same
+ * battle in another tab. `CreateIdempotent` returns early instead of reverting,
+ * which removes the window and the check with it.
+ *
+ * The cost of including these when the accounts already exist was measured on
+ * mainnet rather than guessed: the same buy simulated at 30,069 units without
+ * them and 44,743 with, so about 7,300 units per no-op creation and no lamports.
+ * Both simulations reached the same program error at the same point, which is
+ * what idempotent means here - the extra instructions changed the cost and
+ * nothing else.
+ *
+ * The six accounts and their order are copied from a real ATA instruction on
+ * chain, not recalled - see `__fixtures__/ww-ata-create-transaction.json`. The
+ * one-byte discriminator is the difference between that instruction and this one,
+ * and it is checked by simulating against the deployed ATA program.
+ *
+ * NO NEW ACCOUNTS REACH THE MESSAGE. Every one of the six is already in a buy or
+ * sell: the trader signs and pays, the token account and mint are already
+ * writable, and both programs are already there. So prepending these does not
+ * change the compiled account list at all, only the instruction list - which is
+ * asserted in the tests, because a change there would move every index.
+ */
+export function createAssociatedTokenAccountIdempotentInstruction(p: {
+  /** Pays the rent. The trader, in every case this repo builds. */
+  funder: string;
+  /** Who the token account belongs to. */
+  owner: string;
+  mint: string;
+}): Instruction {
+  return {
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    keys: [
+      signer(p.funder),
+      w(associatedTokenAddress(p.owner, p.mint)),
+      r(p.owner),
+      r(p.mint),
+      r(SYSTEM_PROGRAM_ID),
+      r(TOKEN_PROGRAM_ID),
+    ],
+    // 0 is Create, 1 is CreateIdempotent. The legacy encoding is an empty data
+    // field, which is what the real transactions on chain carry.
+    data: Uint8Array.from([1]),
+  };
+}
+
+/**
+ * Both of the trader's token accounts for a battle, created if absent.
+ *
+ * Returned as a pair because a trade touches both sides: `buyShares` names
+ * artist A's and artist B's token accounts whichever side is being bought, so
+ * creating only the side being traded still fails on the other one.
+ */
+export function traderTokenAccountInstructions(
+  battleId: bigint | number,
+  trader: string,
+): Instruction[] {
+  return (["a", "b"] as const).map((side) =>
+    createAssociatedTokenAccountIdempotentInstruction({
+      funder: trader,
+      owner: trader,
+      mint: mintPda(battleId, side),
+    }),
+  );
 }
 
 /** Seconds from now, as the program wants it. */

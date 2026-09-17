@@ -1,0 +1,40 @@
+{
+ "_what": "A real mainnet transaction from a trader's FIRST trade in a battle: it creates both of the trader's associated token accounts, then buys. The fixture for createAssociatedTokenAccountIdempotentInstruction - the six accounts and their order must match.",
+ "_note": "The chain instructions are plain Create, whose data field is empty. The builder emits CreateIdempotent, whose data is the single byte 0x01. That difference is deliberate and is asserted rather than glossed: see the comment on the builder. Everything else - the six accounts, in this order - is identical.",
+ "_source": "Captured by scripts/capture-ww-fixtures.ts. Re-derivable with --check. All of it is public chain data.",
+ "battle_id": 1789618085,
+ "signature": "LT9DsuFSngRVUAGDBTgHNLXwriQagKVKdSpZQsogBpUhx5VjPGSdHUCok7hFoj3UtzUjbeQhAoZtgyEpvCy8Tmm",
+ "slot": 447702181,
+ "fee_payer": "48mBBpd7Y3GMrVhSHmBC3FuvQHGetuP9GDakMZ7QSDyc",
+ "ata_instructions": [
+  {
+   "program_id": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+   "data_hex": "",
+   "accounts_in_order": [
+    "48mBBpd7Y3GMrVhSHmBC3FuvQHGetuP9GDakMZ7QSDyc",
+    "9GxnEUiapVhN6aqDzqziLQAFG84ffYvejuPqwyokd8Cm",
+    "48mBBpd7Y3GMrVhSHmBC3FuvQHGetuP9GDakMZ7QSDyc",
+    "3tmxCu4hbxiZiqQYex61ADSDhFdo91FQAD39GjR9PtkL",
+    "11111111111111111111111111111111",
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+   ]
+  },
+  {
+   "program_id": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+   "data_hex": "",
+   "accounts_in_order": [
+    "48mBBpd7Y3GMrVhSHmBC3FuvQHGetuP9GDakMZ7QSDyc",
+    "3kyDbosmKyYJvR5exREbrWhjRECavuiPBDyvdscDFHBr",
+    "48mBBpd7Y3GMrVhSHmBC3FuvQHGetuP9GDakMZ7QSDyc",
+    "82taavKzwD8wz7KwcP3zocGdgKqnVtWts9hdQ2bbf27u",
+    "11111111111111111111111111111111",
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+   ]
+  }
+ ],
+ "ata_instruction_indexes": [
+  2,
+  3
+ ],
+ "wavewarz_instruction_index": 4
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
- * Re-capture the two WaveWarZ transaction fixtures from chain, or check that the
- * committed ones still reproduce.
+ * Re-capture the three WaveWarZ transaction fixtures from chain, or check that
+ * the committed ones still reproduce.
  *
  *   npx tsx scripts/capture-ww-fixtures.ts --check    # re-fetch and compare, exit 1 on any drift
  *   npx tsx scripts/capture-ww-fixtures.ts --write    # overwrite the committed fixtures
@@ -27,10 +27,17 @@
  * with base64 encoding and are compared after a Node `Buffer` round trip, so no
  * code of ours touches them at all.
  *
- * COST. Two RPC calls - one `getTransaction`, one `getAccountInfo`. That is
+ * THE THIRD FIXTURE, `ww-ata-create-transaction.json`, exists because the other
+ * two cannot show what they do not contain. Their trader had already traded that
+ * battle, so his token accounts existed and his transaction has no account
+ * creation in it - and a first-time trader's does. It pins the six accounts and
+ * their order for an associated-token-account creation, read off a real
+ * transaction rather than recalled from a spec.
+ *
+ * COST. Four RPC calls - three `getTransaction`, one `getAccountInfo`. That is
  * deliberate: `SOLANA_RPC_URL` is a keyed endpoint shared with the production
  * /live page, and an unthrottled scan against it has taken that page down before
- * (see lib/redact.ts). Two calls need no throttle; do not grow this into a loop
+ * (see lib/redact.ts). Four calls need no throttle; do not grow this into a loop
  * over battles without one.
  */
 import { readFileSync, writeFileSync } from "node:fs";
@@ -41,6 +48,9 @@ import { redactUrl } from "../lib/redact";
 const FIXTURES = join(process.cwd(), "lib", "__fixtures__");
 const BUY = "ww-buy-transaction.json";
 const MESSAGE = "ww-buy-transaction-message.json";
+const ATA = "ww-ata-create-transaction.json";
+
+const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 
@@ -157,6 +167,56 @@ async function capture(signature: string, battleId: number) {
   return { buy, msg };
 }
 
+/**
+ * A real first-time trade: the transaction that creates a trader's two token
+ * accounts and then buys with them.
+ *
+ * Only the ATA instructions are recorded. The buy in the same transaction is not
+ * re-derived here - `ww-buy-transaction.json` already does that job, and two
+ * fixtures asserting the same thing drift apart rather than agreeing twice.
+ */
+async function captureAta(signature: string, battleId: number) {
+  const json = await rpc("getTransaction", [
+    signature,
+    { encoding: "json", maxSupportedTransactionVersion: 0 },
+  ]);
+  const keys: string[] = json.transaction.message.accountKeys;
+  const instructions = json.transaction.message.instructions;
+
+  const ataIxs = instructions.filter(
+    (ix: any) => keys[ix.programIdIndex] === ASSOCIATED_TOKEN_PROGRAM_ID,
+  );
+  if (ataIxs.length !== 2) {
+    throw new Error(
+      `expected two ATA instructions in ${signature.slice(0, 12)}, found ${ataIxs.length}`,
+    );
+  }
+
+  return {
+    _what:
+      "A real mainnet transaction from a trader's FIRST trade in a battle: it creates both of the trader's associated token accounts, then buys. The fixture for createAssociatedTokenAccountIdempotentInstruction - the six accounts and their order must match.",
+    _note:
+      "The chain instructions are plain Create, whose data field is empty. The builder emits CreateIdempotent, whose data is the single byte 0x01. That difference is deliberate and is asserted rather than glossed: see the comment on the builder. Everything else - the six accounts, in this order - is identical.",
+    _source:
+      "Captured by scripts/capture-ww-fixtures.ts. Re-derivable with --check. All of it is public chain data.",
+    battle_id: battleId,
+    signature,
+    slot: json.slot,
+    fee_payer: keys[0],
+    ata_instructions: ataIxs.map((ix: any) => ({
+      program_id: ASSOCIATED_TOKEN_PROGRAM_ID,
+      data_hex: hex(b58decode(ix.data)),
+      accounts_in_order: ix.accounts.map((i: number) => keys[i]),
+    })),
+    // The ordering claim: creation comes before the trade, in the same
+    // transaction. A client that appends instead would fail on its own accounts.
+    ata_instruction_indexes: ataIxs.map((ix: any) => instructions.indexOf(ix)),
+    wavewarz_instruction_index: instructions.findIndex(
+      (ix: any) => keys[ix.programIdIndex] === "9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo",
+    ),
+  };
+}
+
 /** Compare field by field so a failure names what drifted, not just that it did. */
 function compare(label: string, got: any, want: any): string[] {
   const problems: string[] = [];
@@ -202,19 +262,25 @@ async function main() {
     throw new Error("the two fixtures name different transactions");
   }
 
+  const committedAta = JSON.parse(readFileSync(join(FIXTURES, ATA), "utf8"));
+
   console.error(`capturing ${committedBuy.signature.slice(0, 12)}... from ${redactUrl(RPC)}`);
   const { buy, msg } = await capture(committedBuy.signature, committedBuy.battle_id);
+  console.error(`capturing ${committedAta.signature.slice(0, 12)}...`);
+  const ata = await captureAta(committedAta.signature, committedAta.battle_id);
 
   if (arg("--check")) {
     const problems = [
       ...compare(BUY, buy, committedBuy),
       ...compare(MESSAGE, msg, committedMsg),
+      ...compare(ATA, ata, committedAta),
     ];
     if (problems.length === 0) {
       console.log(
-        `both fixtures reproduce exactly: ${buy.accounts_in_order.length} accounts, ` +
+        `all three fixtures reproduce exactly: ${buy.accounts_in_order.length} accounts, ` +
           `${buy.instruction_data_hex.length / 2} instruction bytes, ` +
-          `${Buffer.from(msg.message_base64, "base64").length} message bytes`,
+          `${Buffer.from(msg.message_base64, "base64").length} message bytes, ` +
+          `${ata.ata_instructions.length} ATA instructions`,
       );
       process.exit(0);
     }
@@ -231,7 +297,8 @@ async function main() {
   const dir = out ?? FIXTURES;
   writeFileSync(join(dir, BUY), JSON.stringify(buy, null, 1) + "\n");
   writeFileSync(join(dir, MESSAGE), JSON.stringify(msg, null, 1) + "\n");
-  console.error(`wrote ${BUY} and ${MESSAGE} to ${dir}`);
+  writeFileSync(join(dir, ATA), JSON.stringify(ata, null, 1) + "\n");
+  console.error(`wrote ${BUY}, ${MESSAGE} and ${ATA} to ${dir}`);
 }
 
 main().catch((e) => {
