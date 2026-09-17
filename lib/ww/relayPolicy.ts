@@ -42,10 +42,26 @@
  * the belief about Lighthouse is wrong, which is what makes it the better
  * argument. (Non-author security review, 2026-09-17.)
  *
- * TWO LIMITS OF THIS POLICY, both real, both bounded by the same property:
+ * WHY THE ASSOCIATED TOKEN PROGRAM IS ALLOWED. A wallet's first trade in a
+ * battle has to create its two token accounts first - the WaveWarZ program does
+ * not do it, which cost a session an afternoon to establish (see
+ * `instructions.ts`). So a first-time trader's transaction carries two
+ * `ATokenGP...` instructions before the trade, and a policy without this entry
+ * refuses every new trader while letting every returning one through. That is the
+ * worst possible shape for a bug: it works for whoever tests it.
+ *
+ * The same structural argument covers it. The ATA program creates token accounts
+ * and moves tokens between a nested account and its owner's; every lamport and
+ * every token involved belongs to the sole signer, who is the caller. It cannot
+ * reach ours, because we do not sign.
+ *
+ * THREE LIMITS OF THIS POLICY, all real, all bounded by the same property:
  *
  *   - Lighthouse is matched on PROGRAM ID ONLY. A Lighthouse instruction with
  *     arbitrary data and arbitrary accounts passes. Demonstrated by review.
+ *   - The ATA program is matched on PROGRAM ID ONLY, for the same reason: every
+ *     instruction it has spends the caller's own rent on the caller's own
+ *     accounts, so enumerating its discriminators would buy nothing.
  *   - A trade is matched on DISCRIMINATOR ONLY. A buy naming an attacker-chosen
  *     battle, vault or recipient passes, because the accounts are never checked
  *     against the battle id they claim.
@@ -56,7 +72,7 @@
  * this policy validates more than it does would be wrong.
  */
 import { parseMessage } from "./message";
-import { PROGRAM_ID } from "./pda";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, PROGRAM_ID } from "./pda";
 import { COMPUTE_BUDGET_PROGRAM_ID } from "./message";
 
 /** Phantom's transaction guard program, injected at signing time. */
@@ -66,6 +82,9 @@ export const ALLOWED_PROGRAMS = new Set([
   PROGRAM_ID,
   COMPUTE_BUDGET_PROGRAM_ID,
   LIGHTHOUSE_PROGRAM_ID,
+  // A first-time trader creates their two token accounts in the same
+  // transaction. Without this, the relay serves returning traders only.
+  ASSOCIATED_TOKEN_PROGRAM_ID,
 ]);
 
 /** The three we relay, by discriminator. From chain/wavewarz.idl.json. */

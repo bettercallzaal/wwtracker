@@ -11,7 +11,12 @@ import {
   watchWallet,
   type PhantomProvider,
 } from "@/lib/ww/wallet";
-import { battleAccountsFromRaw, buySharesInstruction, type BattleAccounts } from "@/lib/ww/instructions";
+import {
+  battleAccountsFromRaw,
+  buySharesInstruction,
+  traderTokenAccountInstructions,
+  type BattleAccounts,
+} from "@/lib/ww/instructions";
 import { computeUnitLimitInstruction, computeUnitPriceInstruction, serializeMessage } from "@/lib/ww/message";
 import { deadlineIn } from "@/lib/ww/instructions";
 import { lamportsToSol, quoteBuy, solToLamports, withSlippage } from "@/lib/ww/quote";
@@ -173,6 +178,14 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
     return serializeMessage(wallet, prep.blockhash, [
       computeUnitLimitInstruction(COMPUTE_UNITS),
       computeUnitPriceInstruction(PRIORITY_MICRO_LAMPORTS),
+      // Unconditionally, and before the trade. The program does not create the
+      // trader's token accounts, so a wallet's first trade in a battle fails
+      // without these; they are idempotent, so including them when the accounts
+      // already exist costs a few hundred compute units and nothing else. The
+      // alternative - read the accounts, include these only when absent - makes
+      // the transaction depend on a fact that can stop being true between the
+      // read and the signature.
+      ...traderTokenAccountInstructions(battleId, wallet),
       ix,
     ]);
   }, [wallet, battle, estimate, battleId, side, lamports, slippageBps]);
