@@ -15,110 +15,25 @@
 // and you still get a well-formed, off-curve, entirely valid-looking address
 // that is simply not the account, and getAccountInfo returns null with no error.
 
-import { createHash } from "node:crypto";
+// The base58 and PDA primitives moved to lib/ww/pda.ts, which the trading
+// widget also needs and which must stay dependency-free to be portable to
+// Candy's stack. This file had its own copy of all of it - two implementations
+// of ed25519 curve membership in one repo is one more than anyone wants to keep
+// correct. Proved equivalent before removing: 53 comparisons across six battle
+// ids and every account in the buy fixture, zero mismatches.
+export {
+  PROGRAM_ID,
+  TOKEN_PROGRAM_ID as TOKEN_PROGRAM,
+  b58encode,
+  b58decode,
+  findPda,
+  battlePda,
+  vaultPda,
+  mintPda,
+} from "./ww/pda";
 
-export const PROGRAM_ID = "9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo";
-export const TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+import { b58encode, battlePda, mintPda } from "./ww/pda";
 
-const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-
-export function b58encode(bytes: Uint8Array): string {
-  let n = 0n;
-  for (const b of bytes) n = n * 256n + BigInt(b);
-  let s = "";
-  while (n > 0n) {
-    s = B58[Number(n % 58n)] + s;
-    n /= 58n;
-  }
-  let leading = 0;
-  for (const b of bytes) {
-    if (b !== 0) break;
-    leading++;
-  }
-  return "1".repeat(leading) + s;
-}
-
-export function b58decode(str: string): Uint8Array {
-  let n = 0n;
-  for (const c of str) {
-    const i = B58.indexOf(c);
-    if (i < 0) throw new Error(`not base58: ${c}`);
-    n = n * 58n + BigInt(i);
-  }
-  const out: number[] = [];
-  while (n > 0n) {
-    out.unshift(Number(n % 256n));
-    n /= 256n;
-  }
-  let leading = 0;
-  for (const c of str) {
-    if (c !== "1") break;
-    leading++;
-  }
-  return Uint8Array.from([...new Array(leading).fill(0), ...out]);
-}
-
-// ed25519 curve membership, so we reject on-curve candidates exactly as Solana
-// does. A PDA is by definition an address with no private key, which means it
-// must be off the curve.
-const P = 2n ** 255n - 19n;
-
-function modpow(b: bigint, e: bigint, m: bigint): bigint {
-  let r = 1n;
-  b %= m;
-  while (e > 0n) {
-    if (e & 1n) r = (r * b) % m;
-    b = (b * b) % m;
-    e >>= 1n;
-  }
-  return r;
-}
-
-const D = (-121665n * modpow(121666n, P - 2n, P)) % P;
-
-export function isOnCurve(bytes: Uint8Array): boolean {
-  let y = 0n;
-  for (let i = bytes.length - 1; i >= 0; i--) y = y * 256n + BigInt(bytes[i]);
-  y &= (1n << 255n) - 1n;
-  const y2 = (y * y) % P;
-  const denom = (((D * y2) % P) + 1n) % P;
-  const x2 = ((((y2 - 1n) % P) + P) % P * modpow(denom, P - 2n, P)) % P;
-  if (x2 === 0n) return false;
-  return modpow(x2, (P - 1n) / 2n, P) === 1n;
-}
-
-function u64le(n: number | bigint): Uint8Array {
-  let v = BigInt(n);
-  const out = new Uint8Array(8);
-  for (let i = 0; i < 8; i++) {
-    out[i] = Number(v & 0xffn);
-    v >>= 8n;
-  }
-  return out;
-}
-
-/** seeds, then bump, then program id, then the marker. The order is the trap. */
-export function findPda(seeds: Uint8Array[], programId = PROGRAM_ID): { address: string; bump: number } {
-  const prog = b58decode(programId);
-  const marker = new TextEncoder().encode("ProgramDerivedAddress");
-  for (let bump = 255; bump >= 0; bump--) {
-    const h = createHash("sha256");
-    for (const s of seeds) h.update(s);
-    h.update(Uint8Array.from([bump]));
-    h.update(prog);
-    h.update(marker);
-    const digest = new Uint8Array(h.digest());
-    if (!isOnCurve(digest)) return { address: b58encode(digest), bump };
-  }
-  throw new Error("no off-curve address found");
-}
-
-const enc = (s: string) => new TextEncoder().encode(s);
-
-export const battlePda = (id: number) => findPda([enc("battle"), u64le(id)]).address;
-export const vaultPda = (id: number) => findPda([enc("battle_vault"), u64le(id)]).address;
-export const mintPda = (id: number, side: "a" | "b") =>
-  findPda([enc(side === "a" ? "artist_a_mint" : "artist_b_mint"), u64le(id)]).address;
 
 /**
  * The Battle account, 353 bytes. Offsets verified across all 1,643 accounts on
