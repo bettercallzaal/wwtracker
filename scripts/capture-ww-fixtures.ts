@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
- * Re-capture the three WaveWarZ transaction fixtures from chain, or check that
- * the committed ones still reproduce.
+ * Re-capture the four transaction fixtures from chain, or check that the
+ * committed ones still reproduce.
  *
  *   npx tsx scripts/capture-ww-fixtures.ts --check    # re-fetch and compare, exit 1 on any drift
  *   npx tsx scripts/capture-ww-fixtures.ts --write    # overwrite the committed fixtures
@@ -34,10 +34,22 @@
  * their order for an associated-token-account creation, read off a real
  * transaction rather than recalled from a spec.
  *
- * COST. Four RPC calls - three `getTransaction`, one `getAccountInfo`. That is
+ * THE FOURTH, `ww-ata-create-idempotent.json`, is the only fixture here that is
+ * not a WaveWarZ transaction, and it earns its place by pinning one byte.
+ * `createAssociatedTokenAccountIdempotentInstruction` emits `0x01`, and until
+ * this fixture existed nothing in the repo established that `0x01` IS
+ * CreateIdempotent in the deployed program - it matched the published SPL enum,
+ * which is a memory of a document rather than a measurement, and this repo's bar
+ * is higher than that everywhere else. No WaveWarZ trader has used the idempotent
+ * variant, so the example has to come from elsewhere on mainnet. What makes it
+ * evidence is that the VALIDATOR names the instruction: `jsonParsed` reports
+ * `"type": "createIdempotent"` for these bytes, and that decoder is neither ours
+ * nor the document we were recalling.
+ *
+ * COST. Six RPC calls - five `getTransaction`, one `getAccountInfo`. That is
  * deliberate: `SOLANA_RPC_URL` is a keyed endpoint shared with the production
  * /live page, and an unthrottled scan against it has taken that page down before
- * (see lib/redact.ts). Four calls need no throttle; do not grow this into a loop
+ * (see lib/redact.ts). Six calls need no throttle; do not grow this into a loop
  * over battles without one.
  */
 import { readFileSync, writeFileSync } from "node:fs";
@@ -49,6 +61,7 @@ const FIXTURES = join(process.cwd(), "lib", "__fixtures__");
 const BUY = "ww-buy-transaction.json";
 const MESSAGE = "ww-buy-transaction-message.json";
 const ATA = "ww-ata-create-transaction.json";
+const IDEMPOTENT = "ww-ata-create-idempotent.json";
 
 const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 
@@ -217,6 +230,70 @@ async function captureAta(signature: string, battleId: number) {
   };
 }
 
+/**
+ * A real `CreateIdempotent` on mainnet, captured twice over: once raw, for the
+ * data byte, and once through the validator's own parser, for the NAME of that
+ * byte.
+ *
+ * The second half is the part that matters. Anyone can read `0x01` off a
+ * transaction; what nothing offline could establish is that `0x01` means
+ * CreateIdempotent to the deployed program. `jsonParsed` is decoded by the
+ * validator, so recording its verdict alongside the byte turns a recalled enum
+ * value into an observation. It is still a decoder rather than the program
+ * itself - the program's own acceptance was established separately, by
+ * simulating a transaction carrying this byte and watching it create an account
+ * and then decline to revert when the account already existed.
+ */
+async function captureIdempotent(signature: string) {
+  const parsed = await rpc("getTransaction", [
+    signature,
+    { encoding: "jsonParsed", maxSupportedTransactionVersion: 0 },
+  ]);
+  const raw = await rpc("getTransaction", [
+    signature,
+    { encoding: "json", maxSupportedTransactionVersion: 0 },
+  ]);
+
+  const parsedIxs = parsed.transaction.message.instructions.filter(
+    (ix: any) => ix.programId === ASSOCIATED_TOKEN_PROGRAM_ID,
+  );
+  const idempotent = parsedIxs.filter((ix: any) => ix.parsed?.type === "createIdempotent");
+  if (idempotent.length === 0) {
+    throw new Error(
+      `${signature.slice(0, 12)} has no createIdempotent instruction - it has ` +
+        `[${parsedIxs.map((ix: any) => ix.parsed?.type ?? "unparsed").join(", ")}]`,
+    );
+  }
+
+  const keys: string[] = raw.transaction.message.accountKeys;
+  const rawIxs = raw.transaction.message.instructions.filter(
+    (ix: any) => keys[ix.programIdIndex] === ASSOCIATED_TOKEN_PROGRAM_ID,
+  );
+  if (rawIxs.length !== parsedIxs.length) {
+    throw new Error("the parsed and raw views disagree about how many ATA instructions there are");
+  }
+  // Pair them by position: same transaction, same order, two encodings.
+  const first = idempotent[0];
+  const rawFirst = rawIxs[parsedIxs.indexOf(first)];
+
+  return {
+    _what:
+      "A real mainnet CreateIdempotent instruction from the SPL associated token account program. Not a WaveWarZ transaction: no WaveWarZ trader has used the idempotent variant, and this fixture exists only to pin its one-byte discriminator to something observed.",
+    _note:
+      "instruction_name is the VALIDATOR's decoding of data_hex, via jsonParsed. That is what makes 0x01 evidence rather than a remembered enum value: the decoder is neither ours nor the SPL document. The deployed program's own acceptance of the byte was established separately, by simulation.",
+    _source:
+      "Captured by scripts/capture-ww-fixtures.ts. Re-derivable with --check. All of it is public chain data.",
+    signature,
+    slot: raw.slot,
+    program_id: ASSOCIATED_TOKEN_PROGRAM_ID,
+    instruction_name: first.parsed.type,
+    data_hex: hex(b58decode(rawFirst.data)),
+    accounts_in_order: rawFirst.accounts.map((i: number) => keys[i]),
+    // Named so a reader can see the six roles without decoding base58 by eye.
+    parsed_info: first.parsed.info,
+  };
+}
+
 /** Compare field by field so a failure names what drifted, not just that it did. */
 function compare(label: string, got: any, want: any): string[] {
   const problems: string[] = [];
@@ -263,24 +340,29 @@ async function main() {
   }
 
   const committedAta = JSON.parse(readFileSync(join(FIXTURES, ATA), "utf8"));
+  const committedIdem = JSON.parse(readFileSync(join(FIXTURES, IDEMPOTENT), "utf8"));
 
   console.error(`capturing ${committedBuy.signature.slice(0, 12)}... from ${redactUrl(RPC)}`);
   const { buy, msg } = await capture(committedBuy.signature, committedBuy.battle_id);
   console.error(`capturing ${committedAta.signature.slice(0, 12)}...`);
   const ata = await captureAta(committedAta.signature, committedAta.battle_id);
+  console.error(`capturing ${committedIdem.signature.slice(0, 12)}...`);
+  const idem = await captureIdempotent(committedIdem.signature);
 
   if (arg("--check")) {
     const problems = [
       ...compare(BUY, buy, committedBuy),
       ...compare(MESSAGE, msg, committedMsg),
       ...compare(ATA, ata, committedAta),
+      ...compare(IDEMPOTENT, idem, committedIdem),
     ];
     if (problems.length === 0) {
       console.log(
-        `all three fixtures reproduce exactly: ${buy.accounts_in_order.length} accounts, ` +
+        `all four fixtures reproduce exactly: ${buy.accounts_in_order.length} accounts, ` +
           `${buy.instruction_data_hex.length / 2} instruction bytes, ` +
           `${Buffer.from(msg.message_base64, "base64").length} message bytes, ` +
-          `${ata.ata_instructions.length} ATA instructions`,
+          `${ata.ata_instructions.length} ATA instructions, ` +
+          `and ${idem.instruction_name} = 0x${idem.data_hex}`,
       );
       process.exit(0);
     }
@@ -298,7 +380,8 @@ async function main() {
   writeFileSync(join(dir, BUY), JSON.stringify(buy, null, 1) + "\n");
   writeFileSync(join(dir, MESSAGE), JSON.stringify(msg, null, 1) + "\n");
   writeFileSync(join(dir, ATA), JSON.stringify(ata, null, 1) + "\n");
-  console.error(`wrote ${BUY}, ${MESSAGE} and ${ATA} to ${dir}`);
+  writeFileSync(join(dir, IDEMPOTENT), JSON.stringify(idem, null, 1) + "\n");
+  console.error(`wrote ${BUY}, ${MESSAGE}, ${ATA} and ${IDEMPOTENT} to ${dir}`);
 }
 
 main().catch((e) => {

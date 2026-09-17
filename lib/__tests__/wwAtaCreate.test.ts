@@ -14,15 +14,23 @@
  * test is the one the old fixture was silent about: the six accounts of an
  * associated-token-account creation, in order.
  *
- * WHAT THIS FILE CANNOT PROVE, stated because the last gap of this shape was
- * invisible for six PRs. The fixture's instructions are plain `Create`, with an
- * empty data field; the builder emits `CreateIdempotent`, whose data is `0x01`.
- * No fixture in this repo contains a `CreateIdempotent`, so that one byte is
- * asserted here only as being deliberately different. It is verified by asking
- * the deployed ATA program, which is what a simulation does.
+ * THE ONE BYTE THAT USED TO BE RECALL. The first-trade fixture's instructions
+ * are plain `Create`, with an empty data field; the builder emits
+ * `CreateIdempotent`, whose data is `0x01`. Until `ww-ata-create-idempotent.json`
+ * existed, that byte was asserted here as being deliberately different and
+ * nothing more - it matched the published SPL enum, which is a memory of a
+ * document, and every other byte this repo emits is checked against a captured
+ * transaction. It now has one: a real mainnet `CreateIdempotent`, whose name
+ * comes from the VALIDATOR's own decoder rather than from us.
+ *
+ * WHAT IS STILL NOT PROVED HERE, because the decoder is not the program: that the
+ * deployed ATA program acts on the byte. That was established separately by
+ * simulation - a transaction carrying `0x01` created the accounts, and a second
+ * one declined to revert when they already existed.
  */
 import { describe, expect, it } from "vitest";
 import ataFixture from "../__fixtures__/ww-ata-create-transaction.json";
+import idempotentFixture from "../__fixtures__/ww-ata-create-idempotent.json";
 import buyFixture from "../__fixtures__/ww-buy-transaction.json";
 import {
   battleAccountsFromRaw,
@@ -124,16 +132,46 @@ describe("createAssociatedTokenAccountIdempotentInstruction", () => {
     expect(ours.programId).toBe(ASSOCIATED_TOKEN_PROGRAM_ID);
   });
 
-  it("is the idempotent variant, which is the one byte that differs from chain", () => {
+  /**
+   * The byte, against a real one rather than against a remembered enum.
+   *
+   * `instruction_name` in the fixture is the validator's decoding of
+   * `data_hex`, so this pins our byte to bytes that a decoder we did not write
+   * calls `createIdempotent`. Asserting `hex(ours.data) === "01"` alone would
+   * only pin what we meant to emit.
+   */
+  it("emits the byte a real mainnet CreateIdempotent carries", () => {
     const ours = createAssociatedTokenAccountIdempotentInstruction({
       funder: firstTrader,
       owner: firstTrader,
       mint: mintPda(battleId, "a"),
     });
+    expect(idempotentFixture.instruction_name).toBe("createIdempotent");
+    expect(hex(ours.data)).toBe(idempotentFixture.data_hex);
     expect(hex(ours.data)).toBe("01");
-    // And the difference is against a real `Create`, so nobody later "fixes"
-    // one to match the other without reading why.
+    // And it is NOT the plain Create the first-trade fixture uses, so nobody
+    // later "fixes" one to match the other without reading why.
     expect(ataFixture.ata_instructions[0].data_hex).toBe("");
+    expect(idempotentFixture.data_hex).not.toBe(ataFixture.ata_instructions[0].data_hex);
+  });
+
+  /**
+   * The same six accounts in the same order, in a transaction that has nothing
+   * to do with WaveWarZ - a wrapped-SOL account for an unrelated wallet. If the
+   * layout only held for our mints it would be a coincidence of this program,
+   * not the ATA program's interface.
+   */
+  it("matches the account layout of an unrelated real CreateIdempotent", () => {
+    const info = idempotentFixture.parsed_info;
+    const ours = createAssociatedTokenAccountIdempotentInstruction({
+      funder: info.source,
+      owner: info.wallet,
+      mint: info.mint,
+    });
+    expect(pubkeys(ours)).toEqual(idempotentFixture.accounts_in_order);
+    // Including the account it derived, which the fixture names independently.
+    expect(ours.keys[1].pubkey).toBe(info.account);
+    expect(ours.programId).toBe(idempotentFixture.program_id);
   });
 
   it("separates funder from owner, so the pair is not accidentally one field", () => {

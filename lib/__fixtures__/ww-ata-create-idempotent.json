@@ -1,0 +1,26 @@
+{
+ "_what": "A real mainnet CreateIdempotent instruction from the SPL associated token account program. Not a WaveWarZ transaction: no WaveWarZ trader has used the idempotent variant, and this fixture exists only to pin its one-byte discriminator to something observed.",
+ "_note": "instruction_name is the VALIDATOR's decoding of data_hex, via jsonParsed. That is what makes 0x01 evidence rather than a remembered enum value: the decoder is neither ours nor the SPL document. The deployed program's own acceptance of the byte was established separately, by simulation.",
+ "_source": "Captured by scripts/capture-ww-fixtures.ts. Re-derivable with --check. All of it is public chain data.",
+ "signature": "2NMV228j3rxoY95LnzX6aJ6pzRufrzW6dX5AdKXbF39Gdm6gRBJnvPsBgBJrwHqKKa2baUpRAQN3ZN5N6yU9hRaH",
+ "slot": 447872818,
+ "program_id": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+ "instruction_name": "createIdempotent",
+ "data_hex": "01",
+ "accounts_in_order": [
+  "5mjjTNLnjTevECibQUsf2cubdptdwA8fvaiePgQAbwNX",
+  "2vviyxsb9V2wKwGrnpNNfnpzGVWfbyUCYqfpfMYpokFv",
+  "5mjjTNLnjTevECibQUsf2cubdptdwA8fvaiePgQAbwNX",
+  "So11111111111111111111111111111111111111112",
+  "11111111111111111111111111111111",
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+ ],
+ "parsed_info": {
+  "account": "2vviyxsb9V2wKwGrnpNNfnpzGVWfbyUCYqfpfMYpokFv",
+  "mint": "So11111111111111111111111111111111111111112",
+  "source": "5mjjTNLnjTevECibQUsf2cubdptdwA8fvaiePgQAbwNX",
+  "systemProgram": "11111111111111111111111111111111",
+  "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  "wallet": "5mjjTNLnjTevECibQUsf2cubdptdwA8fvaiePgQAbwNX"
+ }
+}
