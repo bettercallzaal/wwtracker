@@ -1,0 +1,19 @@
+{
+ "_what": "The serialized legacy message of the same real mainnet buy as ww-buy-transaction.json. The round-trip control for lib/ww/message.ts: parse then re-serialize must be byte-identical.",
+ "_note": "Only instruction 2 of its 6 is ours. 0 and 1 are ComputeBudget (200,000 unit limit, 375,000 micro-lamport price); 3, 4 and 5 are Lighthouse (L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95), the guard program Phantom injects when it signs. A client does not build those.",
+ "signature": "4XqZHbqdYF8PWSr9U5ffuJiiJseuj2xKJg3uxoU5A11ch7zUgqGgh2A7gMRFtocTnZywTAG1uBEttvRKf1wiKaFY",
+ "slot": 433994465,
+ "message_base64": "AQAGEPdig0KjsVs2hBloM2z0BmTagY3RZEg618shYdrONaAFD5PNeeQWjdZS/K1JDbPtqm5BVJRnRaW1I/lwsgQcDdMY3zxq4+2sz1UkDO9shHb+3ca7SYt54sWQFPKF2BCQGxtIoxlJ7F2MoTLTTbxMks8uxyi44id6e7TqPGlAxVetSQH7iRf0No+aMhyRAvH8/ne/rpyRbIAT5ckxOEK03gJhM2JMd7AkZ6NjHup5jQKUUpwsuIs1rKf9z+yW/sJ0mmKSOdS8oMwBCWJrWxYcYTMKDEl44/uzQJZryZdeeyaVlqlsOFf9E4snqneQnnM+WiBfuR5iS41iTSRhlaUGyjOhE7qJkXL1kn811QbCutBooPzv/l3c6OhVNu2KP+uvY9WU7OESk4P3WA7GxW9dWBa95rhDvKRgmt8buSnmsqMiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADBkZv5SEXMv/srbpyw5vnvIzlu8X3EmssQ5s6QAAAAATfrXli/7Hdkl0Kn7Xm0AzmGVuouzqR/QfvmGDF6Xu4Bt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKl9pd7nWFH9hJKcWJ56LibcDeQZvRLF2AsO0eJQHBFEBIyXJY9OJInxuz0QKRSODYMLWhOZ2v8QhASOe9jb6fhZVMeKaiRo/eIWvLPV0GIf136MtpLpDfd0tPbI2lMCeIMGCwAFAkANAwALAAkD2LgFAAAAAAAODQIEBQYIAAkHAQMNCg8hKO+KmgglamyAw8kBAAAAAABQPFUAAAAAADVmXWoAAAAADAEAGgYEAwARF2UBAAAAAAQDAAABAAAAAAAAAAAADAEGEQoEAwMAAAYAAAAAAAAAAAUIDAEIGwoEBAIwd8QCAAAAAAQDAAAGAAAAAAAAAAAFCA==",
+ "expected": {
+  "num_signatures": 1,
+  "num_readonly_signed": 0,
+  "num_readonly_unsigned": 6,
+  "num_accounts": 16,
+  "num_instructions": 6,
+  "payer": "HegpwNycqbtc8GCPEkNCK9ToWPiuccw1wRewvi4Dsjkp",
+  "recent_blockhash": "6hwiqoLFz8w9waG2PfeHMTSr8xiMcdsDpnhgKFsVBKbx",
+  "our_instruction_index": 2,
+  "compute_unit_limit": 200000,
+  "compute_unit_price_micro_lamports": 375000
+ }
+}
