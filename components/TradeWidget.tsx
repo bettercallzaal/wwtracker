@@ -13,13 +13,12 @@ import {
 } from "@/lib/ww/wallet";
 import {
   battleAccountsFromRaw,
-  buySharesInstruction,
   traderTokenAccountInstructions,
   type BattleAccounts,
 } from "@/lib/ww/instructions";
 import { computeUnitLimitInstruction, computeUnitPriceInstruction, serializeMessage } from "@/lib/ww/message";
-import { deadlineIn } from "@/lib/ww/instructions";
-import { lamportsToSol, quoteBuy, solToLamports, withSlippage } from "@/lib/ww/quote";
+import { planBuy, poolMoveBps } from "@/lib/ww/tradePlan";
+import { lamportsToSol, quoteBuy, solToLamports } from "@/lib/ww/quote";
 
 /**
  * The trading widget. Stage 1: prove it here, then it moves to wavewarz.info and
@@ -82,6 +81,13 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
   const [preflight, setPreflight] = useState<Preflight | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
+  /**
+   * How far the pool moved between the estimate on screen and the read the
+   * transaction was actually built from. Surfaced rather than swallowed: the
+   * person looked at one number and is being asked to sign against another, and
+   * on a busy battle that gap is the whole reason the floor has to be fresh.
+   */
+  const [quoteDrift, setQuoteDrift] = useState<number | null>(null);
 
   // Extensions inject on their own schedule, so a single check on mount races
   // them. Poll briefly, then stop - "not installed" and "not injected yet" look
@@ -107,6 +113,7 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
       onAccountChanged: (key) => {
         setWallet(key);
         setPreflight(null);
+        setQuoteDrift(null);
         setSignature(null);
         setError(key ? null : "Wallet disconnected from this site.");
       },
@@ -154,9 +161,23 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
     }
   }, [provider]);
 
-  /** Build the transaction and ask the server what the program would do with it. */
+  /**
+   * Build the transaction from a pool read NOW.
+   *
+   * THIS USED TO USE THE MOUNT-TIME READ, and that was the defect: the
+   * slippage floor - the trader's only protection against the price moving -
+   * was computed from the pool as it was when the page loaded. On a live battle
+   * that is whenever the tab happened to be opened. It never bit because the
+   * widget has never run on a live battle, where the pool cannot move. See
+   * lib/ww/tradePlan.ts.
+   *
+   * The estimate above still comes from the mount-time read, deliberately: it
+   * is a display, it says it is approximate, and re-fetching on every keystroke
+   * would spend the RPC budget on people typing. What must be fresh is the
+   * number that goes into the instruction.
+   */
   const build = useCallback(async () => {
-    if (!wallet || !battle || !estimate) return null;
+    if (!wallet || !estimate) return null;
     const prep = await fetch("/api/ww/trade", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -164,17 +185,25 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
     }).then((r) => r.json());
     if (prep.status !== "ok") throw new Error(prep.error ?? "could not get a blockhash");
 
-    const ix = buySharesInstruction({
+    const shownPool = poolLamports ? poolLamports[side] : 0;
+    const plan = await planBuy({
       battleId,
       trader: wallet,
-      battle,
-      artistA: side === "a",
+      side,
       amountLamports: lamports,
-      // The floor is the caller's own tolerance applied to the caller's own
-      // estimate. quote.ts will not invent one, and 0 would mean no protection.
-      minTokensOut: withSlippage(estimate.tokensOut, slippageBps),
-      deadline: deadlineIn(DEADLINE_SECONDS),
+      slippageBps,
+      deadlineSeconds: DEADLINE_SECONDS,
+      readBattleState: async () => {
+        const j = await fetch(`/api/ww/battle-account?battleId=${battleId}`).then((r) => r.json());
+        if (j.status !== "ok") throw new Error(j.error ?? "could not read this battle");
+        return {
+          accounts: battleAccountsFromRaw(new Uint8Array(Buffer.from(j.account, "base64"))),
+          poolLamports: { a: j.poolALamports, b: j.poolBLamports },
+        };
+      },
     });
+    setQuoteDrift(poolMoveBps(shownPool, plan.poolLamports));
+    const ix = plan.instruction;
     return serializeMessage(wallet, prep.blockhash, [
       computeUnitLimitInstruction(COMPUTE_UNITS),
       computeUnitPriceInstruction(PRIORITY_MICRO_LAMPORTS),
@@ -188,7 +217,7 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
       ...traderTokenAccountInstructions(battleId, wallet),
       ix,
     ]);
-  }, [wallet, battle, estimate, battleId, side, lamports, slippageBps]);
+  }, [wallet, estimate, poolLamports, battleId, side, lamports, slippageBps]);
 
   const onPreflight = useCallback(async () => {
     setError(null);
@@ -376,6 +405,16 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
           {phase === "signing" ? "Check Phantom..." : phase === "sending" ? "Sending..." : "Sign and send"}
         </button>
       </div>
+
+      {quoteDrift !== null && Math.abs(quoteDrift) >= 50 && (
+        <div style={{ ...panel, marginBottom: 12, borderColor: C.dim }}>
+          <p style={{ margin: 0, fontSize: 12, color: C.dim }}>
+            The pool moved {(quoteDrift / 100).toFixed(2)}% between the estimate above and the
+            read this transaction was built from. The floor was recomputed against the newer
+            one, so you are protected against the price you are actually getting.
+          </p>
+        </div>
+      )}
 
       {preflight && (
         <div

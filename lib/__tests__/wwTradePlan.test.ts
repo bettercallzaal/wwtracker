@@ -1,0 +1,141 @@
+/**
+ * The slippage floor has to come from a pool read now, not at page load.
+ *
+ * PRD section 56's first requirement is "fresh quote". Scoring it against the
+ * code on 2026-09-18 found it was not: `TradeWidget` read the pools once in its
+ * mount effect and computed `minTokensOut` from that, so the trader's only
+ * protection against the price moving was calculated against the price whenever
+ * they happened to open the tab.
+ *
+ * THE TEST THAT MATTERS IS "recomputes the floor when the pool has moved". It
+ * is written so the OLD behaviour fails it: a pool that changes between two
+ * plans must produce two different floors. An implementation that captured the
+ * pool once returns the same number twice and the test goes red.
+ *
+ * Nothing here needs a network, and that is deliberate - the read is an
+ * argument, so its timing is testable. Order of operations inside a React
+ * callback is not.
+ */
+import { describe, expect, it, vi } from "vitest";
+import { planBuy, poolMoveBps, type BattleState } from "../ww/tradePlan";
+import { quoteBuy, withSlippage } from "../ww/quote";
+import buyFixture from "../__fixtures__/ww-buy-transaction.json";
+import { battleAccountsFromRaw } from "../ww/instructions";
+
+const accounts = battleAccountsFromRaw(
+  new Uint8Array(Buffer.from(buyFixture.battle_account_base64, "base64")),
+);
+const trader = buyFixture.accounts_in_order[5];
+const battleId = buyFixture.battle_id;
+
+const state = (a: number, b = 1_000_000_000): BattleState => ({
+  accounts,
+  poolLamports: { a, b },
+});
+
+const base = {
+  battleId,
+  trader,
+  side: "a" as const,
+  amountLamports: 10_000_000,
+  slippageBps: 100,
+  deadlineSeconds: 90,
+  now: () => 1_700_000_000_000,
+};
+
+describe("the floor comes from a read, every time", () => {
+  it("reads the battle state on every plan, not once", async () => {
+    const readBattleState = vi.fn(async () => state(5_000_000_000));
+    await planBuy({ ...base, readBattleState });
+    await planBuy({ ...base, readBattleState });
+    await planBuy({ ...base, readBattleState });
+    expect(readBattleState).toHaveBeenCalledTimes(3);
+  });
+
+  /**
+   * THE RED CONTROL FOR THE ORIGINAL DEFECT. The old widget captured the pool
+   * in component state at mount; building twice produced the same floor no
+   * matter what the pool did. Here the pool grows tenfold between plans and the
+   * floor must follow it.
+   */
+  it("recomputes the floor when the pool has moved", async () => {
+    let pool = 5_000_000_000;
+    const readBattleState = async () => state(pool);
+
+    const first = await planBuy({ ...base, readBattleState });
+    pool = 50_000_000_000;
+    const second = await planBuy({ ...base, readBattleState });
+
+    expect(second.poolLamports).toBe(50_000_000_000);
+    expect(second.minTokensOut).not.toBe(first.minTokensOut);
+    // A deeper pool means the same SOL buys fewer tokens on this curve, so the
+    // floor must go DOWN. Asserting the direction, not just "different" - a
+    // floor that moved the wrong way is also different.
+    expect(second.minTokensOut).toBeLessThan(first.minTokensOut);
+  });
+
+  it("puts that floor in the instruction, not just in the returned object", async () => {
+    const readBattleState = async () => state(5_000_000_000);
+    const plan = await planBuy({ ...base, readBattleState });
+    // minTokensOut is bytes 17..25 of the buy instruction data, little-endian.
+    const data = plan.instruction.data;
+    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    expect(Number(view.getBigUint64(17, true))).toBe(plan.minTokensOut);
+  });
+
+  it("agrees with quote.ts rather than reimplementing the curve", async () => {
+    const pool = 3_210_000_000;
+    const plan = await planBuy({ ...base, readBattleState: async () => state(pool) });
+    const expected = quoteBuy(pool, base.amountLamports);
+    expect(plan.estimatedTokensOut).toBe(expected.tokensOut);
+    expect(plan.feeLamports).toBe(expected.feeLamports);
+    expect(plan.minTokensOut).toBe(withSlippage(expected.tokensOut, base.slippageBps));
+  });
+
+  it("reads the side being bought, not always side A", async () => {
+    const readBattleState = async () => state(5_000_000_000, 99_000_000_000);
+    const a = await planBuy({ ...base, side: "a", readBattleState });
+    const b = await planBuy({ ...base, side: "b", readBattleState });
+    expect(a.poolLamports).toBe(5_000_000_000);
+    expect(b.poolLamports).toBe(99_000_000_000);
+  });
+
+  /**
+   * A tighter tolerance must produce a higher floor. Getting this backwards
+   * would leave every trade unprotected while the UI showed a slippage setting
+   * the person had deliberately chosen.
+   */
+  it("raises the floor as the tolerance tightens", async () => {
+    const readBattleState = async () => state(5_000_000_000);
+    const loose = await planBuy({ ...base, slippageBps: 300, readBattleState });
+    const tight = await planBuy({ ...base, slippageBps: 50, readBattleState });
+    expect(tight.minTokensOut).toBeGreaterThan(loose.minTokensOut);
+  });
+
+  it("dates the deadline from now, so a stale plan expires", async () => {
+    const readBattleState = async () => state(5_000_000_000);
+    const plan = await planBuy({ ...base, readBattleState });
+    const data = plan.instruction.data;
+    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    const deadline = Number(view.getBigInt64(25, true));
+    expect(deadline).toBe(Math.floor(base.now() / 1000) + 90);
+  });
+});
+
+describe("poolMoveBps", () => {
+  it("reports the move so a person can be told their quote changed", () => {
+    expect(poolMoveBps(1_000_000, 1_100_000)).toBe(1000); // +10%
+    expect(poolMoveBps(1_000_000, 900_000)).toBe(-1000);
+    expect(poolMoveBps(1_000_000, 1_000_000)).toBe(0);
+  });
+
+  /**
+   * A move from an empty pool has no meaningful ratio. Infinity in a UI is
+   * worse than saying nothing moved, and NaN is worse still because it compares
+   * false against every threshold a caller might set.
+   */
+  it("returns 0 rather than Infinity when there was nothing to move from", () => {
+    expect(poolMoveBps(0, 5_000_000)).toBe(0);
+    expect(poolMoveBps(-1, 5_000_000)).toBe(0);
+  });
+});

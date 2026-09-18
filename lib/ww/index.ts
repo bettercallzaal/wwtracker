@@ -108,6 +108,14 @@ export {
   type HeldToken,
 } from "./claim";
 
+/**
+ * Building a trade from state read NOW. The reason this is public rather than a
+ * detail of our widget: the slippage floor has to come from a fresh pool read,
+ * and a consumer writing their own version would reproduce the exact defect
+ * this module was extracted to fix.
+ */
+export { planBuy, poolMoveBps, type BattleState, type BuyPlan, type PlanBuyParams } from "./tradePlan";
+
 // What the program says when it refuses, and which of those we have seen.
 export {
   PROGRAM_ERRORS,
