@@ -116,6 +116,23 @@ export {
  */
 export { planBuy, poolMoveBps, type BattleState, type BuyPlan, type PlanBuyParams } from "./tradePlan";
 
+/**
+ * PRD section 17, token eligibility. Public because an operator deciding
+ * whether to accept an asset is exactly the consumer this SDK is for, and
+ * because the alternative is each of them re-deriving which Token-2022
+ * extensions change what a transfer means.
+ */
+export {
+  TOKEN_2022_PROGRAM,
+  TOKEN_PROGRAM,
+  checkTokenEligibility,
+  summariseEligibility,
+  type EligibilityCheck,
+  type EligibilityReport,
+  type ParsedMintAccount,
+  type Verdict,
+} from "./tokenEligibility";
+
 // What the program says when it refuses, and which of those we have seen.
 export {
   PROGRAM_ERRORS,
