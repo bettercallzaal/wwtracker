@@ -27,6 +27,7 @@
 // "custom program error: 0x1771" - at the cost of one extra RPC call.
 
 import { decideRelay, splitTransaction } from "@/lib/ww/relayPolicy";
+import { decodeSimulationError, explainSimulationError } from "@/lib/ww/errors";
 import { RelayBudget, callerKey } from "@/lib/ww/rateLimit";
 import { redactUrl, redactSecrets } from "@/lib/redact";
 
@@ -106,13 +107,23 @@ interface SimulationValue {
  * Pull the human-readable reason out of simulation logs. Anchor prints
  * "Error Message: Battle has already ended." and that sentence is the entire
  * value of simulating - without it the caller gets a hex code.
+ *
+ * THE LAST RESORT USED TO BE `JSON.stringify(sim.err)`, which puts
+ * `{"InstructionError":[2,{"Custom":6001}]}` in front of a person. Logs are the
+ * better source when they arrive - they are the program's own words - but they
+ * are truncated by the RPC often enough to matter, and a code is not an
+ * explanation. `explainSimulationError` decodes it against the program's error
+ * list, so the fallback is now a sentence and the raw shape is only reached for
+ * something genuinely unrecognised.
  */
 function readableError(sim: SimulationValue): string | null {
   if (!sim.err) return null;
   const line = (sim.logs ?? []).find((l) => l.includes("Error Message:"));
   if (line) return line.slice(line.indexOf("Error Message:") + "Error Message:".length).trim();
   const anchor = (sim.logs ?? []).find((l) => l.includes("AnchorError"));
-  return anchor ?? JSON.stringify(sim.err);
+  if (anchor) return anchor;
+  if (decodeSimulationError(sim.err)) return explainSimulationError(sim.err);
+  return JSON.stringify(sim.err);
 }
 
 async function simulate(tx: Uint8Array): Promise<SimulationValue> {
