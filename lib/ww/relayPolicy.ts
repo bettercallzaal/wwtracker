@@ -98,7 +98,18 @@ export type RelayDecision =
   | { ok: true; trades: Array<keyof typeof RELAYABLE>; instructionCount: number }
   | { ok: false; reason: string };
 
-const hex8 = (data: Uint8Array) => Buffer.from(data.slice(0, 8)).toString("hex");
+/**
+ * The first eight bytes as hex, without `Buffer`.
+ *
+ * `Buffer` is Node's, and Next polyfills it in the browser - so this file
+ * worked everywhere while quietly being the only module in `lib/ww` that could
+ * not run outside a bundler that patches globals. The whole stated purpose of
+ * this directory is to be liftable onto somebody else's stack, and a dependency
+ * on a polyfill is a dependency. Found 2026-09-18 while declaring the SDK's
+ * public surface, which is the first thing that had a reason to look.
+ */
+const hex8 = (data: Uint8Array) =>
+  Array.from(data.slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
 
 /**
  * Decide on the serialized MESSAGE bytes, not the signed envelope - the caller
