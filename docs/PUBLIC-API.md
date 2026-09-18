@@ -113,6 +113,39 @@ valid, so "no account here" is the only honest answer.
 If you want battle data to embed, use `/api/ww/battle` or `/api/ww/positions`,
 which are public, cached and CORS-open.
 
+### `GET /api/ww/claimable?wallet=<address>` - NOT for embedding
+
+**Same-origin only, like `/api/ww/trade`.** No CORS headers, so a browser on
+another site will refuse the response. Documented because an undocumented route
+is worse than a documented refusal, not because it is available. Rate limited on
+the same budget as the relay, and it answers with `Retry-After` when it refuses.
+
+What a wallet can claim from settled battles, **read at request time**. It holds
+no cache of any kind - not balances, not a battle list, not a mint-to-battle
+index - and every response is `no-store`.
+
+That is a ruling, not an implementation detail. `recon/UNCLAIMED.md` in the
+protocol repo killed the obvious version of this, a public page listing every
+wallet with money waiting, because **the page going stale is the page working**:
+everyone who reads such a list and claims makes a row on it false, and the
+failure mode is telling somebody they are owed money they have already taken.
+Measured drift was 1.76% in one quiet day. So this endpoint answers about one
+wallet, now, and refuses to remember.
+
+| field | is |
+|---|---|
+| `positions` | one row per held side: `battleId`, `side`, `mint`, `amount` (base units, string), `vaultLamports` |
+| `totalPayableLamports` | vault lamports above the rent floor, summed per battle, not per side |
+| `readAt` | when the read happened, so a stale tab is visibly stale |
+
+**`vaultLamports` is what the BATTLE holds, not what the wallet is owed.** The
+program works out the share at claim time. Rendering it as a personal balance
+would be the same misreading in a smaller box.
+
+A position appears only if the wallet holds tokens **and** the vault has more
+than the 890,880-lamport rent floor. A vault the RPC could not return is omitted,
+never reported as zero - the rule at the bottom of this page applies here too.
+
 ### `POST /api/ww/trade` - NOT for embedding
 
 **Every other endpoint on this page is yours to call. This one is not.** It is

@@ -1,0 +1,22 @@
+{
+ "_what": "A real mainnet claimShares. The fixture for claimSharesInstruction: the builder must reproduce these nine accounts in this order from (battleId, claimer) alone.",
+ "_note": "The claimer here is also the wavewarz fee wallet, which is a coincidence of who claimed and carries no meaning - the builder derives every account from the battle id and the claimer, and account 2 is simply whoever signed.",
+ "_source": "Public chain data. Re-derivable: getTransaction on the signature below.",
+ "battle_id": 1788574136,
+ "signature": "Bj2mHS6n8yKNCyGg9SMgReoSQgSgNkt3Aym1j1ZFvqR6REBfFd2dAivhBz8qXwT4sHsWQr73hHaY2ZYBdcPBsd5",
+ "slot": 444402840,
+ "program_id": "9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo",
+ "instruction_data_hex": "82831ded86146ef5",
+ "claimer": "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+ "accounts_in_order": [
+  "7TJkqdPn1wNu7ZoBGKFR5qAMZfE1eBk1nYNtwFZtKfPB",
+  "5qLSSxJwZo8uTcaYuc6t6bzAdH73CjMrdnKTZTDmw75n",
+  "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+  "6Hm1P4mBQmByGUscjziWabeNPJmfY6rBiqvsZwxcjPAj",
+  "7XcoPwb3ndStgBauedCtjuAGjjudHuU57nKdwtK9nvPv",
+  "DYGrPZXADBos3Nvk6FH3kPoen2zAdCBAEkk66HjXrdG1",
+  "FfAJcb8SZ2FJPJyaDgrE2zr74WTGAHhui8VC4diVJ5KB",
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  "11111111111111111111111111111111"
+ ]
+}
