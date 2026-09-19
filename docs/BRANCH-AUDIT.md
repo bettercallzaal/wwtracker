@@ -63,37 +63,64 @@ orphan: `docs/CLONE-AUDIT.md` appears in this list and is alive on `main` as
 read `public/ww-battles.json` and `wavewarz.info/api/public/stats` live, and
 they compiled.
 
-**THEY RAN OUT OF DEPLOYMENTS.** 57 of the pull requests carrying these
-components were examined. **53 of the 57 carry the same failure comment:**
+**THEY RAN OUT OF DEPLOYMENTS.**
+
+**The population, stated as a command, because an unreproducible count is an
+assertion.** Every remote branch that added at least one `components/*.tsx` that
+`main` has never carried:
+
+```
+for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin \
+             | grep -v -E '^origin(/(main|HEAD))?$'); do
+  b=${ref#origin/}; base=$(git merge-base main "$ref") || continue
+  git diff --name-status --diff-filter=A "$base".."$ref" \
+    | while read st f; do case "$f" in components/*.tsx)
+        git cat-file -e "main:$f" 2>/dev/null || { echo "$b"; break; };; esac; done
+done | sort -u
+```
+
+**53 branches**, each with exactly one pull request, **all 53 closed, none
+merged**. Note what this is NOT: branches whose name starts `feat/wave` are only
+15 of the 53, so selecting on the name gives a different and much smaller set.
+
+Counting the failure comment over those 53:
+
+```
+gh pr view <n> --json comments --template '{{range .comments}}{{.body}}{{end}}' \
+  | grep -q 'api-deployments-free-per-day'
+```
+
+**51 of the 53** match:
 
     Deployment failed with the following error:
     Resource is limited - try again in 24 hours
     (more than 100, code: "api-deployments-free-per-day")
 
 That is Vercel's free tier refusing to build a preview after 100 deployments in
-a day. The closures cluster on two days - **18 on 2026-07-17 and 37 on
-2026-07-29** - which is the shape of a batch being cleared out, not of 57
-separate judgements.
+a day. The closures cluster on two days - **34 on 2026-07-29, 18 on 2026-07-17**,
+with a single straggler on 2026-09-05 - which is the shape of a batch being
+cleared out, not 53 separate judgements.
 
-**So the most likely story is that nobody ever saw most of these render.** A
-wave of small PRs was opened faster than the free tier would build them, the
-previews failed, and the batch was closed. That is a quota, not a decision about
-the product.
+**So no preview was ever built for most of them.** Whether anyone ran them
+locally is not something a pull request records, and this section previously
+claimed nobody ever saw them render, which the comments do not establish. What
+the comments establish is that the hosted preview never built, and that a wave
+of small pull requests was opened faster than a free tier would serve them.
 
-**TWO EARLIER VERSIONS OF THIS PARAGRAPH WERE WRONG, IN OPPOSITE DIRECTIONS.**
-The first asserted they were dropped because they duplicate wavewarz.info while
-this repo covers the business layer - **inference, never recorded, and it read
-well only because it matched the repo's standing thesis.** The second, correcting
-it, said the reason was unrecorded and nothing in the history gave one. **That
-was also wrong: the history did say something, and I had looked at the wrong
-pull requests.** The first mistake was believing a story that fit. The second was
-declaring an absence after one weak search - `docs/` and commit messages - when
-the answer was sitting in the PR comments.
+**THREE VERSIONS OF THIS PARAGRAPH, WRONG TWICE, AND THE COUNTS WRONG A THIRD
+TIME.** The first asserted the components were dropped because they duplicate
+wavewarz.info - inference, never recorded, believed because it matched the
+repo's standing thesis. The second said the reason was unrecorded - declared
+after searching `docs/` and commit messages only, while the answer sat in the
+pull request comments. The third gave the right cause with counts nobody could
+reproduce, drawn from a looser population than the sentence described; a review
+measured `feat/wave*` instead, got different numbers, and was right to hold it.
+**Hence the commands above.**
 
 What is still genuinely unknown is whether anyone later decided against the work
 on its merits. The overlap with wavewarz.info is real, and this repo's thesis is
-the business layer. **But no one wrote that down, and the recorded cause is a
-deployment cap.**
+the business layer. **But no one wrote that down, and the only recorded cause is
+a deployment cap.**
 
 **Do not rebuild them without asking first.** That instruction survived all three
 versions of this paragraph, and it is the only part that had to be certain.

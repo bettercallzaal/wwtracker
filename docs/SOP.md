@@ -245,15 +245,22 @@ stopped.** That audit went through three versions of one paragraph. First it
 said the components were dropped because they duplicate wavewarz.info -
 inference, never recorded, believed because it matched the repo's thesis. Then
 it said the reason was unrecorded - declared after searching `docs/` and commit
-messages only. **Then someone opened the PRs: 53 of 57 carry a Vercel free-tier
-failure, "more than 100 deployments per day", and the closures cluster on two
-days.** They ran out of deployments. Nobody ever saw most of them render.
+messages only. **Then someone opened the PRs: 51 of 53 carry a Vercel free-tier
+failure, "more than 100 deployments per day", and 52 of the closures fall on two
+days.** They ran out of deployments, and no hosted preview was ever built for
+most of them.
 
-Two lessons, and the second is the expensive one. **An inference that agrees with
-the house view is the one that gets committed without a source.** And **an
-absence declared after one search is a claim, not a finding** - "nothing in the
-history says why" needs the searches named, or it is just where you happened to
-look.
+Then a review could not reproduce 53 and 51, because the paragraph gave counts
+without the rule that selected them - and measuring the obvious rule,
+`feat/wave*`, returns a different and smaller set. **Publish the selector beside
+any count somebody might re-run**; `docs/BRANCH-AUDIT.md` now carries both
+commands.
+
+Three lessons from one paragraph. **An inference that agrees with the house view
+gets committed without a source.** **An absence declared after one search is a
+claim, not a finding** - "nothing in the history says why" needs the searches
+named, or it is just where you happened to look. And **a count without its
+selector cannot be checked, only believed.**
 
 **Rescue with the re-check attached, never the file alone.** The one document
 worth recovering carried a headline finding - "V2 average volume is 58% lower
