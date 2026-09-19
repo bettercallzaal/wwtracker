@@ -49,3 +49,7 @@ as current.
 
 [**WAVEWARZ-RESEARCH.md**](./WAVEWARZ-RESEARCH.md) and `research/` hold the deeper
 background - tokenomics, event economics, community history.
+
+## Operating procedures
+
+- **[SOP.md](SOP.md)** - ending an unsettled battle, claiming, checking whether the volume bug is live, and the reporting rules this lane has paid for. Every procedure has been run on mainnet with the result recorded.
