@@ -236,11 +236,31 @@ reader can actually open** - "under `docs/archive/`" sends them looking for a
 name that is not there, which is the same wrong turn the test itself exists to
 prevent.
 
-**Not merging is often the right answer, and the audit should say so.** 45
-components sit only on the July `feat/wave*` branches. They work, they read live
-data, and they were correctly dropped - they render what wavewarz.info already
-renders, and this repo covers the business layer instead. An audit that lists
-them as "lost work" invites somebody to rebuild them.
+**Not merging is often the right answer, and an audit that calls every unmerged
+branch "lost work" invites somebody to rebuild it.** 45 components sit only on
+the July `feat/wave*` branches. They work and they read live data.
+
+**Read the pull request comments before concluding anything about why a branch
+stopped.** That audit went through three versions of one paragraph. First it
+said the components were dropped because they duplicate wavewarz.info -
+inference, never recorded, believed because it matched the repo's thesis. Then
+it said the reason was unrecorded - declared after searching `docs/` and commit
+messages only. **Then someone opened the PRs: 51 of 53 carry a Vercel free-tier
+failure, "more than 100 deployments per day", and 52 of the closures fall on two
+days.** They ran out of deployments, and no hosted preview was ever built for
+most of them.
+
+Then a review could not reproduce 53 and 51, because the paragraph gave counts
+without the rule that selected them - and measuring the obvious rule,
+`feat/wave*`, returns a different and smaller set. **Publish the selector beside
+any count somebody might re-run**; `docs/BRANCH-AUDIT.md` now carries both
+commands.
+
+Three lessons from one paragraph. **An inference that agrees with the house view
+gets committed without a source.** **An absence declared after one search is a
+claim, not a finding** - "nothing in the history says why" needs the searches
+named, or it is just where you happened to look. And **a count without its
+selector cannot be checked, only believed.**
 
 **Rescue with the re-check attached, never the file alone.** The one document
 worth recovering carried a headline finding - "V2 average volume is 58% lower

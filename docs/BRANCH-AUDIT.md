@@ -60,13 +60,70 @@ orphan: `docs/CLONE-AUDIT.md` appears in this list and is alive on `main` as
     WinRateLeaderboard WwMedia WwNow ZaoIPSummary ZaoVitals
 
 `main` carries 28 components. These 45 are not stale hardcoded snapshots - they
-read `public/ww-battles.json` and `wavewarz.info/api/public/stats` live. They
-were dropped because of **what they show**, not how they fetch it: rivalry
-boards, hot streaks, margin distributions and battle calendars are the things
-wavewarz.info already renders, and this repo's standing thesis is to cover the
-business layer rather than re-render the platform's own front end. **Leaving
-them unmerged was the right call, and this section exists so that nobody
-re-derives them from scratch believing the ground is unbroken.**
+read `public/ww-battles.json` and `wavewarz.info/api/public/stats` live, and
+they compiled.
+
+**THEY RAN OUT OF DEPLOYMENTS.**
+
+**The population, stated as a command, because an unreproducible count is an
+assertion.** Every remote branch that added at least one `components/*.tsx` that
+`main` has never carried:
+
+```
+for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin \
+             | grep -v -E '^origin(/(main|HEAD))?$'); do
+  b=${ref#origin/}; base=$(git merge-base main "$ref") || continue
+  git diff --name-status --diff-filter=A "$base".."$ref" \
+    | while read st f; do case "$f" in components/*.tsx)
+        git cat-file -e "main:$f" 2>/dev/null || { echo "$b"; break; };; esac; done
+done | sort -u
+```
+
+**53 branches**, each with exactly one pull request, **all 53 closed, none
+merged**. Note what this is NOT: branches whose name starts `feat/wave` are only
+15 of the 53, so selecting on the name gives a different and much smaller set.
+
+Counting the failure comment over those 53:
+
+```
+gh pr view <n> --json comments --template '{{range .comments}}{{.body}}{{end}}' \
+  | grep -q 'api-deployments-free-per-day'
+```
+
+**51 of the 53** match:
+
+    Deployment failed with the following error:
+    Resource is limited - try again in 24 hours
+    (more than 100, code: "api-deployments-free-per-day")
+
+That is Vercel's free tier refusing to build a preview after 100 deployments in
+a day. The closures cluster on two days - **34 on 2026-07-29, 18 on 2026-07-17**,
+with a single straggler on 2026-09-05 - which is the shape of a batch being
+cleared out, not 53 separate judgements.
+
+**So no preview was ever built for most of them.** Whether anyone ran them
+locally is not something a pull request records, and this section previously
+claimed nobody ever saw them render, which the comments do not establish. What
+the comments establish is that the hosted preview never built, and that a wave
+of small pull requests was opened faster than a free tier would serve them.
+
+**THREE VERSIONS OF THIS PARAGRAPH, WRONG TWICE, AND THE COUNTS WRONG A THIRD
+TIME.** The first asserted the components were dropped because they duplicate
+wavewarz.info - inference, never recorded, believed because it matched the
+repo's standing thesis. The second said the reason was unrecorded - declared
+after searching `docs/` and commit messages only, while the answer sat in the
+pull request comments. The third gave the right cause with counts nobody could
+reproduce, drawn from a looser population than the sentence described; a review
+measured `feat/wave*` instead, got different numbers, and was right to hold it.
+**Hence the commands above.**
+
+What is still genuinely unknown is whether anyone later decided against the work
+on its merits. The overlap with wavewarz.info is real, and this repo's thesis is
+the business layer. **But no one wrote that down, and the only recorded cause is
+a deployment cap.**
+
+**Do not rebuild them without asking first.** That instruction survived all three
+versions of this paragraph, and it is the only part that had to be certain.
 
 **Four weekly recaps** - `recaps/weekly/2026-07-{17,23,24,28}-weekly.md` - exist
 only on `recap/weekly-*` and `chore/battles-refresh-*` branches. `main` carries
