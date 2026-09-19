@@ -6,10 +6,43 @@ place. The protocol layer - what the Solana program does, byte by byte - lives i
 growth history, the second product, and the things that are true about WaveWarZ
 that are not properties of a program.
 
-**Measured 2026-09-06.** Every figure states its source and sample. Where a
+**Measured 2026-09-06, with a dated delta at section 0 from 2026-09-19.** Every figure states its source and sample. Where a
 number is inherited from somebody else's data rather than measured, it says so.
 
 ---
+
+## 0. What has changed since, re-measured 2026-09-19
+
+**Everything below this section is stamped 2026-09-06 and is left exactly as it
+was.** Re-writing those figures without re-deriving each one is the thing this
+document's own header warns against, so the movement is recorded here instead and
+the original measurement stays legible.
+
+| | 2026-09-06 | 2026-09-19 | |
+|---|---|---|---|
+| Battle accounts on chain | 1,643 | **1,694** | +51 |
+| Settled on chain | - | **1,607** | 87 never ended |
+| In her public listing | 1,501 | **1,552** | the 142-battle gap is unchanged |
+| Lifetime volume, her API | 922.3 SOL | **921.99 SOL** | **it went DOWN** |
+| Artist payouts | 14.38 SOL | 14.47 SOL | |
+| Trader claims | - | 481.76 SOL over 3,368 withdrawals | |
+| SOL still sitting in pools | - | **494.39 SOL** | |
+
+**THE VOLUME FIGURE IS FALLING, AND THAT IS NOT POSSIBLE HONESTLY.** Lifetime
+trading volume cannot decrease - it is a sum over trades that already happened.
+It read 924.99 SOL on the morning of 2026-09-19 and 921.99 SOL a few hours later,
+and it now sits below the 922.3 SOL this document measured thirteen days ago.
+
+The cause is known and is not a measurement error on our side. Fifteen battles
+currently serve their POOL value in place of their trading volume - the signature
+is `volumeSol == poolSol` to 4dp on both sides - which erases **16.34 SOL** of
+real volume from the public total. That was 11.84 SOL on 2026-09-18. See
+`bettercallzaal/wavewarz-protocol`, `recon/VOLUME-FALLBACK-COMPLETE-2026-09-17.md`
+and `tools/events-fallback-scan.py`, which exits non-zero while it is happening.
+
+**So any volume figure quoted from the public API today is low, by a growing
+amount.** The 922.3 SOL below was correct when measured and is now higher than
+what the API reports, which is the wrong way round and is the tell.
 
 ## 1. The ecosystem, in one table
 
