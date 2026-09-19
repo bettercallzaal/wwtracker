@@ -224,7 +224,11 @@ git diff --name-status --diff-filter=A "$base".."$ref" \
 
 **It flags candidates, not losses.** A file renamed on `main` looks identical to
 a file lost on a branch. `docs/CLONE-AUDIT.md` came back as an orphan and is
-alive on `main` under `docs/archive/`. Check each one before acting on it.
+alive on `main` as `docs/archive/2026-08-25-duplicate-clone-check.md`. Check
+each one before acting on it, and when you write the check up, **name the file a
+reader can actually open** - "under `docs/archive/`" sends them looking for a
+name that is not there, which is the same wrong turn the test itself exists to
+prevent.
 
 **Not merging is often the right answer, and the audit should say so.** 45
 components sit only on the July `feat/wave*` branches. They work, they read live
