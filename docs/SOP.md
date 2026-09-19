@@ -3,6 +3,13 @@
 Every procedure here has been run, on mainnet, with the result recorded. None is
 written from how the system is supposed to work.
 
+**Who signs is part of every procedure here.** Anything irreversible, on chain,
+or costing money is Zaal's own hand from his own wallet. No lane holds a key or a
+funded wallet, and `lib/ww/relayPolicy.ts` refuses to relay `initializeBattle` or
+`endBattle` so that a lane cannot settle or launch in anyone's name even by
+accident. **Every run note below names the signer.** A procedure that leaves the
+hand implied is one somebody will later read as permission.
+
 **The one rule the rest descend from: simulate before you sign.** Every
 instruction this estate builds can be asked of the deployed program with
 `sigVerify: false` before anyone is asked to approve anything. It costs nothing,
@@ -45,8 +52,20 @@ that wallet appears nowhere in the instruction. No admin key is needed.
 
 ### Run 2026-09-19
 
-Six battles ended. Settled went **1,601 to 1,607**. All six simulated
-`WOULD SUCCEED` first and all six landed.
+**Zaal signed and sent all six himself, from his own wallet**
+(`4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk`), on his own initiative - he
+opened the request with "I'll go through one by one and end those". The lane's
+part was the list, the links, and the six simulations. **This lane holds no key,
+can reach none, and wrote nothing to chain.**
+
+That sentence is here because the first draft of this section said only "six
+battles ended", and a seat review had to spend a round establishing whose hand
+it was. **A procedure that does not name the hand is how the next reader assumes
+the lane does it.** Name the signer, every time.
+
+Settled went **1,601 to 1,607**. All six simulated `WOULD SUCCEED` first and all
+six landed. The six endBattle signatures are on chain against each battle PDA,
+fee payer as above.
 
 **Decide whether it is worth doing before doing it.** At that run, all 93 unended
 battles held **0.0944 SOL between them** against 924 SOL of lifetime volume, and
@@ -82,8 +101,9 @@ API.
 
 ### Run 2026-09-19
 
-Battle 1787568630 - ended, then claimed. Tokens `0/0`, vault 0.000891 SOL. First
-end-to-end proof of the signing path with a real wallet.
+Battle 1787568630 - **Zaal ended it and claimed it himself**, same wallet as
+SOP 1. Tokens `0/0`, vault 0.000891 SOL. First end-to-end proof of the signing
+path with a real wallet, and the lane's part was the panel and the simulation.
 
 ---
 
