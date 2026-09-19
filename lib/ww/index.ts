@@ -132,6 +132,27 @@ export {
 } from "./battleRecord";
 
 /**
+ * PRD 32. The other half of the record: given one somebody handed you, which
+ * of its fields does the chain actually agree with.
+ *
+ * Exported beside `buildBattleRecord` on purpose. A consumer who can only build
+ * records trusts whoever sent them one; the pair is what makes the record a
+ * claim that can be refused. It cannot return "verified" - eighteen of the
+ * record's fields have no chain representation at all, and a verdict implying
+ * otherwise would be the most dangerous thing this SDK could export.
+ */
+export {
+  MIN_VERIFIABLE_ACCOUNT_BYTES,
+  contradictions,
+  verifyBattleRecord,
+  type ClaimedBattleRecord,
+  type FieldCheck,
+  type FieldVerdict,
+  type VerificationReport,
+  type VerificationVerdict,
+} from "./battleVerification";
+
+/**
  * PRD section 56, price impact. Public because a consumer building their own
  * trade panel needs the same figure and the same three-state assessment - and
  * because the alternative is each of them folding the fee into it.
