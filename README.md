@@ -193,6 +193,35 @@ markdown files with a "Data used" section citing the exact source for every
 number, and a "Not included" section for anything that can't be verified at
 that granularity (no per-battle payout/trade data exists).
 
+## Data freshness
+
+**Most of this dashboard is baked snapshots, and they do not refresh
+themselves.** Before quoting any number out of this repo, know which of these it
+is and how old it is.
+
+| What | Where | As of |
+|---|---|---|
+| Site-wide stamp, shown in the banner | `lib/freshness.ts` `DATA_AS_OF` | **2026-09-05** |
+| On-chain analytics snapshot | `lib/wwData.ts` `generatedAt` | **2026-09-09** |
+| Battle history file | `public/ww-battles.json` | **1,510 battles**, refreshed by `npm run fetch:battles` |
+| Platform stats, treasury balance | `/api/ww/*`, Dune cached query | **live at request time** |
+
+**The dates differ on purpose and the counts will not reconcile.** The battle
+file and the analytics snapshot are pulled by different scripts on different
+days from different sources, so their battle counts disagree, and that is
+expected rather than a fault. `docs/REFRESH.md` is the runbook for re-pulling
+and records the Dune free-tier limits that make a full refresh non-trivial.
+
+**One number in this repo is known to be untrustworthy at source.** Lifetime
+volume from the upstream public API is affected by a live bug in which the
+bonding-curve pool is written into the volume field. Confirmed still regressing
+on 2026-09-19. `docs/SOP.md` SOP 3 is the check, and it exits non-zero while the
+bug is live.
+
+**The skip and queue figures rest on an unverified assumption.** They classify
+SOL inflows to the treasury wallet by amount alone. See
+`docs/issues/001-fnj-payment-bucket-classification.md` - open and unfixed.
+
 ## Two data paths
 
 The app uses two patterns, each fitted to its cost and freshness:
