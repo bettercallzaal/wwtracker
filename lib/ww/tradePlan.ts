@@ -27,7 +27,13 @@
  * change with it - which is exactly what the old code would fail.
  */
 import { buySharesInstruction, deadlineIn, type BattleAccounts, type Instruction } from "./instructions";
-import { quoteBuy, withSlippage } from "./quote";
+import { BUY_POOL_SHARE, quoteBuy, withSlippage } from "./quote";
+import {
+  PriceImpactExceededError,
+  assessPriceImpact,
+  priceImpactBps,
+  type PriceImpactAssessment,
+} from "./priceImpact";
 
 export interface BattleState {
   /** The three wallets, from the battle account. */
@@ -45,6 +51,12 @@ export interface BuyPlan {
   /** The floor actually put in the instruction. */
   minTokensOut: number;
   feeLamports: number;
+  /**
+   * What this trade does to the price, and whether anything checked it.
+   * Always computed; `checked: false` when no maximum was configured, which a
+   * caller must be able to tell apart from "checked and fine".
+   */
+  priceImpact: PriceImpactAssessment;
 }
 
 export interface PlanBuyParams {
@@ -60,6 +72,16 @@ export interface PlanBuyParams {
    * buried in here.
    */
   readBattleState: () => Promise<BattleState>;
+  /**
+   * The asset's `maximum_price_impact`, in basis points, from PRD 16's registry.
+   *
+   * DELIBERATELY OPTIONAL AND DELIBERATELY UNDEFAULTED. Omitting it means no
+   * limit is configured for this asset, and the plan says so rather than
+   * quietly passing; supplying it means the plan REFUSES when the trade moves
+   * the price further. A fallback number here would be a limit nobody chose
+   * that reads exactly like one somebody did.
+   */
+  maxPriceImpactBps?: number;
   /** Injectable only so a test can pin the deadline. */
   now?: () => number;
 }
@@ -77,6 +99,26 @@ export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
   const quote = quoteBuy(poolLamports, p.amountLamports);
   const minTokensOut = withSlippage(quote.tokensOut, p.slippageBps);
 
+  // Computed from the SAME fresh read the floor uses. An impact figure from a
+  // stale pool would be the defect #300 fixed, wearing a different name.
+  const priceImpact = assessPriceImpact(
+    priceImpactBps({
+      poolBeforeLamports: poolLamports,
+      // The pool moves by what reaches it, not by what was spent - the 1.5% fee
+      // never enters the pool and so causes no price movement.
+      poolDeltaLamports: p.amountLamports * BUY_POOL_SHARE,
+      tokens: quote.tokensOut,
+    }),
+    p.maxPriceImpactBps,
+  );
+
+  // PRD 56: outside configured safety limits, FAIL rather than execute at an
+  // unreasonable price. Throwing rather than flagging, because a flag is
+  // something a caller can ignore and an ignorable limit is not a limit.
+  if (priceImpact.exceeded) {
+    throw new PriceImpactExceededError(priceImpact.impactBps, priceImpact.limitBps!);
+  }
+
   return {
     instruction: buySharesInstruction({
       battleId: p.battleId,
@@ -91,6 +133,7 @@ export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
     estimatedTokensOut: quote.tokensOut,
     minTokensOut,
     feeLamports: quote.feeLamports,
+    priceImpact,
   };
 }
 

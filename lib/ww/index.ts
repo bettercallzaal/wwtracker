@@ -117,6 +117,20 @@ export {
 export { planBuy, poolMoveBps, type BattleState, type BuyPlan, type PlanBuyParams } from "./tradePlan";
 
 /**
+ * PRD section 56, price impact. Public because a consumer building their own
+ * trade panel needs the same figure and the same three-state assessment - and
+ * because the alternative is each of them folding the fee into it.
+ */
+export {
+  PriceImpactExceededError,
+  assessPriceImpact,
+  describePriceImpact,
+  priceImpactBps,
+  spotPricePerToken,
+  type PriceImpactAssessment,
+} from "./priceImpact";
+
+/**
  * PRD section 16, the Approved Asset Registry. Public alongside the eligibility
  * checker because they are two halves of one decision: the checker reports what
  * chain says, and this records what a person decided about it. An operator

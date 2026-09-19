@@ -18,6 +18,7 @@ import {
 } from "@/lib/ww/instructions";
 import { computeUnitLimitInstruction, computeUnitPriceInstruction, serializeMessage } from "@/lib/ww/message";
 import { planBuy, poolMoveBps } from "@/lib/ww/tradePlan";
+import { describePriceImpact, type PriceImpactAssessment } from "@/lib/ww/priceImpact";
 import { lamportsToSol, quoteBuy, solToLamports } from "@/lib/ww/quote";
 
 /**
@@ -88,6 +89,12 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
    * on a busy battle that gap is the whole reason the floor has to be fresh.
    */
   const [quoteDrift, setQuoteDrift] = useState<number | null>(null);
+  /**
+   * What the built transaction does to the price. From the plan, so it is
+   * computed against the same fresh read as the slippage floor rather than the
+   * estimate on screen.
+   */
+  const [priceImpact, setPriceImpact] = useState<PriceImpactAssessment | null>(null);
 
   // Extensions inject on their own schedule, so a single check on mount races
   // them. Poll briefly, then stop - "not installed" and "not injected yet" look
@@ -114,6 +121,7 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
         setWallet(key);
         setPreflight(null);
         setQuoteDrift(null);
+        setPriceImpact(null);
         setSignature(null);
         setError(key ? null : "Wallet disconnected from this site.");
       },
@@ -203,6 +211,7 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
       },
     });
     setQuoteDrift(poolMoveBps(shownPool, plan.poolLamports));
+    setPriceImpact(plan.priceImpact);
     const ix = plan.instruction;
     return serializeMessage(wallet, prep.blockhash, [
       computeUnitLimitInstruction(COMPUTE_UNITS),
@@ -405,6 +414,28 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
           {phase === "signing" ? "Check Phantom..." : phase === "sending" ? "Sending..." : "Sign and send"}
         </button>
       </div>
+
+      {priceImpact && (
+        <div
+          style={{
+            ...panel,
+            marginBottom: 12,
+            borderColor: priceImpact.exceeded ? C.danger : C.grid,
+          }}
+        >
+          <p style={{ ...metaLabel, marginBottom: 6, color: priceImpact.exceeded ? C.danger : C.dim }}>
+            Price impact
+          </p>
+          <p style={{ margin: 0, fontSize: 13 }}>{describePriceImpact(priceImpact)}</p>
+          {!priceImpact.checked && (
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: C.dim }}>
+              A maximum is set per asset in the approved asset registry (PRD 16), which is built
+              but not yet maintained - so there is nothing to check against and this figure is
+              shown rather than enforced.
+            </p>
+          )}
+        </div>
+      )}
 
       {quoteDrift !== null && Math.abs(quoteDrift) >= 50 && (
         <div style={{ ...panel, marginBottom: 12, borderColor: C.dim }}>
