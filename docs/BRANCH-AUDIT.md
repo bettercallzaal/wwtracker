@@ -60,13 +60,26 @@ orphan: `docs/CLONE-AUDIT.md` appears in this list and is alive on `main` as
     WinRateLeaderboard WwMedia WwNow ZaoIPSummary ZaoVitals
 
 `main` carries 28 components. These 45 are not stale hardcoded snapshots - they
-read `public/ww-battles.json` and `wavewarz.info/api/public/stats` live. They
-were dropped because of **what they show**, not how they fetch it: rivalry
-boards, hot streaks, margin distributions and battle calendars are the things
-wavewarz.info already renders, and this repo's standing thesis is to cover the
-business layer rather than re-render the platform's own front end. **Leaving
-them unmerged was the right call, and this section exists so that nobody
-re-derives them from scratch believing the ground is unbroken.**
+read `public/ww-battles.json` and `wavewarz.info/api/public/stats` live, and
+they compiled.
+
+**WHY THEY WERE DROPPED IS NOT RECORDED ANYWHERE, AND AN EARLIER VERSION OF THIS
+PARAGRAPH SAID IT WAS.** It stated that they were dropped because they render
+what wavewarz.info already renders, while this repo covers the business layer.
+**That was inference, not a decision anyone wrote down** - it reads plausibly
+because it matches the repo's standing thesis, which is exactly what makes an
+inference hard to catch once it is committed. The PRs were closed on
+2026-07-16 and 2026-07-29 with no stated reason, and nothing in `docs/` or the
+commit history gives one.
+
+What IS on the record: rivalry boards, hot streaks, margin distributions and
+battle calendars do overlap with what wavewarz.info renders, and this repo's
+thesis is to cover the business layer instead. Whether that overlap is why they
+were dropped, or whether the work simply stopped, is unknown.
+
+**Either way, do not rebuild them without asking first.** That instruction
+survives the missing reason, and it is the only part of this section that
+needed to be certain.
 
 **Four weekly recaps** - `recaps/weekly/2026-07-{17,23,24,28}-weekly.md` - exist
 only on `recap/weekly-*` and `chore/battles-refresh-*` branches. `main` carries

@@ -236,11 +236,17 @@ reader can actually open** - "under `docs/archive/`" sends them looking for a
 name that is not there, which is the same wrong turn the test itself exists to
 prevent.
 
-**Not merging is often the right answer, and the audit should say so.** 45
-components sit only on the July `feat/wave*` branches. They work, they read live
-data, and they were correctly dropped - they render what wavewarz.info already
-renders, and this repo covers the business layer instead. An audit that lists
-them as "lost work" invites somebody to rebuild them.
+**Not merging is often the right answer, and an audit that calls every unmerged
+branch "lost work" invites somebody to rebuild it.** 45 components sit only on
+the July `feat/wave*` branches. They work and they read live data.
+
+**But write down what you know, not what fits.** The first version of that audit
+said they were dropped because they duplicate wavewarz.info. Nobody recorded
+that - it was inference, and it read well precisely because it matched the
+repo's thesis. **An inference that agrees with the house view is the one that
+gets committed without a source.** The audit now says the reason is unrecorded
+and keeps the instruction that actually matters: do not rebuild them without
+asking.
 
 **Rescue with the re-check attached, never the file alone.** The one document
 worth recovering carried a headline finding - "V2 average volume is 58% lower
