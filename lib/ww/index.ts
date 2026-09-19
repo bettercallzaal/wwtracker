@@ -117,6 +117,29 @@ export {
 export { planBuy, poolMoveBps, type BattleState, type BuyPlan, type PlanBuyParams } from "./tradePlan";
 
 /**
+ * PRD section 16, the Approved Asset Registry. Public alongside the eligibility
+ * checker because they are two halves of one decision: the checker reports what
+ * chain says, and this records what a person decided about it. An operator
+ * needs both, and needs them to agree about field names.
+ */
+export {
+  IncompletePolicyError,
+  METAPLEX_METADATA_PROGRAM,
+  buildAssetRegistryRow,
+  isStale,
+  metaplexMetadataAddress,
+  missingPolicyFields,
+  parseMetaplexMetadata,
+  tokenMetadataFromMintAccount,
+  type AssetPolicy,
+  type AssetRegistryRow,
+  type AssetStatus,
+  type MetadataSource,
+  type RoutingStatus,
+  type TokenMetadata,
+} from "./assetRegistry";
+
+/**
  * PRD section 17, token eligibility. Public because an operator deciding
  * whether to accept an asset is exactly the consumer this SDK is for, and
  * because the alternative is each of them re-deriving which Token-2022
