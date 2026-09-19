@@ -53,3 +53,7 @@ background - tokenomics, event economics, community history.
 ## Operating procedures
 
 - **[SOP.md](SOP.md)** - ending an unsettled battle, claiming, checking whether the volume bug is live, and the reporting rules this lane has paid for. Every procedure has been run on mainnet with the result recorded.
+- **[BRANCH-AUDIT.md](BRANCH-AUDIT.md)** - what is on the 236 branches this repo
+  has pushed, what never reached `main`, and the one test that tells those apart.
+  45 components and four weekly recaps live only on unmerged branches, on
+  purpose; one research document did not, and was rescued.

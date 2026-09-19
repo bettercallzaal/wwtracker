@@ -192,3 +192,49 @@ the signature and its floor, and a command that fails while the bug is live.
 **Keep established and open apart.** The mechanism being proven does not make the
 trigger proven, and a package that blurs the two invites an argument about the
 part that is solid.
+
+---
+
+## SOP 7 - Auditing the branch trail
+
+**When.** Before anyone deletes branches, and any time the question "did we lose
+work on a branch" comes up. Run 2026-09-19 over 235 remote branches; full result
+in [BRANCH-AUDIT.md](BRANCH-AUDIT.md).
+
+**The two tests that do NOT answer it.**
+
+`git merge-base --is-ancestor` reports every squash-merged branch as unmerged.
+Measured on this repo: 32 branches reported stale, real answer 3.
+
+"Does the branch differ from `main`" is worse, because it reports **yes for
+every old branch whether it merged or not** - `main` has moved on regardless.
+Measured: 181 of 235. A cleanup driven by that number puts 181 branches in front
+of a person and teaches them the audit is noise.
+
+**The test that does.** Which paths did the branch ADD that `main` has never
+carried, at any point in its history:
+
+```
+base=$(git merge-base main "$ref")
+git diff --name-status --diff-filter=A "$base".."$ref" \
+  | while read st f; do git cat-file -e "main:$f" || echo "$f"; done
+```
+
+235 branches down to 74, and 65 distinct paths - a list a person can read.
+
+**It flags candidates, not losses.** A file renamed on `main` looks identical to
+a file lost on a branch. `docs/CLONE-AUDIT.md` came back as an orphan and is
+alive on `main` under `docs/archive/`. Check each one before acting on it.
+
+**Not merging is often the right answer, and the audit should say so.** 45
+components sit only on the July `feat/wave*` branches. They work, they read live
+data, and they were correctly dropped - they render what wavewarz.info already
+renders, and this repo covers the business layer instead. An audit that lists
+them as "lost work" invites somebody to rebuild them.
+
+**Rescue with the re-check attached, never the file alone.** The one document
+worth recovering carried a headline finding - "V2 average volume is 58% lower
+than V1" - that reversed sign when re-measured against the chain census. It was
+brought back with the contradiction at the top and the original body untouched.
+**A two-month-old finding restored without re-checking is a false fact with a
+fresh commit date on it.**
