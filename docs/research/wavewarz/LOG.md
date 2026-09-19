@@ -2,6 +2,26 @@
 
 One line per hourly run: what was tried, and whether it worked or got stuck.
 
+## 2026-09-19 - judging-system document rescued from an unmerged branch
+
+`2026-07-16-judging-system-v1-v2.md` was written on 2026-07-16, pushed to
+`docs/judging-system-research-2026-07-16`, and never merged. Found by the branch
+audit (`docs/BRANCH-AUDIT.md`), which looked for paths a branch added that `main`
+has never carried. It is the only description of the March 10 2026 judging
+change (Charts-only to Poll + Charts + DJ Wavy, 2 of 3) in this estate.
+
+Rescued WITH its headline finding contradicted rather than restored quietly. The
+document claimed V2 battles average 58% less volume than V1; re-measured against
+the 1,643-account chain census, V2's mean pool is two and a half times V1's and
+its median 34% higher. Neither number settles anything - they measure different
+quantities, the July source field is affected by the known volume bug, and 68%
+of V2's SOL sits in 1% of its battles. The re-check note is at the top of the
+file; the 2026-07-16 body is unedited below it.
+
+The gap the original identified is still open and is the part worth carrying:
+per-battle Poll / Charts / DJ Wavy win-loss is in no public feed or API, so how
+often the AI judge is the deciding vote cannot be answered from outside.
+
 2026-07-16 (this session) - Researched DJ Wavy sentiment + AMA content + fan-made content + artist roster churn via parallel subagents. WebFetch worked on wavewarz.info (verified live stats, roster, Clippers program) but blocked on X (HTTP 402) and YouTube (footer only). DJ Wavy generates zero public discourse on indexed platforms — community discussion likely confined to Discord/Telegram. AMA format confirmed ("LIVE MUSIC & LIVE TRADING" X Spaces + YouTube). Fan content: Clippers program (incentivized), one organic clipper found. Roster: frameworkfortune and InkSpireMusic are newer artists not in top-48. Two tournaments in recruitment phase (16-artist + AI-artist bracket). Wrote 2026-07-16-community-dj-wavy-sentiment-and-amas.md and 2026-07-16-community-fan-content-and-roster-churn.md.
 
 2026-07-15 09:05 UTC - Tried community events/charity-initiatives/Discord-Telegram angle via WebSearch+WebFetch - stuck-because-WebFetch returned 403 on every URL this run (including unrelated control domains like en.wikipedia.org), so no page could be fetched/verified; only WebSearch snippets were available. Wrote up snippet-only leads under Unverified and flagged the tooling outage as the real blocker for future runs.
