@@ -217,8 +217,14 @@ carried, at any point in its history:
 ```
 base=$(git merge-base main "$ref")
 git diff --name-status --diff-filter=A "$base".."$ref" \
-  | while read st f; do git cat-file -e "main:$f" || echo "$f"; done
+  | while read st f; do git cat-file -e "main:$f" 2>/dev/null || echo "$f"; done
 ```
+
+**The `2>/dev/null` is not decoration.** Without it `git cat-file` prints
+`fatal: path '...' does not exist in 'main'` to stderr for every orphan it
+finds, interleaved with the answers, and the output reads like the command is
+broken at exactly the moment it is working. This SOP shipped without it and a
+reader copying the block got one fatal per result.
 
 235 branches down to 74, and 65 distinct paths - a list a person can read.
 
