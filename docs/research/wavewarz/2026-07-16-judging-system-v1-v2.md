@@ -33,8 +33,31 @@
 > **V2's mean is two and a half times V1's, not 58% below it, and its median is
 > 34% higher.** The direction of the original finding is reversed.
 >
+> **THAT 2.5x IS ONE MONTH, AND THIS NOTE UNDERSOLD THAT WHEN IT WAS FIRST
+> WRITTEN.** Remove July 2026 - one month of 173 battles holding 245.77 of V2's
+> 386 SOL - and V2's mean is **0.1731 against V1's 0.1573, a ratio of 1.10**.
+> Remove instead just the single largest battle in the whole census (1784509679,
+> 2026-07-20, 97.10 SOL on its own) and the ratio falls from 2.5 to 1.87.
+>
+> **1.10 is not a reversal. It is a coin toss.** The honest statement is not that
+> the finding reverses, it is that **neither direction survives contact with the
+> distribution**: one month and one battle carry the entire effect, in a 15-month
+> window that also contains a platform relaunch, a judging change and a market
+> cycle. The original claimed a 58% fall it could not support, and the first
+> draft of this note claimed a 2.5x rise it could not support either. Both are
+> the same mistake pointed different ways.
+>
+> **One thing the re-check did establish, and it is worth keeping.** Settlement
+> does NOT drain the pool field - comparing settled against still-open battles
+> inside each month, settled medians run 0.02 to 0.13 SOL while the open ones sit
+> at 0.0000, which is the never-traded battles, not a drained one. So the pools
+> compared above really are durable end-state records and the comparison is at
+> least measuring what it claims to measure. It just cannot carry the weight
+> either version put on it.
+>
 > **Neither number should be used to argue anything about the judging change.**
-> Three reasons, and the third is the one that matters:
+> Three reasons, and the third is the one that matters - it is also the one this
+> note had to be corrected for underselling:
 >
 > 1. **They measure different quantities.** The July figure came from the feed's
 >    `vol` field; this one is `artist_a_pool + artist_b_pool` read from the
