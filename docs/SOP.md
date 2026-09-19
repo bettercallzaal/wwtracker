@@ -240,13 +240,20 @@ prevent.
 branch "lost work" invites somebody to rebuild it.** 45 components sit only on
 the July `feat/wave*` branches. They work and they read live data.
 
-**But write down what you know, not what fits.** The first version of that audit
-said they were dropped because they duplicate wavewarz.info. Nobody recorded
-that - it was inference, and it read well precisely because it matched the
-repo's thesis. **An inference that agrees with the house view is the one that
-gets committed without a source.** The audit now says the reason is unrecorded
-and keeps the instruction that actually matters: do not rebuild them without
-asking.
+**Read the pull request comments before concluding anything about why a branch
+stopped.** That audit went through three versions of one paragraph. First it
+said the components were dropped because they duplicate wavewarz.info -
+inference, never recorded, believed because it matched the repo's thesis. Then
+it said the reason was unrecorded - declared after searching `docs/` and commit
+messages only. **Then someone opened the PRs: 53 of 57 carry a Vercel free-tier
+failure, "more than 100 deployments per day", and the closures cluster on two
+days.** They ran out of deployments. Nobody ever saw most of them render.
+
+Two lessons, and the second is the expensive one. **An inference that agrees with
+the house view is the one that gets committed without a source.** And **an
+absence declared after one search is a claim, not a finding** - "nothing in the
+history says why" needs the searches named, or it is just where you happened to
+look.
 
 **Rescue with the re-check attached, never the file alone.** The one document
 worth recovering carried a headline finding - "V2 average volume is 58% lower

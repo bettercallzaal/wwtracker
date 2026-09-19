@@ -63,23 +63,40 @@ orphan: `docs/CLONE-AUDIT.md` appears in this list and is alive on `main` as
 read `public/ww-battles.json` and `wavewarz.info/api/public/stats` live, and
 they compiled.
 
-**WHY THEY WERE DROPPED IS NOT RECORDED ANYWHERE, AND AN EARLIER VERSION OF THIS
-PARAGRAPH SAID IT WAS.** It stated that they were dropped because they render
-what wavewarz.info already renders, while this repo covers the business layer.
-**That was inference, not a decision anyone wrote down** - it reads plausibly
-because it matches the repo's standing thesis, which is exactly what makes an
-inference hard to catch once it is committed. The PRs were closed on
-2026-07-16 and 2026-07-29 with no stated reason, and nothing in `docs/` or the
-commit history gives one.
+**THEY RAN OUT OF DEPLOYMENTS.** 57 of the pull requests carrying these
+components were examined. **53 of the 57 carry the same failure comment:**
 
-What IS on the record: rivalry boards, hot streaks, margin distributions and
-battle calendars do overlap with what wavewarz.info renders, and this repo's
-thesis is to cover the business layer instead. Whether that overlap is why they
-were dropped, or whether the work simply stopped, is unknown.
+    Deployment failed with the following error:
+    Resource is limited - try again in 24 hours
+    (more than 100, code: "api-deployments-free-per-day")
 
-**Either way, do not rebuild them without asking first.** That instruction
-survives the missing reason, and it is the only part of this section that
-needed to be certain.
+That is Vercel's free tier refusing to build a preview after 100 deployments in
+a day. The closures cluster on two days - **18 on 2026-07-17 and 37 on
+2026-07-29** - which is the shape of a batch being cleared out, not of 57
+separate judgements.
+
+**So the most likely story is that nobody ever saw most of these render.** A
+wave of small PRs was opened faster than the free tier would build them, the
+previews failed, and the batch was closed. That is a quota, not a decision about
+the product.
+
+**TWO EARLIER VERSIONS OF THIS PARAGRAPH WERE WRONG, IN OPPOSITE DIRECTIONS.**
+The first asserted they were dropped because they duplicate wavewarz.info while
+this repo covers the business layer - **inference, never recorded, and it read
+well only because it matched the repo's standing thesis.** The second, correcting
+it, said the reason was unrecorded and nothing in the history gave one. **That
+was also wrong: the history did say something, and I had looked at the wrong
+pull requests.** The first mistake was believing a story that fit. The second was
+declaring an absence after one weak search - `docs/` and commit messages - when
+the answer was sitting in the PR comments.
+
+What is still genuinely unknown is whether anyone later decided against the work
+on its merits. The overlap with wavewarz.info is real, and this repo's thesis is
+the business layer. **But no one wrote that down, and the recorded cause is a
+deployment cap.**
+
+**Do not rebuild them without asking first.** That instruction survived all three
+versions of this paragraph, and it is the only part that had to be certain.
 
 **Four weekly recaps** - `recaps/weekly/2026-07-{17,23,24,28}-weekly.md` - exist
 only on `recap/weekly-*` and `chore/battles-refresh-*` branches. `main` carries
