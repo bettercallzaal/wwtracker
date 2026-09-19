@@ -117,6 +117,21 @@ export {
 export { planBuy, poolMoveBps, type BattleState, type BuyPlan, type PlanBuyParams } from "./tradePlan";
 
 /**
+ * PRD section 31, the universal battle record. Public because the record
+ * existed and was not obtainable by anyone else: the Python emitter reads a
+ * census file only this estate has, and an operator with an RPC endpoint and a
+ * battle id had no way to produce one.
+ */
+export {
+  MIN_BATTLE_ACCOUNT_BYTES,
+  buildBattleRecord,
+  unsetFields,
+  type BattleRecord,
+  type OffChainInputs,
+  type RecordTrade,
+} from "./battleRecord";
+
+/**
  * PRD section 56, price impact. Public because a consumer building their own
  * trade panel needs the same figure and the same three-state assessment - and
  * because the alternative is each of them folding the fee into it.
