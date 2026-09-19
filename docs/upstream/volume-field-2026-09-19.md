@@ -85,21 +85,37 @@ of them returned `BattleNotEnded`. `end_battle` is permissionless - seven
 accounts, none a signer - so this needed no admin key and nothing from your
 side. Mentioned only because it moves a number you report.
 
-## How to reproduce any of this
+## How to check this yourself
 
-The scan that finds the signature, from `bettercallzaal/wavewarz-protocol`:
+**The important half needs nothing from us.** The pool-equals-volume equality is
+visible in your own API, unauthenticated, in one request:
 
 ```
-python3 tools/events-fallback-scan.py
+curl -s 'https://wavewarz.info/api/public/events'
 ```
 
-It exits 1 while anything has regressed since its baseline and 0 when clean.
-It applies a floor of 0.0034 SOL per side, below which the 1.5% fee difference
-disappears into 4dp rounding and a healthy battle looks affected. **A scan
-without that floor sends people after correct data**, which is how three of the
-first sixteen candidates turned out to be fine.
+For each of the four battle ids, compare these four fields on its row:
 
-The chain pools come from a full read of the program's battle accounts,
-1,643 of them, stored as `data/chain-snapshot-2026-09-06/census.json` in the
-same repo. They are read from the program, not from your API, which is what
-makes the three-way match meaningful.
+```
+artist1PoolSol   vs   artist1VolumeSol
+artist2PoolSol   vs   artist2VolumeSol
+```
+
+**If pool and volume are equal to four decimal places on a battle that had real
+trading, that is the whole finding.** A buy puts 98.5% of its SOL into the pool,
+so those two numbers should differ by roughly the 1.5% fee on every battle that
+ever traded. They are currently identical on all four.
+
+**The floor matters if you scan more broadly.** Below about **0.0034 SOL per
+side**, the 1.5% difference disappears into 4dp rounding and a perfectly healthy
+battle looks affected. Three of the first sixteen candidates found that way
+turned out to be fine. Any sweep for this signature needs that floor or it sends
+people after correct data.
+
+**The third column is ours and you cannot reach it.** The chain snapshot that
+the "chain pool 6 Sept" column comes from - a full read of the program's 1,643
+battle accounts, taken 2026-09-06 - lives in a private repository of Zaal's,
+along with the script that scans for the signature. **Ask him and he will send
+the raw account reads for those four battles, or the script itself.** It is
+mentioned here because it is what makes the match three-way rather than
+two-way, not to point you at something you cannot open.
