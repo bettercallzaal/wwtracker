@@ -38,6 +38,12 @@ import {
   type BattleMint,
 } from "@/lib/ww/claim";
 import { TOKEN_PROGRAM_ID, vaultPda } from "@/lib/ww/pda";
+import {
+  TOKEN_2022_PROGRAM,
+  checkTokenEligibility,
+  summariseEligibility,
+  type ParsedMintAccount,
+} from "@/lib/ww/tokenEligibility";
 import { RelayBudget, callerKey } from "@/lib/ww/rateLimit";
 import { redactUrl, redactSecrets } from "@/lib/redact";
 
@@ -133,45 +139,68 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 1. Everything the wallet holds.
-    const owned = await rpc<{ value: Array<{ account: { data: { parsed: { info: {
-      mint: string; tokenAmount: { amount: string };
-    } } } } }> }>("getTokenAccountsByOwner", [
-      wallet,
-      { programId: TOKEN_PROGRAM_ID },
-      { encoding: "jsonParsed" },
-    ]);
+    // 1. Everything the wallet holds, under BOTH token programs.
+    //
+    // This used to query the classic program only, which meant a Token-2022
+    // holding was not refused - it was INVISIBLE. A wallet with a position
+    // under that program got `positions: []`, the same answer as a wallet with
+    // nothing, and PRD 57 asks for unsupported configurations to be rejected,
+    // which is the opposite of silence. It is also this lane's own rule: a
+    // filter is where an absence and a mistake produce the same output.
+    const byProgram = await Promise.all(
+      [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM].map(async (programId) => {
+        const owned = await rpc<{ value: Array<{ account: { data: { parsed: { info: {
+          mint: string; tokenAmount: { amount: string };
+        } } } } }> }>("getTokenAccountsByOwner", [
+          wallet,
+          { programId },
+          { encoding: "jsonParsed" },
+        ]);
+        return { programId, accounts: owned.value };
+      }),
+    );
 
-    if (owned.value.length > MAX_TOKEN_ACCOUNTS) {
+    const totalAccounts = byProgram.reduce((n, p) => n + p.accounts.length, 0);
+    if (totalAccounts > MAX_TOKEN_ACCOUNTS) {
       return json(400, {
         status: "error",
-        error: `wallet holds ${owned.value.length} token accounts, over the ${MAX_TOKEN_ACCOUNTS} this endpoint answers for`,
+        error: `wallet holds ${totalAccounts} token accounts, over the ${MAX_TOKEN_ACCOUNTS} this endpoint answers for`,
       });
     }
 
-    const held = nonZeroHoldings(
-      owned.value.map((a) => ({
-        mint: a.account.data.parsed.info.mint,
-        amount: a.account.data.parsed.info.tokenAmount.amount,
-      })),
+    const held = byProgram.flatMap((p) =>
+      nonZeroHoldings(
+        p.accounts.map((a) => ({
+          mint: a.account.data.parsed.info.mint,
+          amount: a.account.data.parsed.info.tokenAmount.amount,
+        })),
+      ),
     );
+    const scanned = byProgram.map((p) => ({ programId: p.programId, accounts: p.accounts.length }));
     if (held.length === 0) {
-      return json(200, { status: "ok", wallet, positions: [], totalPayableLamports: 0 });
+      return json(200, {
+        status: "ok", wallet, positions: [], refused: [], scanned, totalPayableLamports: 0,
+      });
     }
 
     // 2. Those mints, for their authorities.
     const mints = held.map((h) => h.mint);
-    const mintAccounts = await getAccounts<{ data: { parsed: { info: {
-      mintAuthority: string | null;
-    } } } }>(mints, "jsonParsed");
+    const mintAccounts = await getAccounts<ParsedMintAccount>(mints, "jsonParsed");
 
     const authorityByMint = new Map<string, string>();
+    // The whole account is kept, not just the authority: the eligibility check
+    // needs the owning program, decimals and extensions, and they come from
+    // this same read rather than a second one.
+    const accountByMint = new Map<string, ParsedMintAccount>();
     mintAccounts.forEach((acct, i) => {
+      if (acct) accountByMint.set(mints[i], acct);
       const authority = acct?.data?.parsed?.info?.mintAuthority;
       if (authority) authorityByMint.set(mints[i], authority);
     });
     if (authorityByMint.size === 0) {
-      return json(200, { status: "ok", wallet, positions: [], totalPayableLamports: 0 });
+      return json(200, {
+        status: "ok", wallet, positions: [], refused: [], scanned, totalPayableLamports: 0,
+      });
     }
 
     // 3. The candidate battle accounts, read to recover their ids.
@@ -197,6 +226,17 @@ export async function GET(request: Request) {
     // whose mint does not re-derive from that battle is not ours, and building a
     // claim for it would aim a well-formed instruction at the wrong vault.
     const positions: Array<BattleMint & { mint: string; amount: string }> = [];
+    /**
+     * A holding that IS a WaveWarZ position but sits under a token program this
+     * client cannot settle. Reported rather than dropped: the person owns it,
+     * and "we found nothing" would be a lie about their wallet.
+     */
+    const refused: Array<{
+      mint: string; battleId: number; side: "a" | "b"; amount: string;
+      tokenProgram: string | null; reason: string;
+      failed: Array<{ id: string; detail: string }>;
+    }> = [];
+
     for (const h of held) {
       const authority = authorityByMint.get(h.mint);
       if (!authority) continue;
@@ -204,10 +244,31 @@ export async function GET(request: Request) {
       if (battleId === undefined) continue;
       const verified = verifyMintBelongsToBattle(h.mint, battleId);
       if (!verified) continue;
+
+      // It is ours. Now: can this client settle it?
+      const account = accountByMint.get(h.mint) ?? null;
+      const owner = account?.owner ?? null;
+      if (owner !== TOKEN_PROGRAM_ID) {
+        const eligibility = checkTokenEligibility(h.mint, account);
+        refused.push({
+          mint: h.mint,
+          battleId,
+          side: verified.side,
+          amount: h.amount,
+          tokenProgram: owner,
+          reason: summariseEligibility(eligibility),
+          failed: eligibility.checks
+            .filter((c) => c.verdict === "fail" || c.verdict === "review")
+            .map((c) => ({ id: c.id, detail: c.detail })),
+        });
+        continue;
+      }
       positions.push({ ...verified, mint: h.mint, amount: h.amount });
     }
     if (positions.length === 0) {
-      return json(200, { status: "ok", wallet, positions: [], totalPayableLamports: 0 });
+      return json(200, {
+        status: "ok", wallet, positions: [], refused, scanned, totalPayableLamports: 0,
+      });
     }
 
     // 4. The vaults. A position is only claimable if its vault holds something
@@ -235,6 +296,10 @@ export async function GET(request: Request) {
       wallet,
       readAt: new Date().toISOString(),
       positions: claimable,
+      // Always present, empty when nothing was refused, so a caller can rely on
+      // the shape rather than on the happy path.
+      refused,
+      scanned,
       totalPayableLamports,
     });
   } catch (err) {

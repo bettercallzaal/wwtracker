@@ -135,8 +135,21 @@ wallet, now, and refuses to remember.
 | field | is |
 |---|---|
 | `positions` | one row per held side: `battleId`, `side`, `mint`, `amount` (base units, string), `vaultLamports` |
+| `refused` | positions that ARE this wallet's but sit under a token program this client cannot settle. Always present, empty when there are none |
+| `scanned` | which token programs were queried, and how many accounts each returned |
 | `totalPayableLamports` | vault lamports above the rent floor, summed per battle, not per side |
 | `readAt` | when the read happened, so a stale tab is visibly stale |
+
+**`refused` exists because the alternative was silence.** This endpoint used to
+query the classic token program only, so a position under Token-2022 was never
+fetched and the wallet came back as `positions: []` - the same answer as a wallet
+holding nothing. A refused row carries the mint, the battle, the side, the amount,
+the owning program, a one-line `reason`, and a `failed` list naming each hazard
+(a permanent delegate, a transfer hook, a transfer fee) with why it matters. See
+PRD section 17 and `lib/ww/tokenEligibility.ts`.
+
+`scanned` is there so the filter is visible rather than implied: a caller can see
+which programs were asked about instead of inferring it from an empty result.
 
 **`vaultLamports` is what the BATTLE holds, not what the wallet is owed.** The
 program works out the share at claim time. Rendering it as a personal balance
