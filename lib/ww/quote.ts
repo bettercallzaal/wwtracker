@@ -111,6 +111,14 @@ export interface SellQuote {
    *
    * It was the gross until 2026-09-19, which overstated proceeds by 1.5% and
    * made any tolerance under that impossible to satisfy.
+   *
+   * THIS IS THE PROGRAM'S PAYOUT, NOT THE WALLET DELTA. Solana's own
+   * transaction fee is paid separately by the fee payer and is outside every
+   * number here - measured at 80,000 and 80,836 lamports on two real sells,
+   * so it varies with priority and is not a protocol charge. A front end
+   * showing "you will receive" should either say this figure is before network
+   * fees or subtract the fee it is about to set. Otherwise the wallet will show
+   * less than the quote and the quote will look wrong again.
    */
   lamportsOut: number;
   /** What leaves the vault, before the fee. `lamportsOut` plus `feeLamports`. */

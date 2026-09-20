@@ -26,8 +26,14 @@
  * a test can hand it a pool that changes between calls and require the plan to
  * change with it - which is exactly what the old code would fail.
  */
-import { buySharesInstruction, deadlineIn, type BattleAccounts, type Instruction } from "./instructions";
-import { BUY_POOL_SHARE, quoteBuy, withSlippage } from "./quote";
+import {
+  buySharesInstruction,
+  deadlineIn,
+  sellSharesInstruction,
+  type BattleAccounts,
+  type Instruction,
+} from "./instructions";
+import { BUY_POOL_SHARE, quoteBuy, quoteSell, withSlippage } from "./quote";
 import {
   PriceImpactExceededError,
   assessPriceImpact,
@@ -132,6 +138,89 @@ export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
     poolLamports,
     estimatedTokensOut: quote.tokensOut,
     minTokensOut,
+    feeLamports: quote.feeLamports,
+    priceImpact,
+  };
+}
+
+export interface SellPlan {
+  instruction: Instruction;
+  poolLamports: number;
+  /** What the trader receives, after the 1.5% fee. The floor applies to this. */
+  estimatedLamportsOut: number;
+  /** What leaves the vault, before the fee. This is what moves the price. */
+  grossLamports: number;
+  /** The floor actually put in the instruction, in lamports. */
+  minSolOut: number;
+  feeLamports: number;
+  priceImpact: PriceImpactAssessment;
+}
+
+export interface PlanSellParams {
+  battleId: number;
+  trader: string;
+  side: "a" | "b";
+  /** Tokens to sell, in the mint's base units. */
+  amountTokens: number;
+  slippageBps: number;
+  deadlineSeconds: number;
+  readBattleState: () => Promise<BattleState>;
+  maxPriceImpactBps?: number;
+  now?: () => number;
+}
+
+/**
+ * The sell side of `planBuy`, and it is NOT a mirror image. Two things differ,
+ * both of them consequences of where the fee sits.
+ *
+ * THE FLOOR GOES ON THE NET. `minSolOut` is computed from what the trader
+ * receives, which is 1.5% below what leaves the vault. Until 2026-09-19
+ * `quoteSell` returned the gross and called it proceeds; a floor built on that
+ * is a floor the program can never clear, so any tolerance under about 1.5%
+ * reverted every time. That is the reason this function did not exist sooner -
+ * it could not have been written correctly against the old quote.
+ *
+ * THE PRICE MOVES BY THE GROSS. On a buy the pool grows by what reaches it,
+ * 98.5%, because the fee never enters the pool. On a sell the pool releases the
+ * FULL curve amount and the fee is taken from that afterwards, so the price
+ * impact is computed on `grossLamports`, not on what the trader pockets. Using
+ * the net here would understate every sell's impact by 1.5%.
+ */
+export async function planSell(p: PlanSellParams): Promise<SellPlan> {
+  const state = await p.readBattleState();
+  const poolLamports = state.poolLamports[p.side];
+  const quote = quoteSell(poolLamports, p.amountTokens);
+  const minSolOut = withSlippage(quote.lamportsOut, p.slippageBps);
+
+  const priceImpact = assessPriceImpact(
+    priceImpactBps({
+      poolBeforeLamports: poolLamports,
+      // Negative: a sell shrinks the pool. The magnitude is the FULL release,
+      // fee included, because the fee leaves the vault too.
+      poolDeltaLamports: -quote.grossLamports,
+      tokens: p.amountTokens,
+    }),
+    p.maxPriceImpactBps,
+  );
+
+  if (priceImpact.exceeded) {
+    throw new PriceImpactExceededError(priceImpact.impactBps, priceImpact.limitBps!);
+  }
+
+  return {
+    instruction: sellSharesInstruction({
+      battleId: p.battleId,
+      trader: p.trader,
+      battle: state.accounts,
+      artistA: p.side === "a",
+      amountTokens: p.amountTokens,
+      minSolOut,
+      deadline: deadlineIn(p.deadlineSeconds, p.now ? p.now() : Date.now()),
+    }),
+    poolLamports,
+    estimatedLamportsOut: quote.lamportsOut,
+    grossLamports: quote.grossLamports,
+    minSolOut,
     feeLamports: quote.feeLamports,
     priceImpact,
   };

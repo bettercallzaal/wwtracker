@@ -218,3 +218,58 @@ describe("deadlineIn", () => {
     expect(real).toBeLessThan(2_000_000_000);
   });
 });
+
+/**
+ * The guard a front end meets first. Every amount here is base units, so a
+ * fraction is always the caller's arithmetic leaking through - "5% of my
+ * holdings" is a float. Before this, that surfaced four frames away as a
+ * BigInt RangeError naming neither the field nor the instruction.
+ */
+describe("whole-number amounts", () => {
+  const common = {
+    battleId: fixture.battle_id,
+    trader,
+    battle,
+    artistA: true,
+    deadline: 1_700_000_060,
+  };
+
+  it("names the field when a buy amount is fractional", () => {
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 0 }),
+    ).toThrow(/amountLamports must be a whole/);
+  });
+
+  it("names the field when a sell token amount is fractional", () => {
+    expect(() =>
+      sellSharesInstruction({ ...common, amountTokens: 79_001_582.26, minSolOut: 0 }),
+    ).toThrow(/amountTokens must be a whole/);
+  });
+
+  it("catches a fractional slippage floor too, which is the dangerous one", () => {
+    expect(() =>
+      sellSharesInstruction({ ...common, amountTokens: 100, minSolOut: 12.7 }),
+    ).toThrow(/minSolOut must be a whole/);
+  });
+
+  it("refuses rather than rounds, and says so", () => {
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 0 }),
+    ).toThrow(/will not guess which way/);
+  });
+
+  it("rejects negative and non-finite amounts", () => {
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: -1, minTokensOut: 0 }),
+    ).toThrow(/whole non-negative/);
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: NaN, minTokensOut: 0 }),
+    ).toThrow(/whole non-negative/);
+  });
+
+  it("still accepts whole values", () => {
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: 10_000_000, minTokensOut: 0 }),
+    ).not.toThrow();
+  });
+});

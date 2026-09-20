@@ -139,15 +139,45 @@ function tradeAccounts(
   ];
 }
 
+/**
+ * A u64 field must be a whole, non-negative, finite number, and saying so here
+ * is the difference between a usable SDK and a cryptic one.
+ *
+ * Without this, a caller who computes "sell 5% of my holdings" gets a float and
+ * the failure arrives from four frames away as:
+ *
+ *     RangeError: The number 79001582.26263574 cannot be converted to a BigInt
+ *     because it is not an integer
+ *
+ * which names neither the field nor the instruction. Every amount here is in
+ * base units - lamports, or the mint's smallest unit - so a fraction is always
+ * the caller's arithmetic leaking, never a legitimate value.
+ *
+ * IT REFUSES RATHER THAN ROUNDS. Flooring silently would change the trade from
+ * the one the caller asked for into a near neighbour, and on a slippage floor
+ * that is the difference between protection and the appearance of it. The
+ * caller decides how to round their own numbers; `withSlippage` already floors
+ * the ones this library produces.
+ */
+function whole(field: string, value: number): number {
+  if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
+    throw new Error(
+      `${field} must be a whole non-negative number of base units, got ${value}. ` +
+        "Round it yourself - this library will not guess which way.",
+    );
+  }
+  return value;
+}
+
 export function buySharesInstruction(p: BuyParams): Instruction {
   return {
     programId: PROGRAM_ID,
     keys: tradeAccounts(p.battleId, p.trader, p.battle),
     data: concat([
       Uint8Array.from(DISCRIMINATOR.buyShares),
-      u64le(p.amountLamports),
+      u64le(whole("amountLamports", p.amountLamports)),
       Uint8Array.from([p.artistA ? 1 : 0]),
-      u64le(p.minTokensOut),
+      u64le(whole("minTokensOut", p.minTokensOut)),
       i64le(p.deadline),
     ]),
   };
@@ -159,9 +189,9 @@ export function sellSharesInstruction(p: SellParams): Instruction {
     keys: tradeAccounts(p.battleId, p.trader, p.battle),
     data: concat([
       Uint8Array.from(DISCRIMINATOR.sellShares),
-      u64le(p.amountTokens),
+      u64le(whole("amountTokens", p.amountTokens)),
       Uint8Array.from([p.artistA ? 1 : 0]),
-      u64le(p.minSolOut),
+      u64le(whole("minSolOut", p.minSolOut)),
       i64le(p.deadline),
     ]),
   };
