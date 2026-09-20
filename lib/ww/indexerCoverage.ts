@@ -70,7 +70,7 @@ export const INDEXER_REQUIREMENTS: Requirement[] = [
   { id: "artist_payouts", label: "Artist payouts", authority: "chain",
     note: "transfers to the artist wallet inside each trade transaction" },
   { id: "battle_end", label: "Battle end", authority: "chain",
-    note: "the settled byte at 245. NOT the same as an indexer's winnerDecided flag" },
+    note: "byte 245, which the program's IDL names `winner_decided` - the SAME name an indexer uses, not a different concept. There is no field called `settled` on the account. Measured 2026-09-20: of 40 such battles readable from wavewarz.info, 22 report winnerDecided true while the chain byte is 0" },
   { id: "winner", label: "Winner", authority: "indexer",
     note: "THE JUDGED winner is off chain - 2-of-3 for quick battles, a panel for main events. " +
       "The SETTLEMENT winner at offset 244 is a chain fact and a different question; they differ " +
