@@ -1,5 +1,12 @@
 # Branch audit, 2026-09-19
 
+> **The METHOD lives here. The LEDGER of what was actually deleted is
+> [archive/branch-cleanup-2026-09.md](archive/branch-cleanup-2026-09.md)** -
+> three runs, 242 remote heads down to 3, every tip sha, and the commands that
+> restore any of it. This file kept the reusable part; four dated files that
+> each covered one run were folded into one, because four documents about one
+> subject is how a reader gets three of them and misses the fourth.
+
 What is on the 236 branches this repo has pushed since June, what of it never
 reached `main`, and which of that is worth rescuing.
 
@@ -161,3 +168,24 @@ reproducible from the method above in about a minute.
 Every count here comes from `git ls-remote`, `gh pr list --state all --limit
 400`, and the merge-base test above, run 2026-09-19 against `origin`. The
 branch and PR totals sum: 98 merged + 135 closed + 2 with no PR = 235.
+
+---
+
+## A pattern worth naming, 2026-09-20
+
+**Six times in two days, something presented as newly established was already
+written down in this estate.** The 45 components' fate, the sell-side fee base,
+the fee wallet's owner, the platform's largest buyer, the two `factors` schemas,
+and that `FNj` trades at all. Every one was in a file that had already been
+opened for another reason.
+
+The failure is not skipping the check. It is **checking the source in front of
+you and then writing the conclusion as though you had swept.** A grep of
+`lib/leaderboard.ts` for one wallet does not become a survey of that file.
+
+**The cheap fix, which costs about twenty minutes:** before measuring anything
+about this platform, read what this estate already says about it. `docs/`,
+`recon/` in the protocol repo, and the lane's own notes. Twice now the existing
+note was better than the rediscovery - `docs/REFRESH.md` had the fee wallet's
+trading on 2026-09-07 AND the consequence that skip figures are therefore an
+upper bound, which the chain re-derivation never reached.

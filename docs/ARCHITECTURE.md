@@ -162,8 +162,19 @@ sticky jump-nav. Old `?tab=` deep links still resolve (mapped in
 
 Every SOL that moves on WaveWarZ follows a fixed schedule:
 
-- **Trade fee**: 1.5% per trade, split 1.0% to artist, 0.5% to platform
-  (collected from traders as they buy and sell shares)
+- **Trade fee**: **1.500% per trade, split 67/33** - so **1.005% to the artist
+  and 0.495% to the platform.** NOT 1.0/0.5. The PRD, the platform's published
+  schedule and `wavewarz-math.ts` all say 1.00/0.50; the program disagrees with
+  all three, measured at exact lamports. `lib/feeModel.ts` was corrected
+  2026-09-09 and **this line was not** until 2026-09-20, which is the defect
+  that module's own header warns about: a correction that reaches one consumer
+  and not the other.
+
+  **Both legs pay it.** A buy puts 98.5% of the trader's SOL into the vault; a
+  sell hands the trader 98.5% of what the vault releases. Verified on four
+  transactions each, 2026-09-19. A claim pays nothing. The rule is that the fee
+  is 1.5% of whatever crosses the vault boundary, taken from the side facing the
+  trader - so **a round trip pays it twice, just under 3%.**
 
 - **Settlement split** (applied to the losing pool when a battle ends):
   - 50% back to losing traders (pro-rata to their share)
