@@ -18,6 +18,7 @@ import { WW } from "@/lib/wwData";
 import { FLOOR_SOL } from "@/lib/config";
 import { getPublicStats, type PublicStats } from "@/lib/wavewarzApi";
 import { classifyBalanceResponse } from "@/lib/balanceResponse";
+import { toNum, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
 
 // The overview overlays four on-chain series that live on wildly different
 // scales (325 SOL of volume vs a ~3.5 SOL treasury vs thousands of trades).
@@ -385,7 +386,7 @@ export default function OnChainProof() {
               contentStyle={{ background: C.elev, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
               labelStyle={{ color: C.dim }}
               itemStyle={{ color: C.text }}
-              formatter={(v: number) => [`${fmt(v, 1)} SOL`, "Volume"]}
+              formatter={(v: TooltipValue) => [`${fmt(toNum(v), 1)} SOL`, "Volume"]}
             />
             <Area type="monotone" dataKey="vol" stroke={C.accent} strokeWidth={2.2} fill="url(#volFill)" dot={false} isAnimationActive={false} connectNulls />
           </AreaChart>
@@ -411,7 +412,7 @@ export default function OnChainProof() {
               contentStyle={{ background: C.elev, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
               labelStyle={{ color: C.dim }}
               itemStyle={{ color: C.text }}
-              formatter={(v: number) => [`${fmt(v, 2)} SOL`, "Treasury"]}
+              formatter={(v: TooltipValue) => [`${fmt(toNum(v), 2)} SOL`, "Treasury"]}
             />
             <ReferenceLine y={FLOOR_SOL} stroke={C.accent} strokeDasharray="5 4" label={{ value: `${FLOOR_SOL} floor`, position: "insideTopRight", fill: C.accent, fontFamily: C.mono, fontSize: 11 }} />
             <Area type="monotone" dataKey="bal" stroke="#7ee0a0" strokeWidth={2.2} fill="url(#balFill)" dot={false} isAnimationActive={false} connectNulls />

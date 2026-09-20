@@ -31,6 +31,8 @@ import {
 import { FONTS, shortWallet, type EmbedOptions } from "@/lib/embedTheme";
 import { CHAIN_DAILY_PATH, ONCHAIN_DAILY_PATH, correctDuneDays, type ChainDaily } from "@/lib/onchainDaily";
 import { secondsLeft, poolShare, type WidgetBattle } from "@/lib/liveBattle";
+import { labelNum, toNum, type LabelValue, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
+import type { ReactElement } from "react";
 
 // Every widget is a client component that fetches its own data. That is
 // deliberate: an embed is loaded on a cold cache from an origin we do not
@@ -191,7 +193,7 @@ export function TreasuryFloor({ opts }: { opts: EmbedOptions }) {
           />
           <Tooltip
             {...tooltipStyle(opts)}
-            formatter={(v: number | string, name: string) => [
+            formatter={(v: TooltipValue, name: TooltipName) => [
               `${num(Number(v), 3)} SOL`,
               name === "eod_sol_balance" ? "close" : "intraday high",
             ]}
@@ -318,7 +320,7 @@ export function VolumeCumulative({ opts }: { opts: EmbedOptions }) {
           <YAxis {...axisProps(opts)} width={48} />
           <Tooltip
             {...tooltipStyle(opts)}
-            formatter={(v: number | string) => [`${num(Number(v), 1)} SOL`, "cumulative"]}
+            formatter={(v: TooltipValue) => [`${num(Number(v), 1)} SOL`, "cumulative"]}
           />
           <Area
             isAnimationActive={false}
@@ -371,7 +373,7 @@ function DailyBars({
           <Tooltip
             {...tooltipStyle(opts)}
             cursor={{ fill: opts.palette.blueDim }}
-            formatter={(v: number | string) => [
+            formatter={(v: TooltipValue) => [
               `${num(Number(v), dataKey === "vol" ? 2 : 0)} ${unit}`,
               dataKey === "vol" ? "volume" : "battles",
             ]}
@@ -554,14 +556,14 @@ export function InstructionMix({ opts }: { opts: EmbedOptions }) {
           <Tooltip
             {...tooltipStyle(opts)}
             cursor={{ fill: opts.palette.blueDim }}
-            formatter={(v: number | string) => [num(Number(v)), "calls"]}
+            formatter={(v: TooltipValue) => [num(Number(v)), "calls"]}
           />
           {/* Screenshotted more than hovered, so the value is on the bar. */}
           <Bar isAnimationActive={false} dataKey="calls" fill={opts.accent} radius={[0, 3, 3, 0]}>
             <LabelList
               dataKey="calls"
               position="right"
-              formatter={(v: number | string) => num(Number(v))}
+              formatter={(v: LabelValue) => String(num(labelNum(v)))}
               style={{
                 fill: opts.palette.mut,
                 fontFamily: FONTS.mono,
@@ -731,7 +733,7 @@ export function BattleTypeMix({ opts }: { opts: EmbedOptions }) {
           </Pie>
           <Tooltip
             {...tooltipStyle(opts)}
-            formatter={(v: number | string, n: string) => [num(Number(v)), n]}
+            formatter={(v: TooltipValue, n: TooltipName) => [num(Number(v)), n]}
           />
           {/* A donut with no key is decoration, not information. The counts go
               in the legend so the widget is readable without hovering - which
@@ -1214,7 +1216,9 @@ export function LiveBattle({ opts }: { opts: EmbedOptions }) {
   );
 }
 
-export const WIDGETS: Record<string, (p: { opts: EmbedOptions }) => JSX.Element> = {
+// `ReactElement`, not `JSX.Element`: React 19 removed the global JSX namespace,
+// so the bare name no longer resolves.
+export const WIDGETS: Record<string, (p: { opts: EmbedOptions }) => ReactElement> = {
   "live-battle": LiveBattle,
   "treasury-floor": TreasuryFloor,
   "treasury-balance": TreasuryBalance,

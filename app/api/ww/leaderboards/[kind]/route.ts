@@ -24,7 +24,11 @@ function clampLimit(raw: string | null): number {
   return Math.min(500, Math.max(1, Math.floor(n)));
 }
 
-export const revalidate = REVALIDATE_SECONDS;
+// A LITERAL, BECAUSE NEXT 16 REQUIRES ONE. It will not accept a computed
+// value here and says so with an error that names no file. Kept beside its
+// constant so the two cannot drift apart silently - if you change REVALIDATE_SECONDS,
+// change this. Getting it wrong builds and passes every test.
+export const revalidate = 60; // === REVALIDATE_SECONDS
 
 export async function GET(
   request: Request,
