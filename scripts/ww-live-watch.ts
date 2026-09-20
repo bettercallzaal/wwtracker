@@ -46,8 +46,10 @@ async function rpc(method: string, params: unknown[]): Promise<any> {
       return j.result;
     } catch { await sleep(600 * (i + 1)); }
   }
+  rpcFailures++;
   return null;
 }
+let rpcFailures = 0;
 
 const read = (raw: Buffer) => ({
   battleId: Number(raw.readBigUInt64LE(8)),
@@ -122,6 +124,15 @@ async function main() {
   console.log(`watching, polling every ${EVERY / 1000}s. Ctrl-C to stop.\n`);
   const seen = new Map<number, State>();
   let announcedWait = false;
+  // A HEARTBEAT, because silence from a watcher is ambiguous and the ambiguity
+  // is the bug. Without it "no trades yet" and "hung on a rate limit" look
+  // identical, and the one you need to know about is the second.
+  let polls = 0, lastBeat = Date.now();
+  const beat = () => {
+    if (Date.now() - lastBeat < 60_000) return;
+    lastBeat = Date.now();
+    console.log(`${stamp()} alive - ${polls} polls, ${rpcFailures} rpc failures, ${exact} exact, ${wrong} mismatched, ${merged} uncountable`);
+  };
 
   for (;;) {
     let ids: number[];
@@ -130,7 +141,8 @@ async function main() {
       ids = await findLive();
       if (!ids.length) {
         if (!announcedWait) { console.log(`${stamp()} no live battle yet - still watching`); announcedWait = true; }
-        await sleep(Math.max(EVERY, 10_000));
+        beat();
+        await sleep(30_000);   // a full getProgramAccounts - do not hammer it
         continue;
       }
       if (announcedWait) { console.log(`${stamp()} live battles appeared: ${ids.join(", ")}`); announcedWait = false; }
@@ -151,6 +163,8 @@ async function main() {
       }
       seen.set(id, now);
     }
+    polls++;
+    beat();
     const total = exact + wrong;
     if (total && total % 10 === 0) console.log(`${stamp()} running tally: ${exact} exact, ${wrong} mismatched, ${merged} uncountable`);
     await sleep(EVERY);
