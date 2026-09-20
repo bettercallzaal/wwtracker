@@ -272,4 +272,25 @@ describe("whole-number amounts", () => {
       buySharesInstruction({ ...common, amountLamports: 10_000_000, minTokensOut: 0 }),
     ).not.toThrow();
   });
+
+  /**
+   * These fields take bigint as well as number, because a u64 can exceed
+   * Number.MAX_SAFE_INTEGER. A bigint is whole by construction, so the guard
+   * must let it through and check only its sign - a first version typed the
+   * parameter as `number` and failed the build rather than any test.
+   */
+  it("passes bigint straight through", () => {
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: 10_000_000n, minTokensOut: 0n }),
+    ).not.toThrow();
+    expect(() =>
+      sellSharesInstruction({ ...common, amountTokens: 9_007_199_254_740_993n, minSolOut: 0n }),
+    ).not.toThrow();
+  });
+
+  it("still rejects a negative bigint", () => {
+    expect(() =>
+      sellSharesInstruction({ ...common, amountTokens: -1n, minSolOut: 0n }),
+    ).toThrow(/amountTokens must be non-negative/);
+  });
 });

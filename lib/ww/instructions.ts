@@ -153,13 +153,25 @@ function tradeAccounts(
  * base units - lamports, or the mint's smallest unit - so a fraction is always
  * the caller's arithmetic leaking, never a legitimate value.
  *
+ * `bigint` passes straight through: it is whole by construction, so only its
+ * sign can be wrong. These fields accept either type because a u64 can exceed
+ * `Number.MAX_SAFE_INTEGER` and a caller working at that size should not be
+ * forced through a float.
+ *
  * IT REFUSES RATHER THAN ROUNDS. Flooring silently would change the trade from
  * the one the caller asked for into a near neighbour, and on a slippage floor
  * that is the difference between protection and the appearance of it. The
  * caller decides how to round their own numbers; `withSlippage` already floors
  * the ones this library produces.
  */
-function whole(field: string, value: number): number {
+function whole(field: string, value: bigint | number): bigint | number {
+  // A bigint is a whole number by construction, so only its sign can be wrong.
+  if (typeof value === "bigint") {
+    if (value < 0n) {
+      throw new Error(`${field} must be non-negative, got ${value}`);
+    }
+    return value;
+  }
   if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
     throw new Error(
       `${field} must be a whole non-negative number of base units, got ${value}. ` +
