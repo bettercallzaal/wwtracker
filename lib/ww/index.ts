@@ -96,6 +96,7 @@ export {
   ARTIST_FEE_BPS,
   PLATFORM_FEE_BPS,
   floorToQuantum,
+  minimumSpendLamports,
   TRADE_FEE,
   feeSplit,
   lamportsToSol,
@@ -127,6 +128,7 @@ export {
  * this module was extracted to fix.
  */
 export {
+  DustTradeError,
   battleStateFromRaw,
   planBuy,
   planSell,

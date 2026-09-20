@@ -16,7 +16,7 @@
  */
 import { describe, expect, it } from "vitest";
 import fixture from "../__fixtures__/ww-curve-measured.json";
-import { BUY_POOL_SHARE, SUPPLY_QUANTUM, poolAtSupply, quoteBuy, quoteSell } from "../ww/quote";
+import { BUY_POOL_SHARE, SUPPLY_QUANTUM, minimumSpendLamports, poolAtSupply, quoteBuy, quoteSell } from "../ww/quote";
 
 type FirstBuy = { spendLamports: number; poolAfter: number; mintedSupply: number };
 type Incremental = { firstSpend: number; secondSpend: number; poolBefore: number;
@@ -99,5 +99,36 @@ describe("selling", () => {
     const wrongBig = big.poolBefore - poolAtSupply(big.supplyBefore - big.tokensSold);
     expect(wrongBig - big.grossLamports).toBeCloseTo(wrong - small.grossLamports, -1);
     expect(wrongBig / big.grossLamports - 1).toBeLessThan(0.01);
+  });
+});
+
+/**
+ * The dust floor, which quantization created and nothing warned about.
+ */
+describe("a trade too small to mint a step", () => {
+  it("quotes zero, which is what the program refuses on", () => {
+    // 1,000 lamports onto the 9,850,000 pool a 0.01 SOL buy leaves. Simulated
+    // 2026-09-20: InvalidCalculation, and the program took nothing.
+    expect(quoteBuy(9_850_000, 1_000).tokensOut).toBe(0);
+    expect(quoteBuy(9_850_000, 1_000).tokensOutExact).toBeGreaterThan(0);
+  });
+
+  it("names a minimum that actually mints", () => {
+    for (const pool of [0, 9_850_000, 1e9, 2e10]) {
+      const need = minimumSpendLamports(pool);
+      expect(quoteBuy(pool, need).tokensOut).toBeGreaterThan(0);
+      // And it is tight: a lamport under does not.
+      if (need > 1) expect(quoteBuy(pool, need - 1).tokensOut).toBe(0);
+    }
+  });
+
+  it("RISES with the pool, which is why it works when you test it", () => {
+    // The trap: 0.001 SOL is fine on a young battle and mints nothing on a
+    // popular one. A limit that only bites at scale is the worst kind.
+    const young = minimumSpendLamports(0);
+    const busy = minimumSpendLamports(2e10);
+    expect(busy).toBeGreaterThan(young * 1000);
+    expect(quoteBuy(2e10, 1_000_000).tokensOut).toBe(0); // 0.001 SOL, 20 SOL pool
+    expect(quoteBuy(0, 1_000_000).tokensOut).toBeGreaterThan(0);
   });
 });

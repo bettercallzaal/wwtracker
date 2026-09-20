@@ -34,7 +34,7 @@ import {
   type BattleAccounts,
   type Instruction,
 } from "./instructions";
-import { BUY_POOL_SHARE, quoteBuy, quoteSell, withSlippage } from "./quote";
+import { BUY_POOL_SHARE, minimumSpendLamports, quoteBuy, quoteSell, withSlippage } from "./quote";
 import {
   PriceImpactExceededError,
   assessPriceImpact,
@@ -132,10 +132,41 @@ export interface PlanBuyParams {
  * point of the module and the thing the test pins: a plan built twice against a
  * moving pool must produce two different floors.
  */
+/**
+ * Thrown when a trade is too small to mint or burn a whole step.
+ *
+ * Its own type because a caller shows this to a person - it means "trade more"
+ * and nothing is wrong - while every other refusal here means "something moved
+ * or something is misconfigured".
+ */
+export class DustTradeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DustTradeError";
+  }
+}
+
 export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
   const state = await p.readBattleState();
   const poolLamports = state.poolLamports[p.side];
   const quote = quoteBuy(poolLamports, p.amountLamports);
+
+  // REFUSE A TRADE THAT MINTS NOTHING, with the number the caller needs.
+  //
+  // Tokens mint in whole steps, so below a threshold that RISES WITH THE POOL a
+  // buy mints zero. The program refuses those itself, with `InvalidCalculation`
+  // and no further detail, and it does not take the money. Without this the
+  // caller would instead hit the `minTokensOut` guard - floored to 0 by
+  // `withSlippage` - and be told to pass 1, which is not the problem and would
+  // not fix it.
+  if (quote.tokensOut <= 0) {
+    const need = minimumSpendLamports(poolLamports);
+    throw new DustTradeError(
+      `${p.amountLamports} lamports mints no tokens at a pool of ${poolLamports}. ` +
+        `The minimum here is ${need} lamports (${(need / 1e9).toFixed(9)} SOL), and it rises as the pool grows.`,
+    );
+  }
+
   const minTokensOut = withSlippage(quote.tokensOut, p.slippageBps);
 
   // Computed from the SAME fresh read the floor uses. An impact figure from a

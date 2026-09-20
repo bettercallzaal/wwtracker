@@ -165,6 +165,34 @@ export function quoteBuy(poolLamports: number, spendLamports: number): BuyQuote 
   };
 }
 
+/**
+ * The smallest spend that mints anything at this pool size.
+ *
+ * **Below it a buy mints zero tokens, and the program refuses the trade with
+ * `InvalidCalculation`.** It does not take the money - verified by simulation
+ * on 2026-09-20, 1,000 and 10,000 lamports onto a 9,850,000 pool, both
+ * refused, nothing moved. So this is not a leak; it is a floor, and a caller
+ * who does not know about it gets an opaque error from the chain instead of a
+ * number they can act on.
+ *
+ * **It rises with the pool**, because the curve flattens: dust that mints a
+ * step into an empty battle mints nothing into a busy one. Measured against
+ * the model:
+ *
+ *     pool 0 SOL     0.000000021 SOL
+ *     pool 1 SOL     0.000287171 SOL
+ *     pool 20 SOL    0.001284194 SOL
+ *
+ * So a 0.001 SOL buy is fine on a young battle and mints nothing on a popular
+ * one, which is the worst shape for a limit: it works when you test it.
+ */
+export function minimumSpendLamports(poolLamports: number): number {
+  // The pool growth needed for one whole step, inverted through the curve, then
+  // grossed back up for the fee that never reaches the pool.
+  const target = poolAtSupply(supplyAtPool(poolLamports) + SUPPLY_QUANTUM);
+  return Math.ceil((target - poolLamports) / BUY_POOL_SHARE);
+}
+
 export interface SellQuote {
   /**
    * What the TRADER receives, after the 1.5% fee. This is the number to show a
