@@ -19,6 +19,7 @@ import { WW } from "@/lib/wwData";
 import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY, TRACKED_TRADER_WALLET as ME, FLOOR_SOL } from "@/lib/config";
 import { BATTLE_STATS as S } from "@/lib/battles";
 import { DATA_AS_OF } from "@/lib/freshness";
+import { toNum, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
 
 const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 const fmt = (n: number, dp = 0) =>
@@ -239,7 +240,7 @@ export default function PlatformAnalytics() {
                   cursor={{ fill: "rgba(149,254,124,0.08)" }}
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
-                  formatter={(v: number | string, n) => [fmt(Number(v)), n]}
+                  formatter={(v: TooltipValue, n) => [fmt(Number(v)), n]}
                 />
                 <Bar yAxisId="l" dataKey="buys" stackId="t" fill={C.accent} fillOpacity={0.85} isAnimationActive={!reduced} />
                 <Bar yAxisId="l" dataKey="sells" stackId="t" fill={C.danger} fillOpacity={0.7} isAnimationActive={!reduced} />
@@ -313,7 +314,7 @@ export default function PlatformAnalytics() {
                   cursor={{ fill: "rgba(149,254,124,0.08)" }}
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
-                  formatter={(v: number | string, n) => [fmt(Number(v)), n === "txs" ? "txs" : "traders"]}
+                  formatter={(v: TooltipValue, n) => [fmt(Number(v)), n === "txs" ? "txs" : "traders"]}
                 />
                 <Bar yAxisId="l" dataKey="txs" fill={C.accent} fillOpacity={0.8} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
                 <Line yAxisId="r" type="monotone" dataKey="traders" stroke={C.good} strokeWidth={1.5} dot={false} isAnimationActive={!reduced} />
@@ -340,7 +341,7 @@ export default function PlatformAnalytics() {
                   cursor={{ fill: "rgba(149,254,124,0.08)" }}
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
-                  formatter={(v: number | string, n) => [fmt(Number(v)), n]}
+                  formatter={(v: TooltipValue, n) => [fmt(Number(v)), n]}
                 />
                 <Bar dataKey="trades" fill={C.accent} fillOpacity={0.7} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
                 <Line type="monotone" dataKey="battles" stroke={C.good} strokeWidth={1.5} dot={false} isAnimationActive={!reduced} />
@@ -365,7 +366,7 @@ export default function PlatformAnalytics() {
                 <Tooltip
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
-                  formatter={(v: number | string, n) => [`${fmt(Math.abs(Number(v)), 3)} ◎`, n]}
+                  formatter={(v: TooltipValue, n) => [`${fmt(Math.abs(Number(v)), 3)} ◎`, n]}
                 />
                 <Bar dataKey="inflow" stackId="f" fill={C.good} fillOpacity={0.85} isAnimationActive={!reduced} />
                 <Bar dataKey="outflow" stackId="f" fill={C.danger} fillOpacity={0.85} isAnimationActive={!reduced} />
@@ -388,7 +389,7 @@ export default function PlatformAnalytics() {
                   cursor={{ fill: "rgba(149,254,124,0.08)" }}
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
-                  formatter={(v: number | string) => [`${fmt(Number(v), 2)} ◎`, "volume"]}
+                  formatter={(v: TooltipValue) => [`${fmt(Number(v), 2)} ◎`, "volume"]}
                 />
                 <Bar dataKey="vol" fill={C.accent} fillOpacity={0.8} isAnimationActive={!reduced} radius={[2, 2, 0, 0]} />
               </BarChart>

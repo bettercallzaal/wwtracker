@@ -63,9 +63,11 @@ function trimTrack(t: Record<string, unknown>): Track {
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } },
+  // A PROMISE SINCE NEXT 15. Reading it synchronously typechecks against the
+  // old types and fails the build against the new ones.
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const param = params.id;
+  const param = (await params).id;
 
   // The parameter could be either a handle (e.g., "BetterCallZaal") or an
   // audiusId (e.g., "lzq2G"). Try the handle map first; if no match, use

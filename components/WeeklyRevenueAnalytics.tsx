@@ -5,6 +5,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { C, metaLabel } from "@/lib/theme";
 import { loadWeeklyRevenueFromCsv, WeeklyTrend, WeeklyRevenue } from "@/lib/treasuryAnalytics";
 import { getPublicStats } from "@/lib/wavewarzApi";
+import { toNum, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
 
 const fmt = (n: number, dp = 0) =>
   n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -181,11 +182,11 @@ export default function WeeklyRevenueAnalytics({ solPrice }: WeeklyRevenueAnalyt
                     fontSize: 12,
                   }}
                   labelStyle={{ color: C.dim }}
-                  formatter={(v: number, n) => {
-                    if (n === "gross") return [`${fmt(v, 2)} ◎`, "Gross Inflow"];
-                    if (n === "net") return [`${fmt(v, 2)} ◎`, "Net Flow"];
-                    if (n === "battles") return [fmt(v), "Battles"];
-                    if (n === "per_battle") return [`${fmt(v, 4)} ◎`, "Fee/Battle"];
+                  formatter={(v: TooltipValue, n) => {
+                    if (n === "gross") return [`${fmt(toNum(v), 2)} ◎`, "Gross Inflow"];
+                    if (n === "net") return [`${fmt(toNum(v), 2)} ◎`, "Net Flow"];
+                    if (n === "battles") return [fmt(toNum(v)), "Battles"];
+                    if (n === "per_battle") return [`${fmt(toNum(v), 4)} ◎`, "Fee/Battle"];
                     return [v, n];
                   }}
                 />

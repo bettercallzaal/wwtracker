@@ -20,7 +20,11 @@ import { redactSecrets } from "@/lib/redact";
 const FEED_URL = "https://api.paragraph.com/blogs/rss/@wavewarz";
 const REVALIDATE = 1800; // 30 min. Posts appear a few times a month at most.
 
-export const revalidate = REVALIDATE;
+// A LITERAL, BECAUSE NEXT 16 REQUIRES ONE. It will not accept a computed
+// value here and says so with an error that names no file. Kept beside its
+// constant so the two cannot drift apart silently - if you change REVALIDATE,
+// change this. Getting it wrong builds and passes every test.
+export const revalidate = 1800; // === REVALIDATE
 
 interface BlogPayload {
   status: "live" | "unknown";
