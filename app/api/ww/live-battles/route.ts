@@ -12,7 +12,7 @@
 // BattleNotEnded, and a dashboard that showed it as finished would be lying in
 // the direction that costs somebody money.
 import { PROGRAM_ID } from "@/lib/ww/pda";
-import { redactUrl } from "@/lib/redact";
+import { redactSecrets, redactUrl } from "@/lib/redact";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 export const dynamic = "force-dynamic";
@@ -63,7 +63,11 @@ export async function GET(request: Request) {
       live, awaitingSettlement: awaiting.length, source: redactUrl(RPC),
     }), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
   } catch (e) {
-    return new Response(JSON.stringify({ status: "error", error: String(e instanceof Error ? e.message : e), source: redactUrl(RPC) }),
+    // THROUGH redactSecrets, NOT RAW. An RPC failure message can carry the
+    // endpoint, and the endpoint carries the key. Caught by
+    // routeErrorRedaction.test.ts, which is the only reason this route does not
+    // ship a way to read SOLANA_RPC_URL out of a 502.
+    return new Response(JSON.stringify({ status: "error", error: redactSecrets(String(e instanceof Error ? e.message : e)), source: redactUrl(RPC) }),
       { status: 502, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
   }
 }

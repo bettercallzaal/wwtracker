@@ -98,6 +98,26 @@ trades - the most holders any side has ever ended with is **18**, so the flag ha
 never yet been true. It is published because the first battle large enough to
 trip it will be the first one anybody is watching live.
 
+### `GET /api/ww/live-battles` - NOT for embedding
+
+Every battle that is running right now, decoded from one `getProgramAccounts`,
+plus a count of those past their end time and never settled. Optional
+`?battle=<id>` pins one battle whatever its phase.
+
+Same-origin only. `getProgramAccounts` over ~1,700 accounts is the most
+expensive call this estate makes and it spends the keyed endpoint per request,
+so it is not CORS-open and not cached.
+
+**It reports settlement from the account byte, not from the clock.** A battle
+past its `end_time` is NOT finished - `winner_decided` at offset 245 is a
+separate fact, and a claim against a battle whose byte is still 0 returns
+`BattleNotEnded (6009)`. The response carries `winnerDecided` per battle and
+`awaitingSettlement` as a count, so a consumer cannot infer "settled" from a
+countdown reaching zero. Measured 2026-09-20: 81 battles are in that state.
+
+Feeds `/finals`. If you want battle data to embed, use `/api/ww/battle` or
+`/api/ww/positions`, which are public, cached and CORS-open.
+
 ### `GET /api/ww/battle-account?battleId=<id>` - NOT for embedding
 
 Same-origin only, like `/api/ww/trade`. It returns the raw Battle account as
