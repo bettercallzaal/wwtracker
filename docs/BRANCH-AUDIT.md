@@ -1,5 +1,12 @@
 # Branch audit, 2026-09-19
 
+> **The METHOD lives here. The LEDGER of what was actually deleted is
+> [archive/branch-cleanup-2026-09.md](archive/branch-cleanup-2026-09.md)** -
+> three runs, 242 remote heads down to 3, every tip sha, and the commands that
+> restore any of it. This file kept the reusable part; four dated files that
+> each covered one run were folded into one, because four documents about one
+> subject is how a reader gets three of them and misses the fourth.
+
 What is on the 236 branches this repo has pushed since June, what of it never
 reached `main`, and which of that is worth rescuing.
 
