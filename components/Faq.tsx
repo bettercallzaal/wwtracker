@@ -71,15 +71,15 @@ const FAQS: QA[] = [
   },
   {
     q: "How do I join The ZAO community?",
-    a: "Three paths: (1) Battle on WaveWarZ — artists who compete become part of the ZAO ecosystem. (2) Attend weekly Fractal governance calls (Farcaster Spaces, open to all) — active participants earn Respect over time. (3) Apply for ZABAL Gamez (the 3-month builder cohort, open enrollment 2× per year). The community directory is at thezao.com/community.",
+    a: "Three paths: (1) Battle on WaveWarZ — a separate project, incubated in The ZAO and since graduated. (2) Attend weekly Fractal governance calls (Farcaster Spaces, open to all) — active participants earn Respect over time. (3) Apply for ZABAL Gamez (the 3-month builder cohort, open enrollment 2× per year). The community directory is at thezao.com/community.",
   },
   {
     q: "What is ZABAL Gamez?",
     a: "The ZAO's 3-month builder cohort. Builders ship products or features for The ZAO community and keep earning from what they build even after the cohort ends — not a one-time hackathon, but a sustained build track. Open enrollment twice per year.",
   },
   {
-    q: "Do WaveWarZ battles connect to ZAO governance?",
-    a: "Yes. The ZAO's open-source ZAOOS platform integrates WaveWarZ: battle milestones auto-generate DAO proposal drafts, the 43-artist roster syncs nightly with win/volume stats, and results can be shared to Farcaster. WaveWarZ is not just a product of the ZAO — its battles are a source of governance inputs for it.",
+    q: "Is WaveWarZ part of The ZAO?",
+    a: "Not any more. WaveWarZ was incubated in The ZAO by three ZAO members and has since graduated into its own project and ecosystem. The ZAO does not govern it, vote on its direction, or own it. What remains is the shared history and some data integration: The ZAO's open-source ZAOOS platform reads WaveWarZ battle data, and results can be shared to Farcaster. That is two projects connected by an integration, not one inside the other.",
   },
   {
     q: "Where does this dashboard's data come from?",
