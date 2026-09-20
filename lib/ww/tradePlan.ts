@@ -34,7 +34,7 @@ import {
   type BattleAccounts,
   type Instruction,
 } from "./instructions";
-import { BUY_POOL_SHARE, minimumSpendLamports, quoteBuy, quoteSell, withSlippage } from "./quote";
+import { BUY_POOL_SHARE, SUPPLY_QUANTUM, minimumSpendLamports, quoteBuy, quoteSell, withSlippage } from "./quote";
 import {
   PriceImpactExceededError,
   assessPriceImpact,
@@ -159,7 +159,16 @@ export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
   // caller would instead hit the `minTokensOut` guard - floored to 0 by
   // `withSlippage` - and be told to pass 1, which is not the problem and would
   // not fix it.
-  if (quote.tokensOut <= 0) {
+  // REFUSE ONLY WHAT IS CLEARLY DUST, not what merely sits on the boundary.
+  //
+  // Our curve and the program's diverge by one to two token units in 100,000 at
+  // a quantisation boundary, so `tokensOut` can read 0 for a spend the program
+  // mints a whole step for - measured at a 1 SOL pool, a four-lamport window.
+  // Refusing there would reject a trade that works, which is the same mistake
+  // as the sell-floor guard and in the same direction: our rule tighter than
+  // the chain's. So the test is against the CONTINUOUS figure with headroom,
+  // and anything inside the window is handed to the program to decide.
+  if (quote.tokensOut <= 0 && quote.tokensOutExact < SUPPLY_QUANTUM - 16) {
     const need = minimumSpendLamports(poolLamports);
     throw new DustTradeError(
       `${p.amountLamports} lamports mints no tokens at a pool of ${poolLamports}. ` +

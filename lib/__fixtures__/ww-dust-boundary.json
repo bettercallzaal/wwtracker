@@ -1,0 +1,11 @@
+{
+  "capturedAt": "2026-09-20",
+  "endpoint": "https://api.mainnet-beta.solana.com",
+  "method": "simulateTransaction, sigVerify false, nothing signed or sent. A seed buy of 1015229000 lamports into a fresh battle, then a second buy bisected to find the smallest the program accepts. The fee wallet was fee payer only because it holds the balance a 1 SOL pool needs; no lamports move in a simulation.",
+  "poolBeforeLamports": 1000000565,
+  "smallestAcceptedSpend": 287167,
+  "largestRejectedSpend": 287166,
+  "tokensMintedAtSmallestAccepted": 100000,
+  "rejectionError": "InvalidCalculation",
+  "note": "Our curve reads a raw delta of 99999 at 287167, where the program reads at least 100000. The models diverge by one to two token units in 100000 - 0.002 percent - which is exact for pricing and not bit-exact at the quantisation boundary."
+}

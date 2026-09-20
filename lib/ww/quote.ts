@@ -190,7 +190,34 @@ export function minimumSpendLamports(poolLamports: number): number {
   // The pool growth needed for one whole step, inverted through the curve, then
   // grossed back up for the fee that never reaches the pool.
   const target = poolAtSupply(supplyAtPool(poolLamports) + SUPPLY_QUANTUM);
-  return Math.ceil((target - poolLamports) / BUY_POOL_SHARE);
+  const exact = Math.ceil((target - poolLamports) / BUY_POOL_SHARE);
+  // Biased DOWN by the boundary tolerance, so this never quotes a minimum
+  // higher than the program's. Measured at a 1 SOL pool: the program accepts
+  // 287,167 and this returned 287,171. Quoting a minimum that is too high tells
+  // a caller a trade is impossible when it is not.
+  return Math.max(1, exact - boundaryToleranceLamports(poolLamports));
+}
+
+/**
+ * How far our curve can sit from the program's at a quantisation boundary,
+ * expressed in lamports of spend at this pool size.
+ *
+ * **OUR MODEL IS NOT BIT-EXACT AND THIS IS THE HONEST SIZE OF THAT.** It
+ * reproduces every measured trade - nine first buys, eight later buys, five
+ * sells, all exact - and still reads a raw delta of 99,999 where the program
+ * reads 100,000, because the two compute the square root slightly differently.
+ * One to two token units in 100,000, or 0.002%.
+ *
+ * That is invisible in a price and decisive at exactly one place: deciding
+ * whether a trade mints anything at all. So the tolerance exists only there,
+ * and only to make the error fall on the safe side.
+ */
+function boundaryToleranceLamports(poolLamports: number): number {
+  // Sixteen token units of headroom, well past the one to two measured, priced
+  // back into lamports through the curve at this pool.
+  const supply = supplyAtPool(poolLamports);
+  const slack = poolAtSupply(supply + 16) - poolAtSupply(supply);
+  return Math.ceil(slack / BUY_POOL_SHARE);
 }
 
 export interface SellQuote {

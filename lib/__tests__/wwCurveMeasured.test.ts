@@ -16,6 +16,7 @@
  */
 import { describe, expect, it } from "vitest";
 import fixture from "../__fixtures__/ww-curve-measured.json";
+import boundaryFixture from "../__fixtures__/ww-dust-boundary.json";
 import { BUY_POOL_SHARE, SUPPLY_QUANTUM, minimumSpendLamports, poolAtSupply, quoteBuy, quoteSell } from "../ww/quote";
 
 type FirstBuy = { spendLamports: number; poolAfter: number; mintedSupply: number };
@@ -24,6 +25,10 @@ type Incremental = { firstSpend: number; secondSpend: number; poolBefore: number
 type Sell = { poolBefore: number; supplyBefore: number; tokensSold: number;
   grossLamports: number; supplyAfter: number };
 const f = fixture as unknown as { firstBuys: FirstBuy[]; incremental: Incremental[]; sells: Sell[] };
+const boundary = boundaryFixture as unknown as {
+  poolBeforeLamports: number; smallestAcceptedSpend: number; largestRejectedSpend: number;
+  tokensMintedAtSmallestAccepted: number; rejectionError: string;
+};
 
 it("has rows to check, so nothing below passes vacuously", () => {
   expect(f.firstBuys.length).toBeGreaterThanOrEqual(9);
@@ -113,12 +118,29 @@ describe("a trade too small to mint a step", () => {
     expect(quoteBuy(9_850_000, 1_000).tokensOutExact).toBeGreaterThan(0);
   });
 
-  it("names a minimum that actually mints", () => {
+  /**
+   * CHECKED AGAINST THE PROGRAM'S BOUNDARY, NOT AGAINST OUR OWN QUOTE.
+   *
+   * This used to assert that `quoteBuy` mints at the minimum we name - our
+   * model agreeing with our model. It passed while the minimum was four
+   * lamports HIGHER than the program's, which would tell a caller a trade is
+   * impossible when the chain would take it.
+   */
+  it("never names a minimum above the one the program enforces", () => {
+    // Bisected against the deployed program: 287,167 accepted, 287,166 not.
+    expect(minimumSpendLamports(boundary.poolBeforeLamports))
+      .toBeLessThanOrEqual(boundary.smallestAcceptedSpend);
+  });
+
+  it("stays close to it rather than naming a uselessly small number", () => {
+    // Safe is not the same as unhelpful: within 0.1% of the real boundary.
+    const named = minimumSpendLamports(boundary.poolBeforeLamports);
+    expect(named).toBeGreaterThan(boundary.smallestAcceptedSpend * 0.999);
+  });
+
+  it("is positive at every pool size, including an empty one", () => {
     for (const pool of [0, 9_850_000, 1e9, 2e10]) {
-      const need = minimumSpendLamports(pool);
-      expect(quoteBuy(pool, need).tokensOut).toBeGreaterThan(0);
-      // And it is tight: a lamport under does not.
-      if (need > 1) expect(quoteBuy(pool, need - 1).tokensOut).toBe(0);
+      expect(minimumSpendLamports(pool)).toBeGreaterThan(0);
     }
   });
 
@@ -130,5 +152,26 @@ describe("a trade too small to mint a step", () => {
     expect(busy).toBeGreaterThan(young * 1000);
     expect(quoteBuy(2e10, 1_000_000).tokensOut).toBe(0); // 0.001 SOL, 20 SOL pool
     expect(quoteBuy(0, 1_000_000).tokensOut).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The size of our disagreement with the program, stated rather than hidden.
+ */
+describe("where our curve and the program part company", () => {
+  it("has a boundary measured on both sides", () => {
+    expect(boundary.smallestAcceptedSpend - boundary.largestRejectedSpend).toBe(1);
+    expect(boundary.tokensMintedAtSmallestAccepted).toBe(SUPPLY_QUANTUM);
+    expect(boundary.rejectionError).toBe("InvalidCalculation");
+  });
+
+  it("disagrees by at most a few token units in a hundred thousand", () => {
+    // Our raw delta at the program's smallest accepted spend. The program mints
+    // a full step here; we read just under one. That gap is the whole of our
+    // inexactness, and it is why the dust check carries headroom.
+    const ours = quoteBuy(boundary.poolBeforeLamports, boundary.smallestAcceptedSpend).tokensOutExact;
+    const gap = SUPPLY_QUANTUM - ours;
+    expect(gap).toBeGreaterThan(0);
+    expect(gap).toBeLessThan(16);
   });
 });
