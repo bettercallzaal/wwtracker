@@ -218,3 +218,79 @@ describe("deadlineIn", () => {
     expect(real).toBeLessThan(2_000_000_000);
   });
 });
+
+/**
+ * The guard a front end meets first. Every amount here is base units, so a
+ * fraction is always the caller's arithmetic leaking through - "5% of my
+ * holdings" is a float. Before this, that surfaced four frames away as a
+ * BigInt RangeError naming neither the field nor the instruction.
+ */
+describe("whole-number amounts", () => {
+  const common = {
+    battleId: fixture.battle_id,
+    trader,
+    battle,
+    artistA: true,
+    deadline: 1_700_000_060,
+  };
+
+  it("names the field when a buy amount is fractional", () => {
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 0 }),
+    ).toThrow(/amountLamports must be a whole/);
+  });
+
+  it("names the field when a sell token amount is fractional", () => {
+    expect(() =>
+      sellSharesInstruction({ ...common, amountTokens: 79_001_582.26, minSolOut: 0 }),
+    ).toThrow(/amountTokens must be a whole/);
+  });
+
+  it("catches a fractional slippage floor too, which is the dangerous one", () => {
+    expect(() =>
+      sellSharesInstruction({ ...common, amountTokens: 100, minSolOut: 12.7 }),
+    ).toThrow(/minSolOut must be a whole/);
+  });
+
+  it("refuses rather than rounds, and says so", () => {
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 0 }),
+    ).toThrow(/will not guess which way/);
+  });
+
+  it("rejects negative and non-finite amounts", () => {
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: -1, minTokensOut: 0 }),
+    ).toThrow(/whole non-negative/);
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: NaN, minTokensOut: 0 }),
+    ).toThrow(/whole non-negative/);
+  });
+
+  it("still accepts whole values", () => {
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: 10_000_000, minTokensOut: 0 }),
+    ).not.toThrow();
+  });
+
+  /**
+   * These fields take bigint as well as number, because a u64 can exceed
+   * Number.MAX_SAFE_INTEGER. A bigint is whole by construction, so the guard
+   * must let it through and check only its sign - a first version typed the
+   * parameter as `number` and failed the build rather than any test.
+   */
+  it("passes bigint straight through", () => {
+    expect(() =>
+      buySharesInstruction({ ...common, amountLamports: 10_000_000n, minTokensOut: 0n }),
+    ).not.toThrow();
+    expect(() =>
+      sellSharesInstruction({ ...common, amountTokens: 9_007_199_254_740_993n, minSolOut: 0n }),
+    ).not.toThrow();
+  });
+
+  it("still rejects a negative bigint", () => {
+    expect(() =>
+      sellSharesInstruction({ ...common, amountTokens: -1n, minSolOut: 0n }),
+    ).toThrow(/amountTokens must be non-negative/);
+  });
+});

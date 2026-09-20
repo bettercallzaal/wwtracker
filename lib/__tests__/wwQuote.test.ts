@@ -18,6 +18,7 @@ import {
   poolAtSupply,
   quoteBuy,
   quoteSell,
+  feeSplit,
   supplyAtPool,
   withSlippage,
   solToLamports,
@@ -53,7 +54,12 @@ function replayRatios() {
         const supply = supplyAtPool(pool[e.side]);
         if (tokens > 0 && tokens <= supply && e.lamports > 0) {
           const q = quoteSell(pool[e.side], tokens);
-          if (q.lamportsOut > 0) sells.push(e.lamports / q.lamportsOut);
+          // AGAINST THE GROSS, and this is the whole bug in one line. A sell
+          // row's `lamports` is what LEFT THE VAULT, not what the trader
+          // received - they differ by the 1.5% fee. Comparing the fixture's
+          // gross to `lamportsOut`, which is now net, would restate the same
+          // mistake that made this module claim sells were fee-free.
+          if (q.grossLamports > 0) sells.push(e.lamports / q.grossLamports);
           pool[e.side] = q.poolAfterLamports;
         }
       }
@@ -99,12 +105,15 @@ describe("the curve against 1,803 real trades", () => {
   });
 
   /**
-   * The control for the fee model. Sells taking the 1.5% buy fee was the first
-   * thing tried and it is wrong by a consistent 1.4% - which looks like a small
-   * error and is in fact a systematically wrong model. If someone "fixes"
-   * quoteSell by applying BUY_POOL_SHARE, this fails.
+   * THE POOL TAKES NO FEE. THE TRADER DOES. Both are true and confusing them is
+   * what made this module wrong for two days.
+   *
+   * The ratios above are pool movement against pool movement, so applying the
+   * fee to them must break the fit - if it did not, the fixture's `lamports`
+   * would be the trader's proceeds rather than the vault's release, and the
+   * whole replay would be measuring something else.
    */
-  it("would be measurably wrong if sells took the buy fee", () => {
+  it("the pool moves by the full curve amount, with no fee applied to it", () => {
     const withFee = sells.map((r) => r / BUY_POOL_SHARE);
     expect(Math.abs(median(withFee) - 1)).toBeGreaterThan(0.01);
     expect(shareWithin(withFee, 0.005)).toBeLessThan(0.05);
@@ -150,12 +159,42 @@ describe("quoteBuy", () => {
 });
 
 describe("quoteSell", () => {
-  it("returns roughly what a buy of the same size put in, less the buy fee", () => {
+  it("costs the fee TWICE over a round trip, once in and once out", () => {
     const pool = 2e9;
-    const bought = quoteBuy(pool, solToLamports(0.5));
+    const spend = solToLamports(0.5);
+    const bought = quoteBuy(pool, spend);
     const back = quoteSell(bought.poolAfterLamports, bought.tokensOut);
-    // Round-tripping costs the buy fee and nothing else.
-    expect(back.lamportsOut).toBeCloseTo(solToLamports(0.5) * BUY_POOL_SHARE, -4);
+    // In and straight back out, with no price move: the vault returns what the
+    // buy put in, and the fee is charged on each crossing.
+    expect(back.grossLamports).toBeCloseTo(spend * BUY_POOL_SHARE, -4);
+    expect(back.lamportsOut).toBeCloseTo(spend * BUY_POOL_SHARE * BUY_POOL_SHARE, -4);
+    // Which is a hair under 3%, not 1.5%. Worth a reader seeing the number.
+    expect(1 - back.lamportsOut / spend).toBeGreaterThan(0.029);
+    expect(1 - back.lamportsOut / spend).toBeLessThan(0.03);
+  });
+
+  it("reports gross, net and fee consistently", () => {
+    const q = quoteSell(2e9, supplyAtPool(2e9) * 0.1);
+    expect(q.lamportsOut + q.feeLamports).toBeCloseTo(q.grossLamports, 6);
+    expect(q.feeLamports / q.grossLamports).toBeCloseTo(0.015, 9);
+  });
+
+  /**
+   * The regression guard. `lamportsOut` was the gross until 2026-09-19, which
+   * overstated proceeds by 1.5% and made any slippage tolerance under that
+   * impossible to satisfy. If someone restores the old behaviour this fails.
+   */
+  it("never returns the gross as the trader's proceeds", () => {
+    const q = quoteSell(2e9, supplyAtPool(2e9) * 0.1);
+    expect(q.lamportsOut).toBeLessThan(q.grossLamports);
+    expect(withSlippage(q.lamportsOut, 100)).toBeLessThan(q.grossLamports * BUY_POOL_SHARE);
+  });
+
+  it("splits the fee 67/33 to artist and platform", () => {
+    const q = quoteSell(2e9, supplyAtPool(2e9) * 0.1);
+    const { artistLamports, platformLamports } = feeSplit(q.feeLamports);
+    expect(artistLamports + platformLamports).toBeCloseTo(q.feeLamports, 6);
+    expect(artistLamports / q.feeLamports).toBeCloseTo(0.67, 9);
   });
 
   it("refuses to sell more than the side's whole supply", () => {

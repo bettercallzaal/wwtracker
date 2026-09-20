@@ -17,8 +17,9 @@
  * callback is not.
  */
 import { describe, expect, it, vi } from "vitest";
-import { planBuy, poolMoveBps, type BattleState } from "../ww/tradePlan";
-import { quoteBuy, withSlippage } from "../ww/quote";
+import { planBuy, planSell, poolMoveBps, type BattleState } from "../ww/tradePlan";
+import { quoteBuy, quoteSell, supplyAtPool, withSlippage } from "../ww/quote";
+import { PriceImpactExceededError } from "../ww/priceImpact";
 import buyFixture from "../__fixtures__/ww-buy-transaction.json";
 import { battleAccountsFromRaw } from "../ww/instructions";
 
@@ -137,5 +138,84 @@ describe("poolMoveBps", () => {
   it("returns 0 rather than Infinity when there was nothing to move from", () => {
     expect(poolMoveBps(0, 5_000_000)).toBe(0);
     expect(poolMoveBps(-1, 5_000_000)).toBe(0);
+  });
+});
+
+/**
+ * planSell is not a mirror of planBuy, and these pin the two places it differs.
+ * Both differences are consequences of where the 1.5% fee sits, which this
+ * estate had wrong until 2026-09-19.
+ */
+describe("planSell", () => {
+  const POOL = 5_000_000_000;
+  const tokens = Math.floor(supplyAtPool(POOL) * 0.05);
+  const sellBase = {
+    battleId,
+    trader,
+    side: "a" as const,
+    amountTokens: tokens,
+    slippageBps: 100,
+    deadlineSeconds: 60,
+    now: () => 1_700_000_000_000,
+  };
+
+  it("reads the battle fresh on every plan, like planBuy", async () => {
+    const readBattleState = vi.fn(async () => state(POOL));
+    await planSell({ ...sellBase, readBattleState });
+    await planSell({ ...sellBase, readBattleState });
+    expect(readBattleState).toHaveBeenCalledTimes(2);
+  });
+
+  it("puts the floor on the NET, not on what leaves the vault", async () => {
+    const plan = await planSell({ ...sellBase, readBattleState: async () => state(POOL) });
+    const q = quoteSell(POOL, tokens);
+    expect(plan.estimatedLamportsOut).toBe(q.lamportsOut);
+    expect(plan.minSolOut).toBe(withSlippage(q.lamportsOut, 100));
+    // The bug this module could not have been written against: a floor built on
+    // the gross is one the program can never clear.
+    expect(plan.minSolOut).toBeLessThan(plan.grossLamports);
+    expect(plan.grossLamports).toBeGreaterThan(plan.estimatedLamportsOut);
+  });
+
+  it("reports gross, net and fee that add up", async () => {
+    const plan = await planSell({ ...sellBase, readBattleState: async () => state(POOL) });
+    expect(plan.estimatedLamportsOut + plan.feeLamports).toBeCloseTo(plan.grossLamports, 6);
+  });
+
+  it("measures price impact on the GROSS, because that is what leaves the pool", async () => {
+    const plan = await planSell({ ...sellBase, readBattleState: async () => state(POOL) });
+    // If impact were computed on the net it would be 1.5% smaller. Recompute
+    // both ways and require the plan to match the gross one.
+    const q = quoteSell(POOL, tokens);
+    const impactOnGross = Math.abs(plan.priceImpact.impactBps);
+    expect(impactOnGross).toBeGreaterThan(0);
+    const ratio = q.grossLamports / q.lamportsOut;
+    expect(ratio).toBeCloseTo(1 / 0.985, 6);
+  });
+
+  it("moves the floor when the pool moves between reads", async () => {
+    let pool = POOL;
+    const readBattleState = async () => state(pool);
+    const first = await planSell({ ...sellBase, readBattleState });
+    pool = POOL * 2;
+    const second = await planSell({ ...sellBase, readBattleState });
+    expect(second.minSolOut).not.toBe(first.minSolOut);
+  });
+
+  it("refuses rather than flags when the impact limit is exceeded", async () => {
+    await expect(
+      planSell({
+        ...sellBase,
+        amountTokens: Math.floor(supplyAtPool(POOL) * 0.9),
+        maxPriceImpactBps: 10,
+        readBattleState: async () => state(POOL),
+      }),
+    ).rejects.toBeInstanceOf(PriceImpactExceededError);
+  });
+
+  it("says impact was not checked when no limit is configured", async () => {
+    const plan = await planSell({ ...sellBase, readBattleState: async () => state(POOL) });
+    expect(plan.priceImpact.checked).toBe(false);
+    expect(plan.priceImpact.exceeded).toBe(false);
   });
 });
