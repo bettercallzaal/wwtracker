@@ -84,8 +84,11 @@ export {
 
 // Prices, measured against 1,803 real trades rather than derived from a paper.
 export {
+  ARTIST_FEE_SHARE,
   BUY_POOL_SHARE,
   CURVE_K,
+  TRADE_FEE,
+  feeSplit,
   lamportsToSol,
   quoteBuy,
   quoteSell,
