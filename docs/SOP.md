@@ -1,13 +1,22 @@
 # WaveWarZ standard operating procedures
 
-Every procedure here has been run, on mainnet, with the result recorded. None is
-written from how the system is supposed to work.
+Every procedure here has been run, on mainnet, with the result recorded, **except
+SOP 8, which says so in its first line.** None is written from how the system is
+supposed to work.
+
+That exception is carried in the open rather than quietly. A file whose rule is
+"everything here has been run" stops being checkable the moment one entry has
+not, unless the entry and the header both say which one.
 
 **Who signs is part of every procedure here.** Anything irreversible, on chain,
 or costing money is Zaal's own hand from his own wallet. No lane holds a key or a
 funded wallet, and `lib/ww/relayPolicy.ts` refuses to relay `initializeBattle` or
 `endBattle` so that a lane cannot settle or launch in anyone's name even by
-accident. **Every run note below names the signer.** A procedure that leaves the
+accident. **That holds even though the SDK now BUILDS both instructions** - see
+SOP 8. Handing a front end bytes for its own user to sign is not the same act as
+putting them through our key, and the refusal is about the key.
+
+**Every run note below names the signer.** A procedure that leaves the
 hand implied is one somebody will later read as permission.
 
 **The one rule the rest descend from: simulate before you sign.** Every
@@ -192,6 +201,78 @@ the signature and its floor, and a command that fails while the bug is live.
 **Keep established and open apart.** The mechanism being proven does not make the
 trigger proven, and a package that blurs the two invites an argument about the
 part that is solid.
+
+---
+
+## SOP 8 - Launch a battle
+
+**NOT YET RUN ON MAINNET BY THIS ESTATE, AND THAT IS THE FIRST THING TO SAY.**
+This file opens by promising every procedure here has been run. This one has
+not: no lane holds a key, and the signing step below has never been executed by
+anybody in it. What HAS been done is stronger than a simulation and weaker than
+a run, and the distinction matters.
+
+**The instruction is verified against a real launch, byte for byte.** Battle
+1788580997's own `initializeBattle` transaction was read back from chain on
+2026-09-20 and `initializeBattleInstruction` rebuilds its 32 data bytes and all
+eight accounts exactly. That is a confirmed mainnet transaction, not a
+simulation, so the encoding is not in question. **What is unproven is the
+procedure around it** - the id choice, the ordering, the verification step. Do
+not read the byte match as a run.
+
+**Who can.** Anyone. The single signer is whoever pays the rent. The transaction
+this was decoded from was signed by **Zaal's own wallet**
+(`4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk`), not by a platform key, which
+settles the question from the chain side. Zaal ruled the same thing in words on
+2026-09-20: anyone can launch a battle, anyone can build a front end.
+
+**Cost.** Rent on two new accounts, roughly 0.004 SOL, plus network fees. **The
+published launch prices are not charged by the program** - 20 creations were
+inspected on chain on 2026-09-06 and the platform's fee wallet received nothing
+in any of them. See `lib/feeModel.ts`. Whatever 0.69 and 4 SOL are, they are not
+this instruction.
+
+### The two traps, both in the arguments
+
+**The middle argument is a DURATION, in seconds. The account stores an END
+TIME.** They are different numbers and the program computes one from the other.
+Passing an end time where a duration belongs produces a battle that runs for
+about 56 years, and nothing rejects it. `initializeBattleInstruction` names the
+field `durationSeconds` for this reason alone.
+
+**The battle id IS the start time, in unix seconds.** Not an index, not a
+counter. Every battle on chain satisfies `battle_id == start_time`, which is why
+discovery's id guard is a date range. A small integer derives a perfectly
+well-formed PDA for a battle that can never exist.
+
+### Procedure
+
+1. **Choose the id as the start time.** Unix seconds, now or later. Both PDAs
+   derive from it, so it cannot be changed afterwards.
+2. **Check the PDA is empty first.** `getAccountInfo` on `battlePda(id)`. A
+   used id fails at send with an account-already-in-use error, and finding that
+   out for free is the point of this step.
+3. **Build it** with `initializeBattleInstruction`, passing the duration in
+   seconds and the three wallets. Start time defaults to the id, which is what
+   every real launch does.
+4. **Simulate before signing**, as SOP 1 does: `sigVerify: false`,
+   `replaceRecentBlockhash: true`. **This step has not been exercised for this
+   instruction** - an attempt on 2026-09-20 was blocked before it reached the
+   endpoint. Whoever runs it first should record the log line here.
+5. **Sign and send from your own wallet.** **Not through our relay.**
+   `lib/ww/relayPolicy.ts` refuses `initializeBattle`, and that exclusion stays
+   even though the SDK now builds the instruction for anyone who asks. Building
+   a transaction for a front end's user to sign and relaying one through our key
+   are different acts; only the second launches a battle in our name.
+6. **Verify from chain.** Re-read the battle account: 353 bytes, `battle_id` at
+   offset 8, `start_time` at 20, `end_time` at 28. Confirm
+   `end_time - start_time` equals the duration you passed. That single
+   subtraction catches the duration trap above, and it is why it is a step.
+
+**Mints are separate.** This instruction creates the battle and its vault. The
+token accounts a trader needs are created by the trader's own first
+transaction - the program does not make them, which cost an earlier session an
+afternoon to establish. See `traderTokenAccountInstructions`.
 
 ---
 

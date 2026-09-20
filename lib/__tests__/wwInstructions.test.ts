@@ -16,14 +16,17 @@
 import { describe, expect, it } from "vitest";
 import fixture from "../__fixtures__/ww-buy-transaction.json";
 import {
+  RENT_SYSVAR,
   battleAccountsFromRaw,
   buySharesInstruction,
   claimSharesInstruction,
   deadlineIn,
+  initializeBattleInstruction,
   sellSharesInstruction,
 } from "../ww/instructions";
 import {
   PROGRAM_ID,
+  SYSTEM_PROGRAM_ID,
   associatedTokenAddress,
   b58decode,
   b58encode,
@@ -292,5 +295,104 @@ describe("whole-number amounts", () => {
     expect(() =>
       sellSharesInstruction({ ...common, amountTokens: -1n, minSolOut: 0n }),
     ).toThrow(/amountTokens must be non-negative/);
+  });
+});
+
+/**
+ * Launching, against the real launch it was decoded from.
+ *
+ * Battle 1788580997 is the newest in the committed census. Its `initializeBattle`
+ * transaction was read back from chain on 2026-09-20 and every assertion below
+ * compares to those bytes rather than to the shape this module wishes they had.
+ *
+ * The first test is the whole point: 32 bytes rebuilt, byte for byte. A test
+ * that only checked "the discriminator is first and there are three u64s" would
+ * pass on an argument ORDER that is wrong, and the order is the trap - the
+ * middle field is a duration and the account stores an end time.
+ */
+describe("initializeBattleInstruction reproduces a real launch", () => {
+  // Read from the oldest signature on battle PDA GRsy35X6VgB44JjfEZHRgrb8VxcTqqCzSNm7GPVJL6KP.
+  const REAL = {
+    battleId: 1_788_580_997,
+    // The creator is ZAAL'S OWN WALLET, not the platform's. The chain said
+    // "anyone can launch" before Zaal ruled it on 2026-09-20.
+    creator: "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk",
+    artistA: "ASpsqT7qKbHF7VhsBPYGRk95vNyAgPuhTBoh2o7ptRLb",
+    artistB: "BYshzR3KeycopC1o7iynYp224AM3psAUziV35Nyha8Ns",
+    wavewarzWallet: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+    durationSeconds: 541,
+    battlePda: "GRsy35X6VgB44JjfEZHRgrb8VxcTqqCzSNm7GPVJL6KP",
+    vaultPda: "Fk7kK7SV8sETB9TkRtCzAYthwXNKTuvPaZXQSBhYtkCK",
+    data: "756ca69f9252f6df85949b6a000000001d0200000000000085949b6a00000000",
+  };
+  const ix = initializeBattleInstruction(REAL);
+  const hex = (b: Uint8Array) => Buffer.from(b).toString("hex");
+
+  it("rebuilds the transaction's 32 data bytes exactly", () => {
+    expect(hex(ix.data)).toBe(REAL.data);
+  });
+
+  it("puts the DURATION in the middle field, not the end time", () => {
+    // 541 seconds = 0x21d. An end time here would be ~1.79e9 and the battle
+    // would run for 56 years, which is why this has its own assertion.
+    const view = new DataView(ix.data.buffer, ix.data.byteOffset, ix.data.byteLength);
+    expect(view.getBigInt64(16, true)).toBe(541n);
+    expect(view.getBigUint64(8, true)).toBe(BigInt(REAL.battleId));
+    // Start time defaults to the battle id, which is what every real launch does.
+    expect(view.getBigInt64(24, true)).toBe(BigInt(REAL.battleId));
+  });
+
+  it("derives both PDAs to the accounts the real transaction used", () => {
+    expect(ix.keys[0].pubkey).toBe(REAL.battlePda);
+    expect(ix.keys[5].pubkey).toBe(REAL.vaultPda);
+  });
+
+  it("orders the eight accounts as the program expects them", () => {
+    expect(ix.keys.map((k) => k.pubkey)).toEqual([
+      REAL.battlePda,
+      REAL.creator,
+      REAL.artistA,
+      REAL.artistB,
+      REAL.wavewarzWallet,
+      REAL.vaultPda,
+      SYSTEM_PROGRAM_ID,
+      RENT_SYSVAR,
+    ]);
+  });
+
+  it("asks ONE wallet to sign, and it is the creator paying the rent", () => {
+    // Not the platform. A front end can launch with any wallet it holds.
+    const signers = ix.keys.filter((k) => k.isSigner);
+    expect(signers).toHaveLength(1);
+    expect(signers[0].pubkey).toBe(REAL.creator);
+    expect(signers[0].isWritable).toBe(true);
+  });
+
+  it("writes only what it creates, and leaves the three wallets read-only", () => {
+    expect(ix.keys.filter((k) => k.isWritable).map((k) => k.pubkey)).toEqual([
+      REAL.battlePda,
+      REAL.creator,
+      REAL.vaultPda,
+    ]);
+  });
+
+  it("takes an explicit start time when a caller schedules ahead", () => {
+    const later = initializeBattleInstruction({ ...REAL, startTime: REAL.battleId + 600 });
+    const view = new DataView(later.data.buffer, later.data.byteOffset, later.data.byteLength);
+    expect(view.getBigInt64(24, true)).toBe(BigInt(REAL.battleId + 600));
+    // The id, and so both PDAs, are unchanged by scheduling.
+    expect(later.keys[0].pubkey).toBe(REAL.battlePda);
+  });
+
+  it("refuses a fractional duration rather than truncating it", () => {
+    expect(() => initializeBattleInstruction({ ...REAL, durationSeconds: 541.5 })).toThrow(
+      /durationSeconds/,
+    );
+  });
+
+  it("refuses a negative duration, which would end the battle before it starts", () => {
+    expect(() => initializeBattleInstruction({ ...REAL, durationSeconds: -1 })).toThrow(
+      /durationSeconds/,
+    );
   });
 });

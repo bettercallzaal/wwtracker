@@ -59,6 +59,7 @@ export {
   RENT_SYSVAR,
   claimSharesInstruction,
   endBattleInstruction,
+  initializeBattleInstruction,
   createAssociatedTokenAccountIdempotentInstruction,
   deadlineIn,
   sellSharesInstruction,

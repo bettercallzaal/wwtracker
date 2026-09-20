@@ -27,6 +27,7 @@ import {
   battleAccountsFromRaw,
   buySharesInstruction,
   claimSharesInstruction,
+  initializeBattleInstruction,
   sellSharesInstruction,
   traderTokenAccountInstructions,
 } from "../ww/instructions";
@@ -137,11 +138,17 @@ describe("what it refuses", () => {
   it("refuses a WaveWarZ instruction that is not one of the three trades", () => {
     // initializeBattle's discriminator. The platform signs those, not a trader,
     // and relaying one would launch a battle in our name.
-    const initialize = {
-      programId: PROGRAM_ID,
-      keys: [{ pubkey: trader, isSigner: true, isWritable: true }],
-      data: Uint8Array.from([0x75, 0x6c, 0xa6, 0x9f, 0x92, 0x52, 0xf6, 0xdf, 0, 0]),
-    };
+    // Built by the SDK's own launcher rather than hand-typed, so the day
+    // `initializeBattleInstruction` ships to front ends, this test is the one
+    // that proves the relay still refuses what they can now construct.
+    const initialize = initializeBattleInstruction({
+      battleId: 1_788_580_997,
+      creator: trader,
+      artistA: trader,
+      artistB: trader,
+      wavewarzWallet: trader,
+      durationSeconds: 541,
+    });
     const d = decideRelay(build([initialize]));
     expect(d.ok).toBe(false);
     if (d.ok) return;

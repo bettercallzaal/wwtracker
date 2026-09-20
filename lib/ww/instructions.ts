@@ -67,6 +67,7 @@ const DISCRIMINATOR = {
   sellShares: [184, 164, 169, 16, 231, 158, 199, 196],
   claimShares: [130, 131, 29, 237, 134, 20, 110, 245],
   endBattle: [80, 145, 208, 48, 183, 92, 168, 112],
+  initializeBattle: [117, 108, 166, 159, 146, 82, 246, 223],
 } as const;
 
 /** The rent sysvar, which `endBattle` takes read-only as its last account. */
@@ -247,6 +248,73 @@ export function sellSharesInstruction(p: SellParams): Instruction {
  * nothing, needs no wallet, and returns the program's own words rather than a
  * hex code. Expect `Battle ended successfully`.
  */
+/**
+ * Launch a battle.
+ *
+ * ANYONE CAN, AND ZAAL CONFIRMED IT ON 2026-09-20: "anyone can launch a battle
+ * anyone can build a front end." The chain already said so - the transaction
+ * this was decoded from was signed by his own wallet, not the platform's, and
+ * the only signer in the instruction is the creator paying the rent.
+ *
+ * DECODED FROM A REAL LAUNCH RATHER THAN FROM A GUESS. Battle 1788580997, the
+ * newest in the committed census, read back from its own oldest signature.
+ * Eight accounts, 32 bytes of data, and every field checked against the census
+ * afterwards: the three arguments are the battle id, the DURATION in seconds,
+ * and the start time. That middle one is the trap - the account stores
+ * `end_time`, so a caller who passes an end time gets a battle that lasts until
+ * the heat death of the universe, and the field name here says `durationSeconds`
+ * for that reason.
+ *
+ * THE BATTLE ID IS THE START TIME. Not an index, not a counter. Every battle
+ * on chain has `battle_id == start_time`, which is why the id range guard in
+ * `discovery.ts` is a date range. Passing a small integer derives a
+ * well-formed PDA for a battle that will never exist.
+ *
+ * COSTS THE CREATOR ABOUT 0.004 SOL IN RENT and nothing else. The published
+ * launch fees - 0.69 SOL quick, 4 SOL community - are NOT charged: twenty
+ * creations were inspected on chain 2026-09-06 and the platform's wallet
+ * received nothing in any of them. See `lib/feeModel.ts`.
+ *
+ * `relayPolicy.ts` still refuses to RELAY this, and that stays true. Building
+ * an instruction for someone else's wallet to sign is not launching a battle in
+ * our name.
+ */
+export function initializeBattleInstruction(p: {
+  /** The battle id, which IS the start time in unix seconds. */
+  battleId: bigint | number;
+  /** Who signs and pays the rent. Any wallet. */
+  creator: string;
+  artistA: string;
+  artistB: string;
+  /** The platform's fee wallet, which receives the platform share of trades. */
+  wavewarzWallet: string;
+  /** How long the battle runs, in SECONDS. Not an end time. */
+  durationSeconds: bigint | number;
+  /** Unix seconds. Defaults to the battle id, which is what every real launch does. */
+  startTime?: bigint | number;
+}): Instruction {
+  const start = p.startTime ?? p.battleId;
+  return {
+    programId: PROGRAM_ID,
+    keys: [
+      w(battlePda(p.battleId)),
+      signer(p.creator),
+      r(p.artistA),
+      r(p.artistB),
+      r(p.wavewarzWallet),
+      w(vaultPda(p.battleId)),
+      r(SYSTEM_PROGRAM_ID),
+      r(RENT_SYSVAR),
+    ],
+    data: concat([
+      Uint8Array.from(DISCRIMINATOR.initializeBattle),
+      u64le(whole("battleId", p.battleId)),
+      i64le(whole("durationSeconds", p.durationSeconds)),
+      i64le(whole("startTime", start)),
+    ]),
+  };
+}
+
 export function endBattleInstruction(p: {
   battleId: bigint | number;
   battle: BattleAccounts;
