@@ -53,6 +53,10 @@ background - tokenomics, event economics, community history.
 ## Operating procedures
 
 - **[SOP.md](SOP.md)** - ending an unsettled battle, claiming, checking whether the volume bug is live, and the reporting rules this lane has paid for. Every procedure has been run on mainnet with the result recorded.
+- **[upstream/api-audit-2026-09-20.md](upstream/api-audit-2026-09-20.md)** - the
+  whole public API measured against chain: what is missing, the two `factors`
+  schemas sharing one field name, and the five fixes that would help a consumer
+  most.
 - **[upstream/volume-field-2026-09-19.md](upstream/volume-field-2026-09-19.md)** -
   written for Candy: the volume field carrying the pool value, what is
   established, what is open, and the one question only her logs can answer.
