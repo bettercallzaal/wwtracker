@@ -52,8 +52,47 @@
  * flaw - a clean fit to the wrong quantity.
  */
 
-/** Fitted in the protocol repo against all 1,643 battles. */
-export const CURVE_K = 4.993e8;
+/**
+ * The curve constant. **EXACT, AND IT USED TO BE FITTED.**
+ *
+ * This read `4.993e8`, "fitted in the protocol repo against all 1,643
+ * battles", and the comment four lines above it warned against exactly the
+ * mistake it was: a constant with no meaning that happens to fit the samples.
+ * The residual it left was described as "a slight over-prediction, consistent
+ * with the program flooring integer division", which was the right diagnosis
+ * attached to the wrong fix - the flooring was real and was modelled by bending
+ * K instead of by flooring.
+ *
+ * **Measured against the deployed program on 2026-09-20.** Nine buys of
+ * different sizes were simulated from an empty pool and the resulting supply
+ * read out of the battle account. `K = 5e8` with supply floored to
+ * `SUPPLY_QUANTUM` reproduces **nine of nine exactly**, at every size from
+ * 0.0005 to 0.25 SOL. The old constant was wrong by between -0.06% and +0.52%,
+ * with the error largest on the smallest trades.
+ *
+ * That residual was not noise. It was the quantum.
+ */
+export const CURVE_K = 5e8;
+
+/**
+ * Tokens are minted in whole steps of 100,000 base units, and **the step is
+ * applied to each TRADE, not to the running total.**
+ *
+ * That distinction was got wrong once in the course of finding it. Flooring the
+ * total supply reproduces a first buy into an empty pool exactly - nine of nine
+ * - and then over-predicts every later buy by exactly one step, five times in
+ * eight. Flooring the delta reproduces both. The stored supply is therefore a
+ * SUM OF FLOORED DELTAS and drifts steadily below `sqrt(K x pool)` as a battle
+ * trades, which is why it is stored at offset 196 rather than recomputed.
+ *
+ * This is also why `minTokensOut` set to a quote's exact continuous value
+ * reverts: the program's answer is the step below.
+ */
+export const SUPPLY_QUANTUM = 100_000;
+
+/** Down to a whole step, the way the program mints. */
+export const floorToQuantum = (tokens: number): number =>
+  Math.floor(tokens / SUPPLY_QUANTUM) * SUPPLY_QUANTUM;
 
 /** The total trade fee, on a buy and on a sell alike. Measured at exact lamports. */
 export const TRADE_FEE = 0.015;
@@ -71,7 +110,13 @@ export const ARTIST_FEE_SHARE = 0.67;
 
 export const LAMPORTS_PER_SOL = 1_000_000_000;
 
-/** Token supply at a given pool size, in lamports. */
+/**
+ * The curve's supply at a given pool size: continuous, unrounded.
+ *
+ * **This is the curve, not the mint.** A battle's actual minted supply is the
+ * sum of floored trade deltas and sits at or below this. Use it to price a
+ * trade; read offset 196 for what was actually minted.
+ */
 export const supplyAtPool = (poolLamports: number): number =>
   poolLamports > 0 ? Math.sqrt(CURVE_K * poolLamports) : 0;
 
@@ -80,8 +125,21 @@ export const poolAtSupply = (supply: number): number =>
   supply > 0 ? (supply * supply) / CURVE_K : 0;
 
 export interface BuyQuote {
-  /** Estimated tokens received, in the mint's base units. */
+  /**
+   * Tokens received, in base units, floored to a whole step as the program
+   * mints them. **This is the number to derive `minTokensOut` from.**
+   */
   tokensOut: number;
+  /**
+   * The same trade on the continuous curve, before the step is applied.
+   *
+   * **For measuring price impact and nothing else.** The gap between this and
+   * `tokensOut` is a rounding loss of up to one step; it is not slippage and it
+   * does not grow with trade size. Feeding the floored figure to a price-impact
+   * calculation makes a small trade against a large pool look catastrophic -
+   * measured at 383 basis points for a trade whose curve impact is 5.
+   */
+  tokensOutExact: number;
   /** What the pool becomes, for showing the price impact. */
   poolAfterLamports: number;
   /** The 1.5% that does not reach the pool. */
@@ -95,9 +153,12 @@ export function quoteBuy(poolLamports: number, spendLamports: number): BuyQuote 
   const toPool = spendLamports * BUY_POOL_SHARE;
   const before = supplyAtPool(poolLamports);
   const after = supplyAtPool(poolLamports + toPool);
-  const tokensOut = after - before;
+  // FLOORED PER TRADE. The continuous difference over-predicts by up to one
+  // step, which is what made a quote's own value fail as `minTokensOut`.
+  const tokensOut = floorToQuantum(after - before);
   return {
     tokensOut,
+    tokensOutExact: after - before,
     poolAfterLamports: poolLamports + toPool,
     feeLamports: spendLamports - toPool,
     effectivePricePerToken: tokensOut > 0 ? spendLamports / tokensOut : Infinity,
@@ -128,16 +189,52 @@ export interface SellQuote {
   poolAfterLamports: number;
 }
 
-export function quoteSell(poolLamports: number, sellTokens: number): SellQuote {
+/**
+ * @param mintedSupply The side's ACTUAL minted supply, from offset 196 of the
+ * battle account. Pass it whenever you have the account, which is whenever you
+ * are about to sell. Omitted, this falls back to the curve's supply at that
+ * pool, which is an upper bound: the minted total is a sum of floored deltas
+ * and drifts below the curve as a battle trades, so the fallback OVERSTATES
+ * proceeds on a battle with many trades. The fallback exists for quoting
+ * without a fetch, not for building a transaction.
+ */
+export function quoteSell(
+  poolLamports: number,
+  sellTokens: number,
+  mintedSupply?: number,
+): SellQuote {
   if (sellTokens <= 0) throw new Error("token amount must be positive");
-  const currentSupply = supplyAtPool(poolLamports);
+  const currentSupply = mintedSupply ?? supplyAtPool(poolLamports);
   if (sellTokens > currentSupply) {
     throw new Error(
       `selling ${sellTokens} tokens but the side's whole supply is ${Math.floor(currentSupply)}`,
     );
   }
-  const poolAfter = poolAtSupply(currentSupply - sellTokens);
-  const gross = poolLamports - poolAfter;
+  // PRICED OFF THE CURVE, NOT OFF THE POOL, and the difference is not small.
+  //
+  // Flooring the supply leaves part of the pool unrepresented by any token:
+  // `poolLamports - poolAtSupply(currentSupply)` is a residual of up to one
+  // quantum's worth, and it stays in the vault permanently. The program removes
+  // exactly the curve value of the tokens burned and leaves that residual
+  // alone. Taking `poolLamports - poolAfter` instead handed the seller the
+  // whole residual on top of their tokens' worth.
+  //
+  // **The error is a CONSTANT number of lamports per battle, so it is worst on
+  // the smallest sells.** Measured against the deployed program on 2026-09-20,
+  // on a battle holding 0.0985 SOL where the residual was 20,780 lamports:
+  //
+  //     tokens sold    old quote    the program    overstated by
+  //         100,000      109,520         88,740           23.42%
+  //         500,000      464,080        443,300            4.69%
+  //       1,000,000      906,380        885,600            2.35%
+  //       5,000,000    4,408,780      4,388,000            0.47%
+  //      22,100,000   18,659,920     18,639,140            0.11%
+  //
+  // The form below reproduces all five EXACTLY. A quote overstating proceeds by
+  // 23% is a number a front end would have shown a seller, and any slippage
+  // tolerance tighter than the overstatement reverts the trade.
+  const gross = poolAtSupply(currentSupply) - poolAtSupply(currentSupply - sellTokens);
+  const poolAfter = poolLamports - gross;
   const net = gross * BUY_POOL_SHARE;
   return {
     lamportsOut: net,

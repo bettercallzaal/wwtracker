@@ -252,7 +252,21 @@ inspected on chain on 2026-09-06 and the platform's fee wallet received nothing
 in any of them. See `lib/feeModel.ts`. Whatever 0.69 and 4 SOL are, they are not
 this instruction.
 
-### The two traps, both in the arguments
+### Two more traps, found by simulating rather than by reasoning
+
+**`minTokensOut` of 0 is REJECTED.** The obvious way to say "no slippage limit"
+is the one value the program refuses, with `InvalidAmount (6006)`. Pass 1.
+`buySharesInstruction` and `sellSharesInstruction` now refuse 0 with that
+reason rather than letting it fail on chain as a number.
+
+**A battle is not tradeable the instant it starts, because the chain's clock
+lags.** `BattleNotActive (6003)` on a launch-and-buy whose start time was
+seconds in the past, and the same call succeeded when the start was further
+back. The clock sysvar measured 10 seconds behind wall time in one reading and
+the effective boundary moved between runs. **Set the start time from the chain's
+clock, not the machine's**, or launch a minute ahead of the first trade.
+
+### The two traps in the arguments
 
 **The middle argument is a DURATION, in seconds. The account stores an END
 TIME.** The program adds; it does not store. **This was measured, not reasoned
@@ -282,6 +296,18 @@ well-formed PDA for a battle that can never exist.
 3. **Build it** with `initializeBattleInstruction`, passing the duration in
    seconds and the three wallets. Start time defaults to the id, which is what
    every real launch does.
+3b. **Create the mints, in the same transaction.** `initializeMintsInstruction`,
+   no arguments, any payer. **A battle without mints cannot be traded** - there
+   is nothing for `buyShares` to mint into, and the page is dead. Simulated
+   2026-09-20: battle alone returns `err: null` and the mint account does not
+   exist; battle plus mints returns two 82-byte SPL mints owned by the token
+   program, 43,179 compute units for the pair.
+
+   **This instruction was missing from this estate entirely until 2026-09-20,**
+   and it was found by counting rather than by reading: 200 real program
+   transactions sampled and bucketed by discriminator, of which 7.5% were an
+   instruction nothing here could build. Everything else about launching had
+   been verified byte for byte, and the gap was a whole step, not a detail.
 4. **Simulate before signing**, as SOP 1 does: `sigVerify: false`,
    `replaceRecentBlockhash: true`. Expect `Battle initialized with ID <id>
    starting at <id>` and about 18,600 compute units. **Ask for the post-state
@@ -298,10 +324,12 @@ well-formed PDA for a battle that can never exist.
    `end_time - start_time` equals the duration you passed. That single
    subtraction catches the duration trap above, and it is why it is a step.
 
-**Mints are separate.** This instruction creates the battle and its vault. The
-token accounts a trader needs are created by the trader's own first
-transaction - the program does not make them, which cost an earlier session an
-afternoon to establish. See `traderTokenAccountInstructions`.
+**Trader token accounts are a third thing, and are NOT the mints.** Step 3b
+creates the battle's two mints. The ASSOCIATED TOKEN ACCOUNTS a trader holds
+them in are created by the trader's own first transaction - the program does
+not make those, which cost an earlier session an afternoon to establish. See
+`traderTokenAccountInstructions`. Conflating the two is what hid step 3b for as
+long as it was hidden.
 
 ---
 

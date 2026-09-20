@@ -68,6 +68,7 @@ const DISCRIMINATOR = {
   claimShares: [130, 131, 29, 237, 134, 20, 110, 245],
   endBattle: [80, 145, 208, 48, 183, 92, 168, 112],
   initializeBattle: [117, 108, 166, 159, 146, 82, 246, 223],
+  initializeMints: [189, 84, 85, 142, 177, 200, 57, 22],
 } as const;
 
 /** The rent sysvar, which `endBattle` takes read-only as its last account. */
@@ -169,6 +170,27 @@ function tradeAccounts(
  * caller decides how to round their own numbers; `withSlippage` already floors
  * the ones this library produces.
  */
+/**
+ * A slippage floor the program will accept.
+ *
+ * **ZERO IS REJECTED ON CHAIN, WITH `InvalidAmount` (6006).** Measured against
+ * the deployed program on 2026-09-20: a buy identical in every other respect
+ * succeeds at `minTokensOut: 1` and fails at `0`. "No slippage limit" is the
+ * natural way to express an unprotected trade and it is the one value that
+ * cannot be sent, so it is refused here with the reason rather than on chain
+ * with a number.
+ */
+function slippageFloor(field: string, value: bigint | number): bigint | number {
+  const v = whole(field, value);
+  if (v === 0 || v === 0n) {
+    throw new Error(
+      `${field} must be at least 1; the program rejects 0 with InvalidAmount (6006). ` +
+        "To trade without slippage protection, pass 1, not 0.",
+    );
+  }
+  return v;
+}
+
 function whole(field: string, value: bigint | number): bigint | number {
   // A bigint is a whole number by construction, so only its sign can be wrong.
   if (typeof value === "bigint") {
@@ -194,7 +216,7 @@ export function buySharesInstruction(p: BuyParams): Instruction {
       Uint8Array.from(DISCRIMINATOR.buyShares),
       u64le(whole("amountLamports", p.amountLamports)),
       Uint8Array.from([p.artistA ? 1 : 0]),
-      u64le(whole("minTokensOut", p.minTokensOut)),
+      u64le(slippageFloor("minTokensOut", p.minTokensOut)),
       i64le(p.deadline),
     ]),
   };
@@ -208,7 +230,7 @@ export function sellSharesInstruction(p: SellParams): Instruction {
       Uint8Array.from(DISCRIMINATOR.sellShares),
       u64le(whole("amountTokens", p.amountTokens)),
       Uint8Array.from([p.artistA ? 1 : 0]),
-      u64le(whole("minSolOut", p.minSolOut)),
+      u64le(slippageFloor("minSolOut", p.minSolOut)),
       i64le(p.deadline),
     ]),
   };
@@ -312,6 +334,52 @@ export function initializeBattleInstruction(p: {
       i64le(whole("durationSeconds", p.durationSeconds)),
       i64le(whole("startTime", start)),
     ]),
+  };
+}
+
+/**
+ * Create a battle's two share mints. **STEP TWO OF LAUNCHING, NOT AN OPTIONAL
+ * EXTRA.**
+ *
+ * `initializeBattle` creates the battle and its vault and nothing else. Until
+ * this runs, the battle has no mints, so `buyShares` has nothing to mint into
+ * and the battle cannot be traded. A front end that calls only
+ * `initializeBattle` produces a dead page.
+ *
+ * FOUND BY MEASURING, AFTER THIS FILE ASSERTED THE OPPOSITE. An earlier note
+ * here said mints were "separate" and handled by the trader's own first
+ * transaction. That is true of the trader's ASSOCIATED TOKEN ACCOUNTS and false
+ * of the mints themselves, and the two were conflated. 200 real program
+ * transactions were sampled on 2026-09-20 and bucketed by discriminator:
+ * `InitializeMints` was 7.5% of them, the one instruction the SDK did not know.
+ * Nothing in the estate's docs mentioned it.
+ *
+ * ANYONE CAN CALL IT. Of the three launches inspected, two were signed by the
+ * platform's fee wallet and one by `HegpwNycqbtc8GCPEkNCK9ToWPiuccw1wRewvi4Dsjkp`,
+ * which is neither the fee wallet nor an artist. The signer is simply whoever
+ * pays the rent for two mint accounts.
+ *
+ * Seven accounts, no arguments: the discriminator alone is the whole 8-byte
+ * payload. Both mint PDAs derive from the battle id, so this instruction cannot
+ * be pointed at a battle other than the one whose id it was built with.
+ */
+export function initializeMintsInstruction(p: {
+  battleId: bigint | number;
+  /** Who signs and pays rent on the two mints. Any wallet. */
+  payer: string;
+}): Instruction {
+  return {
+    programId: PROGRAM_ID,
+    keys: [
+      w(battlePda(p.battleId)),
+      w(mintPda(p.battleId, "a")),
+      w(mintPda(p.battleId, "b")),
+      signer(p.payer),
+      r(TOKEN_PROGRAM_ID),
+      r(SYSTEM_PROGRAM_ID),
+      r(RENT_SYSVAR),
+    ],
+    data: Uint8Array.from(DISCRIMINATOR.initializeMints),
   };
 }
 

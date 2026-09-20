@@ -146,7 +146,8 @@ export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
       // The pool moves by what reaches it, not by what was spent - the 1.5% fee
       // never enters the pool and so causes no price movement.
       poolDeltaLamports: p.amountLamports * BUY_POOL_SHARE,
-      tokens: quote.tokensOut,
+      // The CONTINUOUS figure: impact is the curve's slope, not the mint's step.
+      tokens: quote.tokensOutExact,
     }),
     p.maxPriceImpactBps,
   );

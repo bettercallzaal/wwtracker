@@ -22,11 +22,13 @@ import {
   claimSharesInstruction,
   deadlineIn,
   initializeBattleInstruction,
+  initializeMintsInstruction,
   sellSharesInstruction,
 } from "../ww/instructions";
 import {
   PROGRAM_ID,
   SYSTEM_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
   associatedTokenAddress,
   b58decode,
   b58encode,
@@ -179,14 +181,14 @@ describe("sellShares and claimShares", () => {
     const buy = buySharesInstruction({
       ...common,
       amountLamports: 1,
-      minTokensOut: 0,
+      minTokensOut: 1,
     });
-    const sell = sellSharesInstruction({ ...common, amountTokens: 1, minSolOut: 0 });
+    const sell = sellSharesInstruction({ ...common, amountTokens: 1, minSolOut: 1 });
     expect(sell.keys).toEqual(buy.keys);
   });
 
   it("sell carries its own discriminator, not buy's", () => {
-    const sell = sellSharesInstruction({ ...common, amountTokens: 1, minSolOut: 0 });
+    const sell = sellSharesInstruction({ ...common, amountTokens: 1, minSolOut: 1 });
     expect(hex(sell.data).slice(0, 16)).toBe("b8a4a910e79ec7c4");
     expect(hex(sell.data).slice(0, 16)).not.toBe(fixture.instruction_data_hex.slice(0, 16));
     expect(sell.data.length).toBe(33);
@@ -239,13 +241,13 @@ describe("whole-number amounts", () => {
 
   it("names the field when a buy amount is fractional", () => {
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 0 }),
+      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 1 }),
     ).toThrow(/amountLamports must be a whole/);
   });
 
   it("names the field when a sell token amount is fractional", () => {
     expect(() =>
-      sellSharesInstruction({ ...common, amountTokens: 79_001_582.26, minSolOut: 0 }),
+      sellSharesInstruction({ ...common, amountTokens: 79_001_582.26, minSolOut: 1 }),
     ).toThrow(/amountTokens must be a whole/);
   });
 
@@ -257,22 +259,22 @@ describe("whole-number amounts", () => {
 
   it("refuses rather than rounds, and says so", () => {
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 0 }),
+      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 1 }),
     ).toThrow(/will not guess which way/);
   });
 
   it("rejects negative and non-finite amounts", () => {
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: -1, minTokensOut: 0 }),
+      buySharesInstruction({ ...common, amountLamports: -1, minTokensOut: 1 }),
     ).toThrow(/whole non-negative/);
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: NaN, minTokensOut: 0 }),
+      buySharesInstruction({ ...common, amountLamports: NaN, minTokensOut: 1 }),
     ).toThrow(/whole non-negative/);
   });
 
   it("still accepts whole values", () => {
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: 10_000_000, minTokensOut: 0 }),
+      buySharesInstruction({ ...common, amountLamports: 10_000_000, minTokensOut: 1 }),
     ).not.toThrow();
   });
 
@@ -284,16 +286,16 @@ describe("whole-number amounts", () => {
    */
   it("passes bigint straight through", () => {
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: 10_000_000n, minTokensOut: 0n }),
+      buySharesInstruction({ ...common, amountLamports: 10_000_000n, minTokensOut: 1n }),
     ).not.toThrow();
     expect(() =>
-      sellSharesInstruction({ ...common, amountTokens: 9_007_199_254_740_993n, minSolOut: 0n }),
+      sellSharesInstruction({ ...common, amountTokens: 9_007_199_254_740_993n, minSolOut: 1n }),
     ).not.toThrow();
   });
 
   it("still rejects a negative bigint", () => {
     expect(() =>
-      sellSharesInstruction({ ...common, amountTokens: -1n, minSolOut: 0n }),
+      sellSharesInstruction({ ...common, amountTokens: -1n, minSolOut: 1n }),
     ).toThrow(/amountTokens must be non-negative/);
   });
 });
@@ -394,5 +396,94 @@ describe("initializeBattleInstruction reproduces a real launch", () => {
     expect(() => initializeBattleInstruction({ ...REAL, durationSeconds: -1 })).toThrow(
       /durationSeconds/,
     );
+  });
+});
+
+/**
+ * `initializeMints`, decoded from three real launches.
+ *
+ * FOUND BY COUNTING, NOT BY READING. 200 real program transactions were sampled
+ * on 2026-09-20 and bucketed by discriminator. Five buckets were instructions
+ * this library already built; one, at 7.5% of all traffic, was not, and nothing
+ * in the estate's docs mentioned it. A battle launched without it has no mints,
+ * so nothing can be bought and the page is dead.
+ */
+describe("initializeMintsInstruction", () => {
+  const REAL = [
+    { battleId: 1789790992, battle: "H733cPQkBgwfJAzDuAwVri8rzJfYJPQ11EoCDaHC2FEX",
+      mintA: "8UWiSgMpWM3j7yuddvvFa8cf8vLkBWDF8fmSEWqPQ7WR", mintB: "AdQtLRJ3nBQFrLG9VqRdDYodSotFjeqAUKNPsNZCw1XP",
+      payer: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37" },
+    { battleId: 1789789481, battle: "GReSnPyXyVZmRRJL9TwvLgkm5rbhzWbGE8gTKTQqBNLr",
+      mintA: "HsoHLcyiZ53a94G9xeYSE8feRtBkcK6zwuujXDfLyF3j", mintB: "2mLJJW6kZDXLhzt74WLxqvAcRduPHdBL3sUJYdq6SJa9",
+      payer: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37" },
+    // Signed by a wallet that is neither the fee wallet nor an artist, which is
+    // the on-chain half of "anyone can launch".
+    { battleId: 1789787784, battle: "7H4a8C86Quo9JtNLH9V57LPdR5Dygu3jKepRxf6ZXULv",
+      mintA: "4yj19bVdDec4n1hZz3G5TX6kVMEh8Y63zCL25zHBKENh", mintB: "HKP1cAEX9Je8jCovnAhLt6ZRwaaDuoJpVB88iqTfcsL3",
+      payer: "HegpwNycqbtc8GCPEkNCK9ToWPiuccw1wRewvi4Dsjkp" },
+  ];
+
+  it("reproduces all three real transactions' accounts, in order", () => {
+    for (const r of REAL) {
+      const ix = initializeMintsInstruction({ battleId: r.battleId, payer: r.payer });
+      expect(ix.keys.map((k) => k.pubkey)).toEqual([
+        r.battle, r.mintA, r.mintB, r.payer, TOKEN_PROGRAM_ID, SYSTEM_PROGRAM_ID, RENT_SYSVAR,
+      ]);
+    }
+  });
+
+  it("carries no arguments at all - the discriminator is the whole payload", () => {
+    const ix = initializeMintsInstruction({ battleId: REAL[0].battleId, payer: REAL[0].payer });
+    expect(ix.data).toHaveLength(8);
+    expect(Buffer.from(ix.data).toString("hex")).toBe("bd54558eb1c83916");
+  });
+
+  it("asks one wallet to sign, and any wallet will do", () => {
+    const ix = initializeMintsInstruction({ battleId: REAL[2].battleId, payer: REAL[2].payer });
+    const signers = ix.keys.filter((k) => k.isSigner);
+    expect(signers).toHaveLength(1);
+    expect(signers[0].pubkey).toBe("HegpwNycqbtc8GCPEkNCK9ToWPiuccw1wRewvi4Dsjkp");
+  });
+
+  it("cannot be pointed at a different battle than its id", () => {
+    // Every account but the payer derives from the battle id, so there is no
+    // argument through which a caller could mint into somebody else's battle.
+    const a = initializeMintsInstruction({ battleId: 1, payer: REAL[0].payer });
+    const b = initializeMintsInstruction({ battleId: 2, payer: REAL[0].payer });
+    expect(a.keys.slice(0, 3).map((k) => k.pubkey)).not.toEqual(b.keys.slice(0, 3).map((k) => k.pubkey));
+  });
+});
+
+describe("the slippage floor the program insists on", () => {
+  const common = {
+    battleId: 1_749_170_107,
+    trader: "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk",
+    battle: {
+      artistA: "ASpsqT7qKbHF7VhsBPYGRk95vNyAgPuhTBoh2o7ptRLb",
+      artistB: "BYshzR3KeycopC1o7iynYp224AM3psAUziV35Nyha8Ns",
+      wavewarzWallet: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+    },
+    artistA: true,
+    deadline: 1,
+  };
+
+  it("refuses minTokensOut of 0, which the program rejects with 6006", () => {
+    expect(() => buySharesInstruction({ ...common, amountLamports: 1_000_000, minTokensOut: 0 }))
+      .toThrow(/InvalidAmount \(6006\)/);
+  });
+
+  it("refuses minSolOut of 0 the same way", () => {
+    expect(() => sellSharesInstruction({ ...common, amountTokens: 100_000, minSolOut: 0 }))
+      .toThrow(/InvalidAmount \(6006\)/);
+  });
+
+  it("says what to pass instead, because 0 is the obvious way to mean no limit", () => {
+    expect(() => buySharesInstruction({ ...common, amountLamports: 1_000_000, minTokensOut: 0n }))
+      .toThrow(/pass 1, not 0/);
+  });
+
+  it("accepts 1", () => {
+    expect(() => buySharesInstruction({ ...common, amountLamports: 1_000_000, minTokensOut: 1 }))
+      .not.toThrow();
   });
 });

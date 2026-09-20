@@ -1,0 +1,155 @@
+{
+  "capturedAt": "2026-09-20T18:58:59.256Z",
+  "endpoint": "https://api.mainnet-beta.solana.com",
+  "method": "simulateTransaction against the deployed program, sigVerify false, post-state accounts returned. Nothing signed or sent.",
+  "firstBuys": [
+    {
+      "spendLamports": 500000,
+      "poolAfter": 492500,
+      "mintedSupply": 15600000
+    },
+    {
+      "spendLamports": 1000000,
+      "poolAfter": 985000,
+      "mintedSupply": 22100000
+    },
+    {
+      "spendLamports": 2500000,
+      "poolAfter": 2462500,
+      "mintedSupply": 35000000
+    },
+    {
+      "spendLamports": 5000000,
+      "poolAfter": 4925000,
+      "mintedSupply": 49600000
+    },
+    {
+      "spendLamports": 10000000,
+      "poolAfter": 9850000,
+      "mintedSupply": 70100000
+    },
+    {
+      "spendLamports": 25000000,
+      "poolAfter": 24625000,
+      "mintedSupply": 110900000
+    },
+    {
+      "spendLamports": 50000000,
+      "poolAfter": 49250000,
+      "mintedSupply": 156900000
+    },
+    {
+      "spendLamports": 100000000,
+      "poolAfter": 98500000,
+      "mintedSupply": 221900000
+    },
+    {
+      "spendLamports": 250000000,
+      "poolAfter": 246250000,
+      "mintedSupply": 350800000
+    }
+  ],
+  "incremental": [
+    {
+      "firstSpend": 10000000,
+      "secondSpend": 1000000,
+      "poolBefore": 9850000,
+      "supplyBefore": 70100000,
+      "tokensMinted": 3400000,
+      "poolAfter": 10835000
+    },
+    {
+      "firstSpend": 10000000,
+      "secondSpend": 10000000,
+      "poolBefore": 9850000,
+      "supplyBefore": 70100000,
+      "tokensMinted": 29000000,
+      "poolAfter": 19700000
+    },
+    {
+      "firstSpend": 50000000,
+      "secondSpend": 500000,
+      "poolBefore": 49250000,
+      "supplyBefore": 156900000,
+      "tokensMinted": 700000,
+      "poolAfter": 49742500
+    },
+    {
+      "firstSpend": 50000000,
+      "secondSpend": 5000000,
+      "poolBefore": 49250000,
+      "supplyBefore": 156900000,
+      "tokensMinted": 7600000,
+      "poolAfter": 54175000
+    },
+    {
+      "firstSpend": 100000000,
+      "secondSpend": 1000000,
+      "poolBefore": 98500000,
+      "supplyBefore": 221900000,
+      "tokensMinted": 1100000,
+      "poolAfter": 99485000
+    },
+    {
+      "firstSpend": 5000000,
+      "secondSpend": 20000000,
+      "poolBefore": 4925000,
+      "supplyBefore": 49600000,
+      "tokensMinted": 61300000,
+      "poolAfter": 24625000
+    },
+    {
+      "firstSpend": 1000000,
+      "secondSpend": 100000,
+      "poolBefore": 985000,
+      "supplyBefore": 22100000,
+      "tokensMinted": 1000000,
+      "poolAfter": 1083500
+    },
+    {
+      "firstSpend": 25000000,
+      "secondSpend": 250000,
+      "poolBefore": 24625000,
+      "supplyBefore": 110900000,
+      "tokensMinted": 500000,
+      "poolAfter": 24871250
+    }
+  ],
+  "sells": [
+    {
+      "poolBefore": 98500000,
+      "supplyBefore": 221900000,
+      "tokensSold": 100000,
+      "grossLamports": 88740,
+      "supplyAfter": 221800000
+    },
+    {
+      "poolBefore": 98500000,
+      "supplyBefore": 221900000,
+      "tokensSold": 500000,
+      "grossLamports": 443300,
+      "supplyAfter": 221400000
+    },
+    {
+      "poolBefore": 98500000,
+      "supplyBefore": 221900000,
+      "tokensSold": 1000000,
+      "grossLamports": 885600,
+      "supplyAfter": 220900000
+    },
+    {
+      "poolBefore": 98500000,
+      "supplyBefore": 221900000,
+      "tokensSold": 5000000,
+      "grossLamports": 4388000,
+      "supplyAfter": 216900000
+    },
+    {
+      "poolBefore": 98500000,
+      "supplyBefore": 221900000,
+      "tokensSold": 22100000,
+      "grossLamports": 18639140,
+      "supplyAfter": 199800000
+    }
+  ]
+}

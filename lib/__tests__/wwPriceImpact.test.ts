@@ -36,7 +36,12 @@ const impactFor = (spendLamports: number, pool = POOL) => {
   return priceImpactBps({
     poolBeforeLamports: pool,
     poolDeltaLamports: spendLamports * BUY_POOL_SHARE,
-    tokens: q.tokensOut,
+    // THE CONTINUOUS FIGURE, matching what `planBuy` feeds it. Passing the
+    // floored `tokensOut` mixes the mint's 100,000-unit step into a slope
+    // measurement: on this pool it reports 383 basis points for a trade whose
+    // curve impact is 5, and the error shrinks as the trade grows, so it also
+    // breaks monotonicity. The step is a rounding loss, not price impact.
+    tokens: q.tokensOutExact,
   });
 };
 

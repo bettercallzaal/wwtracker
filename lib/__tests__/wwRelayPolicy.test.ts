@@ -168,7 +168,7 @@ describe("what it refuses", () => {
   it("refuses a real trade with one foreign instruction smuggled alongside it", () => {
     const buy = buySharesInstruction({
       battleId: buyFixture.battle_id, trader, battle, artistA: true,
-      amountLamports: 1, minTokensOut: 0, deadline: 1,
+      amountLamports: 1, minTokensOut: 1, deadline: 1,
     });
     const drain = {
       programId: "11111111111111111111111111111111",
@@ -194,7 +194,7 @@ describe("what it refuses", () => {
     const legacy = build([
       buySharesInstruction({
         battleId: buyFixture.battle_id, trader, battle, artistA: true,
-        amountLamports: 1, minTokensOut: 0, deadline: 1,
+        amountLamports: 1, minTokensOut: 1, deadline: 1,
       }),
     ]);
     // The same bytes with the v0 version byte in front.
@@ -232,8 +232,8 @@ describe("what it refuses", () => {
 
 describe("all three trades are relayable", () => {
   const cases = [
-    ["buyShares", buySharesInstruction({ battleId: buyFixture.battle_id, trader, battle, artistA: true, amountLamports: 1, minTokensOut: 0, deadline: 1 })],
-    ["sellShares", sellSharesInstruction({ battleId: buyFixture.battle_id, trader, battle, artistA: true, amountTokens: 1, minSolOut: 0, deadline: 1 })],
+    ["buyShares", buySharesInstruction({ battleId: buyFixture.battle_id, trader, battle, artistA: true, amountLamports: 1, minTokensOut: 1, deadline: 1 })],
+    ["sellShares", sellSharesInstruction({ battleId: buyFixture.battle_id, trader, battle, artistA: true, amountTokens: 1, minSolOut: 1, deadline: 1 })],
     ["claimShares", claimSharesInstruction({ battleId: buyFixture.battle_id, trader })],
   ] as const;
 
