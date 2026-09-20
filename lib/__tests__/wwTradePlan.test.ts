@@ -219,3 +219,43 @@ describe("planSell", () => {
     expect(plan.priceImpact.exceeded).toBe(false);
   });
 });
+
+/**
+ * The front door, not the module. Every other test in this repo imports
+ * `../ww/<module>` directly, which is why two gaps survived 875 passing tests:
+ * `planSell` was never exported and there was no way to build a `BattleState`
+ * without hand-decoding byte offsets. Both were found by writing a script that
+ * imports only what an integrator can reach.
+ */
+describe("the exported surface, as an integrator sees it", () => {
+  it("exports both planners, not just the buy one", async () => {
+    const sdk = await import("../ww");
+    expect(typeof sdk.planBuy).toBe("function");
+    expect(typeof sdk.planSell).toBe("function");
+  });
+
+  it("can build a BattleState without knowing a byte offset", async () => {
+    const sdk = await import("../ww");
+    expect(typeof sdk.battleStateFromRaw).toBe("function");
+    const raw = new Uint8Array(Buffer.from(buyFixture.battle_account_base64, "base64"));
+    const state = sdk.battleStateFromRaw(raw);
+    expect(state.accounts.artistA).toBe(accounts.artistA);
+    expect(typeof state.poolLamports.a).toBe("number");
+    expect(typeof state.poolLamports.b).toBe("number");
+  });
+
+  it("refuses an account too short to hold the pools, and says what is needed", async () => {
+    const sdk = await import("../ww");
+    expect(() => sdk.battleStateFromRaw(new Uint8Array(140))).toThrow(/228 needed/);
+  });
+
+  it("feeds planBuy directly, which is the whole point of it existing", async () => {
+    const sdk = await import("../ww");
+    const raw = new Uint8Array(Buffer.from(buyFixture.battle_account_base64, "base64"));
+    const plan = await sdk.planBuy({
+      ...base,
+      readBattleState: async () => sdk.battleStateFromRaw(raw),
+    });
+    expect(plan.instruction.keys.length).toBeGreaterThan(0);
+  });
+});
