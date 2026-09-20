@@ -473,9 +473,15 @@ describe("the slippage floor the program insists on", () => {
       .toThrow(/InvalidAmount \(6006\)/);
   });
 
-  it("refuses minSolOut of 0 the same way", () => {
+  it("ALLOWS minSolOut of 0 on a sell, because the program does", () => {
+    // The asymmetry, measured four ways against the deployed program on
+    // 2026-09-20: a buy at 0 fails with InvalidAmount, a sell at 0 succeeds.
+    // This guard refused both for about an hour. Refusing a value the chain
+    // accepts is the same class of error as sending one it rejects - quieter,
+    // because it looks like safety - and no test could catch it while the
+    // tests asserted the guard instead of the program.
     expect(() => sellSharesInstruction({ ...common, amountTokens: 100_000, minSolOut: 0 }))
-      .toThrow(/InvalidAmount \(6006\)/);
+      .not.toThrow();
   });
 
   it("says what to pass instead, because 0 is the obvious way to mean no limit", () => {

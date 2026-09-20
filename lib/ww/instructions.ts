@@ -179,16 +179,28 @@ function tradeAccounts(
  * the ones this library produces.
  */
 /**
- * A slippage floor the program will accept.
+ * A BUY's slippage floor, which the program will not accept as zero.
  *
- * **ZERO IS REJECTED ON CHAIN, WITH `InvalidAmount` (6006).** Measured against
- * the deployed program on 2026-09-20: a buy identical in every other respect
- * succeeds at `minTokensOut: 1` and fails at `0`. "No slippage limit" is the
- * natural way to express an unprotected trade and it is the one value that
- * cannot be sent, so it is refused here with the reason rather than on chain
- * with a number.
+ * **`minTokensOut: 0` is rejected with `InvalidAmount` (6006), and
+ * `minSolOut: 0` on a SELL is accepted.** The asymmetry is real and it is
+ * measured, not assumed - the same transaction was simulated four ways against
+ * the deployed program on 2026-09-20:
+ *
+ *     BUY  minTokensOut = 1   OK
+ *     BUY  minTokensOut = 0   FAIL InvalidAmount
+ *     SELL minSolOut     = 1   OK
+ *     SELL minSolOut     = 0   OK
+ *
+ * **THIS GUARD APPLIED TO BOTH FOR ABOUT AN HOUR AND THAT WAS A BUG.** A buy
+ * was measured rejecting zero, and the rule was extended to sells because the
+ * two look symmetric. They are not, and no test could have caught it because
+ * the test asserted the guard rather than the program. Refusing a value the
+ * chain accepts is the same class of error as sending one it rejects; it is
+ * just quieter, because it looks like safety.
+ *
+ * Zero on a sell means "no floor", and a caller is entitled to mean that.
  */
-function slippageFloor(field: string, value: bigint | number): bigint | number {
+function buyFloor(field: string, value: bigint | number): bigint | number {
   const v = whole(field, value);
   if (v === 0 || v === 0n) {
     throw new Error(
@@ -224,7 +236,7 @@ export function buySharesInstruction(p: BuyParams): Instruction {
       Uint8Array.from(DISCRIMINATOR.buyShares),
       u64le(whole("amountLamports", p.amountLamports)),
       Uint8Array.from([p.artistA ? 1 : 0]),
-      u64le(slippageFloor("minTokensOut", p.minTokensOut)),
+      u64le(buyFloor("minTokensOut", p.minTokensOut)),
       i64le(p.deadline),
     ]),
   };
@@ -238,7 +250,7 @@ export function sellSharesInstruction(p: SellParams): Instruction {
       Uint8Array.from(DISCRIMINATOR.sellShares),
       u64le(whole("amountTokens", p.amountTokens)),
       Uint8Array.from([p.artistA ? 1 : 0]),
-      u64le(slippageFloor("minSolOut", p.minSolOut)),
+      u64le(whole("minSolOut", p.minSolOut)),
       i64le(p.deadline),
     ]),
   };
