@@ -56,7 +56,9 @@ export {
 export {
   battleAccountsFromRaw,
   buySharesInstruction,
+  RENT_SYSVAR,
   claimSharesInstruction,
+  endBattleInstruction,
   createAssociatedTokenAccountIdempotentInstruction,
   deadlineIn,
   sellSharesInstruction,
@@ -117,7 +119,17 @@ export {
  * and a consumer writing their own version would reproduce the exact defect
  * this module was extracted to fix.
  */
-export { planBuy, poolMoveBps, type BattleState, type BuyPlan, type PlanBuyParams } from "./tradePlan";
+export {
+  battleStateFromRaw,
+  planBuy,
+  planSell,
+  poolMoveBps,
+  type BattleState,
+  type BuyPlan,
+  type PlanBuyParams,
+  type PlanSellParams,
+  type SellPlan,
+} from "./tradePlan";
 
 /**
  * PRD section 31, the universal battle record. Public because the record
@@ -133,6 +145,27 @@ export {
   type OffChainInputs,
   type RecordTrade,
 } from "./battleRecord";
+
+/**
+ * PRD 33 and 34. What an indexer must cover, and - the part that matters -
+ * which of it an indexer is entitled to be believed about.
+ *
+ * Section 33 says the indexer is "never the authority for canonical
+ * settlement". Section 34 lists seventeen things to index. Together they mean
+ * eleven of the seventeen are chain facts an indexer restates and cannot
+ * overrule, and nothing had written down which eleven.
+ */
+export {
+  INDEXER_REQUIREMENTS,
+  assessIndexerCoverage,
+  formatCoverage,
+  type Authority,
+  type CoverageReport,
+  type CoverageRow,
+  type CoverageState,
+  type Observation,
+  type Requirement,
+} from "./indexerCoverage";
 
 /**
  * Finding a battle in the first place.
@@ -295,3 +328,25 @@ export {
   type OperatorIdentity,
   type OperatorRecord,
 } from "./operatorRecord";
+
+/**
+ * PRD 35, 36 and 37. The portable fighter card, the track record, and the six
+ * ranking dimensions that are deliberately never summed.
+ *
+ * `buildArtistRecord` REFUSES settlement winners. The program settles on the
+ * larger pool, so a record built from it is a record of who had more money
+ * behind them - and on this platform one artist is 35.8% of all buy volume with
+ * 93% of his own-battle buying on his own side. Section 38 says capital should
+ * not be able to buy skill ranking; using the wrong winner field is exactly how
+ * it would.
+ */
+export {
+  RANKING_DIMENSIONS,
+  SettlementWinnerRefused,
+  buildArtistRecord,
+  buildTrackRecord,
+  type ArtistRecord,
+  type RankingDimensions,
+  type RecordBattle,
+  type TrackRecord,
+} from "./artistRecord";
