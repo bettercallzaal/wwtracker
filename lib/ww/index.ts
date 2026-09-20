@@ -152,8 +152,14 @@ export {
  *
  * Section 33 says the indexer is "never the authority for canonical
  * settlement". Section 34 lists seventeen things to index. Together they mean
- * eleven of the seventeen are chain facts an indexer restates and cannot
- * overrule, and nothing had written down which eleven.
+ * THIRTEEN of the seventeen are chain facts an indexer restates and cannot
+ * overrule, three are the indexer's own and one is the operator's, and nothing
+ * had written down which.
+ *
+ * The count is computed from `INDEXER_REQUIREMENTS` by the test, not typed.
+ * This sentence said eleven until that assertion disagreed with it, and the
+ * module's own doc comment said eleven too - the same wrong number in two
+ * places, both written from memory.
  */
 export {
   INDEXER_REQUIREMENTS,
