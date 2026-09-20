@@ -1,0 +1,42 @@
+{
+  "capturedAt": "2026-09-20T21:40:37.987Z",
+  "endpoint": "https://api.mainnet-beta.solana.com",
+  "method": "simulateTransaction, sigVerify false. Nothing signed or sent. The floor u64 is overwritten in the built instruction so our own guard cannot mask the program's answer.",
+  "cases": [
+    {
+      "kind": "buy",
+      "field": "minTokensOut",
+      "floor": 1,
+      "err": null,
+      "errorName": null
+    },
+    {
+      "kind": "buy",
+      "field": "minTokensOut",
+      "floor": 0,
+      "err": {
+        "InstructionError": [
+          5,
+          {
+            "Custom": 6006
+          }
+        ]
+      },
+      "errorName": "InvalidAmount"
+    },
+    {
+      "kind": "sell",
+      "field": "minSolOut",
+      "floor": 1,
+      "err": null,
+      "errorName": null
+    },
+    {
+      "kind": "sell",
+      "field": "minSolOut",
+      "floor": 0,
+      "err": null,
+      "errorName": null
+    }
+  ]
+}
