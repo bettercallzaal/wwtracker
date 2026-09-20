@@ -31,8 +31,15 @@ in `/api/ww/*`. See [`PUBLIC-API.md`](./PUBLIC-API.md).
 count in a snapshot file (`public/ww-battles.json`, `lib/battles.ts`) or a dated recap is
 a historical snapshot and should be read as of its date, not as current.
 
-## Governance
+## Origin, and who it answers to now
 
-WaveWarZ operates under **The ZAO**, a decentralized artist collective that runs weekly
-Fractal governance on Optimism. That governance layer - artists who earn Respect and vote
-on direction - is what distinguishes WaveWarZ from a purely corporate battle platform.
+**WaveWarZ does not operate under The ZAO.** It was **incubated in The ZAO by three ZAO
+members** and has since **graduated into its own project and ecosystem**. Corrected
+2026-09-20 by Zaal; this section previously said WaveWarZ "operates under The ZAO" and
+pointed at weekly Fractal governance as the thing that distinguishes it. That was true of
+its origin and is not true of its governance.
+
+The relationship that remains is history plus whatever integrations exist on their own
+merits, not authority. **Anything describing The ZAO as governing WaveWarZ, voting on its
+direction, or owning it is wrong.** `components/Ecosystem.tsx` already had this right -
+it calls The ZAO "the DAO that incubated WaveWarZ" - and that is the phrasing to copy.

@@ -119,7 +119,9 @@ nearest surviving section. Each is a focused lens on one aspect of the business:
 - **09 Embeds** - every chart here is a standalone iframe for embedding elsewhere.
 - **10 Artists** - the roster (live from Audius), who they are, their releases,
   play totals and streaming stats.
-- **11 Ecosystem** - where WaveWarZ sits in The ZAO ecosystem, events, FAQ.
+- **11 Ecosystem** - WaveWarZ's own ecosystem and the projects around it, events, FAQ.
+  WaveWarZ was incubated in The ZAO and has since graduated into its own project;
+  The ZAO appears here as its incubator, not as its governance.
 
 ## The newsletter
 

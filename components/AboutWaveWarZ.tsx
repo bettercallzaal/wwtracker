@@ -112,10 +112,11 @@ export default function AboutWaveWarZ() {
       {/* ecosystem */}
       <Section label="ECOSYSTEM">
         <p style={{ margin: "0 0 8px", color: C.text, lineHeight: 1.6 }}>
-          WaveWarZ is the music-battle application layer of <b>BCZ -&gt;{" "}
+          WaveWarZ is <b>its own project and ecosystem</b>. It was incubated in{" "}
           <a href="https://thezao.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>The ZAO</a>
-          {" "}-&gt; WaveWarZ</b> — The ZAO is a web3 music/creator collective with 100+ consecutive Fractal governance weeks and onchain Respect scores. Related
-          surfaces in the ecosystem:
+          {" "}by three ZAO members and has since graduated out of it — The ZAO is its
+          incubator and part of its history, not its governance. Related surfaces, some
+          shared with that history and some its own:
         </p>
         <ul style={listStyle}>
           <li><b>ZABAL</b> - streaming + coordination engine across the ecosystem.</li>
