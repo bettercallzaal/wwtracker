@@ -212,6 +212,15 @@ days from different sources, so their battle counts disagree, and that is
 expected rather than a fault. `docs/REFRESH.md` is the runbook for re-pulling
 and records the Dune free-tier limits that make a full refresh non-trivial.
 
+**One number in this repo comes from a source with a known bug.** Lifetime volume
+from the upstream public API is affected by a defect in which the bonding-curve
+pool is written into the volume field. Measured 2026-09-20: **15 of the 173
+rounds the API exposes report volume exactly equal to pool on both sides**, 4.64
+SOL, against 156 showing the healthy shape where volume exceeds pool. `docs/SOP.md`
+SOP 3 is the check and it exits non-zero while the bug is live. The full write-up,
+written for the platform team and shared with them, is
+[`docs/upstream/volume-field-2026-09-19.md`](docs/upstream/volume-field-2026-09-19.md).
+
 **The skip and queue figures rest on an unverified assumption.** They classify
 SOL inflows to the treasury wallet by amount alone. See
 `docs/issues/001-fnj-payment-bucket-classification.md` - open and unfixed.
