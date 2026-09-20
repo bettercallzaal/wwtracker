@@ -18,11 +18,12 @@ was.** Re-writing those figures without re-deriving each one is the thing this
 document's own header warns against, so the movement is recorded here instead and
 the original measurement stays legible.
 
-| | 2026-09-06 | 2026-09-19 | |
-|---|---|---|---|
-| Battle accounts on chain | 1,643 | **1,694** | +51 |
-| Settled on chain | - | **1,607** | 87 never ended |
-| In her public listing | 1,501 | **1,552** | the 142-battle gap is unchanged |
+| | 2026-09-06 | 2026-09-19 | 2026-09-20 | |
+|---|---|---|---|---|
+| Battle accounts on chain | 1,643 | 1,694 | **1,694** | +51 over the fortnight, flat since |
+| Settled on chain | - | 1,607 | **1,613** | Zaal settled six more by hand |
+| Never ended, past their clock | - | 87 | **81** | the six he cleared |
+| In her public listing | 1,501 | 1,552 | **1,558** | the gap to chain is now 136 |
 | Lifetime volume, her API | 922.3 SOL | **921.99 SOL** | **it went DOWN** |
 | Artist payouts | 14.38 SOL | 14.47 SOL | |
 | Trader claims | - | 481.76 SOL over 3,368 withdrawals | |
@@ -134,9 +135,28 @@ July as a trend is showing one battle.
 
 ### The upset is the platform's best untold story
 
-The chain settles to the larger pool. The result is a 2-of-3 judgment. So they
-disagree, and **189 of 1,265 decided battles - one in seven - were won by the
-artist the money was against.** Nothing anywhere surfaces this.
+The chain settles to the larger pool. The announced result comes from judges -
+**2-of-3 for quick battles, a panel of three humans for main events**, confirmed
+by Zaal 2026-09-20. So the two disagree, and the artist the money was against
+wins more often than anyone says.
+
+**142 of 1,205 battles, 11.8%.** By type: quick **10.1%**, community 16.7%, and
+main events **21.1%** - one in five of the curated events goes against the pool.
+
+**Say the denominator, because this document has carried three numbers for one
+fact.** It previously said 189 of 1,265, and other notes have said 174 of 1,246.
+They are the same measurement counted three ways:
+
+| Denominator | Disagreements | Rate |
+|---|---|---|
+| Settled battles with unequal pools | 142 of 1,205 | **11.8%** |
+| All settled battles with a recorded winner, counting the 41 tied-pool battles as disagreements | 183 of 1,246 | 14.7% |
+
+**The first is the honest one.** Where both pools are equal the money expressed
+no preference, so the judges cannot have overruled it, and folding those 41 in
+inflates the rate by three points.
+
+Nothing anywhere surfaces any of it.
 
 ---
 
