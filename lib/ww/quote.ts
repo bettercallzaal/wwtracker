@@ -251,9 +251,38 @@ export function quoteSell(
  * saying where it goes is describing a cost; one that can show the artist's
  * two thirds is describing the product.
  */
+/**
+ * Split a fee the way the program splits it: **both sides floored to whole
+ * lamports, independently.**
+ *
+ * So the two halves do not always add back to the fee. Read off the program's
+ * own log on 2026-09-20, on a sell whose fee was 91,140 lamports:
+ *
+ *     - Total fee: 91140 lamports
+ *     - WaveWarZ fee: 30076 lamports
+ *     - Artist fee: 61063 lamports
+ *
+ * 61,063 + 30,076 = 91,139. **One lamport stays in the vault**, and the same
+ * thing happens on any fee that does not divide cleanly by the shares. It is a
+ * rounding crumb, not a leak, and it is written down because a reconciliation
+ * that assumes the halves sum will be off by a lamport per trade and nobody
+ * will know why.
+ *
+ * **COMPUTED IN BASIS POINTS, NOT FROM THE FLOAT SHARE**, and that is not
+ * fussiness. `Math.floor(750000 * 0.33)` is 247,499, because 0.33 is not
+ * representable and the product lands a hair under. The program says 247,500.
+ * One lamport, in the direction of shorting the platform, on every fee that
+ * looked like it divided cleanly. Integer arithmetic on the basis points has no
+ * such failure, and the unrounded products were worse still - they made
+ * `feeSplit(750000).artistLamports` come back as 502500.00000000006, which is
+ * not a number of lamports at all.
+ */
+export const ARTIST_FEE_BPS = 6_700;
+export const PLATFORM_FEE_BPS = 10_000 - ARTIST_FEE_BPS;
+
 export const feeSplit = (feeLamports: number) => ({
-  artistLamports: feeLamports * ARTIST_FEE_SHARE,
-  platformLamports: feeLamports * (1 - ARTIST_FEE_SHARE),
+  artistLamports: Math.floor((feeLamports * ARTIST_FEE_BPS) / 10_000),
+  platformLamports: Math.floor((feeLamports * PLATFORM_FEE_BPS) / 10_000),
 });
 
 /**

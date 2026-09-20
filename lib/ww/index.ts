@@ -93,6 +93,8 @@ export {
   BUY_POOL_SHARE,
   CURVE_K,
   SUPPLY_QUANTUM,
+  ARTIST_FEE_BPS,
+  PLATFORM_FEE_BPS,
   floorToQuantum,
   TRADE_FEE,
   feeSplit,
