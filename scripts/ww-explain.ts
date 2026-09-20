@@ -23,6 +23,8 @@ const DISC: Record<string, string> = {
 
 /** What a trader should actually do about it, per code. */
 const ADVICE: Record<number, string> = {
+  6001: "The battle had already ended when it landed. Trading closes at end_time; after that only endBattle and claimShares work.",
+  6002: "The battle is still running. endBattle only works after end_time.",
   6003: "The battle was not active when it landed. Either it had not started or it had ended. The chain's clock lags wall time, so a battle that just opened can reject the first seconds of trading.",
   6006: "An amount the program will not take. On a BUY this is almost always minTokensOut of 0 - zero is rejected, the minimum is 1. On a sell, 0 is allowed, so look at the token amount instead.",
   6008: "The trade was too small to mint a whole token. Tokens mint in steps of 100,000 and the minimum spend RISES as the pool grows. Nothing was taken.",

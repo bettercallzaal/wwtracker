@@ -98,6 +98,33 @@ trades - the most holders any side has ever ended with is **18**, so the flag ha
 never yet been true. It is published because the first battle large enough to
 trip it will be the first one anybody is watching live.
 
+### `GET /api/ww/diagnose` - NOT for embedding
+
+The dashboard's two buttons, so nobody needs a terminal during a show.
+
+- no parameters - health of everything the live tools rely on
+- `?sig=<signature>` - why one transaction failed
+- `?code=6014` - what one error code means
+
+**Per RPC METHOD, not per endpoint.** The public node throttles each method
+separately: on 2026-09-20 `getTransaction` was refused for an hour while
+`getAccountInfo` and `getProgramAccounts` answered normally. One ping would
+have called that endpoint healthy and been right about everything except the
+tool that needed it.
+
+It also checks the MODEL, not only the plumbing: that a known battle's stored
+supply sits below the curve by the expected flooring residual and no further,
+and that a quote comes back as a whole step.
+
+For a signature it decodes our instructions and prints the amount, side and
+slippage floor, flagging a buy carrying a floor of 0 - which the program
+rejects outright with `InvalidAmount (6006)`. Same answers as
+`scripts/ww-doctor.ts` and `scripts/ww-explain.ts`.
+
+Same-origin only. It spends the keyed endpoint per request, and every error is
+passed through `redactSecrets` first, because an RPC failure message carries
+the endpoint and the endpoint carries the key.
+
 ### `GET /api/ww/live-battles` - NOT for embedding
 
 Every battle that is running right now, decoded from one `getProgramAccounts`,

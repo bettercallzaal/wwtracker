@@ -12,6 +12,9 @@
 import { useEffect, useState } from "react";
 import { quoteBuy, minimumSpendLamports, SUPPLY_QUANTUM } from "@/lib/ww/quote";
 
+type Check = { name: string; ok: boolean; detail: string };
+type Health = { checks: Check[]; pass: number; fail: number; endpoint: string; keyed: boolean; live: number; awaitingSettlement: number; readAt: string };
+
 type Battle = {
   battleId: number; startTime: number; endTime: number;
   pool: { a: number; b: number }; supply: { a: number; b: number };
@@ -66,11 +69,78 @@ function Side({ label, pool, supply, spend }: { label: string; pool: number; sup
   );
 }
 
+function Explained({ data }: { data: Record<string, unknown> }) {
+  // A bare error code lookup comes back without a signature.
+  if (!data.signature) {
+    return (
+      <>
+        <div><strong>{String(data.code)}</strong> {data.name ? <span style={{ color: "#ffd479" }}>{String(data.name)}</span> : null}</div>
+        <div style={{ opacity: 0.85 }}>{String(data.message)}</div>
+        {data.advice ? <div style={{ marginTop: 8 }}>{String(data.advice)}</div> : null}
+        {data.observed ? <div style={{ marginTop: 8, opacity: 0.6 }}>seen before: {String(data.observed)}</div> : null}
+      </>
+    );
+  }
+  const ixs = (data.instructions ?? []) as Record<string, unknown>[];
+  const err = data.error as Record<string, unknown> | null;
+  return (
+    <>
+      <div style={{ opacity: 0.6 }}>slot {String(data.slot)} · {String(data.blockTime ?? "")}</div>
+      <div style={{ margin: "8px 0", color: data.failed ? "#ff9d9d" : "#95fe7c" }}>
+        {data.failed ? "FAILED" : "SUCCEEDED"}
+      </div>
+      {ixs.map((ix) => (
+        <div key={String(ix.index)} style={{ opacity: 0.9 }}>
+          [{String(ix.index)}] {String(ix.name)}
+          {ix.amount !== undefined ? ` · amount ${Number(ix.amount).toLocaleString()} · side ${String(ix.side)} · floor ${Number(ix.slippageFloor).toLocaleString()}` : ""}
+          {ix.warning ? <span style={{ color: "#ffd479" }}> · {String(ix.warning)}</span> : null}
+        </div>
+      ))}
+      {err ? (
+        <div style={{ marginTop: 10 }}>
+          <div><strong style={{ color: "#ffd479" }}>{String(err.name ?? "")}</strong> ({String(err.code)}) on instruction {String(err.instructionIndex)}</div>
+          <div style={{ opacity: 0.85 }}>{String(err.message)}</div>
+          {err.advice ? <div style={{ marginTop: 6 }}>{String(err.advice)}</div> : null}
+        </div>
+      ) : null}
+      {Array.isArray(data.programLogs) && data.programLogs.length > 0 ? (
+        <details style={{ marginTop: 10 }}>
+          <summary style={{ cursor: "pointer", opacity: 0.7 }}>the program's own log</summary>
+          <pre style={{ whiteSpace: "pre-wrap", opacity: 0.75, fontSize: 12 }}>{(data.programLogs as string[]).join("\n")}</pre>
+        </details>
+      ) : null}
+    </>
+  );
+}
+
 export default function Finals() {
   const [data, setData] = useState<{ live: Battle[]; awaitingSettlement: number; readAt: string } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [spendSol, setSpendSol] = useState("0.05");
   const [tick, setTick] = useState(0);
+  // The buttons. Nothing here needs a terminal.
+  const [health, setHealth] = useState<Health | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [sig, setSig] = useState("");
+  const [explained, setExplained] = useState<Record<string, unknown> | null>(null);
+
+  const runHealth = async () => {
+    setBusy("health"); setExplained(null);
+    try {
+      const r = await fetch("/api/ww/diagnose", { cache: "no-store" });
+      setHealth(await r.json());
+    } catch (e) { setHealth(null); setErr(String(e)); } finally { setBusy(null); }
+  };
+  const runExplain = async () => {
+    const q = sig.trim();
+    if (!q) return;
+    setBusy("explain"); setHealth(null);
+    try {
+      const url = /^\d{3,5}$/.test(q) ? `/api/ww/diagnose?code=${q}` : `/api/ww/diagnose?sig=${encodeURIComponent(q)}`;
+      const r = await fetch(url, { cache: "no-store" });
+      setExplained(await r.json());
+    } catch (e) { setExplained({ status: "error", error: String(e) }); } finally { setBusy(null); }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -111,6 +181,45 @@ export default function Finals() {
           style={{ background: "#0d1524", color: "#e8eefc", border: "1px solid #24304a", borderRadius: 6, padding: "4px 8px", width: 110, fontFamily: "inherit" }} />{" "}
         SOL
       </label>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+        <button onClick={runHealth} disabled={busy !== null}
+          style={{ background: "#16233a", color: "#e8eefc", border: "1px solid #2b3b5a", borderRadius: 7, padding: "7px 13px", cursor: busy ? "wait" : "pointer", fontFamily: "inherit", fontSize: 13 }}>
+          {busy === "health" ? "checking..." : "Check everything"}
+        </button>
+        <input value={sig} onChange={(e) => setSig(e.target.value)} placeholder="paste a failed signature, or an error code"
+          style={{ background: "#0d1524", color: "#e8eefc", border: "1px solid #24304a", borderRadius: 7, padding: "7px 10px", flex: 1, minWidth: 250, fontFamily: "inherit", fontSize: 13 }} />
+        <button onClick={runExplain} disabled={busy !== null || !sig.trim()}
+          style={{ background: "#16233a", color: "#e8eefc", border: "1px solid #2b3b5a", borderRadius: 7, padding: "7px 13px", cursor: busy ? "wait" : "pointer", fontFamily: "inherit", fontSize: 13 }}>
+          {busy === "explain" ? "reading..." : "Why did it fail?"}
+        </button>
+      </div>
+
+      {health && (
+        <div style={{ border: "1px solid #24304a", borderRadius: 10, padding: 14, marginBottom: 18, fontSize: 13 }}>
+          <div style={{ marginBottom: 8 }}>
+            <strong style={{ color: health.fail ? "#ff9d9d" : "#95fe7c" }}>{health.pass} pass, {health.fail} fail</strong>
+            <span style={{ opacity: 0.6 }}> · {health.keyed ? "keyed endpoint" : "public endpoint, no fallback exists"} · {health.live} live, {health.awaitingSettlement} unsettled</span>
+          </div>
+          {health.checks.map((c) => (
+            <div key={c.name} style={{ lineHeight: 1.8 }}>
+              <span style={{ color: c.ok ? "#95fe7c" : "#ff9d9d" }}>{c.ok ? "PASS" : "FAIL"}</span>{" "}
+              <span style={{ opacity: 0.9 }}>{c.name}</span>{" "}
+              <span style={{ opacity: 0.55 }}>{c.detail}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {explained && (
+        <div style={{ border: "1px solid #24304a", borderRadius: 10, padding: 14, marginBottom: 18, fontSize: 13, lineHeight: 1.7 }}>
+          {explained.status === "error" ? (
+            <div style={{ color: "#ff9d9d" }}>{String(explained.error)}</div>
+          ) : (
+            <Explained data={explained} />
+          )}
+        </div>
+      )}
 
       {data && data.live.length === 0 && (
         <div style={{ opacity: 0.6, fontSize: 14 }}>No battle running right now. This page refreshes itself.</div>
