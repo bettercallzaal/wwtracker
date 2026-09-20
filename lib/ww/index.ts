@@ -135,6 +135,31 @@ export {
 } from "./battleRecord";
 
 /**
+ * Finding a battle in the first place.
+ *
+ * Everything else in this library takes a battle id you already have. This is
+ * where one comes from, and without it an integrator has to reinvent a
+ * `getProgramAccounts` call from a procedure written for a human - including
+ * the id-range guard, which is the part people miss.
+ *
+ * No network here either: it builds the request and parses the response.
+ */
+export {
+  BATTLE_ACCOUNT_BYTES,
+  DISCOVERY_SLICE_BYTES,
+  awaitingSettlement,
+  battleDiscoveryRequest,
+  liveBattles,
+  parseBattleAccount,
+  parseBattleAccounts,
+  phaseCounts,
+  settledWithValue,
+  type BattlePhase,
+  type BattleSummary,
+  type ProgramAccountRow,
+} from "./discovery";
+
+/**
  * PRD 32. The other half of the record: given one somebody handed you, which
  * of its fields does the chain actually agree with.
  *
