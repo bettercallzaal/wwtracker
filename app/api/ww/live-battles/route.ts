@@ -13,12 +13,18 @@
 // the direction that costs somebody money.
 import { PROGRAM_ID } from "@/lib/ww/pda";
 import { redactSecrets, redactUrl } from "@/lib/redact";
+import { finalsEnabled } from "@/lib/finalsFlag";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET(request: Request) {
+  // GATED WITH THE PAGE IT FEEDS. This is the expensive one - a
+  // getProgramAccounts over ~1,700 accounts, per request, polled every five
+  // seconds per viewer. Leaving the route open while hiding the page would
+  // leave the cost open and only the convenience hidden.
+  if (!finalsEnabled()) return new Response("not found", { status: 404 });
   try {
     const res = await fetch(RPC, {
       method: "POST",
