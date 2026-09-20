@@ -383,6 +383,43 @@ export function initializeMintsInstruction(p: {
   };
 }
 
+/**
+ * Launch a battle, completely, in one call.
+ *
+ * **BECAUSE HALF A LAUNCH LOOKS EXACTLY LIKE A WHOLE ONE.** `initializeBattle`
+ * alone returns `err: null`, writes a well-formed 353-byte battle account,
+ * derives the PDA a front end would show, and logs "Battle initialized". It
+ * also leaves no mints, so nothing can ever be bought and the page is dead. The
+ * only way to tell the two apart is to go looking for an account that is not
+ * there.
+ *
+ * A failure that silent does not belong behind an ordering a caller has to
+ * know. Both instructions go in one transaction, so the battle either exists
+ * and is tradeable or does not exist at all.
+ *
+ * Simulated together on 2026-09-20: `err: null`, 43,179 compute units, two
+ * 82-byte SPL mints owned by the token program.
+ *
+ * The two builders stay exported for anyone repairing a battle that was
+ * launched without mints. This is the path for making a new one.
+ */
+export function launchBattleInstructions(p: {
+  battleId: bigint | number;
+  /** Signs both, pays rent on the battle, the vault and the two mints. */
+  creator: string;
+  artistA: string;
+  artistB: string;
+  wavewarzWallet: string;
+  /** SECONDS, not an end time. See `initializeBattleInstruction`. */
+  durationSeconds: bigint | number;
+  startTime?: bigint | number;
+}): Instruction[] {
+  return [
+    initializeBattleInstruction(p),
+    initializeMintsInstruction({ battleId: p.battleId, payer: p.creator }),
+  ];
+}
+
 export function endBattleInstruction(p: {
   battleId: bigint | number;
   battle: BattleAccounts;

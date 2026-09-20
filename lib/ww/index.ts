@@ -61,6 +61,7 @@ export {
   endBattleInstruction,
   initializeBattleInstruction,
   initializeMintsInstruction,
+  launchBattleInstructions,
   createAssociatedTokenAccountIdempotentInstruction,
   deadlineIn,
   sellSharesInstruction,

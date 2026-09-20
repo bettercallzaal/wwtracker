@@ -23,6 +23,7 @@ import {
   deadlineIn,
   initializeBattleInstruction,
   initializeMintsInstruction,
+  launchBattleInstructions,
   sellSharesInstruction,
 } from "../ww/instructions";
 import {
@@ -485,5 +486,40 @@ describe("the slippage floor the program insists on", () => {
   it("accepts 1", () => {
     expect(() => buySharesInstruction({ ...common, amountLamports: 1_000_000, minTokensOut: 1 }))
       .not.toThrow();
+  });
+});
+
+describe("launchBattleInstructions", () => {
+  const p = {
+    battleId: 1_788_580_997,
+    creator: "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk",
+    artistA: "ASpsqT7qKbHF7VhsBPYGRk95vNyAgPuhTBoh2o7ptRLb",
+    artistB: "BYshzR3KeycopC1o7iynYp224AM3psAUziV35Nyha8Ns",
+    wavewarzWallet: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+    durationSeconds: 541,
+  };
+
+  it("returns both steps, battle before mints", () => {
+    const ixs = launchBattleInstructions(p);
+    expect(ixs).toHaveLength(2);
+    expect(Buffer.from(ixs[0].data.slice(0, 8)).toString("hex")).toBe("756ca69f9252f6df");
+    expect(Buffer.from(ixs[1].data).toString("hex")).toBe("bd54558eb1c83916");
+  });
+
+  it("is exactly the two builders, so neither can drift from it", () => {
+    const [battle, mints] = launchBattleInstructions(p);
+    expect(battle).toEqual(initializeBattleInstruction(p));
+    expect(mints).toEqual(initializeMintsInstruction({ battleId: p.battleId, payer: p.creator }));
+  });
+
+  it("asks the creator to sign both, and nobody else to sign anything", () => {
+    const signers = launchBattleInstructions(p).flatMap((ix) => ix.keys.filter((k) => k.isSigner));
+    expect(signers).toHaveLength(2);
+    expect(new Set(signers.map((k) => k.pubkey))).toEqual(new Set([p.creator]));
+  });
+
+  it("points both at the same battle", () => {
+    const [battle, mints] = launchBattleInstructions(p);
+    expect(mints.keys[0].pubkey).toBe(battle.keys[0].pubkey);
   });
 });
