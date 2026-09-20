@@ -270,3 +270,25 @@ export {
   WalletError,
   type PhantomProvider,
 } from "./wallet";
+
+/**
+ * PRD 35, 36 and 37. The portable fighter card, the track record, and the six
+ * ranking dimensions that are deliberately never summed.
+ *
+ * `buildArtistRecord` REFUSES settlement winners. The program settles on the
+ * larger pool, so a record built from it is a record of who had more money
+ * behind them - and on this platform one artist is 35.8% of all buy volume with
+ * 93% of his own-battle buying on his own side. Section 38 says capital should
+ * not be able to buy skill ranking; using the wrong winner field is exactly how
+ * it would.
+ */
+export {
+  RANKING_DIMENSIONS,
+  SettlementWinnerRefused,
+  buildArtistRecord,
+  buildTrackRecord,
+  type ArtistRecord,
+  type RankingDimensions,
+  type RecordBattle,
+  type TrackRecord,
+} from "./artistRecord";
