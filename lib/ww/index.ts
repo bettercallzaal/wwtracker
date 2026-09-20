@@ -56,7 +56,9 @@ export {
 export {
   battleAccountsFromRaw,
   buySharesInstruction,
+  RENT_SYSVAR,
   claimSharesInstruction,
+  endBattleInstruction,
   createAssociatedTokenAccountIdempotentInstruction,
   deadlineIn,
   sellSharesInstruction,
