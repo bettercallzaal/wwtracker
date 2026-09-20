@@ -142,6 +142,21 @@ export {
 } from "./tradePlan";
 
 /**
+ * Watching a battle and checking the curve against what actually happened.
+ *
+ * Separate from `tradePlan` because it answers the opposite question: not
+ * "what should this trade do" but "did our model predict what this trade
+ * did". A consumer verifying our arithmetic against their own node needs it.
+ */
+export {
+  observe,
+  spendForPoolDelta,
+  type BattleSide,
+  type TradeObservation,
+  type TradeObservationKind,
+} from "./tradeObservation";
+
+/**
  * PRD section 31, the universal battle record. Public because the record
  * existed and was not obtainable by anyone else: the Python emitter reads a
  * census file only this estate has, and an operator with an RPC endpoint and a

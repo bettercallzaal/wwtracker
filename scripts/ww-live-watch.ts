@@ -24,7 +24,8 @@
  * smaller one.
  */
 import { PROGRAM_ID, battlePda } from "@/lib/ww/pda";
-import { quoteBuy, supplyAtPool, SUPPLY_QUANTUM } from "@/lib/ww/quote";
+import { supplyAtPool } from "@/lib/ww/quote";
+import { observe, spendForPoolDelta } from "@/lib/ww/tradeObservation";
 
 const RPC = "https://api.mainnet-beta.solana.com";
 const arg = (n: string, d?: string) => {
@@ -83,41 +84,26 @@ async function fetchState(id: number): Promise<State | null> {
 const stamp = () => new Date().toISOString().slice(11, 19);
 let exact = 0, wrong = 0, merged = 0;
 
+/**
+ * One side, between two polls. The verdict itself lives in
+ * `lib/ww/tradeObservation` so it can be tested; this only prints it.
+ *
+ * It used to be written out here, closed over these counters, and had never
+ * executed once - the tally still read all zeros an hour before the finals. It
+ * was going to run for the first time on somebody's real trade.
+ */
 function compare(id: number, side: "a" | "b", before: State, after: State) {
-  const dPool = after.pool[side] - before.pool[side];
-  const dSupply = after.supply[side] - before.supply[side];
-  if (dPool === 0 && dSupply === 0) return;
-
-  if (dPool > 0 && dSupply > 0) {
-    // A buy. The pool grew by 98.5% of what was spent, so recover the spend.
-    const spend = Math.round(dPool / 0.985);
-    const predicted = quoteBuy(before.pool[side], spend).tokensOut;
-    const off = predicted - dSupply;
-    if (off === 0) {
-      exact++;
-      console.log(`${stamp()} ${id} ${side.toUpperCase()} BUY  ${(spend / 1e9).toFixed(4)} SOL -> ${dSupply.toLocaleString()} tokens   ours EXACT`);
-    } else if (Math.abs(off) <= SUPPLY_QUANTUM && dSupply % SUPPLY_QUANTUM === 0 && Math.abs(off) === SUPPLY_QUANTUM) {
-      merged++;
-      console.log(`${stamp()} ${id} ${side.toUpperCase()} BUY  MERGED? off by exactly one step (${off}) - likely two trades in one interval, not counted`);
-    } else {
-      wrong++;
-      console.log(`${stamp()} ${id} ${side.toUpperCase()} BUY  MISMATCH  pool ${before.pool[side]} + ${dPool}  ours ${predicted}  program ${dSupply}  off ${off}`);
-    }
-  } else if (dPool < 0 && dSupply < 0) {
-    const sold = -dSupply;
-    const grossPredicted = (before.supply[side] ** 2 - (before.supply[side] - sold) ** 2) / 5e8;
-    const off = Math.round(grossPredicted) - -dPool;
-    if (Math.abs(off) <= 1) {
-      exact++;
-      console.log(`${stamp()} ${id} ${side.toUpperCase()} SELL ${sold.toLocaleString()} tokens -> ${(-dPool / 1e9).toFixed(6)} SOL out of pool   ours EXACT`);
-    } else {
-      wrong++;
-      console.log(`${stamp()} ${id} ${side.toUpperCase()} SELL MISMATCH  ours ${Math.round(grossPredicted)}  program ${-dPool}  off ${off}`);
-    }
-  } else {
-    merged++;
-    console.log(`${stamp()} ${id} ${side.toUpperCase()} pool ${dPool >= 0 ? "+" : ""}${dPool} supply ${dSupply >= 0 ? "+" : ""}${dSupply} - mixed direction, not counted`);
-  }
+  const o = observe(
+    { poolLamports: before.pool[side], supply: before.supply[side] },
+    { poolLamports: after.pool[side], supply: after.supply[side] },
+  );
+  if (o.kind === "none") return;
+  const tag = `${stamp()} ${id} ${side.toUpperCase()}`;
+  if (o.exact === true) { exact++; console.log(`${tag} ${o.note}   ours EXACT`); return; }
+  if (o.exact === null) { merged++; console.log(`${tag} ${o.note}`); return; }
+  wrong++;
+  console.log(`${tag} ${o.note}`);
+  console.log(`${" ".repeat(9)} pool was ${before.pool[side]}, moved ${o.poolDelta} (spend about ${spendForPoolDelta(o.poolDelta)})`);
 }
 
 async function main() {

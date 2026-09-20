@@ -43,7 +43,7 @@ function Side({ label, pool, supply, spend }: { label: string; pool: number; sup
   const after = quoteBuy(pool + Math.round(spend * 0.985), 10_000_000).tokensOut / 0.01;
   const rate = q.tokensOut > 0 ? q.tokensOut / (spend / 1e9) : 0;
   return (
-    <div style={{ border: "1px solid #24304a", borderRadius: 10, padding: 14, flex: 1, minWidth: 260 }}>
+    <div className="ww-side" style={{ border: "1px solid #24304a", borderRadius: 10, padding: 14 }}>
       <div style={{ fontWeight: 700, letterSpacing: 0.4 }}>{label}</div>
       <div style={{ opacity: 0.7, fontSize: 13, marginTop: 4 }}>
         pool {SOL(pool)} SOL · minted {N(supply)}
@@ -168,7 +168,19 @@ export default function Finals() {
   const now = Math.floor(Date.now() / 1000);
 
   return (
-    <main style={{ padding: 24, fontFamily: "var(--font-jetbrains-mono, monospace)", color: "#e8eefc", maxWidth: 1000, margin: "0 auto" }}>
+    <main className="ww-finals" style={{ fontFamily: "var(--font-jetbrains-mono, monospace)", color: "#e8eefc", maxWidth: 1000, margin: "0 auto" }}>
+      {/* Phone first. Checked at 390px: the cards, the signature box and the
+          long number lines all overflowed the right edge before this. */}
+      <style>{`
+        .ww-finals { padding: 16px; overflow-x: hidden; }
+        .ww-finals * { min-width: 0; overflow-wrap: anywhere; }
+        .ww-finals .ww-side { flex: 1 1 260px; }
+        .ww-finals .ww-sig { flex: 1 1 100%; }
+        @media (min-width: 620px) {
+          .ww-finals { padding: 24px; }
+          .ww-finals .ww-sig { flex: 1 1 250px; }
+        }
+      `}</style>
       <h1 style={{ fontSize: 22, marginBottom: 4 }}>WaveWarZ live</h1>
       <div style={{ opacity: 0.6, fontSize: 12, marginBottom: 18 }}>
         {err ? <span style={{ color: "#ff9d9d" }}>discovery error: {err}</span>
@@ -188,7 +200,7 @@ export default function Finals() {
           {busy === "health" ? "checking..." : "Check everything"}
         </button>
         <input value={sig} onChange={(e) => setSig(e.target.value)} placeholder="paste a failed signature, or an error code"
-          style={{ background: "#0d1524", color: "#e8eefc", border: "1px solid #24304a", borderRadius: 7, padding: "7px 10px", flex: 1, minWidth: 250, fontFamily: "inherit", fontSize: 13 }} />
+          className="ww-sig" style={{ background: "#0d1524", color: "#e8eefc", border: "1px solid #24304a", borderRadius: 7, padding: "7px 10px", fontFamily: "inherit", fontSize: 13 }} />
         <button onClick={runExplain} disabled={busy !== null || !sig.trim()}
           style={{ background: "#16233a", color: "#e8eefc", border: "1px solid #2b3b5a", borderRadius: 7, padding: "7px 13px", cursor: busy ? "wait" : "pointer", fontFamily: "inherit", fontSize: 13 }}>
           {busy === "explain" ? "reading..." : "Why did it fail?"}
@@ -232,7 +244,7 @@ export default function Finals() {
         const qa = quoteBuy(b.pool.a, spend).tokensOut, qb = quoteBuy(b.pool.b, spend).tokensOut;
         return (
           <section key={b.battleId} style={{ marginBottom: 26, borderTop: "1px solid #1b2436", paddingTop: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 4, fontSize: 14 }}>
               <strong>{b.battleId}</strong>
               <span style={{ color: b.winnerDecided ? "#95fe7c" : left < 60 ? "#ffd479" : "#8fa4c9" }}>
                 {/* SETTLED and AWAITING are different states and conflating them
