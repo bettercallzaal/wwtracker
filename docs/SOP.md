@@ -25,6 +25,21 @@ instruction this estate builds can be asked of the deployed program with
 needs no wallet, and returns the program's own words rather than a hex code. A
 procedure that skips it is spending fees to produce error messages.
 
+**And it needs no credential either.** Every simulation in this file works
+against `https://api.mainnet-beta.solana.com`, the free keyless public endpoint.
+The keyed `SOLANA_RPC_URL` buys rate limits and reliability for the site, not
+access to this. **Recorded because a session on 2026-09-20 hit a permission
+refusal reading that key and reported itself blocked on simulating** - it was
+never blocked, it had reached for the expensive door first. If a check here
+appears to need a secret, check whether the public endpoint answers it before
+saying so.
+
+**Ask simulation for the post-state, not just the verdict.** `simulateTransaction`
+takes `accounts: { encoding: "base64", addresses: [...] }` and hands back the
+accounts as they WOULD be. That turns "would this succeed" into "what exactly
+would it write", which is how SOP 8's duration trap was caught: the call
+succeeds either way, and only the written account tells them apart.
+
 ---
 
 ## SOP 1 - End a battle the program never settled
@@ -206,19 +221,24 @@ part that is solid.
 
 ## SOP 8 - Launch a battle
 
-**NOT YET RUN ON MAINNET BY THIS ESTATE, AND THAT IS THE FIRST THING TO SAY.**
-This file opens by promising every procedure here has been run. This one has
-not: no lane holds a key, and the signing step below has never been executed by
-anybody in it. What HAS been done is stronger than a simulation and weaker than
-a run, and the distinction matters.
+**EVERY STEP BELOW HAS BEEN RUN EXCEPT THE SIGNING, WHICH IS ZAAL'S.** That is
+the one exception this file's header names. No lane holds a key, so no lane has
+sent one of these.
 
-**The instruction is verified against a real launch, byte for byte.** Battle
-1788580997's own `initializeBattle` transaction was read back from chain on
-2026-09-20 and `initializeBattleInstruction` rebuilds its 32 data bytes and all
-eight accounts exactly. That is a confirmed mainnet transaction, not a
-simulation, so the encoding is not in question. **What is unproven is the
-procedure around it** - the id choice, the ordering, the verification step. Do
-not read the byte match as a run.
+**Two independent verifications, and they check different things.**
+
+**The encoding, against a real launch, byte for byte.** Battle 1788580997's own
+`initializeBattle` transaction was read back from chain on 2026-09-20 and
+`initializeBattleInstruction` rebuilds its 32 data bytes and all eight accounts
+exactly. A confirmed mainnet transaction, not a simulation.
+
+**The behaviour, against the deployed program.** Simulated on 2026-09-20:
+`err: null`, 18,620 compute units, a 353-byte account at the predicted PDA, and
+the program's own log line *"Battle initialized with ID 1789936271 starting at
+1789936271"*. The post-state account was captured and is asserted in
+`lib/__tests__/wwInitializeSimulation.test.ts`.
+
+**Neither is a run.** What remains unexercised is one signature.
 
 **Who can.** Anyone. The single signer is whoever pays the rent. The transaction
 this was decoded from was signed by **Zaal's own wallet**
@@ -235,10 +255,17 @@ this instruction.
 ### The two traps, both in the arguments
 
 **The middle argument is a DURATION, in seconds. The account stores an END
-TIME.** They are different numbers and the program computes one from the other.
-Passing an end time where a duration belongs produces a battle that runs for
-about 56 years, and nothing rejects it. `initializeBattleInstruction` names the
-field `durationSeconds` for this reason alone.
+TIME.** The program adds; it does not store. **This was measured, not reasoned
+about.** An end time passed as a duration was simulated against the deployed
+program on 2026-09-20: it returned `err: null`, consumed **the same 18,620
+compute units** as the correct call, logged the same cheerful
+*"Battle initialized"*, and produced a battle ending in **2083** - 56.7 years
+long.
+
+**Nothing stands between a caller and that outcome except the parameter name.**
+There is no validation, no warning, and no difference in cost or logs to notice
+it by. `initializeBattleInstruction` names the field `durationSeconds` for this
+reason alone, and the trap has its own test rather than its own sentence.
 
 **The battle id IS the start time, in unix seconds.** Not an index, not a
 counter. Every battle on chain satisfies `battle_id == start_time`, which is why
@@ -256,9 +283,11 @@ well-formed PDA for a battle that can never exist.
    seconds and the three wallets. Start time defaults to the id, which is what
    every real launch does.
 4. **Simulate before signing**, as SOP 1 does: `sigVerify: false`,
-   `replaceRecentBlockhash: true`. **This step has not been exercised for this
-   instruction** - an attempt on 2026-09-20 was blocked before it reached the
-   endpoint. Whoever runs it first should record the log line here.
+   `replaceRecentBlockhash: true`. Expect `Battle initialized with ID <id>
+   starting at <id>` and about 18,600 compute units. **Ask for the post-state
+   account back too** - `accounts: { encoding: "base64", addresses: [battlePda(id)] }` -
+   and run step 6's subtraction on it before anyone signs anything. The whole
+   check then costs nothing and happens before the mistake instead of after.
 5. **Sign and send from your own wallet.** **Not through our relay.**
    `lib/ww/relayPolicy.ts` refuses `initializeBattle`, and that exclusion stays
    even though the SDK now builds the instruction for anyone who asks. Building
