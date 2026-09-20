@@ -311,6 +311,31 @@ export {
 } from "./wallet";
 
 /**
+ * PRD 23, 24 and 25. The operator record, and an honest account of which of its
+ * seventeen fields is measured, which is a registry decision, and which is a
+ * rate nobody charges.
+ *
+ * `operator_revenue` and `network_pool_contribution` are the third kind and
+ * this library has not had one before. PRD 18 proposes 0.15% to the originating
+ * operator and PRD 24 proposes 0.10% to a network pool; the program pays
+ * neither, and there is no pool account. Both come back with `_modelled` in the
+ * field NAME rather than only in a note, so a caller destructuring the record
+ * cannot get a number called `operator_revenue` by accident.
+ */
+export {
+  IncompleteOperatorIdentity,
+  POOL_ELIGIBILITY_MIN_BATTLES,
+  PROPOSED_NETWORK_POOL_SHARE,
+  PROPOSED_OPERATOR_SHARE,
+  buildOperatorRecord,
+  missingIdentityFields,
+  modelOperatorEconomics,
+  type OperatorActivity,
+  type OperatorIdentity,
+  type OperatorRecord,
+} from "./operatorRecord";
+
+/**
  * PRD 35, 36 and 37. The portable fighter card, the track record, and the six
  * ranking dimensions that are deliberately never summed.
  *
