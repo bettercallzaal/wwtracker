@@ -17,6 +17,7 @@ import { sampleBalances } from "@/lib/sampleData";
 import { usd } from "@/lib/price";
 import { C, metaLabel } from "@/lib/theme";
 import { FLOOR_SOL as FLOOR } from "@/lib/config";
+import { toNum, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
 
 interface BalanceRow {
   block_date: string;
@@ -481,7 +482,7 @@ function ChartCard({
                 fontSize: 12,
               }}
               labelStyle={{ color: C.dim }}
-              formatter={(v: number | string, name) => [
+              formatter={(v: TooltipValue, name) => [
                 `${fmt(Number(v))} ◎`,
                 name === "high" ? "intraday high" : "close",
               ]}

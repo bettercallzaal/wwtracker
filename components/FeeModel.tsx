@@ -36,6 +36,7 @@ import {
 } from "@/lib/feeModel";
 import type { PublicStats } from "@/lib/wavewarzApi";
 import type { CacheStatus } from "@/lib/wwCache";
+import { toNum, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
 
 // Format numbers for display - avoid rendering 0 when unknown, show TBD instead.
 const fmt = (n: number | null, dp = 2) => {
@@ -185,7 +186,7 @@ export default function FeeModel() {
                 <Tooltip
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
-                  formatter={(v: number) => `${v.toFixed(2)}%`}
+                  formatter={(v: TooltipValue) => `${toNum(v).toFixed(2)}%`}
                 />
                 <Legend wrapperStyle={{ paddingTop: 12, fontFamily: C.mono, fontSize: 12 }} />
                 <Bar
@@ -233,7 +234,7 @@ export default function FeeModel() {
                 <Tooltip
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 11 }}
                   labelStyle={{ color: C.dim }}
-                  formatter={(v: number) => `${v.toFixed(1)}%`}
+                  formatter={(v: TooltipValue) => `${toNum(v).toFixed(1)}%`}
                 />
                 <Legend wrapperStyle={{ paddingTop: 12, fontFamily: C.mono, fontSize: 11 }} />
                 <Bar dataKey="losingTraders" name="Losing Traders (50%)" fill={C.good} stackId="settlement" />
@@ -279,7 +280,7 @@ export default function FeeModel() {
                   cursor={{ fill: "rgba(255,194,75,0.08)" }}
                   contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                   labelStyle={{ color: C.dim }}
-                  formatter={(v: number) => `${v.toFixed(3)} ◎`}
+                  formatter={(v: TooltipValue) => `${toNum(v).toFixed(3)} ◎`}
                 />
                 <Line
                   type="monotone"

@@ -13,7 +13,11 @@ import { cachedFetch } from "@/lib/wwCache";
 import type { PublicStats } from "@/lib/wavewarzApi";
 import { publicJson, corsPreflight, REVALIDATE_SECONDS } from "@/lib/wwPublicRoute";
 
-export const revalidate = REVALIDATE_SECONDS;
+// A LITERAL, BECAUSE NEXT 16 REQUIRES ONE. It will not accept a computed
+// value here and says so with an error that names no file. Kept beside its
+// constant so the two cannot drift apart silently - if you change REVALIDATE_SECONDS,
+// change this. Getting it wrong builds and passes every test.
+export const revalidate = 60; // === REVALIDATE_SECONDS
 
 export async function GET(): Promise<Response> {
   const payload = await cachedFetch<PublicStats>(

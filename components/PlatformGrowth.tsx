@@ -13,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
+import { toNum, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
 
 interface VolDay {
   date: string;
@@ -187,7 +188,7 @@ export default function PlatformGrowth() {
                   <Tooltip
                     contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                     labelStyle={{ color: C.dim }}
-                    formatter={(v: number | string) => [`${fmt(Number(v), 1)} ◎`, "cumulative"]}
+                    formatter={(v: TooltipValue) => [`${fmt(Number(v), 1)} ◎`, "cumulative"]}
                   />
                   <Area type="monotone" dataKey="cum" stroke={C.accent} strokeWidth={2} fill="url(#volFill)" />
                 </AreaChart>
@@ -206,7 +207,7 @@ export default function PlatformGrowth() {
                     cursor={{ fill: "rgba(149,254,124,0.08)" }}
                     contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                     labelStyle={{ color: C.dim }}
-                    formatter={(v: number | string) => [`${fmt(Number(v), 2)} ◎`, "volume"]}
+                    formatter={(v: TooltipValue) => [`${fmt(Number(v), 2)} ◎`, "volume"]}
                   />
                   <Bar dataKey="daily" fill={C.accent} fillOpacity={0.8} radius={[2, 2, 0, 0]} />
                 </BarChart>
@@ -226,7 +227,7 @@ export default function PlatformGrowth() {
                       cursor={{ fill: "rgba(149,254,124,0.08)" }}
                       contentStyle={{ background: C.bg, border: `1px solid ${C.grid}`, borderRadius: 10, fontFamily: C.mono, fontSize: 12 }}
                       labelStyle={{ color: C.dim }}
-                      formatter={(v: number | string, name: string) => [
+                      formatter={(v: TooltipValue, name: TooltipName) => [
                         name === "battles" ? `${v} battles` : `${fmt(Number(v), 2)} ◎`,
                         name,
                       ]}
@@ -271,7 +272,7 @@ export default function PlatformGrowth() {
                         fontSize: 12,
                       }}
                       labelStyle={{ color: C.dim }}
-                      formatter={(v: number | string, name: string) => [
+                      formatter={(v: TooltipValue, name: TooltipName) => [
                         name === "battles" ? `${v} battles` : `${fmt(Number(v), 2)} ◎`,
                         name === "battles" ? "battles" : "volume",
                       ]}

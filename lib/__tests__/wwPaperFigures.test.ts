@@ -148,9 +148,18 @@ describe("no sentence hard-codes a figure the page computes", () => {
     // The rule is about what a READER sees, so comments are out of scope - a
     // doc comment citing a date or an HTTP status is not a claim on the page.
     // Style objects are layout, not claims. Everything else is fair game.
+    //
+    // AND THE ROUTE SEGMENT CONFIG, which is new and is a real exemption rather
+    // than a convenient one. Next 16 refuses a computed `revalidate` and
+    // demands a literal, so `export const revalidate = 3600` must appear in
+    // this file. It is configuration Next reads, not a sentence anybody reads,
+    // and `revalidateLiterals.test.ts` separately asserts it still equals
+    // PAPER_REVALIDATE_SECONDS - so the number is pinned, just not by this
+    // test. Narrowed to that one export, so any OTHER literal still fails here.
     const prose = source
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/\/\/[^\n]*/g, "")
+      .replace(/^export const revalidate = \d+;.*$/m, "")
       .replace(/style=\{\{[^}]*\}\}/gs, "");
     const suspicious = [...prose.matchAll(/\b\d[\d,]{2,}(?:\.\d+)?\b/g)].map((m) => m[0]);
     expect(suspicious).toEqual([]);

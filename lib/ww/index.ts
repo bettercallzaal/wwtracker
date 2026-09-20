@@ -56,6 +56,7 @@ export {
 export {
   battleAccountsFromRaw,
   buySharesInstruction,
+  DISCRIMINATOR_BY_NAME,
   RENT_SYSVAR,
   claimSharesInstruction,
   endBattleInstruction,
@@ -161,8 +162,14 @@ export {
  *
  * Section 33 says the indexer is "never the authority for canonical
  * settlement". Section 34 lists seventeen things to index. Together they mean
- * eleven of the seventeen are chain facts an indexer restates and cannot
- * overrule, and nothing had written down which eleven.
+ * THIRTEEN of the seventeen are chain facts an indexer restates and cannot
+ * overrule, three are the indexer's own and one is the operator's, and nothing
+ * had written down which.
+ *
+ * The count is computed from `INDEXER_REQUIREMENTS` by the test, not typed.
+ * This sentence said eleven until that assertion disagreed with it, and the
+ * module's own doc comment said eleven too - the same wrong number in two
+ * places, both written from memory.
  */
 export {
   INDEXER_REQUIREMENTS,
@@ -334,3 +341,28 @@ export {
   type RecordBattle,
   type TrackRecord,
 } from "./artistRecord";
+
+/**
+ * PRD 23, 24 and 25. The operator record, and an honest account of which of its
+ * seventeen fields is measured, which is a registry decision, and which is a
+ * rate nobody charges.
+ *
+ * `operator_revenue` and `network_pool_contribution` are the third kind and
+ * this library has not had one before. PRD 18 proposes 0.15% to the originating
+ * operator and PRD 24 proposes 0.10% to a network pool; the program pays
+ * neither, and there is no pool account. Both come back with `_modelled` in the
+ * field NAME rather than only in a note, so a caller destructuring the record
+ * cannot get a number called `operator_revenue` by accident.
+ */
+export {
+  IncompleteOperatorIdentity,
+  POOL_ELIGIBILITY_MIN_BATTLES,
+  PROPOSED_NETWORK_POOL_SHARE,
+  PROPOSED_OPERATOR_SHARE,
+  buildOperatorRecord,
+  missingIdentityFields,
+  modelOperatorEconomics,
+  type OperatorActivity,
+  type OperatorIdentity,
+  type OperatorRecord,
+} from "./operatorRecord";

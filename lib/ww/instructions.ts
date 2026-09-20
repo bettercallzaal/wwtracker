@@ -62,7 +62,12 @@ export interface BattleAccounts {
 // of sha256("global:<name>"), but these are copied from the IDL rather than
 // recomputed, because the IDL is what Hurricane confirmed matches the deployed
 // program on 2026-09-08.
-const DISCRIMINATOR = {
+/**
+ * Exported so `wwIdlConformance.test.ts` can compare every entry against the
+ * program's IDL. A hand-transcribed table that nothing checks is the shape
+ * behind two of this estate's near-misses; this one is checked.
+ */
+export const DISCRIMINATOR_BY_NAME = {
   buyShares: [40, 239, 138, 154, 8, 37, 106, 108],
   sellShares: [184, 164, 169, 16, 231, 158, 199, 196],
   claimShares: [130, 131, 29, 237, 134, 20, 110, 245],
@@ -70,6 +75,9 @@ const DISCRIMINATOR = {
   initializeBattle: [117, 108, 166, 159, 146, 82, 246, 223],
   initializeMints: [189, 84, 85, 142, 177, 200, 57, 22],
 } as const;
+
+/** Internal alias, kept so the call sites below read unchanged. */
+const DISCRIMINATOR = DISCRIMINATOR_BY_NAME;
 
 /** The rent sysvar, which `endBattle` takes read-only as its last account. */
 export const RENT_SYSVAR = "SysvarRent111111111111111111111111111111111";

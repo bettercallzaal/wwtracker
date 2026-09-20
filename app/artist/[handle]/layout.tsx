@@ -8,9 +8,10 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { handle: string };
+  // A Promise since Next 15, in generateMetadata as everywhere else.
+  params: Promise<{ handle: string }>;
 }): Promise<Metadata> {
-  const handle = decodeURIComponent(params.handle);
+  const handle = decodeURIComponent((await params).handle);
   const lower = handle.toLowerCase();
   const lb = LEADERBOARD.find((a) => a.handle.toLowerCase() === lower);
 

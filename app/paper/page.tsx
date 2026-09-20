@@ -25,7 +25,11 @@ import { C } from "@/lib/theme";
  * GATED OFF BY DEFAULT AND THE GATE IS A 404. A route on a deployed site is
  * public the moment it exists. Enable with `WW_PAPER=1`.
  */
-export const revalidate = PAPER_REVALIDATE_SECONDS;
+// A LITERAL, BECAUSE NEXT 16 REQUIRES ONE. It will not accept a computed
+// value here and says so with an error that names no file. Kept beside its
+// constant so the two cannot drift apart silently - if you change PAPER_REVALIDATE_SECONDS,
+// change this. Getting it wrong builds and passes every test.
+export const revalidate = 3600; // === PAPER_REVALIDATE_SECONDS
 
 export function generateMetadata() {
   return { robots: { index: false, follow: false }, title: "WaveWarZ, explained" };
