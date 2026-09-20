@@ -115,6 +115,20 @@ date-keyed maps; merge new days into the existing history, newest-first.
 > paid in, versus what the platform kept - over windows that do not overlap at
 > all: these files end 2026-06-16 and `treasury_fee_events` starts 2026-07-02.
 
+> **Re-measured 2026-09-20 and confirmed within one battle: 1,156 battles,
+> 2,492 buys and 256 sells.** Zaal ruled on what it is - *"count it as hurricane
+> trading essentially and include it as a trader so our stats are all
+> complete"* - so nothing filters it and nothing should.
+>
+> **What this paragraph established first, and a later analysis re-derived from
+> chain without finding it:** that `FNj` trades at all. The re-derivation is in
+> `wavewarz-protocol/recon/WHO-ACTUALLY-TRADES-2026-09-20.md`, which adds the
+> part this note does not have - the wallet is **26.8% of every buy ever placed**
+> and 5.4% of buy volume, so it trades often and small. **The two belong
+> together**: this paragraph says the skip figures are an upper bound because
+> program-originated inflows may be miscounted, and that recon says how much
+> program-originated activity there is to miscount.
+
 **DJ Wavy split coverage.** `public/ww-wavysplit.json` classifies 103 nights
 (queue 382 / DJ Wavy 31). Roughly 49 nights in **2026-02-17 .. 2026-04-28** are
 still unclassified - the busy months that need 3-day windows. DJ Wavy is a
