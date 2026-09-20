@@ -1,5 +1,26 @@
 # Watching /live through the Grand Final
 
+> **STATUS, 2026-09-20: the hosted half is DORMANT and will be until September
+> 2027.** The Grand Final was 13 September; the last scheduled run was
+> **2026-09-14T09:11:41Z** and there has been none in the six days since.
+>
+> That is correct rather than broken, and the reason is worth carrying: **every
+> cron in `.github/workflows/live-watch.yml` has a month field of `9`**, so
+> `17 * 11-12 9 *` next fires on **2027-09-11**. The workflow file has said so
+> since it was written; this document, which is where somebody would look first,
+> did not.
+>
+> **What still works today:** `workflow_dispatch`, which is the half that has
+> actually been used, and the local `npm run watch:live`. **What does not:** the
+> scheduled probe, until somebody changes the month field for the next event.
+>
+> **And the alert-delivery gap below is unresolved.** Measured 2026-09-12: a run
+> can fail exactly as designed and reach nobody. Nothing since has changed that,
+> and this lane cannot verify the account's notification settings - it is
+> reported, not confirmed. **Before relying on this for another event, test the
+> delivery, not the probe.** They are two separate things and only the first one
+> has ever been proven to work.
+
 **13 September 2026.** `/live` has only ever been watched on settled battles with
 zero holders. A main event is the first time it carries real positions, the first
 time anyone is looking while it does, and the first time our own tooling can take

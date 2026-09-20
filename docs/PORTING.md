@@ -113,10 +113,12 @@ rather than ours:
    three more embed widgets on our side.
 2. **The treasury and floor charts** (Route A). Nothing on wavewarz.info shows
    the platform's own balance against its operating floor. Highest-value embed.
-3. **The fee model section** (Route A or B). The story that artists take 1.0%
-   against the platform's 0.5% on every trade is theirs to tell and nobody is
-   telling it. Route A works; Route B is better if they want it inline on a
-   page about artist earnings.
+3. **The fee model section** (Route A or B). The story that artists take
+   **1.005% against the platform's 0.495%** on every trade - buys and sells
+   alike - is theirs to tell and nobody is telling it. Their own API note rounds
+   the artist's share down to a flat one percent, which undersells them by half
+   a point on every trade. Route A works; Route B is better if they want it
+   inline on a page about artist earnings.
 4. **The battle lifecycle funnel** (Route A). The gaps - battles created but
    never settled, claims lagging settlements - are operationally useful to them
    and invisible today.

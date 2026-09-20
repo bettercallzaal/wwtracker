@@ -329,11 +329,27 @@ export function verifyBattleRecord(p: {
     const poolA = u64at(a, OFFSET.poolA);
     const poolB = u64at(a, OFFSET.poolB);
     if (poolA === poolB) {
+      /**
+       * A TIE IS NOT UNDEFINED, AND THIS SAID IT WAS UNTIL 2026-09-20.
+       *
+       * Simulating `endBattle` against a real battle printed the program's own
+       * branch: "Tie detected! Total pool: 0 SOL" followed by "Winner decided:
+       * true, Winner is artist A: false". So the program has a deterministic
+       * rule and it is artist B.
+       *
+       * Checked against every tied battle on chain rather than the one log
+       * line: **68 settled battles have equal pools and all 68 settled to
+       * artist B.** 24 of them had real money in them, so this is not an
+       * artefact of empty battles.
+       */
       checks.push({
-        field: "invariant:winner_is_larger_pool",
-        verdict: "unverifiable",
+        field: "invariant:tie_goes_to_artist_b",
+        verdict: onChainWinner === "artist_b" ? "match" : "mismatch",
         claimed: null,
-        detail: "both pools are equal, so the invariant has nothing to say about which side won",
+        onChain: `pools equal at ${poolA}; settled to ${onChainWinner}`,
+        detail:
+          "the program's own tie branch settles to artist B, 68 of 68 tied battles on chain. " +
+          "A tie settling to artist A would mean the rule has changed",
       });
     } else {
       const larger = poolA > poolB ? "artist_a" : "artist_b";

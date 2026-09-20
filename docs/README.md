@@ -60,6 +60,9 @@ background - tokenomics, event economics, community history.
 - **[upstream/volume-field-2026-09-19.md](upstream/volume-field-2026-09-19.md)** -
   written for Candy: the volume field carrying the pool value, what is
   established, what is open, and the one question only her logs can answer.
+- **[archive/branch-cleanup-2026-09.md](archive/branch-cleanup-2026-09.md)** -
+  the ledger for the September cleanup: three runs, 242 remote heads down to 3,
+  every tip sha, and the two commands that restore any of it.
 - **[BRANCH-AUDIT.md](BRANCH-AUDIT.md)** - what is on the 236 branches this repo
   has pushed, what never reached `main`, and the one test that tells those apart.
   45 components and four weekly recaps live only on unmerged branches, on

@@ -136,3 +136,41 @@ describe("the two winners, which a naive verifier would get wrong", () => {
     }
   });
 });
+
+describe("the tie rule, which the program logs and nothing documented", () => {
+  it("expects a tie to settle to artist B", () => {
+    // Simulating endBattle printed "Tie detected!" then "Winner is artist A:
+    // false". Verified across every tied battle on chain: 68 of 68 to artist B,
+    // 24 of them with real money in the pools.
+    const p = pairs[0];
+    const account = bytes(p.account_base64);
+    const view = new DataView(account.buffer, account.byteOffset, account.byteLength);
+    // Force both pools equal and the winner flag to B, as a tie looks on chain.
+    view.setBigUint64(212, 5_000_000n, true);
+    view.setBigUint64(220, 5_000_000n, true);
+    account[244] = 0; // artist B
+    account[245] = 1; // settled
+    const r = verifyBattleRecord({
+      record: { ...p.record, final_pool_a: 5_000_000, final_pool_b: 5_000_000, settlement_winner: "artist_b", settled: true },
+      account,
+    });
+    const tie = r.checks.find((c) => c.field === "invariant:tie_goes_to_artist_b")!;
+    expect(tie.verdict).toBe("match");
+  });
+
+  it("flags a tie that settled to artist A, which would mean the rule changed", () => {
+    const p = pairs[0];
+    const account = bytes(p.account_base64);
+    const view = new DataView(account.buffer, account.byteOffset, account.byteLength);
+    view.setBigUint64(212, 5_000_000n, true);
+    view.setBigUint64(220, 5_000_000n, true);
+    account[244] = 1; // artist A on a tie - should not happen
+    account[245] = 1;
+    const r = verifyBattleRecord({
+      record: { ...p.record, final_pool_a: 5_000_000, final_pool_b: 5_000_000, settlement_winner: "artist_a", settled: true },
+      account,
+    });
+    expect(r.verdict).toBe("contradicted");
+    expect(contradictions(r).map((c) => c.field)).toContain("invariant:tie_goes_to_artist_b");
+  });
+});

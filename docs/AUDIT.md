@@ -53,16 +53,18 @@ was lost - five clean runs afterwards could not reproduce it and the test's name
 was never seen. That is the same defect as a measurement whose last pipeline
 stage swallows the exit code, and knowing the rule did not prevent it.
 
-| Check | Command | Result 2026-09-08 | Was 2026-09-05 |
-|---|---|---|---|
-| Types | `npx tsc --noEmit` | clean | clean |
-| Tests | `npx vitest run` | **435 passing, 46 files** | 288, 33 |
-| Data validation | `node scripts/validate.mjs` | passing, 3 staleness warnings | same |
-| Production build | `npm run build` | compiles | compiles, 60 pages |
-| Dependency audit | `npm audit --omit=dev` | **3 high** | 3 high |
+| Check | Command | **2026-09-20** | 2026-09-08 | 2026-09-05 |
+|---|---|---|---|---|
+| Types | `npx tsc --noEmit` | clean | clean | clean |
+| Tests | `npx vitest run` | **875 passing, 79 files** | 435, 46 | 288, 33 |
+| Data validation | `node scripts/validate.mjs` | passing | passing, 3 staleness warnings | same |
+| Production build | `npm run build` | compiles | compiles | compiles, 60 pages |
+| Dependency audit | `npm audit --omit=dev` | **2 high, 1 CRITICAL** | 3 high | 3 high |
 
-Size: 22 components / 5,963 lines, 40 lib modules, 13 API routes, 35 test files.
-One TODO comment in the entire tree.
+Size: 24 components, 79 test files. One TODO comment in the entire tree.
+
+**The severity moved and that is the only line in this table worth acting on.**
+It said 3 high on 2026-09-08 and reads 2 high, 1 critical today. See 3.1.
 
 The lib count nearly doubled and the API route count more than doubled because
 the routes were always there - the previous figure counted only `app/api/ww/*`
@@ -83,19 +85,43 @@ The fix is `next@16.3.4` - a **two-major-version** jump from 14. That is not a
 patch, it is a migration, and it should be planned rather than run as
 `npm audit fix --force` on a Friday.
 
-Mitigating context, which is why this is high and not critical: we do not use
-`next/image` with remote patterns, we have no rewrites and no middleware, and
-the app is deployed on Vercel rather than self-hosted, which neutralises several
-of the self-hosting-specific advisories. It still wants doing.
+**Re-measured 2026-09-20: it is now 2 high and 1 CRITICAL.** The critical is
+`next` itself, on 14.2.35, and the only listed fix is a major bump to 16.3.5.
+The two high are `nanoid` and `postcss`, the latter also only fixed by that bump.
+
+**The mitigating context still holds and is worth re-stating rather than
+assumed**, because it is what keeps this at "wants doing" rather than "stop
+everything". Re-checked today, not carried forward:
+
+- the critical's headline advisory is **DoS via the Image Optimizer's
+  `remotePatterns`**, and `next.config.mjs` configures no `images` block at all
+- **no rewrites and no middleware**, which takes out the request-smuggling
+  advisory in the same bundle
+- deployed on **Vercel**, not self-hosted, which is the precondition the first
+  advisory names
+
+**What that argument does NOT cover**, and this is the part the earlier note
+skipped: "HTTP request deserialization can lead to DoS when using insecure React
+Server Components" is not self-hosting-specific on its face. This app is App
+Router with server components throughout. **Nobody has checked whether that one
+applies**, and a bump to Next 16 is a major version across a 24-component app,
+so it is a planned piece of work rather than a `--force` on a Friday.
 
     npm audit --json | python3 -c "import json,sys; [print(k, v['severity']) for k,v in json.load(sys.stdin)['vulnerabilities'].items()]"
 
 ### 3.2 Component test coverage is thin - HIGH, and got worse
 
+**Re-measured 2026-09-20 and it has strengthened again.** Still **two**
+components have any test - `BalanceDashboard` and `FreshnessBanner` - while the
+component count is now **24** and the test count **875**. The ratio has gone
+2/20, then 2/22, now **2/24**, while tests tripled. Every one of those 440 new
+tests went to `lib/`, which is the easy place to test and not where a user
+meets the product.
+
 **Re-measured 2026-09-08 and the finding has strengthened against its own
-author.** Still **two** components have any test - `BalanceDashboard` and
-`FreshnessBanner` - while the component count went 20 -> 22 and the test count
-went 288 -> 435. So the ratio moved from 2/20 to **2/22** across a day that added
+author.** Still two components had any test while the component count went
+20 -> 22 and the test count went 288 -> 435. So the ratio moved from 2/20 to
+**2/22** across a day that added
 147 tests.
 
 The 2026-09-05 version of this section predicted exactly that: *"the new tests

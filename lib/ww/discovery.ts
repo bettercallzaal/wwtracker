@@ -130,6 +130,11 @@ export function parseBattleAccount(
     endTime,
     poolLamports: { a: poolA, b: poolB },
     settled,
+    // On a tie the program settles to artist B - its own "Tie detected!" branch,
+    // 68 of 68 tied battles on chain. This field reads the flag rather than
+    // comparing pools, so it is already correct for ties; the note is here
+    // because comparing pools yourself is the obvious reimplementation and it
+    // would be wrong exactly 68 times.
     settlementWinner: settled ? (raw[OFFSET.winnerArtistA] !== 0 ? "artist_a" : "artist_b") : null,
     // A battle past its end time that has not settled is its own state, not a
     // live one and not a finished one. 81 accounts were in it on 2026-09-20 and
