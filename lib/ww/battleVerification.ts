@@ -136,7 +136,19 @@ const eq = (
     ? { field, verdict: "unverifiable", claimed: null, onChain, detail: `${detail}. The record does not assert it` }
     : { field, verdict: claimed === onChain ? "match" : "mismatch", claimed, onChain, detail };
 
-/** The record shape this accepts. Everything optional: absent is not wrong. */
+/**
+ * The record shape this accepts. Everything optional: absent is not wrong.
+ *
+ * NO INDEX SIGNATURE, DELIBERATELY, AND IT USED TO HAVE ONE. With
+ * `[k: string]: unknown` on it, the output of `buildBattleRecord` would not
+ * type-check into this function - TypeScript allows an object literal to
+ * satisfy an index signature but not a closed interface like `BattleRecord`.
+ * So PRD 31 and PRD 32, the two halves of the same idea, did not compose. The
+ * first script written against the exported surface hit it immediately and no
+ * unit test ever could, because each half is tested against its own fixture.
+ *
+ * The extra fields are read through a narrow cast inside the function instead.
+ */
 export interface ClaimedBattleRecord {
   battle_id?: number | null;
   battle_pda?: string | null;
@@ -152,7 +164,36 @@ export interface ClaimedBattleRecord {
   final_pool_b?: number | null;
   settled?: boolean | null;
   settlement_winner?: string | null;
-  [k: string]: unknown;
+  /**
+   * The fields the chain cannot speak to, declared so a caller sees what this
+   * function understands and gets told when they misspell one. Typed `unknown`
+   * because their shapes belong to whoever supplies them, not to this module -
+   * it only reports that they are unverifiable and why.
+   */
+  protocol_version?: unknown;
+  ruleset?: unknown;
+  ranked?: unknown;
+  artist_a_id?: unknown;
+  artist_b_id?: unknown;
+  track_a_id?: unknown;
+  track_b_id?: unknown;
+  input_assets_used?: unknown;
+  operator_id?: unknown;
+  operator_attribution_basis?: unknown;
+  battle_type?: unknown;
+  result_winner?: unknown;
+  total_volume_lamports?: unknown;
+  buy_lamports?: unknown;
+  sell_lamports?: unknown;
+  trade_count?: unknown;
+  unique_traders?: unknown;
+  claim_count?: unknown;
+  distribution_lamports?: unknown;
+  settlement_asset?: unknown;
+  launcher_wallet?: unknown;
+  fee_collection_wallet?: unknown;
+  artist_a_wallet?: unknown;
+  artist_b_wallet?: unknown;
 }
 
 export function verifyBattleRecord(p: {
@@ -307,12 +348,15 @@ export function verifyBattleRecord(p: {
     }
   }
 
+  // Fields outside the declared shape, read through one narrow cast rather
+  // than by widening the parameter type. See the note on ClaimedBattleRecord.
+  const extra = r as unknown as Record<string, unknown>;
   for (const [field, why] of Object.entries(NO_CHAIN_SOURCE)) {
-    if (!(field in r)) continue;
+    if (!(field in extra)) continue;
     checks.push({
       field,
       verdict: "unverifiable",
-      claimed: (r[field] as string | number | boolean | null) ?? null,
+      claimed: (extra[field] as string | number | boolean | null) ?? null,
       detail: why,
     });
   }
