@@ -27,6 +27,7 @@ import {
   battleAccountsFromRaw,
   buySharesInstruction,
   claimSharesInstruction,
+  initializeBattleInstruction,
   sellSharesInstruction,
   traderTokenAccountInstructions,
 } from "../ww/instructions";
@@ -137,11 +138,17 @@ describe("what it refuses", () => {
   it("refuses a WaveWarZ instruction that is not one of the three trades", () => {
     // initializeBattle's discriminator. The platform signs those, not a trader,
     // and relaying one would launch a battle in our name.
-    const initialize = {
-      programId: PROGRAM_ID,
-      keys: [{ pubkey: trader, isSigner: true, isWritable: true }],
-      data: Uint8Array.from([0x75, 0x6c, 0xa6, 0x9f, 0x92, 0x52, 0xf6, 0xdf, 0, 0]),
-    };
+    // Built by the SDK's own launcher rather than hand-typed, so the day
+    // `initializeBattleInstruction` ships to front ends, this test is the one
+    // that proves the relay still refuses what they can now construct.
+    const initialize = initializeBattleInstruction({
+      battleId: 1_788_580_997,
+      creator: trader,
+      artistA: trader,
+      artistB: trader,
+      wavewarzWallet: trader,
+      durationSeconds: 541,
+    });
     const d = decideRelay(build([initialize]));
     expect(d.ok).toBe(false);
     if (d.ok) return;
@@ -161,7 +168,7 @@ describe("what it refuses", () => {
   it("refuses a real trade with one foreign instruction smuggled alongside it", () => {
     const buy = buySharesInstruction({
       battleId: buyFixture.battle_id, trader, battle, artistA: true,
-      amountLamports: 1, minTokensOut: 0, deadline: 1,
+      amountLamports: 1, minTokensOut: 1, deadline: 1,
     });
     const drain = {
       programId: "11111111111111111111111111111111",
@@ -187,7 +194,7 @@ describe("what it refuses", () => {
     const legacy = build([
       buySharesInstruction({
         battleId: buyFixture.battle_id, trader, battle, artistA: true,
-        amountLamports: 1, minTokensOut: 0, deadline: 1,
+        amountLamports: 1, minTokensOut: 1, deadline: 1,
       }),
     ]);
     // The same bytes with the v0 version byte in front.
@@ -225,8 +232,8 @@ describe("what it refuses", () => {
 
 describe("all three trades are relayable", () => {
   const cases = [
-    ["buyShares", buySharesInstruction({ battleId: buyFixture.battle_id, trader, battle, artistA: true, amountLamports: 1, minTokensOut: 0, deadline: 1 })],
-    ["sellShares", sellSharesInstruction({ battleId: buyFixture.battle_id, trader, battle, artistA: true, amountTokens: 1, minSolOut: 0, deadline: 1 })],
+    ["buyShares", buySharesInstruction({ battleId: buyFixture.battle_id, trader, battle, artistA: true, amountLamports: 1, minTokensOut: 1, deadline: 1 })],
+    ["sellShares", sellSharesInstruction({ battleId: buyFixture.battle_id, trader, battle, artistA: true, amountTokens: 1, minSolOut: 1, deadline: 1 })],
     ["claimShares", claimSharesInstruction({ battleId: buyFixture.battle_id, trader })],
   ] as const;
 

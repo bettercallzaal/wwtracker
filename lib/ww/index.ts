@@ -56,9 +56,13 @@ export {
 export {
   battleAccountsFromRaw,
   buySharesInstruction,
+  DISCRIMINATOR_BY_NAME,
   RENT_SYSVAR,
   claimSharesInstruction,
   endBattleInstruction,
+  initializeBattleInstruction,
+  initializeMintsInstruction,
+  launchBattleInstructions,
   createAssociatedTokenAccountIdempotentInstruction,
   deadlineIn,
   sellSharesInstruction,
@@ -89,6 +93,11 @@ export {
   ARTIST_FEE_SHARE,
   BUY_POOL_SHARE,
   CURVE_K,
+  SUPPLY_QUANTUM,
+  ARTIST_FEE_BPS,
+  PLATFORM_FEE_BPS,
+  floorToQuantum,
+  minimumSpendLamports,
   TRADE_FEE,
   feeSplit,
   lamportsToSol,
@@ -120,6 +129,7 @@ export {
  * this module was extracted to fix.
  */
 export {
+  DustTradeError,
   battleStateFromRaw,
   planBuy,
   planSell,
@@ -130,6 +140,21 @@ export {
   type PlanSellParams,
   type SellPlan,
 } from "./tradePlan";
+
+/**
+ * Watching a battle and checking the curve against what actually happened.
+ *
+ * Separate from `tradePlan` because it answers the opposite question: not
+ * "what should this trade do" but "did our model predict what this trade
+ * did". A consumer verifying our arithmetic against their own node needs it.
+ */
+export {
+  observe,
+  spendForPoolDelta,
+  type BattleSide,
+  type TradeObservation,
+  type TradeObservationKind,
+} from "./tradeObservation";
 
 /**
  * PRD section 31, the universal battle record. Public because the record
@@ -311,6 +336,28 @@ export {
 } from "./wallet";
 
 /**
+ * PRD 35, 36 and 37. The portable fighter card, the track record, and the six
+ * ranking dimensions that are deliberately never summed.
+ *
+ * `buildArtistRecord` REFUSES settlement winners. The program settles on the
+ * larger pool, so a record built from it is a record of who had more money
+ * behind them - and on this platform one artist is 35.8% of all buy volume with
+ * 93% of his own-battle buying on his own side. Section 38 says capital should
+ * not be able to buy skill ranking; using the wrong winner field is exactly how
+ * it would.
+ */
+export {
+  RANKING_DIMENSIONS,
+  SettlementWinnerRefused,
+  buildArtistRecord,
+  buildTrackRecord,
+  type ArtistRecord,
+  type RankingDimensions,
+  type RecordBattle,
+  type TrackRecord,
+} from "./artistRecord";
+
+/**
  * PRD 23, 24 and 25. The operator record, and an honest account of which of its
  * seventeen fields is measured, which is a registry decision, and which is a
  * rate nobody charges.
@@ -334,25 +381,3 @@ export {
   type OperatorIdentity,
   type OperatorRecord,
 } from "./operatorRecord";
-
-/**
- * PRD 35, 36 and 37. The portable fighter card, the track record, and the six
- * ranking dimensions that are deliberately never summed.
- *
- * `buildArtistRecord` REFUSES settlement winners. The program settles on the
- * larger pool, so a record built from it is a record of who had more money
- * behind them - and on this platform one artist is 35.8% of all buy volume with
- * 93% of his own-battle buying on his own side. Section 38 says capital should
- * not be able to buy skill ranking; using the wrong winner field is exactly how
- * it would.
- */
-export {
-  RANKING_DIMENSIONS,
-  SettlementWinnerRefused,
-  buildArtistRecord,
-  buildTrackRecord,
-  type ArtistRecord,
-  type RankingDimensions,
-  type RecordBattle,
-  type TrackRecord,
-} from "./artistRecord";

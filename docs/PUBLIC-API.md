@@ -98,6 +98,53 @@ trades - the most holders any side has ever ended with is **18**, so the flag ha
 never yet been true. It is published because the first battle large enough to
 trip it will be the first one anybody is watching live.
 
+### `GET /api/ww/diagnose` - NOT for embedding
+
+The dashboard's two buttons, so nobody needs a terminal during a show.
+
+- no parameters - health of everything the live tools rely on
+- `?sig=<signature>` - why one transaction failed
+- `?code=6014` - what one error code means
+
+**Per RPC METHOD, not per endpoint.** The public node throttles each method
+separately: on 2026-09-20 `getTransaction` was refused for an hour while
+`getAccountInfo` and `getProgramAccounts` answered normally. One ping would
+have called that endpoint healthy and been right about everything except the
+tool that needed it.
+
+It also checks the MODEL, not only the plumbing: that a known battle's stored
+supply sits below the curve by the expected flooring residual and no further,
+and that a quote comes back as a whole step.
+
+For a signature it decodes our instructions and prints the amount, side and
+slippage floor, flagging a buy carrying a floor of 0 - which the program
+rejects outright with `InvalidAmount (6006)`. Same answers as
+`scripts/ww-doctor.ts` and `scripts/ww-explain.ts`.
+
+Same-origin only. It spends the keyed endpoint per request, and every error is
+passed through `redactSecrets` first, because an RPC failure message carries
+the endpoint and the endpoint carries the key.
+
+### `GET /api/ww/live-battles` - NOT for embedding
+
+Every battle that is running right now, decoded from one `getProgramAccounts`,
+plus a count of those past their end time and never settled. Optional
+`?battle=<id>` pins one battle whatever its phase.
+
+Same-origin only. `getProgramAccounts` over ~1,700 accounts is the most
+expensive call this estate makes and it spends the keyed endpoint per request,
+so it is not CORS-open and not cached.
+
+**It reports settlement from the account byte, not from the clock.** A battle
+past its `end_time` is NOT finished - `winner_decided` at offset 245 is a
+separate fact, and a claim against a battle whose byte is still 0 returns
+`BattleNotEnded (6009)`. The response carries `winnerDecided` per battle and
+`awaitingSettlement` as a count, so a consumer cannot infer "settled" from a
+countdown reaching zero. Measured 2026-09-20: 81 battles are in that state.
+
+Feeds `/finals`. If you want battle data to embed, use `/api/ww/battle` or
+`/api/ww/positions`, which are public, cached and CORS-open.
+
 ### `GET /api/ww/battle-account?battleId=<id>` - NOT for embedding
 
 Same-origin only, like `/api/ww/trade`. It returns the raw Battle account as

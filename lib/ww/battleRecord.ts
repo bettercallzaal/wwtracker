@@ -109,7 +109,19 @@ const UNSET: Record<string, string> = {
  * `artist_b_final_pool` IS AT 220. The protocol repo's `battle-record.py`
  * documents it at 228 in its `field_sources` map; measured on the fixture,
  * offset 220 matches the emitter's own values 30 out of 30 and offset 228
- * matches 2 out of 30, which is coincidence on battles where both read zero.
+ * matches 2 out of 30.
+ *
+ * **The IDL names the reason, and it is better than "coincidence".** 228 is
+ * `artist_a_pool` - side A's, not side B's. It agrees with B only on a battle
+ * where the two sides hold the same amount, which is why it matched twice
+ * rather than never.
+ *
+ * The account declares TWO pairs: `artist_a_sol_balance`/`artist_b_sol_balance`
+ * at 212/220, and `artist_a_pool`/`artist_b_pool` at 228/236. The program
+ * writes the same value to both members of a pair - checked across all 1,694
+ * battle accounts on 2026-09-20, 1,694 of 1,694 identical on both sides. So
+ * reading either member of a PAIR is equivalent, and reading across the pairs
+ * is the mistake. `wwIdlConformance.test.ts` pins all four offsets.
  *
  * The emitter's RECORDS are right - it reads our parsed census and never uses
  * that offset. Only the provenance note is wrong, and a provenance note is

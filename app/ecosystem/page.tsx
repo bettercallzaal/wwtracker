@@ -172,7 +172,7 @@ export default function EcosystemPage() {
           {[
             ["Battle accounts on chain", M.BATTLES_ON_CHAIN_FMT],
             ["Instruction set recovered", "all six, derivable from their names"],
-            ["Bonding curve", "supply = sqrt(4.993e8 x pool)"],
+            ["Bonding curve", "supply = sqrt(5e8 x pool), minted in whole steps of 100,000"],
             ["Trade fee", "1.500%, split 67/33 between artist and platform"],
             ["Settlement", "winner pool + 40% of loser pool, 1,506 of 1,506"],
             ["Launch fees", "not collected - creating a battle costs the creator"],

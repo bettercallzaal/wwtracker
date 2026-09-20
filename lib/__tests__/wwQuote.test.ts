@@ -15,6 +15,8 @@ import replay from "../__fixtures__/ww-trades-replay.json";
 import {
   BUY_POOL_SHARE,
   CURVE_K,
+  SUPPLY_QUANTUM,
+  floorToQuantum,
   poolAtSupply,
   quoteBuy,
   quoteSell,
@@ -133,8 +135,36 @@ describe("the curve's own algebra", () => {
     expect(supplyAtPool(-1)).toBe(0);
   });
 
-  it("uses the K the protocol repo fitted", () => {
-    expect(CURVE_K).toBe(4.993e8);
+  it("uses the K the PROGRAM uses, which is round", () => {
+    // Was 4.993e8, "fitted against all 1,643 battles". Measured against the
+    // deployed program on 2026-09-20 instead: nine buys from an empty pool and
+    // eight incremental buys all reproduce exactly at 5e8 with the step below.
+    // A fitted constant was standing in for arithmetic nobody had read.
+    expect(CURVE_K).toBe(5e8);
+    expect(SUPPLY_QUANTUM).toBe(100_000);
+  });
+
+  it("mints in whole steps, and floors each TRADE rather than the total", () => {
+    // The distinction cost a round to find. Flooring the running total is right
+    // for a first buy and wrong for every buy after it, by exactly one step.
+    const first = quoteBuy(0, 10_000_000);
+    expect(first.tokensOut % SUPPLY_QUANTUM).toBe(0);
+    expect(first.tokensOut).toBe(70_100_000); // read off the program
+
+    // A SECOND buy of 0.001 SOL onto that pool: the program minted 3,400,000.
+    expect(quoteBuy(9_850_000, 1_000_000).tokensOut).toBe(3_400_000);
+    // Flooring the running total instead says 3,500,000 - one step too many,
+    // which is exactly how the wrong model failed, five times in eight.
+    expect(floorToQuantum(supplyAtPool(9_850_000 + 985_000)) - 70_100_000).toBe(3_500_000);
+
+    // A different pair off the same table, to pin it at another size.
+    expect(quoteBuy(985_000, 100_000).tokensOut).toBe(1_000_000);
+  });
+
+  it("keeps the continuous figure for price impact, separately", () => {
+    const q = quoteBuy(2e9, 1e7);
+    expect(q.tokensOutExact).toBeGreaterThanOrEqual(q.tokensOut);
+    expect(q.tokensOutExact - q.tokensOut).toBeLessThan(SUPPLY_QUANTUM);
   });
 });
 
@@ -160,17 +190,31 @@ describe("quoteBuy", () => {
 
 describe("quoteSell", () => {
   it("costs the fee TWICE over a round trip, once in and once out", () => {
-    const pool = 2e9;
+    // FROM AN EMPTY POOL, so the buyer's tokens ARE the whole minted supply and
+    // the sell can be priced against the real thing rather than the fallback.
+    const pool = 0;
     const spend = solToLamports(0.5);
     const bought = quoteBuy(pool, spend);
-    const back = quoteSell(bought.poolAfterLamports, bought.tokensOut);
-    // In and straight back out, with no price move: the vault returns what the
-    // buy put in, and the fee is charged on each crossing.
-    expect(back.grossLamports).toBeCloseTo(spend * BUY_POOL_SHARE, -4);
-    expect(back.lamportsOut).toBeCloseTo(spend * BUY_POOL_SHARE * BUY_POOL_SHARE, -4);
-    // Which is a hair under 3%, not 1.5%. Worth a reader seeing the number.
-    expect(1 - back.lamportsOut / spend).toBeGreaterThan(0.029);
-    expect(1 - back.lamportsOut / spend).toBeLessThan(0.03);
+    const back = quoteSell(bought.poolAfterLamports, bought.tokensOut, bought.tokensOut);
+    // In and straight back out, with no price move. The fee is charged on each
+    // crossing, so the vault returns very nearly what the buy put in.
+    expect(back.grossLamports).toBeCloseTo(spend * BUY_POOL_SHARE, -6);
+
+    // NEARLY, AND NOT EXACTLY. The buyer was minted a whole number of steps,
+    // so a little of what they paid in bought no token and cannot be sold
+    // back. That shortfall is bounded by one step's worth of pool and does NOT
+    // scale with the trade - it is a fixed cost of entering, not a rate.
+    const shortfall = spend * BUY_POOL_SHARE - back.grossLamports;
+    expect(shortfall).toBeGreaterThan(0);
+    // One step's worth of pool at this point on the curve, and no more.
+    const oneStep = poolAtSupply(bought.tokensOut + SUPPLY_QUANTUM) - poolAtSupply(bought.tokensOut);
+    expect(shortfall).toBeLessThan(oneStep);
+
+    // A round trip therefore costs the fee twice plus that crumb: a hair OVER
+    // 3% here, where the older model said a hair under. The fee half of that
+    // is 2.98% and is exact; the rest is the step.
+    expect(1 - back.lamportsOut / spend).toBeGreaterThan(0.0298);
+    expect(1 - back.lamportsOut / spend).toBeLessThan(0.031);
   });
 
   it("reports gross, net and fee consistently", () => {

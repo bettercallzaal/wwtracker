@@ -74,6 +74,19 @@ export function battleIdFromAccount(raw: Uint8Array): number | null {
 /**
  * Has the program actually ended this battle?
  *
+ * **THE PROGRAM CALLS THIS BYTE `winner_decided`, NOT `settled`.** Its IDL
+ * declares `winner_artist_a` at 244 and `winner_decided` at 245, and there is
+ * no field named `settled` anywhere on the account. We named it `settled`
+ * ourselves and then told a partner their `winnerDecided` and "the on-chain
+ * settled byte" were "two different facts" - which made a real disagreement
+ * sound like a naming difference and undersold our own evidence. Measured
+ * 2026-09-20: 22 of 40 readable battles report decided upstream while this byte
+ * is 0. See `docs/upstream/winner-decided-2026-09-20.md`.
+ *
+ * The local name stays `settled` because it reads better at the call sites and
+ * renaming an exported field breaks consumers; the point is that it is OUR name
+ * for the program's `winner_decided`, and nobody should infer a second field.
+ *
  * Byte 245, the same offset `lib/battlePositions.ts` and `/api/ww/battle-account`
  * read. **This is NOT the same fact as the public API's `winnerDecided`**, and
  * the difference is not academic: battle 1787568630 reports `winnerDecided: true`

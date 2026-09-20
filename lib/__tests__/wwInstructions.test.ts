@@ -16,14 +16,20 @@
 import { describe, expect, it } from "vitest";
 import fixture from "../__fixtures__/ww-buy-transaction.json";
 import {
+  RENT_SYSVAR,
   battleAccountsFromRaw,
   buySharesInstruction,
   claimSharesInstruction,
   deadlineIn,
+  initializeBattleInstruction,
+  initializeMintsInstruction,
+  launchBattleInstructions,
   sellSharesInstruction,
 } from "../ww/instructions";
 import {
   PROGRAM_ID,
+  SYSTEM_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
   associatedTokenAddress,
   b58decode,
   b58encode,
@@ -176,14 +182,14 @@ describe("sellShares and claimShares", () => {
     const buy = buySharesInstruction({
       ...common,
       amountLamports: 1,
-      minTokensOut: 0,
+      minTokensOut: 1,
     });
-    const sell = sellSharesInstruction({ ...common, amountTokens: 1, minSolOut: 0 });
+    const sell = sellSharesInstruction({ ...common, amountTokens: 1, minSolOut: 1 });
     expect(sell.keys).toEqual(buy.keys);
   });
 
   it("sell carries its own discriminator, not buy's", () => {
-    const sell = sellSharesInstruction({ ...common, amountTokens: 1, minSolOut: 0 });
+    const sell = sellSharesInstruction({ ...common, amountTokens: 1, minSolOut: 1 });
     expect(hex(sell.data).slice(0, 16)).toBe("b8a4a910e79ec7c4");
     expect(hex(sell.data).slice(0, 16)).not.toBe(fixture.instruction_data_hex.slice(0, 16));
     expect(sell.data.length).toBe(33);
@@ -236,13 +242,13 @@ describe("whole-number amounts", () => {
 
   it("names the field when a buy amount is fractional", () => {
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 0 }),
+      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 1 }),
     ).toThrow(/amountLamports must be a whole/);
   });
 
   it("names the field when a sell token amount is fractional", () => {
     expect(() =>
-      sellSharesInstruction({ ...common, amountTokens: 79_001_582.26, minSolOut: 0 }),
+      sellSharesInstruction({ ...common, amountTokens: 79_001_582.26, minSolOut: 1 }),
     ).toThrow(/amountTokens must be a whole/);
   });
 
@@ -254,22 +260,22 @@ describe("whole-number amounts", () => {
 
   it("refuses rather than rounds, and says so", () => {
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 0 }),
+      buySharesInstruction({ ...common, amountLamports: 1.5, minTokensOut: 1 }),
     ).toThrow(/will not guess which way/);
   });
 
   it("rejects negative and non-finite amounts", () => {
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: -1, minTokensOut: 0 }),
+      buySharesInstruction({ ...common, amountLamports: -1, minTokensOut: 1 }),
     ).toThrow(/whole non-negative/);
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: NaN, minTokensOut: 0 }),
+      buySharesInstruction({ ...common, amountLamports: NaN, minTokensOut: 1 }),
     ).toThrow(/whole non-negative/);
   });
 
   it("still accepts whole values", () => {
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: 10_000_000, minTokensOut: 0 }),
+      buySharesInstruction({ ...common, amountLamports: 10_000_000, minTokensOut: 1 }),
     ).not.toThrow();
   });
 
@@ -281,16 +287,245 @@ describe("whole-number amounts", () => {
    */
   it("passes bigint straight through", () => {
     expect(() =>
-      buySharesInstruction({ ...common, amountLamports: 10_000_000n, minTokensOut: 0n }),
+      buySharesInstruction({ ...common, amountLamports: 10_000_000n, minTokensOut: 1n }),
     ).not.toThrow();
     expect(() =>
-      sellSharesInstruction({ ...common, amountTokens: 9_007_199_254_740_993n, minSolOut: 0n }),
+      sellSharesInstruction({ ...common, amountTokens: 9_007_199_254_740_993n, minSolOut: 1n }),
     ).not.toThrow();
   });
 
   it("still rejects a negative bigint", () => {
     expect(() =>
-      sellSharesInstruction({ ...common, amountTokens: -1n, minSolOut: 0n }),
+      sellSharesInstruction({ ...common, amountTokens: -1n, minSolOut: 1n }),
     ).toThrow(/amountTokens must be non-negative/);
+  });
+});
+
+/**
+ * Launching, against the real launch it was decoded from.
+ *
+ * Battle 1788580997 is the newest in the committed census. Its `initializeBattle`
+ * transaction was read back from chain on 2026-09-20 and every assertion below
+ * compares to those bytes rather than to the shape this module wishes they had.
+ *
+ * The first test is the whole point: 32 bytes rebuilt, byte for byte. A test
+ * that only checked "the discriminator is first and there are three u64s" would
+ * pass on an argument ORDER that is wrong, and the order is the trap - the
+ * middle field is a duration and the account stores an end time.
+ */
+describe("initializeBattleInstruction reproduces a real launch", () => {
+  // Read from the oldest signature on battle PDA GRsy35X6VgB44JjfEZHRgrb8VxcTqqCzSNm7GPVJL6KP.
+  const REAL = {
+    battleId: 1_788_580_997,
+    // The creator is ZAAL'S OWN WALLET, not the platform's. The chain said
+    // "anyone can launch" before Zaal ruled it on 2026-09-20.
+    creator: "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk",
+    artistA: "ASpsqT7qKbHF7VhsBPYGRk95vNyAgPuhTBoh2o7ptRLb",
+    artistB: "BYshzR3KeycopC1o7iynYp224AM3psAUziV35Nyha8Ns",
+    wavewarzWallet: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+    durationSeconds: 541,
+    battlePda: "GRsy35X6VgB44JjfEZHRgrb8VxcTqqCzSNm7GPVJL6KP",
+    vaultPda: "Fk7kK7SV8sETB9TkRtCzAYthwXNKTuvPaZXQSBhYtkCK",
+    data: "756ca69f9252f6df85949b6a000000001d0200000000000085949b6a00000000",
+  };
+  const ix = initializeBattleInstruction(REAL);
+  const hex = (b: Uint8Array) => Buffer.from(b).toString("hex");
+
+  it("rebuilds the transaction's 32 data bytes exactly", () => {
+    expect(hex(ix.data)).toBe(REAL.data);
+  });
+
+  it("puts the DURATION in the middle field, not the end time", () => {
+    // 541 seconds = 0x21d. An end time here would be ~1.79e9 and the battle
+    // would run for 56 years, which is why this has its own assertion.
+    const view = new DataView(ix.data.buffer, ix.data.byteOffset, ix.data.byteLength);
+    expect(view.getBigInt64(16, true)).toBe(541n);
+    expect(view.getBigUint64(8, true)).toBe(BigInt(REAL.battleId));
+    // Start time defaults to the battle id, which is what every real launch does.
+    expect(view.getBigInt64(24, true)).toBe(BigInt(REAL.battleId));
+  });
+
+  it("derives both PDAs to the accounts the real transaction used", () => {
+    expect(ix.keys[0].pubkey).toBe(REAL.battlePda);
+    expect(ix.keys[5].pubkey).toBe(REAL.vaultPda);
+  });
+
+  it("orders the eight accounts as the program expects them", () => {
+    expect(ix.keys.map((k) => k.pubkey)).toEqual([
+      REAL.battlePda,
+      REAL.creator,
+      REAL.artistA,
+      REAL.artistB,
+      REAL.wavewarzWallet,
+      REAL.vaultPda,
+      SYSTEM_PROGRAM_ID,
+      RENT_SYSVAR,
+    ]);
+  });
+
+  it("asks ONE wallet to sign, and it is the creator paying the rent", () => {
+    // Not the platform. A front end can launch with any wallet it holds.
+    const signers = ix.keys.filter((k) => k.isSigner);
+    expect(signers).toHaveLength(1);
+    expect(signers[0].pubkey).toBe(REAL.creator);
+    expect(signers[0].isWritable).toBe(true);
+  });
+
+  it("writes only what it creates, and leaves the three wallets read-only", () => {
+    expect(ix.keys.filter((k) => k.isWritable).map((k) => k.pubkey)).toEqual([
+      REAL.battlePda,
+      REAL.creator,
+      REAL.vaultPda,
+    ]);
+  });
+
+  it("takes an explicit start time when a caller schedules ahead", () => {
+    const later = initializeBattleInstruction({ ...REAL, startTime: REAL.battleId + 600 });
+    const view = new DataView(later.data.buffer, later.data.byteOffset, later.data.byteLength);
+    expect(view.getBigInt64(24, true)).toBe(BigInt(REAL.battleId + 600));
+    // The id, and so both PDAs, are unchanged by scheduling.
+    expect(later.keys[0].pubkey).toBe(REAL.battlePda);
+  });
+
+  it("refuses a fractional duration rather than truncating it", () => {
+    expect(() => initializeBattleInstruction({ ...REAL, durationSeconds: 541.5 })).toThrow(
+      /durationSeconds/,
+    );
+  });
+
+  it("refuses a negative duration, which would end the battle before it starts", () => {
+    expect(() => initializeBattleInstruction({ ...REAL, durationSeconds: -1 })).toThrow(
+      /durationSeconds/,
+    );
+  });
+});
+
+/**
+ * `initializeMints`, decoded from three real launches.
+ *
+ * FOUND BY COUNTING, NOT BY READING. 200 real program transactions were sampled
+ * on 2026-09-20 and bucketed by discriminator. Five buckets were instructions
+ * this library already built; one, at 7.5% of all traffic, was not, and nothing
+ * in the estate's docs mentioned it. A battle launched without it has no mints,
+ * so nothing can be bought and the page is dead.
+ */
+describe("initializeMintsInstruction", () => {
+  const REAL = [
+    { battleId: 1789790992, battle: "H733cPQkBgwfJAzDuAwVri8rzJfYJPQ11EoCDaHC2FEX",
+      mintA: "8UWiSgMpWM3j7yuddvvFa8cf8vLkBWDF8fmSEWqPQ7WR", mintB: "AdQtLRJ3nBQFrLG9VqRdDYodSotFjeqAUKNPsNZCw1XP",
+      payer: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37" },
+    { battleId: 1789789481, battle: "GReSnPyXyVZmRRJL9TwvLgkm5rbhzWbGE8gTKTQqBNLr",
+      mintA: "HsoHLcyiZ53a94G9xeYSE8feRtBkcK6zwuujXDfLyF3j", mintB: "2mLJJW6kZDXLhzt74WLxqvAcRduPHdBL3sUJYdq6SJa9",
+      payer: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37" },
+    // Signed by a wallet that is neither the fee wallet nor an artist, which is
+    // the on-chain half of "anyone can launch".
+    { battleId: 1789787784, battle: "7H4a8C86Quo9JtNLH9V57LPdR5Dygu3jKepRxf6ZXULv",
+      mintA: "4yj19bVdDec4n1hZz3G5TX6kVMEh8Y63zCL25zHBKENh", mintB: "HKP1cAEX9Je8jCovnAhLt6ZRwaaDuoJpVB88iqTfcsL3",
+      payer: "HegpwNycqbtc8GCPEkNCK9ToWPiuccw1wRewvi4Dsjkp" },
+  ];
+
+  it("reproduces all three real transactions' accounts, in order", () => {
+    for (const r of REAL) {
+      const ix = initializeMintsInstruction({ battleId: r.battleId, payer: r.payer });
+      expect(ix.keys.map((k) => k.pubkey)).toEqual([
+        r.battle, r.mintA, r.mintB, r.payer, TOKEN_PROGRAM_ID, SYSTEM_PROGRAM_ID, RENT_SYSVAR,
+      ]);
+    }
+  });
+
+  it("carries no arguments at all - the discriminator is the whole payload", () => {
+    const ix = initializeMintsInstruction({ battleId: REAL[0].battleId, payer: REAL[0].payer });
+    expect(ix.data).toHaveLength(8);
+    expect(Buffer.from(ix.data).toString("hex")).toBe("bd54558eb1c83916");
+  });
+
+  it("asks one wallet to sign, and any wallet will do", () => {
+    const ix = initializeMintsInstruction({ battleId: REAL[2].battleId, payer: REAL[2].payer });
+    const signers = ix.keys.filter((k) => k.isSigner);
+    expect(signers).toHaveLength(1);
+    expect(signers[0].pubkey).toBe("HegpwNycqbtc8GCPEkNCK9ToWPiuccw1wRewvi4Dsjkp");
+  });
+
+  it("cannot be pointed at a different battle than its id", () => {
+    // Every account but the payer derives from the battle id, so there is no
+    // argument through which a caller could mint into somebody else's battle.
+    const a = initializeMintsInstruction({ battleId: 1, payer: REAL[0].payer });
+    const b = initializeMintsInstruction({ battleId: 2, payer: REAL[0].payer });
+    expect(a.keys.slice(0, 3).map((k) => k.pubkey)).not.toEqual(b.keys.slice(0, 3).map((k) => k.pubkey));
+  });
+});
+
+describe("the slippage floor the program insists on", () => {
+  const common = {
+    battleId: 1_749_170_107,
+    trader: "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk",
+    battle: {
+      artistA: "ASpsqT7qKbHF7VhsBPYGRk95vNyAgPuhTBoh2o7ptRLb",
+      artistB: "BYshzR3KeycopC1o7iynYp224AM3psAUziV35Nyha8Ns",
+      wavewarzWallet: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+    },
+    artistA: true,
+    deadline: 1,
+  };
+
+  it("refuses minTokensOut of 0, which the program rejects with 6006", () => {
+    expect(() => buySharesInstruction({ ...common, amountLamports: 1_000_000, minTokensOut: 0 }))
+      .toThrow(/InvalidAmount \(6006\)/);
+  });
+
+  it("ALLOWS minSolOut of 0 on a sell, because the program does", () => {
+    // The asymmetry, measured four ways against the deployed program on
+    // 2026-09-20: a buy at 0 fails with InvalidAmount, a sell at 0 succeeds.
+    // This guard refused both for about an hour. Refusing a value the chain
+    // accepts is the same class of error as sending one it rejects - quieter,
+    // because it looks like safety - and no test could catch it while the
+    // tests asserted the guard instead of the program.
+    expect(() => sellSharesInstruction({ ...common, amountTokens: 100_000, minSolOut: 0 }))
+      .not.toThrow();
+  });
+
+  it("says what to pass instead, because 0 is the obvious way to mean no limit", () => {
+    expect(() => buySharesInstruction({ ...common, amountLamports: 1_000_000, minTokensOut: 0n }))
+      .toThrow(/pass 1, not 0/);
+  });
+
+  it("accepts 1", () => {
+    expect(() => buySharesInstruction({ ...common, amountLamports: 1_000_000, minTokensOut: 1 }))
+      .not.toThrow();
+  });
+});
+
+describe("launchBattleInstructions", () => {
+  const p = {
+    battleId: 1_788_580_997,
+    creator: "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk",
+    artistA: "ASpsqT7qKbHF7VhsBPYGRk95vNyAgPuhTBoh2o7ptRLb",
+    artistB: "BYshzR3KeycopC1o7iynYp224AM3psAUziV35Nyha8Ns",
+    wavewarzWallet: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+    durationSeconds: 541,
+  };
+
+  it("returns both steps, battle before mints", () => {
+    const ixs = launchBattleInstructions(p);
+    expect(ixs).toHaveLength(2);
+    expect(Buffer.from(ixs[0].data.slice(0, 8)).toString("hex")).toBe("756ca69f9252f6df");
+    expect(Buffer.from(ixs[1].data).toString("hex")).toBe("bd54558eb1c83916");
+  });
+
+  it("is exactly the two builders, so neither can drift from it", () => {
+    const [battle, mints] = launchBattleInstructions(p);
+    expect(battle).toEqual(initializeBattleInstruction(p));
+    expect(mints).toEqual(initializeMintsInstruction({ battleId: p.battleId, payer: p.creator }));
+  });
+
+  it("asks the creator to sign both, and nobody else to sign anything", () => {
+    const signers = launchBattleInstructions(p).flatMap((ix) => ix.keys.filter((k) => k.isSigner));
+    expect(signers).toHaveLength(2);
+    expect(new Set(signers.map((k) => k.pubkey))).toEqual(new Set([p.creator]));
+  });
+
+  it("points both at the same battle", () => {
+    const [battle, mints] = launchBattleInstructions(p);
+    expect(mints.keys[0].pubkey).toBe(battle.keys[0].pubkey);
   });
 });

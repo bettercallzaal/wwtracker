@@ -62,12 +62,22 @@ export interface BattleAccounts {
 // of sha256("global:<name>"), but these are copied from the IDL rather than
 // recomputed, because the IDL is what Hurricane confirmed matches the deployed
 // program on 2026-09-08.
-const DISCRIMINATOR = {
+/**
+ * Exported so `wwIdlConformance.test.ts` can compare every entry against the
+ * program's IDL. A hand-transcribed table that nothing checks is the shape
+ * behind two of this estate's near-misses; this one is checked.
+ */
+export const DISCRIMINATOR_BY_NAME = {
   buyShares: [40, 239, 138, 154, 8, 37, 106, 108],
   sellShares: [184, 164, 169, 16, 231, 158, 199, 196],
   claimShares: [130, 131, 29, 237, 134, 20, 110, 245],
   endBattle: [80, 145, 208, 48, 183, 92, 168, 112],
+  initializeBattle: [117, 108, 166, 159, 146, 82, 246, 223],
+  initializeMints: [189, 84, 85, 142, 177, 200, 57, 22],
 } as const;
+
+/** Internal alias, kept so the call sites below read unchanged. */
+const DISCRIMINATOR = DISCRIMINATOR_BY_NAME;
 
 /** The rent sysvar, which `endBattle` takes read-only as its last account. */
 export const RENT_SYSVAR = "SysvarRent111111111111111111111111111111111";
@@ -168,6 +178,39 @@ function tradeAccounts(
  * caller decides how to round their own numbers; `withSlippage` already floors
  * the ones this library produces.
  */
+/**
+ * A BUY's slippage floor, which the program will not accept as zero.
+ *
+ * **`minTokensOut: 0` is rejected with `InvalidAmount` (6006), and
+ * `minSolOut: 0` on a SELL is accepted.** The asymmetry is real and it is
+ * measured, not assumed - the same transaction was simulated four ways against
+ * the deployed program on 2026-09-20:
+ *
+ *     BUY  minTokensOut = 1   OK
+ *     BUY  minTokensOut = 0   FAIL InvalidAmount
+ *     SELL minSolOut     = 1   OK
+ *     SELL minSolOut     = 0   OK
+ *
+ * **THIS GUARD APPLIED TO BOTH FOR ABOUT AN HOUR AND THAT WAS A BUG.** A buy
+ * was measured rejecting zero, and the rule was extended to sells because the
+ * two look symmetric. They are not, and no test could have caught it because
+ * the test asserted the guard rather than the program. Refusing a value the
+ * chain accepts is the same class of error as sending one it rejects; it is
+ * just quieter, because it looks like safety.
+ *
+ * Zero on a sell means "no floor", and a caller is entitled to mean that.
+ */
+function buyFloor(field: string, value: bigint | number): bigint | number {
+  const v = whole(field, value);
+  if (v === 0 || v === 0n) {
+    throw new Error(
+      `${field} must be at least 1; the program rejects 0 with InvalidAmount (6006). ` +
+        "To trade without slippage protection, pass 1, not 0.",
+    );
+  }
+  return v;
+}
+
 function whole(field: string, value: bigint | number): bigint | number {
   // A bigint is a whole number by construction, so only its sign can be wrong.
   if (typeof value === "bigint") {
@@ -193,7 +236,7 @@ export function buySharesInstruction(p: BuyParams): Instruction {
       Uint8Array.from(DISCRIMINATOR.buyShares),
       u64le(whole("amountLamports", p.amountLamports)),
       Uint8Array.from([p.artistA ? 1 : 0]),
-      u64le(whole("minTokensOut", p.minTokensOut)),
+      u64le(buyFloor("minTokensOut", p.minTokensOut)),
       i64le(p.deadline),
     ]),
   };
@@ -247,6 +290,156 @@ export function sellSharesInstruction(p: SellParams): Instruction {
  * nothing, needs no wallet, and returns the program's own words rather than a
  * hex code. Expect `Battle ended successfully`.
  */
+/**
+ * Launch a battle.
+ *
+ * ANYONE CAN, AND ZAAL CONFIRMED IT ON 2026-09-20: "anyone can launch a battle
+ * anyone can build a front end." The chain already said so - the transaction
+ * this was decoded from was signed by his own wallet, not the platform's, and
+ * the only signer in the instruction is the creator paying the rent.
+ *
+ * DECODED FROM A REAL LAUNCH RATHER THAN FROM A GUESS. Battle 1788580997, the
+ * newest in the committed census, read back from its own oldest signature.
+ * Eight accounts, 32 bytes of data, and every field checked against the census
+ * afterwards: the three arguments are the battle id, the DURATION in seconds,
+ * and the start time. That middle one is the trap - the account stores
+ * `end_time`, so a caller who passes an end time gets a battle that lasts until
+ * the heat death of the universe, and the field name here says `durationSeconds`
+ * for that reason.
+ *
+ * THE BATTLE ID IS THE START TIME. Not an index, not a counter. Every battle
+ * on chain has `battle_id == start_time`, which is why the id range guard in
+ * `discovery.ts` is a date range. Passing a small integer derives a
+ * well-formed PDA for a battle that will never exist.
+ *
+ * COSTS THE CREATOR ABOUT 0.004 SOL IN RENT and nothing else. The published
+ * launch fees - 0.69 SOL quick, 4 SOL community - are NOT charged: twenty
+ * creations were inspected on chain 2026-09-06 and the platform's wallet
+ * received nothing in any of them. See `lib/feeModel.ts`.
+ *
+ * `relayPolicy.ts` still refuses to RELAY this, and that stays true. Building
+ * an instruction for someone else's wallet to sign is not launching a battle in
+ * our name.
+ */
+export function initializeBattleInstruction(p: {
+  /** The battle id, which IS the start time in unix seconds. */
+  battleId: bigint | number;
+  /** Who signs and pays the rent. Any wallet. */
+  creator: string;
+  artistA: string;
+  artistB: string;
+  /** The platform's fee wallet, which receives the platform share of trades. */
+  wavewarzWallet: string;
+  /** How long the battle runs, in SECONDS. Not an end time. */
+  durationSeconds: bigint | number;
+  /** Unix seconds. Defaults to the battle id, which is what every real launch does. */
+  startTime?: bigint | number;
+}): Instruction {
+  const start = p.startTime ?? p.battleId;
+  return {
+    programId: PROGRAM_ID,
+    keys: [
+      w(battlePda(p.battleId)),
+      signer(p.creator),
+      r(p.artistA),
+      r(p.artistB),
+      r(p.wavewarzWallet),
+      w(vaultPda(p.battleId)),
+      r(SYSTEM_PROGRAM_ID),
+      r(RENT_SYSVAR),
+    ],
+    data: concat([
+      Uint8Array.from(DISCRIMINATOR.initializeBattle),
+      u64le(whole("battleId", p.battleId)),
+      i64le(whole("durationSeconds", p.durationSeconds)),
+      i64le(whole("startTime", start)),
+    ]),
+  };
+}
+
+/**
+ * Create a battle's two share mints. **STEP TWO OF LAUNCHING, NOT AN OPTIONAL
+ * EXTRA.**
+ *
+ * `initializeBattle` creates the battle and its vault and nothing else. Until
+ * this runs, the battle has no mints, so `buyShares` has nothing to mint into
+ * and the battle cannot be traded. A front end that calls only
+ * `initializeBattle` produces a dead page.
+ *
+ * FOUND BY MEASURING, AFTER THIS FILE ASSERTED THE OPPOSITE. An earlier note
+ * here said mints were "separate" and handled by the trader's own first
+ * transaction. That is true of the trader's ASSOCIATED TOKEN ACCOUNTS and false
+ * of the mints themselves, and the two were conflated. 200 real program
+ * transactions were sampled on 2026-09-20 and bucketed by discriminator:
+ * `InitializeMints` was 7.5% of them, the one instruction the SDK did not know.
+ * Nothing in the estate's docs mentioned it.
+ *
+ * ANYONE CAN CALL IT. Of the three launches inspected, two were signed by the
+ * platform's fee wallet and one by `HegpwNycqbtc8GCPEkNCK9ToWPiuccw1wRewvi4Dsjkp`,
+ * which is neither the fee wallet nor an artist. The signer is simply whoever
+ * pays the rent for two mint accounts.
+ *
+ * Seven accounts, no arguments: the discriminator alone is the whole 8-byte
+ * payload. Both mint PDAs derive from the battle id, so this instruction cannot
+ * be pointed at a battle other than the one whose id it was built with.
+ */
+export function initializeMintsInstruction(p: {
+  battleId: bigint | number;
+  /** Who signs and pays rent on the two mints. Any wallet. */
+  payer: string;
+}): Instruction {
+  return {
+    programId: PROGRAM_ID,
+    keys: [
+      w(battlePda(p.battleId)),
+      w(mintPda(p.battleId, "a")),
+      w(mintPda(p.battleId, "b")),
+      signer(p.payer),
+      r(TOKEN_PROGRAM_ID),
+      r(SYSTEM_PROGRAM_ID),
+      r(RENT_SYSVAR),
+    ],
+    data: Uint8Array.from(DISCRIMINATOR.initializeMints),
+  };
+}
+
+/**
+ * Launch a battle, completely, in one call.
+ *
+ * **BECAUSE HALF A LAUNCH LOOKS EXACTLY LIKE A WHOLE ONE.** `initializeBattle`
+ * alone returns `err: null`, writes a well-formed 353-byte battle account,
+ * derives the PDA a front end would show, and logs "Battle initialized". It
+ * also leaves no mints, so nothing can ever be bought and the page is dead. The
+ * only way to tell the two apart is to go looking for an account that is not
+ * there.
+ *
+ * A failure that silent does not belong behind an ordering a caller has to
+ * know. Both instructions go in one transaction, so the battle either exists
+ * and is tradeable or does not exist at all.
+ *
+ * Simulated together on 2026-09-20: `err: null`, 43,179 compute units, two
+ * 82-byte SPL mints owned by the token program.
+ *
+ * The two builders stay exported for anyone repairing a battle that was
+ * launched without mints. This is the path for making a new one.
+ */
+export function launchBattleInstructions(p: {
+  battleId: bigint | number;
+  /** Signs both, pays rent on the battle, the vault and the two mints. */
+  creator: string;
+  artistA: string;
+  artistB: string;
+  wavewarzWallet: string;
+  /** SECONDS, not an end time. See `initializeBattleInstruction`. */
+  durationSeconds: bigint | number;
+  startTime?: bigint | number;
+}): Instruction[] {
+  return [
+    initializeBattleInstruction(p),
+    initializeMintsInstruction({ battleId: p.battleId, payer: p.creator }),
+  ];
+}
+
 export function endBattleInstruction(p: {
   battleId: bigint | number;
   battle: BattleAccounts;

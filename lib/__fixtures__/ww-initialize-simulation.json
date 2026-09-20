@@ -1,0 +1,44 @@
+{
+  "capturedAt": "2026-09-20T18:31:11.768Z",
+  "endpoint": "https://api.mainnet-beta.solana.com",
+  "method": "simulateTransaction, sigVerify false, replaceRecentBlockhash true, accounts returned",
+  "note": "Nothing was signed or sent. Simulation returns post-state without committing it.",
+  "correct": {
+    "battleId": 1789936271,
+    "durationPassed": 600,
+    "err": null,
+    "unitsConsumed": 18620,
+    "battlePda": "B25gdcWSXGKLJdC33KBZHqtGjJWDa9AaYkTuXfadqgVf",
+    "account": "UZR5Rz+mdBiPQrBqAAAAAP8AAP+PQrBqAAAAAOdEsGoAAAAAjFbWL4wiC9Ki9lNd7SgxWWEcTLaSXKw0AvM6rvK0M3icvzVoCg0gVz3Nt7xLfD5r/rDj/jRkwM3XEb9VrT5I2NWU7OESk4P3WA7GxW9dWBa95rhDvKRgmt8buSnmsqMiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAA1KkfvcwGk598rTKRKKLz+geNf2r2XlOOhokk9WDd5RwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    "logs": [
+      "Program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo invoke [1]",
+      "Program log: Instruction: InitializeBattle",
+      "Program 11111111111111111111111111111111 invoke [2]",
+      "Program 11111111111111111111111111111111 success",
+      "Program 11111111111111111111111111111111 invoke [2]",
+      "Program 11111111111111111111111111111111 success",
+      "Program log: Battle initialized with ID 1789936271 starting at 1789936271",
+      "Program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo consumed 18620 of 200000 compute units",
+      "Program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo success"
+    ]
+  },
+  "trap": {
+    "battleId": 1789936272,
+    "durationPassed": 1789936871,
+    "err": null,
+    "unitsConsumed": 18620,
+    "battlePda": "CBpvyYcbsNV9J4GRnUZtG57UgEZQnqCeQ1BN9utx7ooZ",
+    "account": "UZR5Rz+mdBiQQrBqAAAAAP8AAP+QQrBqAAAAAHeHYNUAAAAAjFbWL4wiC9Ki9lNd7SgxWWEcTLaSXKw0AvM6rvK0M3icvzVoCg0gVz3Nt7xLfD5r/rDj/jRkwM3XEb9VrT5I2NWU7OESk4P3WA7GxW9dWBa95rhDvKRgmt8buSnmsqMiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAA1KkfvcwGk598rTKRKKLz+geNf2r2XlOOhokk9WDd5RwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    "logs": [
+      "Program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo invoke [1]",
+      "Program log: Instruction: InitializeBattle",
+      "Program 11111111111111111111111111111111 invoke [2]",
+      "Program 11111111111111111111111111111111 success",
+      "Program 11111111111111111111111111111111 invoke [2]",
+      "Program 11111111111111111111111111111111 success",
+      "Program log: Battle initialized with ID 1789936272 starting at 1789936272",
+      "Program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo consumed 18620 of 200000 compute units",
+      "Program 9TUfEHvk5fN5vogtQyrefgNqzKy2Bqb4nWVhSFUg2fYo success"
+    ]
+  }
+}
