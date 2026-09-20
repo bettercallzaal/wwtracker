@@ -66,7 +66,11 @@ const DISCRIMINATOR = {
   buyShares: [40, 239, 138, 154, 8, 37, 106, 108],
   sellShares: [184, 164, 169, 16, 231, 158, 199, 196],
   claimShares: [130, 131, 29, 237, 134, 20, 110, 245],
+  endBattle: [80, 145, 208, 48, 183, 92, 168, 112],
 } as const;
+
+/** The rent sysvar, which `endBattle` takes read-only as its last account. */
+export const RENT_SYSVAR = "SysvarRent111111111111111111111111111111111";
 
 const w = (pubkey: string): AccountMeta => ({ pubkey, isSigner: false, isWritable: true });
 const r = (pubkey: string): AccountMeta => ({ pubkey, isSigner: false, isWritable: false });
@@ -214,6 +218,54 @@ export function sellSharesInstruction(p: SellParams): Instruction {
  * what is owed from the trader's token balances, which is why a claim cannot be
  * partial and cannot be aimed at one side.
  */
+/**
+ * Settle a battle whose clock has run out.
+ *
+ * NOT ONE OF THESE SEVEN ACCOUNTS IS A SIGNER, and that is the whole character
+ * of this instruction. `endBattle` is permissionless: no admin key, no
+ * cooperation from the platform, nothing but a fee payer to cover about
+ * 0.000005 SOL and ~22,000 compute units. Verified against a real settled
+ * transaction - its only signer is the fee payer, and that wallet appears
+ * nowhere in the instruction.
+ *
+ * IT TAKES NO ARGUMENTS EITHER, and that follows from the same fact. If it
+ * accepted a winner, anyone could pass any winner and drain the losing pool to
+ * whichever side they liked. So the program works the winner out itself, from
+ * the only thing it holds: the two pools. That is why the settlement winner is
+ * always the larger pool, with no exception in 1,482 settled battles, and why a
+ * battle has two winners rather than one.
+ *
+ * WHY THE SDK HAS IT AND THE RELAY DOES NOT. `relayPolicy.ts` deliberately
+ * refuses to relay this, because relaying one would settle a battle in our
+ * name. A front end building it for its own user to sign is a different act
+ * entirely, and until now no front end could do that at all - the technique
+ * existed only as a procedure for a human in `docs/SOP.md` SOP 1. 81 battles
+ * were past their clock and unsettled on 2026-09-20, and a claim against any of
+ * them fails until somebody calls this.
+ *
+ * SIMULATE IT FIRST. `sigVerify: false` against the deployed program costs
+ * nothing, needs no wallet, and returns the program's own words rather than a
+ * hex code. Expect `Battle ended successfully`.
+ */
+export function endBattleInstruction(p: {
+  battleId: bigint | number;
+  battle: BattleAccounts;
+}): Instruction {
+  return {
+    programId: PROGRAM_ID,
+    keys: [
+      w(battlePda(p.battleId)),
+      w(vaultPda(p.battleId)),
+      w(p.battle.artistA),
+      w(p.battle.artistB),
+      w(p.battle.wavewarzWallet),
+      r(SYSTEM_PROGRAM_ID),
+      r(RENT_SYSVAR),
+    ],
+    data: Uint8Array.from(DISCRIMINATOR.endBattle),
+  };
+}
+
 export function claimSharesInstruction(p: {
   battleId: bigint | number;
   trader: string;

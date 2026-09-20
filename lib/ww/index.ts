@@ -56,7 +56,9 @@ export {
 export {
   battleAccountsFromRaw,
   buySharesInstruction,
+  RENT_SYSVAR,
   claimSharesInstruction,
+  endBattleInstruction,
   createAssociatedTokenAccountIdempotentInstruction,
   deadlineIn,
   sellSharesInstruction,
@@ -117,7 +119,17 @@ export {
  * and a consumer writing their own version would reproduce the exact defect
  * this module was extracted to fix.
  */
-export { planBuy, poolMoveBps, type BattleState, type BuyPlan, type PlanBuyParams } from "./tradePlan";
+export {
+  battleStateFromRaw,
+  planBuy,
+  planSell,
+  poolMoveBps,
+  type BattleState,
+  type BuyPlan,
+  type PlanBuyParams,
+  type PlanSellParams,
+  type SellPlan,
+} from "./tradePlan";
 
 /**
  * PRD section 31, the universal battle record. Public because the record

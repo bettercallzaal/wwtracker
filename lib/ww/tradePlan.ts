@@ -27,6 +27,7 @@
  * change with it - which is exactly what the old code would fail.
  */
 import {
+  battleAccountsFromRaw,
   buySharesInstruction,
   deadlineIn,
   sellSharesInstruction,
@@ -46,6 +47,38 @@ export interface BattleState {
   accounts: BattleAccounts;
   /** Lamports in each artist's pool, at the moment of the read. */
   poolLamports: { a: number; b: number };
+}
+
+/**
+ * A `BattleState` straight from the raw account.
+ *
+ * THIS WAS MISSING AND IT IS THE KIND OF GAP ONLY A WALKTHROUGH FINDS. `planBuy`
+ * and `planSell` both require a `BattleState`, and until now the only way to
+ * produce one was to hand-decode two u64s at offsets 212 and 220 - so every
+ * integrator using the planners had to know byte offsets that the library
+ * otherwise keeps to itself. The first end-to-end script written against the
+ * exported surface hit it in the first five minutes.
+ *
+ * The offsets are duplicated here rather than imported from `battleRecord.ts`
+ * for the same reason they are duplicated there: a shared constant that moves
+ * takes every reader with it, and these are verified against thirty real
+ * accounts in two places independently.
+ */
+export function battleStateFromRaw(raw: Uint8Array): BattleState {
+  if (raw.length < 228) {
+    throw new Error(
+      `battle account too short for pools: ${raw.length} bytes, 228 needed. ` +
+        "A discovery slice of 256 bytes is enough; a 132-byte read is not.",
+    );
+  }
+  const view = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+  return {
+    accounts: battleAccountsFromRaw(raw),
+    poolLamports: {
+      a: Number(view.getBigUint64(212, true)),
+      b: Number(view.getBigUint64(220, true)),
+    },
+  };
 }
 
 export interface BuyPlan {
