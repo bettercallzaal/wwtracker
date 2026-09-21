@@ -384,3 +384,11 @@ export {
   type OperatorIdentity,
   type OperatorRecord,
 } from "./operatorRecord";
+
+// The battle account as the widget's route serves it: one decoder, the same
+// offsets as decodeBattle, with the minted supplies a sell quote needs.
+export { decodeBattleAccountResponse, type BattleAccountResponse } from "./battleAccountResponse";
+
+// The sell side of the widget as functions: sizing against a balance, pricing
+// off the minted supply, and reading a token balance reply honestly.
+export { parseTokenAccountBalance, sellEstimate, shareOfSide, type SellEstimate } from "./widgetSell";

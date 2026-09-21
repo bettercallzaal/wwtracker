@@ -148,7 +148,13 @@ Feeds `/finals`. If you want battle data to embed, use `/api/ww/battle` or
 ### `GET /api/ww/battle-account?battleId=<id>` - NOT for embedding
 
 Same-origin only, like `/api/ww/trade`. It returns the raw Battle account as
-base64, plus the two pool figures and the end time decoded from it.
+base64, plus what the widget needs decoded from it: `poolALamports`,
+`poolBLamports`, `supplyA`, `supplyB` (minted supply per side, base units, bytes
+196 and 204), `endTime`, `winnerArtistA` (the MARKET winner byte, the larger
+pool, not the judged result) and `settled` (byte 245, `winner_decided`). The
+supplies were added on 2026-09-21 for the sell path, which prices off the minted
+supply rather than the curve's; one decoder, `lib/ww/battleAccountResponse.ts`,
+is pinned against `decodeBattle` so the route and the library cannot drift.
 
 It exists for the trading widget, which needs three wallets that live at fixed
 offsets in that account and puts them straight into an instruction's account
@@ -159,6 +165,26 @@ valid, so "no account here" is the only honest answer.
 
 If you want battle data to embed, use `/api/ww/battle` or `/api/ww/positions`,
 which are public, cached and CORS-open.
+
+### `GET /api/ww/token-balance?battleId=<id>&wallet=<address>` - NOT for embedding
+
+Same-origin only and rate limited on the relay's budget, like `/api/ww/claimable`.
+How many tokens one wallet holds on each side of one battle, read now: two
+`getTokenAccountBalance` calls on the two derived associated token accounts and
+nothing else. It exists for the widget's sell path, which needs the balance to
+cap the amount, offer "max" and show the share of the side that is leaving.
+
+| field | is |
+|---|---|
+| `balances` | `{ a, b }`, base units, as the mint counts them and as `sellShares` takes them |
+| `exists` | `{ a, b }`: whether each associated token account exists. A wallet that never traded this battle has none, and reads as `0` with `false` |
+| `tokenAccounts` | `{ a, b }`, the two derived addresses that were read |
+| `readAt` | ISO time of the read |
+
+An absent account is the one RPC error answered as zero ("could not find
+account"). Every other failure is a `502`, because a node that is behind says
+nothing about a balance and reporting `0` for it would tell a holder they hold
+nothing.
 
 ### `GET /api/ww/claimable?wallet=<address>` - NOT for embedding
 

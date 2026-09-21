@@ -17,6 +17,7 @@
 // the relay, but it is not free.
 
 import { battlePda } from "@/lib/ww/pda";
+import { decodeBattleAccountResponse } from "@/lib/ww/battleAccountResponse";
 import { redactSecrets, redactUrl } from "@/lib/redact";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
@@ -67,19 +68,16 @@ export async function GET(request: Request) {
     if (raw.length < 353) {
       return json(502, { status: "error", error: `account is ${raw.length} bytes, expected 353` });
     }
-    const dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
 
+    // One decoder, shared with the tests and pinned against decodeBattle. This
+    // route used to read the pools at 228/236, which are duplicates of 212/220
+    // on every account measured; see lib/ww/battleAccountResponse.ts for why a
+    // duplicate that has always agreed is not something to build a sell on.
     return json(200, {
       status: "ok",
       pda,
       account: body.result.value.data[0],
-      // Offsets from chain/BATTLE-ACCOUNT.md, the same ones lib/battlePositions
-      // decodes. Lamports, not SOL - the quote works in lamports and converting
-      // twice is how a rounding error gets in.
-      poolALamports: Number(dv.getBigUint64(228, true)),
-      poolBLamports: Number(dv.getBigUint64(236, true)),
-      endTime: Number(dv.getBigInt64(28, true)),
-      settled: raw[245] !== 0,
+      ...decodeBattleAccountResponse(new Uint8Array(raw)),
     });
   } catch (err) {
     return json(502, { status: "error", error: redactSecrets((err as Error).message) });

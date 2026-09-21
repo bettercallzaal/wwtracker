@@ -17,9 +17,10 @@ import {
   type BattleAccounts,
 } from "@/lib/ww/instructions";
 import { computeUnitLimitInstruction, computeUnitPriceInstruction, serializeMessage } from "@/lib/ww/message";
-import { planBuy, poolMoveBps } from "@/lib/ww/tradePlan";
+import { planBuy, planSell, poolMoveBps, type BattleState } from "@/lib/ww/tradePlan";
 import { describePriceImpact, type PriceImpactAssessment } from "@/lib/ww/priceImpact";
-import { lamportsToSol, quoteBuy, solToLamports } from "@/lib/ww/quote";
+import { lamportsToSol, quoteBuy, solToLamports, withSlippage } from "@/lib/ww/quote";
+import { sellEstimate, shareOfSide } from "@/lib/ww/widgetSell";
 
 /**
  * The trading widget. Stage 1: prove it here, then it moves to wavewarz.info and
@@ -35,6 +36,13 @@ import { lamportsToSol, quoteBuy, solToLamports } from "@/lib/ww/quote";
  * page showing it. A widget that signs first and explains afterwards is a
  * widget that spends fees to produce error messages.
  *
+ * BUY AND SELL, since 2026-09-21. The widget was buy-only through the finals,
+ * so nothing learned about selling that night could be acted on here. The sell
+ * path prices off the side's MINTED supply (bytes 196/204, now returned by
+ * /api/ww/battle-account), sizes against the wallet's balance from
+ * /api/ww/token-balance, and puts its slippage floor on the NET proceeds, which
+ * is the number the program checks. See lib/ww/widgetSell.ts and planSell.
+ *
  * NOTHING HERE HOLDS A KEY. Phantom signs; this builds bytes and hands them
  * over. The RPC key stays on the server behind /api/ww/trade.
  */
@@ -45,11 +53,20 @@ const COMPUTE_UNITS = 200_000;
 const DEADLINE_SECONDS = 90;
 
 type Phase = "idle" | "checking" | "ready" | "signing" | "sending" | "done";
+type Mode = "buy" | "sell";
 
 interface Preflight {
   ok: boolean;
   message: string;
   unitsConsumed: number | null;
+}
+
+interface BattleRead {
+  accounts: BattleAccounts;
+  poolLamports: { a: number; b: number };
+  mintedSupply: { a: number; b: number };
+  endTime: number;
+  settled: boolean;
 }
 
 const panel: React.CSSProperties = {
@@ -70,18 +87,39 @@ const button = (tone: "accent" | "plain" | "danger"): React.CSSProperties => ({
   cursor: "pointer",
 });
 
+const input: React.CSSProperties = {
+  width: "100%", background: C.void, color: C.text, border: `1px solid ${C.grid}`,
+  borderRadius: 8, padding: "10px 12px", fontSize: 14, fontFamily: C.mono,
+};
+
+/** One read of the battle account, decoded the same way for mount and for build. */
+async function readBattle(battleId: number): Promise<BattleRead> {
+  const j = await fetch(`/api/ww/battle-account?battleId=${battleId}`).then((r) => r.json());
+  if (j.status !== "ok") throw new Error(j.error ?? "could not read this battle");
+  return {
+    accounts: battleAccountsFromRaw(new Uint8Array(Buffer.from(j.account, "base64"))),
+    poolLamports: { a: j.poolALamports, b: j.poolBLamports },
+    mintedSupply: { a: j.supplyA, b: j.supplyB },
+    endTime: j.endTime,
+    settled: j.settled,
+  };
+}
+
 export default function TradeWidget({ battleId }: { battleId: number }) {
   const [provider, setProvider] = useState<PhantomProvider | null>(null);
   const [wallet, setWallet] = useState<string | null>(null);
-  const [battle, setBattle] = useState<BattleAccounts | null>(null);
-  const [poolLamports, setPoolLamports] = useState<{ a: number; b: number } | null>(null);
+  const [battle, setBattle] = useState<BattleRead | null>(null);
+  const [mode, setMode] = useState<Mode>("buy");
   const [side, setSide] = useState<"a" | "b">("a");
   const [amountSol, setAmountSol] = useState("0.01");
+  const [amountTokens, setAmountTokens] = useState("");
   const [slippageBps, setSlippageBps] = useState(100);
   const [phase, setPhase] = useState<Phase>("idle");
   const [preflight, setPreflight] = useState<Preflight | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
+  /** The wallet's tokens on each side, base units. null until read. */
+  const [balances, setBalances] = useState<{ a: number; b: number } | null>(null);
   /**
    * How far the pool moved between the estimate on screen and the read the
    * transaction was actually built from. Surfaced rather than swallowed: the
@@ -119,6 +157,7 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
     return watchWallet(provider, {
       onAccountChanged: (key) => {
         setWallet(key);
+        setBalances(null);
         setPreflight(null);
         setQuoteDrift(null);
         setPriceImpact(null);
@@ -127,36 +166,58 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
       },
       onDisconnect: () => {
         setWallet(null);
+        setBalances(null);
         setPreflight(null);
         setSignature(null);
       },
     });
   }, [provider]);
 
-  // The battle's three wallets, read once. Everything else derives.
+  // The battle, read once for display. Everything else derives.
   useEffect(() => {
     let live = true;
-    fetch(`/api/ww/battle-account?battleId=${battleId}`)
-      .then((r) => r.json())
-      .then((j) => {
-        if (!live) return;
-        if (j.status !== "ok") {
-          setError(j.error ?? "Could not read this battle.");
-          return;
-        }
-        const raw = new Uint8Array(Buffer.from(j.account, "base64"));
-        setBattle(battleAccountsFromRaw(raw));
-        setPoolLamports({ a: j.poolALamports, b: j.poolBLamports });
-      })
-      .catch((e) => live && setError(String(e)));
+    readBattle(battleId)
+      .then((b) => live && setBattle(b))
+      .catch((e) => live && setError(String((e as Error).message ?? e)));
     return () => {
       live = false;
     };
   }, [battleId]);
 
+  /**
+   * The wallet's balance on both sides. Read when a wallet connects and again
+   * after every sent trade, not on a timer: it changes only when this wallet
+   * trades, and a timer would spend the RPC budget confirming that.
+   */
+  const refreshBalances = useCallback(async (key: string) => {
+    const j = await fetch(`/api/ww/token-balance?battleId=${battleId}&wallet=${key}`).then((r) => r.json());
+    if (j.status !== "ok") throw new Error(j.error ?? "could not read this wallet's tokens");
+    setBalances(j.balances);
+  }, [battleId]);
+
+  useEffect(() => {
+    if (!wallet) return;
+    refreshBalances(wallet).catch((e) => setError(String((e as Error).message ?? e)));
+  }, [wallet, refreshBalances]);
+
   const lamports = solToLamports(Number(amountSol) || 0);
-  const pool = poolLamports ? poolLamports[side] : 0;
-  const estimate = lamports > 0 && poolLamports ? quoteBuy(pool, lamports) : null;
+  const tokens = Math.floor(Number(amountTokens) || 0);
+  const pool = battle ? battle.poolLamports[side] : 0;
+  const minted = battle ? battle.mintedSupply[side] : null;
+  const held = balances ? balances[side] : null;
+
+  const buyEstimate = mode === "buy" && lamports > 0 && battle ? quoteBuy(pool, lamports) : null;
+  const sell =
+    mode === "sell" && battle && held !== null
+      ? sellEstimate({ poolLamports: pool, mintedSupply: minted, sellTokens: tokens, balanceTokens: held })
+      : null;
+  const canBuild = mode === "buy" ? Boolean(buyEstimate) : Boolean(sell?.ok);
+
+  const resetOutcome = () => {
+    setPreflight(null);
+    setQuoteDrift(null);
+    setPriceImpact(null);
+  };
 
   const onConnect = useCallback(async () => {
     if (!provider) return;
@@ -175,9 +236,7 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
    * THIS USED TO USE THE MOUNT-TIME READ, and that was the defect: the
    * slippage floor - the trader's only protection against the price moving -
    * was computed from the pool as it was when the page loaded. On a live battle
-   * that is whenever the tab happened to be opened. It never bit because the
-   * widget has never run on a live battle, where the pool cannot move. See
-   * lib/ww/tradePlan.ts.
+   * that is whenever the tab happened to be opened. See lib/ww/tradePlan.ts.
    *
    * The estimate above still comes from the mount-time read, deliberately: it
    * is a display, it says it is approximate, and re-fetching on every keystroke
@@ -185,7 +244,7 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
    * number that goes into the instruction.
    */
   const build = useCallback(async () => {
-    if (!wallet || !estimate) return null;
+    if (!wallet || !battle || !canBuild) return null;
     const prep = await fetch("/api/ww/trade", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -193,40 +252,35 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
     }).then((r) => r.json());
     if (prep.status !== "ok") throw new Error(prep.error ?? "could not get a blockhash");
 
-    const shownPool = poolLamports ? poolLamports[side] : 0;
-    const plan = await planBuy({
-      battleId,
-      trader: wallet,
-      side,
-      amountLamports: lamports,
-      slippageBps,
-      deadlineSeconds: DEADLINE_SECONDS,
-      readBattleState: async () => {
-        const j = await fetch(`/api/ww/battle-account?battleId=${battleId}`).then((r) => r.json());
-        if (j.status !== "ok") throw new Error(j.error ?? "could not read this battle");
-        return {
-          accounts: battleAccountsFromRaw(new Uint8Array(Buffer.from(j.account, "base64"))),
-          poolLamports: { a: j.poolALamports, b: j.poolBLamports },
-        };
-      },
-    });
+    const shownPool = battle.poolLamports[side];
+    const readBattleState = async (): Promise<BattleState> => {
+      const fresh = await readBattle(battleId);
+      return { accounts: fresh.accounts, poolLamports: fresh.poolLamports, mintedSupply: fresh.mintedSupply };
+    };
+    const common = { battleId, trader: wallet, side, slippageBps, deadlineSeconds: DEADLINE_SECONDS, readBattleState };
+
+    const plan =
+      mode === "buy"
+        ? await planBuy({ ...common, amountLamports: lamports })
+        : await planSell({ ...common, amountTokens: tokens });
     setQuoteDrift(poolMoveBps(shownPool, plan.poolLamports));
     setPriceImpact(plan.priceImpact);
-    const ix = plan.instruction;
     return serializeMessage(wallet, prep.blockhash, [
       computeUnitLimitInstruction(COMPUTE_UNITS),
       computeUnitPriceInstruction(PRIORITY_MICRO_LAMPORTS),
-      // Unconditionally, and before the trade. The program does not create the
-      // trader's token accounts, so a wallet's first trade in a battle fails
-      // without these; they are idempotent, so including them when the accounts
-      // already exist costs a few hundred compute units and nothing else. The
+      // Unconditionally, before the trade, on BOTH legs. The program does not
+      // create the trader's token accounts, so a wallet's first trade in a
+      // battle fails without these; they are idempotent, so including them when
+      // the accounts already exist costs a few hundred compute units and nothing
+      // else. A sell names both sides' accounts too, and a wallet that received
+      // its tokens by transfer may hold one side without the other. The
       // alternative - read the accounts, include these only when absent - makes
       // the transaction depend on a fact that can stop being true between the
       // read and the signature.
       ...traderTokenAccountInstructions(battleId, wallet),
-      ix,
+      plan.instruction,
     ]);
-  }, [wallet, estimate, poolLamports, battleId, side, lamports, slippageBps]);
+  }, [wallet, battle, canBuild, battleId, side, slippageBps, mode, lamports, tokens]);
 
   const onPreflight = useCallback(async () => {
     setError(null);
@@ -290,6 +344,10 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
       if (res.status === "sent") {
         setSignature(res.signature);
         setPhase("done");
+        // The pool and this wallet's balance both changed. Re-read rather than
+        // predict: what landed is what the chain says landed.
+        readBattle(battleId).then(setBattle).catch(() => undefined);
+        if (wallet) refreshBalances(wallet).catch(() => undefined);
       } else {
         setError(res.error ?? "The trade was not sent.");
         setPhase("ready");
@@ -298,7 +356,7 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
       setError(mapWalletError(e).message);
       setPhase("ready");
     }
-  }, [provider, preflight, build]);
+  }, [provider, preflight, build, battleId, wallet, refreshBalances]);
 
   return (
     <main style={{ maxWidth: 460, margin: "40px auto", padding: "0 16px", color: C.text, fontFamily: "inherit" }}>
@@ -327,10 +385,31 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
             {wallet.slice(0, 6)}...{wallet.slice(-6)}
           </p>
         )}
+        {wallet && balances && battle && (
+          <p style={{ margin: "8px 0 0", fontSize: 12, color: C.dim, fontFamily: C.mono }}>
+            Holding A {balances.a.toLocaleString()} ({(shareOfSide(balances.a, battle.mintedSupply.a) * 100).toFixed(2)}% of side)
+            {" / "}
+            B {balances.b.toLocaleString()} ({(shareOfSide(balances.b, battle.mintedSupply.b) * 100).toFixed(2)}% of side)
+          </p>
+        )}
       </div>
 
       <div style={{ ...panel, marginBottom: 12 }}>
-        <p style={{ ...metaLabel, marginBottom: 10 }}>Buy</p>
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          {(["buy", "sell"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => {
+                setMode(m);
+                resetOutcome();
+              }}
+              style={{ ...button(mode === m ? "accent" : "plain"), flex: 1 }}
+            >
+              {m === "buy" ? "Buy" : "Sell"}
+            </button>
+          ))}
+        </div>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
           {(["a", "b"] as const).map((s) => (
@@ -339,7 +418,7 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
               type="button"
               onClick={() => {
                 setSide(s);
-                setPreflight(null);
+                resetOutcome();
               }}
               style={{ ...button(side === s ? "accent" : "plain"), flex: 1 }}
             >
@@ -348,19 +427,54 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
           ))}
         </div>
 
-        <label style={{ ...metaLabel, display: "block", marginBottom: 6 }}>Amount in SOL</label>
-        <input
-          value={amountSol}
-          inputMode="decimal"
-          onChange={(e) => {
-            setAmountSol(e.target.value);
-            setPreflight(null);
-          }}
-          style={{
-            width: "100%", background: C.void, color: C.text, border: `1px solid ${C.grid}`,
-            borderRadius: 8, padding: "10px 12px", fontSize: 14, fontFamily: C.mono,
-          }}
-        />
+        {mode === "buy" && (
+          <>
+            <label style={{ ...metaLabel, display: "block", marginBottom: 6 }}>Amount in SOL</label>
+            <input
+              value={amountSol}
+              inputMode="decimal"
+              onChange={(e) => {
+                setAmountSol(e.target.value);
+                resetOutcome();
+              }}
+              style={input}
+            />
+          </>
+        )}
+
+        {mode === "sell" && (
+          <>
+            <label style={{ ...metaLabel, display: "block", marginBottom: 6 }}>Tokens to sell</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                value={amountTokens}
+                inputMode="numeric"
+                placeholder={held !== null ? `up to ${held.toLocaleString()}` : "connect a wallet"}
+                onChange={(e) => {
+                  setAmountTokens(e.target.value.replace(/[^\d]/g, ""));
+                  resetOutcome();
+                }}
+                style={{ ...input, flex: 1 }}
+              />
+              <button
+                type="button"
+                style={button("plain")}
+                disabled={held === null || held === 0}
+                onClick={() => {
+                  if (held !== null) setAmountTokens(String(held));
+                  resetOutcome();
+                }}
+              >
+                Max
+              </button>
+            </div>
+            {wallet && held === 0 && (
+              <p style={{ color: C.dim, fontSize: 12, marginTop: 8 }}>
+                This wallet holds nothing on Artist {side.toUpperCase()} in this battle.
+              </p>
+            )}
+          </>
+        )}
 
         <label style={{ ...metaLabel, display: "block", margin: "12px 0 6px" }}>
           Slippage tolerance
@@ -372,7 +486,7 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
               type="button"
               onClick={() => {
                 setSlippageBps(bps);
-                setPreflight(null);
+                resetOutcome();
               }}
               style={{ ...button(slippageBps === bps ? "accent" : "plain"), flex: 1 }}
             >
@@ -381,10 +495,10 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
           ))}
         </div>
 
-        {estimate && (
+        {buyEstimate && (
           <p style={{ color: C.dim, fontSize: 12, marginTop: 12, lineHeight: 1.6 }}>
-            Estimated {Math.floor(estimate.tokensOut).toLocaleString()} tokens.{" "}
-            Fee {lamportsToSol(estimate.feeLamports).toFixed(6)} SOL.
+            Estimated {Math.floor(buyEstimate.tokensOut).toLocaleString()} tokens.{" "}
+            Fee {lamportsToSol(buyEstimate.feeLamports).toFixed(6)} SOL.
             <br />
             <span style={{ color: C.dim }}>
               An estimate from the curve, accurate to about 0.5%. The exact figure comes from the
@@ -392,13 +506,34 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
             </span>
           </p>
         )}
+
+        {sell && sell.ok && (
+          <p style={{ color: C.dim, fontSize: 12, marginTop: 12, lineHeight: 1.6 }}>
+            You receive about {lamportsToSol(sell.quote.lamportsOut).toFixed(6)} SOL, before the
+            network fee. Fee to artist and platform {lamportsToSol(sell.quote.feeLamports).toFixed(6)} SOL.
+            <br />
+            That is {(sell.shareOfSide * 100).toFixed(2)}% of the side's supply. The floor at{" "}
+            {slippageBps / 100}% is {lamportsToSol(withSlippage(sell.quote.lamportsOut, slippageBps)).toFixed(6)} SOL;
+            the program refuses to pay less.
+            {sell.supplySource === "curve" && (
+              <>
+                <br />
+                Priced off the curve, not the account, so it may read slightly high.
+              </>
+            )}
+          </p>
+        )}
+
+        {sell && !sell.ok && tokens > 0 && (
+          <p style={{ color: C.dim, fontSize: 12, marginTop: 12 }}>{sell.reason}</p>
+        )}
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         <button
           type="button"
           style={{ ...button("plain"), flex: 1 }}
-          disabled={!wallet || !battle || !estimate || phase === "checking"}
+          disabled={!wallet || !battle || !canBuild || phase === "checking"}
           onClick={onPreflight}
         >
           {phase === "checking" ? "Simulating..." : "Simulate"}
