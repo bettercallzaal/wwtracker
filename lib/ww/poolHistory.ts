@@ -85,3 +85,19 @@ export function chartSeries(samples: PoolSample[]): ChartPoint[] {
     .sort((x, y) => x.t - y.t)
     .map((s) => ({ t: s.t, aSol: s.a / 1e9, bSol: s.b / 1e9 }));
 }
+
+export type RecordingState = "recording" | "stale" | "none";
+
+/**
+ * Is the watcher writing? Judged from the newest sample's age, because a
+ * watcher that died looks exactly like a quiet market otherwise. While a
+ * battle is live the heartbeat guarantees a sample at least every
+ * HEARTBEAT_SECONDS, so anything older than that plus one poll is "stale".
+ * On a settled battle age means nothing and the answer is "recording" when
+ * there is any sample at all.
+ */
+export function recordingState(newestT: number | null, nowSeconds: number, live: boolean, pollSeconds = 3): RecordingState {
+  if (newestT === null) return "none";
+  if (!live) return "recording";
+  return nowSeconds - newestT <= HEARTBEAT_SECONDS + pollSeconds * 2 ? "recording" : "stale";
+}
