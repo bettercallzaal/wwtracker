@@ -176,7 +176,15 @@ export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
     );
   }
 
-  const minTokensOut = withSlippage(quote.tokensOut, p.slippageBps);
+  // Floor at 1, never 0. Inside the headroom window the dust check above
+  // deliberately lets the plan through: the program mints a full step where
+  // our continuous math reads 99,984..99,999 (wwCurveMeasured.test.ts, the
+  // boundary fixture), so `tokensOut` is 0 while the trade is good. A floor of
+  // 0 then hits `buyFloor` in instructions.ts, which refuses with "pass 1, not
+  // 0" - the exact misleading error the dust check exists to prevent, thrown
+  // on the other side of the boundary. Measured 2026-09-20 at pool
+  // 1,000,000,565 and spend 287,167.
+  const minTokensOut = Math.max(1, withSlippage(quote.tokensOut, p.slippageBps));
 
   // Computed from the SAME fresh read the floor uses. An impact figure from a
   // stale pool would be the defect #300 fixed, wearing a different name.

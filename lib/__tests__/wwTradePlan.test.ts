@@ -22,6 +22,7 @@ import { quoteBuy, quoteSell, supplyAtPool, withSlippage } from "../ww/quote";
 import { PriceImpactExceededError } from "../ww/priceImpact";
 import buyFixture from "../__fixtures__/ww-buy-transaction.json";
 import { battleAccountsFromRaw } from "../ww/instructions";
+import dustFixture from "../__fixtures__/ww-dust-boundary.json";
 
 const accounts = battleAccountsFromRaw(
   new Uint8Array(Buffer.from(buyFixture.battle_account_base64, "base64")),
@@ -257,5 +258,31 @@ describe("the exported surface, as an integrator sees it", () => {
       readBattleState: async () => sdk.battleStateFromRaw(raw),
     });
     expect(plan.instruction.keys.length).toBeGreaterThan(0);
+  });
+});
+
+describe("the headroom window, where the program mints and our floor reads 0", () => {
+  // The measured boundary: the program's smallest accepted spend at this pool
+  // mints 100,000 tokens while quoteBuy reads 99,998.8 exact and 0 floored.
+  // The dust check lets it through (correctly); the slippage floor must not
+  // then hand 0 to buyFloor.
+  const pool = dustFixture.poolBeforeLamports;
+  const spend = dustFixture.smallestAcceptedSpend;
+
+  it("is inside the window the fixture measured", () => {
+    const q = quoteBuy(pool, spend);
+    expect(q.tokensOut).toBe(0);
+    expect(q.tokensOutExact).toBeGreaterThanOrEqual(100_000 - 16);
+    expect(q.tokensOutExact).toBeLessThan(100_000);
+  });
+
+  it("plans the buy with a floor of 1 instead of refusing it", async () => {
+    const plan = await planBuy({
+      ...base,
+      amountLamports: spend,
+      readBattleState: async () => state(pool),
+    });
+    expect(plan.minTokensOut).toBe(1);
+    expect(plan.estimatedTokensOut).toBe(0);
   });
 });
