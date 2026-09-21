@@ -47,6 +47,7 @@ jobs:
       # --strict: stale data fails here even though it never fails a deploy.
       # Datasets knowingly parked carry an expiry date in the script itself.
       - run: node scripts/validate.mjs --strict
+      - run: npm run check:review
 
   upstream-contract:
     name: upstream stats API contract

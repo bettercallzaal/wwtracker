@@ -27,6 +27,7 @@ const GATES = [
   { name: "tests", cmd: "npx", args: ["vitest", "run"] },
   { name: "build", cmd: "npm", args: ["run", "build"] },
   { name: "validate", cmd: "node", args: ["scripts/validate.mjs", "--strict"] },
+  { name: "review", cmd: "node", args: ["scripts/check-pr-review.mjs"] },
 ];
 
 const only = process.argv.slice(2).filter((a) => !a.startsWith("-"));
@@ -56,6 +57,7 @@ for (const gate of GATES) {
       build: /Compiled successfully/,
       validate: /validation passed/,
       typecheck: /^$/,
+      review: /OVERALL VERDICT: PASS/,
     }[gate.name];
     const hit = PATTERN ? (r.stdout ?? "").match(PATTERN) : null;
     console.log(`ok    ${hit ? hit[0].trim() : ""}`);
