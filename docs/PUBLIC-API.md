@@ -166,6 +166,25 @@ valid, so "no account here" is the only honest answer.
 If you want battle data to embed, use `/api/ww/battle` or `/api/ww/positions`,
 which are public, cached and CORS-open.
 
+### `GET /api/ww/pool-history?battleId=<id>` - NOT for embedding
+
+The two pools and supplies of one battle over time, as `scripts/ww-live-watch.ts`
+recorded them: one sample per 3 s poll where a pool or supply moved, plus a
+heartbeat every 30 s so a flat stretch is a measured flat stretch. This is what
+`/battle/<id>` draws. No RPC and no upstream: a file read on the machine that
+runs the watcher (`var/ww-live/<id>.jsonl`, gitignored), so it answers only
+where the watcher runs.
+
+| field | is |
+|---|---|
+| `series` | `[{ t, aSol, bSol }]`, unix seconds and SOL, sorted by time |
+| `count`, `from`, `to` | how many points and the first and last time |
+| `skipped` | malformed lines skipped (a watcher killed mid-write leaves one) |
+
+A battle the watcher did not watch is `404` `not-recorded`, which is a different
+answer from an empty series. There is no chain backfill yet; every trade's pool
+delta is on chain, so one can be built.
+
 ### `GET /api/ww/token-balance?battleId=<id>&wallet=<address>` - NOT for embedding
 
 Same-origin only and rate limited on the relay's budget, like `/api/ww/claimable`.

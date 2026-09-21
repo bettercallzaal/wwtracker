@@ -127,3 +127,6 @@ export function poolShare(a: number, b: number): number {
   const total = a + b;
   return total <= 0 ? 0.5 : a / total;
 }
+
+/** The single-battle shape, for pages that fetch /battles/:id themselves. */
+export const shapeBattle = shape;
