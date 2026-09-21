@@ -182,8 +182,11 @@ where the watcher runs.
 | `skipped` | malformed lines skipped (a watcher killed mid-write leaves one) |
 
 A battle the watcher did not watch is `404` `not-recorded`, which is a different
-answer from an empty series. There is no chain backfill yet; every trade's pool
-delta is on chain, so one can be built.
+answer from an empty series. For those, `npx tsx scripts/ww-pool-backfill.ts <id>`
+rebuilds the series from the battle's own transactions (the program's "SOL for
+tokens", "SOL to return" and "Total fee" lines, the mint's token deltas), replays
+it from zero, checks the end state against the account, and writes the file.
+Measured exact on 1789948124 (49 trades) on 2026-09-21.
 
 ### `GET /api/ww/token-balance?battleId=<id>&wallet=<address>` - NOT for embedding
 
