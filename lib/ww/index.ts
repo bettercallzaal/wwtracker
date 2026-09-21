@@ -404,3 +404,15 @@ export {
   type ChartPoint,
   type PoolSample,
 } from "./poolHistory";
+
+// Pool history from the chain, for a battle the watcher did not watch: one
+// trade step per transaction, read off the program's own lines, replayed
+// from zero and checked against the account. The RPC walk is a script.
+export {
+  endStateDiff,
+  replayTrades,
+  tradeFromTransaction,
+  type BattleIds,
+  type TradeStep,
+  type TxLike,
+} from "./poolBackfill";
