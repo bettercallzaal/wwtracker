@@ -392,3 +392,15 @@ export { decodeBattleAccountResponse, type BattleAccountResponse } from "./battl
 // The sell side of the widget as functions: sizing against a balance, pricing
 // off the minted supply, and reading a token balance reply honestly.
 export { parseTokenAccountBalance, sellEstimate, shareOfSide, type SellEstimate } from "./widgetSell";
+
+// The pool series a battle page draws: what the watcher keeps and how it is
+// spelled. Pure; the disk half is lib/poolHistoryStore.ts, outside the surface.
+export {
+  HEARTBEAT_SECONDS,
+  chartSeries,
+  parseJsonl,
+  serializeSample,
+  shouldRecord,
+  type ChartPoint,
+  type PoolSample,
+} from "./poolHistory";

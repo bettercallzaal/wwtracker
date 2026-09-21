@@ -105,7 +105,12 @@ async function readBattle(battleId: number): Promise<BattleRead> {
   };
 }
 
-export default function TradeWidget({ battleId }: { battleId: number }) {
+/**
+ * `embedded`: rendered inside the battle page, which already carries the
+ * battle's title and clock, so the widget drops its own header and outer
+ * margin and becomes a panel among panels. Behaviour is identical.
+ */
+export default function TradeWidget({ battleId, embedded = false }: { battleId: number; embedded?: boolean }) {
   const [provider, setProvider] = useState<PhantomProvider | null>(null);
   const [wallet, setWallet] = useState<string | null>(null);
   const [battle, setBattle] = useState<BattleRead | null>(null);
@@ -358,14 +363,25 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
     }
   }, [provider, preflight, build, battleId, wallet, refreshBalances]);
 
+  const Wrapper = embedded ? "div" : "main";
   return (
-    <main style={{ maxWidth: 460, margin: "40px auto", padding: "0 16px", color: C.text, fontFamily: "inherit" }}>
-      <p style={metaLabel}>WaveWarZ trade widget</p>
-      <h1 style={{ fontSize: 20, margin: "6px 0 4px" }}>Battle {battleId}</h1>
-      <p style={{ color: C.dim, fontSize: 13, margin: "0 0 18px" }}>
-        Stage 1 reference implementation. Every trade is simulated against the program before you
-        are asked to sign.
-      </p>
+    <Wrapper
+      style={
+        embedded
+          ? { color: C.text, fontFamily: "inherit" }
+          : { maxWidth: 460, margin: "40px auto", padding: "0 16px", color: C.text, fontFamily: "inherit" }
+      }
+    >
+      {!embedded && (
+        <>
+          <p style={metaLabel}>WaveWarZ trade widget</p>
+          <h1 style={{ fontSize: 20, margin: "6px 0 4px" }}>Battle {battleId}</h1>
+          <p style={{ color: C.dim, fontSize: 13, margin: "0 0 18px" }}>
+            Stage 1 reference implementation. Every trade is simulated against the program before you
+            are asked to sign.
+          </p>
+        </>
+      )}
 
       <div style={{ ...panel, marginBottom: 12 }}>
         {!provider && (
@@ -616,6 +632,6 @@ export default function TradeWidget({ battleId }: { battleId: number }) {
           </p>
         </div>
       )}
-    </main>
+    </Wrapper>
   );
 }

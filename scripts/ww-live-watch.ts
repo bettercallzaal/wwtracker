@@ -25,6 +25,8 @@
  */
 import { PROGRAM_ID, battlePda } from "@/lib/ww/pda";
 import { supplyAtPool } from "@/lib/ww/quote";
+import { recordSample, DEFAULT_DIR } from "../lib/poolHistoryStore";
+import { shouldRecord, type PoolSample } from "../lib/ww/poolHistory";
 import { observe, spendForPoolDelta } from "@/lib/ww/tradeObservation";
 
 const RPC = "https://api.mainnet-beta.solana.com";
@@ -34,6 +36,8 @@ const arg = (n: string, d?: string) => {
 };
 const EVERY = Number(arg("--every", "3")) * 1000;
 const ONE = arg("--battle");
+/** Where each battle's pool series is appended, one JSONL per battle. `var/` is gitignored. */
+const STORE = arg("--store", DEFAULT_DIR)!;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function rpc(method: string, params: unknown[]): Promise<any> {
@@ -121,6 +125,7 @@ function compare(id: number, side: "a" | "b", before: State, after: State) {
 async function main() {
   console.log(`watching, polling every ${EVERY / 1000}s. Ctrl-C to stop.\n`);
   const seen = new Map<number, State>();
+  const lastRecorded = new Map<number, PoolSample>();
   let announcedWait = false;
   // A HEARTBEAT, because silence from a watcher is ambiguous and the ambiguity
   // is the bug. Without it "no trades yet" and "hung on a rate limit" look
@@ -150,6 +155,16 @@ async function main() {
       const now = await fetchState(id);
       if (!now) continue;
       const before = seen.get(id);
+      // THE STORE. Every poll where a pool or supply moved, plus a heartbeat
+      // every 30 s, appended to var/ww-live/<id>.jsonl for the battle page's
+      // chart. Until 2026-09-21 the watcher compared and printed and kept
+      // nothing anyone could plot. A write failure is logged, never fatal:
+      // the verdicts above are the watcher's job, the chart is a bonus.
+      const sample: PoolSample = { t: Math.floor(Date.now() / 1000), a: now.pool.a, b: now.pool.b, sa: now.supply.a, sb: now.supply.b };
+      if (shouldRecord(lastRecorded.get(id) ?? null, sample)) {
+        try { recordSample(STORE, id, sample); lastRecorded.set(id, sample); }
+        catch (e) { console.log(`${stamp()} ${id} store write failed: ${(e as Error).message}`); }
+      }
       if (!before) {
         const left = now.endTime - Math.floor(Date.now() / 1000);
         console.log(`${stamp()} ${id} joined  pools ${now.pool.a}/${now.pool.b}  supply ${now.supply.a}/${now.supply.b}  ends in ${left}s`);
