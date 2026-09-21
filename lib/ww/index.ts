@@ -103,6 +103,9 @@ export {
   lamportsToSol,
   quoteBuy,
   quoteSell,
+  quoteClaim,
+  SETTLEMENT_WINNING_TRADERS,
+  SETTLEMENT_LOSING_TRADERS,
   solToLamports,
   withSlippage,
 } from "./quote";
