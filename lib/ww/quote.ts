@@ -365,3 +365,79 @@ export function withSlippage(estimate: number, toleranceBps: number): number {
 
 export const solToLamports = (sol: number): number => Math.round(sol * LAMPORTS_PER_SOL);
 export const lamportsToSol = (lamports: number): number => lamports / LAMPORTS_PER_SOL;
+
+// ---------------------------------------------------------------------------
+// Settlement claims.
+//
+// QUOTED FROM THE PROGRAM, NOT INFERRED. On 2026-09-20 the EndBattle and
+// ClaimShares instructions logged their own arithmetic on battle 1789951764:
+//
+//     Winner's original pool:                 9121260940
+//     Winner's share from loser pool (40%):    182098640
+//     Total winner distribution:              9303359580
+//     Loser share pool (50%):                  227623300
+//     Winner supply: 2135200000  Winner balance: 1892300000  Winner share: 8245009394
+//
+// So a winner claims (balance / winnerSupply) of (winnerPool + 0.40 * loserPool)
+// and a loser claims (balance / loserSupply) of (0.50 * loserPool). The other
+// 10% of the losing pool goes 5 / 2 / 3 to winning artist, losing artist and
+// platform (lib/feeModel.ts) and is not claimable by traders.
+//
+// NOT BIT-EXACT. Against 12 real claims across two battles this reproduces
+// every one to within 20,000 lamports (largest miss 16,656 on a 1.33 SOL
+// claim). The residual behaves like an ABSOLUTE error, not a relative one, so
+// the smallest claims see the largest relative miss: 1.4e-4 on a 5,178,668
+// lamport claim, 4e-5 on a 176,456,821 one. It varies in sign, does not decay
+// with claim order and does not track balance size - mechanism unknown as of
+// 2026-09-21.
+// Treat the result as a quote, like quoteBuy and quoteSell, not as the lamport
+// the program will transfer.
+// ---------------------------------------------------------------------------
+
+/** Share of the losing pool paid to holders of the winning side. */
+export const SETTLEMENT_WINNING_TRADERS = 0.4;
+/** Share of the losing pool refunded to holders of the losing side. */
+export const SETTLEMENT_LOSING_TRADERS = 0.5;
+
+export interface ClaimQuote {
+  /** Lamports the claim pays, floored. */
+  lamportsOut: number;
+  /** The pool the claim draws on after settlement splits, in lamports. */
+  distributionLamports: number;
+  /** balance / supply, as a fraction. */
+  share: number;
+  /** Which formula applied. */
+  outcome: "won" | "lost";
+}
+
+/**
+ * What a holder claims once the battle settles.
+ *
+ * @param p.balance      Tokens held on the side being claimed (base units).
+ * @param p.sideSupply   That side's minted supply (offset 196 or 204).
+ * @param p.sidePool     That side's pool, lamports.
+ * @param p.otherPool    The opposing side's pool, lamports.
+ * @param p.won          Whether the held side won.
+ */
+export function quoteClaim(p: {
+  balance: number;
+  sideSupply: number;
+  sidePool: number;
+  otherPool: number;
+  won: boolean;
+}): ClaimQuote {
+  if (p.balance < 0 || p.sideSupply <= 0) throw new Error("balance must be >= 0 and supply > 0");
+  if (p.balance > p.sideSupply) {
+    throw new Error(`balance ${p.balance} exceeds the side's supply ${p.sideSupply}`);
+  }
+  const share = p.balance / p.sideSupply;
+  const distributionLamports = p.won
+    ? p.sidePool + SETTLEMENT_WINNING_TRADERS * p.otherPool
+    : SETTLEMENT_LOSING_TRADERS * p.sidePool;
+  return {
+    lamportsOut: Math.floor(share * distributionLamports),
+    distributionLamports,
+    share,
+    outcome: p.won ? "won" : "lost",
+  };
+}
