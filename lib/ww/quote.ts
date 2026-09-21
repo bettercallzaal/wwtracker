@@ -400,23 +400,53 @@ export const SETTLEMENT_WINNING_TRADERS = 0.4;
 export const SETTLEMENT_LOSING_TRADERS = 0.5;
 
 export interface ClaimQuote {
-  /** Lamports the claim pays, floored. */
+  /** Lamports the claim pays. EXACT: the program's own integer arithmetic. */
   lamportsOut: number;
   /** The pool the claim draws on after settlement splits, in lamports. */
   distributionLamports: number;
-  /** balance / supply, as a fraction. */
+  /** balance / supply, as a fraction (for display). */
   share: number;
+  /**
+   * The program's proportion, floor(balance * 1,000,000 / supply). This is
+   * where the residual everyone measured lived: the share is truncated to
+   * parts per million BEFORE it multiplies the pool, so a claim can be short by
+   * up to one millionth of the distribution. Exposed so a caller can show it.
+   */
+  proportionPpm: number;
   /** Which formula applied. */
   outcome: "won" | "lost";
 }
 
 /**
- * What a holder claims once the battle settles.
+ * What a holder claims once the battle settles, to the lamport.
+ *
+ * THE RESIDUAL IS EXPLAINED. Until 2026-09-21 this computed
+ * floor(share * distribution) with a float share and was within 20,000
+ * lamports of twelve real claims but exact on none of the round 2 ones. The
+ * ClaimShares program log prints its own steps:
+ *
+ *     Loser supply: 133300000
+ *     Loser balance: 64100000
+ *     Proportion (scaled by 1M): 480870
+ *     Loser pool: 37886360
+ *     Loser share pool (50%): 18943180
+ *     Loser share: 9109206
+ *
+ * So: proportion = floor(balance * 1e6 / supply), payout = floor(pool *
+ * proportion / 1e6), in integers. With that, and with the pools read as
+ * lamports from the account rather than rounded from the API, fifteen of
+ * fifteen real claims across three finals battles reproduce exactly
+ * (wwQuoteClaim.test.ts). The earlier "within 20,000" bound was half the
+ * formula and half rounded inputs.
+ *
+ * The 40% and 50% legs are integer too: otherPool * 40 / 100 and
+ * sidePool * 50 / 100, floored, which match EndBattle's logged
+ * "Winner's share from loser pool (40%)" and "Loser share pool (50%)" lines.
  *
  * @param p.balance      Tokens held on the side being claimed (base units).
  * @param p.sideSupply   That side's minted supply (offset 196 or 204).
- * @param p.sidePool     That side's pool, lamports.
- * @param p.otherPool    The opposing side's pool, lamports.
+ * @param p.sidePool     That side's pool, lamports, from the account.
+ * @param p.otherPool    The opposing side's pool, lamports, from the account.
  * @param p.won          Whether the held side won.
  */
 export function quoteClaim(p: {
@@ -430,14 +460,20 @@ export function quoteClaim(p: {
   if (p.balance > p.sideSupply) {
     throw new Error(`balance ${p.balance} exceeds the side's supply ${p.sideSupply}`);
   }
-  const share = p.balance / p.sideSupply;
-  const distributionLamports = p.won
-    ? p.sidePool + SETTLEMENT_WINNING_TRADERS * p.otherPool
-    : SETTLEMENT_LOSING_TRADERS * p.sidePool;
+  for (const [k, v] of Object.entries({ balance: p.balance, sideSupply: p.sideSupply, sidePool: p.sidePool, otherPool: p.otherPool })) {
+    if (!Number.isInteger(v)) throw new Error(`${k} must be whole lamports or base units, got ${v}`);
+  }
+  const PPM = 1_000_000n;
+  const distribution = p.won
+    ? BigInt(p.sidePool) + (BigInt(p.otherPool) * 40n) / 100n
+    : (BigInt(p.sidePool) * 50n) / 100n;
+  const proportion = (BigInt(p.balance) * PPM) / BigInt(p.sideSupply);
+  const lamportsOut = (distribution * proportion) / PPM;
   return {
-    lamportsOut: Math.floor(share * distributionLamports),
-    distributionLamports,
-    share,
+    lamportsOut: Number(lamportsOut),
+    distributionLamports: Number(distribution),
+    share: p.balance / p.sideSupply,
+    proportionPpm: Number(proportion),
     outcome: p.won ? "won" : "lost",
   };
 }
