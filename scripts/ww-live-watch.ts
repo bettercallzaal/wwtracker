@@ -71,7 +71,19 @@ async function findLive(): Promise<number[]> {
     const raw = Buffer.from(a.account.data[0], "base64");
     const s = read(raw);
     if (s.battleId < 1_600_000_000 || s.battleId > 2_600_000_000) continue;
-    if (s.endTime > now && !s.winnerDecided) live.push(s.battleId);
+    // Keep a battle until it actually settles, not until the clock runs out.
+    // Trades land in the final second and the settle lags the bell by up to a
+    // minute: on 2026-09-20 a 7.88 SOL buy hit battle 1789951764 at t-1s, the
+    // next poll fell at t+2s, endTime > now was false, the battle left this
+    // list, and its last stored state was never compared. That was 8.50 of the
+    // 9.58 SOL that moved in that round (11.2% coverage), reported all night
+    // as "106 exact, 1 mismatched" because the tally counts what it classified.
+    //
+    // THE GRACE BOUND IS LOAD-BEARING. `!s.winnerDecided` alone looks right
+    // and would subscribe this loop to the 81 battles that sit past end_time
+    // permanently unsettled on chain (measured 2026-09-20), every poll.
+    const GRACE = 300;
+    if (!s.winnerDecided && s.endTime > now - GRACE) live.push(s.battleId);
   }
   return live;
 }
@@ -143,7 +155,10 @@ async function main() {
         console.log(`${stamp()} ${id} joined  pools ${now.pool.a}/${now.pool.b}  supply ${now.supply.a}/${now.supply.b}  ends in ${left}s`);
         console.log(`${stamp()} ${id} curve check on join: A supply ${now.supply.a} vs curve ${Math.floor(supplyAtPool(now.pool.a))}, B ${now.supply.b} vs ${Math.floor(supplyAtPool(now.pool.b))}`);
       } else {
-        for (const side of ["a", "b"] as const) compare(id, side, before, now);
+        // Settlement is not a trade: it drains ~90% of the losing pool in one
+        // step and compare() would score that as a huge mismatch. Only price
+        // the delta while the battle is still open.
+        if (!now.winnerDecided) for (const side of ["a", "b"] as const) compare(id, side, before, now);
         if (!before.winnerDecided && now.winnerDecided)
           console.log(`${stamp()} ${id} SETTLED - winner_decided flipped to 1, winner ${now.pool.a >= now.pool.b ? "A" : "B"} by pool`);
       }
