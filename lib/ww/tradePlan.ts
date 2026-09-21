@@ -34,7 +34,15 @@ import {
   type BattleAccounts,
   type Instruction,
 } from "./instructions";
-import { BUY_POOL_SHARE, SUPPLY_QUANTUM, minimumSpendLamports, quoteBuy, quoteSell, withSlippage } from "./quote";
+import {
+  BUY_POOL_SHARE,
+  SUPPLY_QUANTUM,
+  minimumSpendLamports,
+  quoteBuy,
+  quoteSell,
+  supplyAtPool,
+  withSlippage,
+} from "./quote";
 import {
   PriceImpactExceededError,
   assessPriceImpact,
@@ -47,6 +55,13 @@ export interface BattleState {
   accounts: BattleAccounts;
   /** Lamports in each artist's pool, at the moment of the read. */
   poolLamports: { a: number; b: number };
+  /**
+   * Each side's MINTED supply, base units, from bytes 196 and 204. Optional
+   * because a caller quoting without the account cannot know it; when it is
+   * present a sell is priced off it, and when it is absent the plan says it
+   * priced off the curve instead (`supplySource`). See `planSell`.
+   */
+  mintedSupply?: { a: number; b: number };
 }
 
 /**
@@ -77,6 +92,10 @@ export function battleStateFromRaw(raw: Uint8Array): BattleState {
     poolLamports: {
       a: Number(view.getBigUint64(212, true)),
       b: Number(view.getBigUint64(220, true)),
+    },
+    mintedSupply: {
+      a: Number(view.getBigUint64(196, true)),
+      b: Number(view.getBigUint64(204, true)),
     },
   };
 }
@@ -236,6 +255,16 @@ export interface SellPlan {
   minSolOut: number;
   feeLamports: number;
   priceImpact: PriceImpactAssessment;
+  /**
+   * Which supply the quote was priced off. "minted" is the account's own
+   * figure and is what a transaction should be built from; "curve" is the
+   * fallback for a state read without the account, and overstates proceeds on
+   * a battle with many trades. A caller building a real sell from a "curve"
+   * plan should know it did.
+   */
+  supplySource: "minted" | "curve";
+  /** The supply figure actually used, base units. */
+  supplyUsed: number;
 }
 
 export interface PlanSellParams {
@@ -271,7 +300,16 @@ export interface PlanSellParams {
 export async function planSell(p: PlanSellParams): Promise<SellPlan> {
   const state = await p.readBattleState();
   const poolLamports = state.poolLamports[p.side];
-  const quote = quoteSell(poolLamports, p.amountTokens);
+  // THE MINTED SUPPLY, WHEN THE READ HAS IT. Until 2026-09-21 this called
+  // `quoteSell(pool, tokens)` and priced every sell off the curve's supply at
+  // that pool, which quote.ts documents as an upper bound: the minted total is
+  // a sum of floored deltas and drifts below the curve as a battle trades. The
+  // planner had the account and did not pass it. About 10 lamports on the
+  // measured case; more the longer a battle trades.
+  const minted = state.mintedSupply?.[p.side];
+  const quote = quoteSell(poolLamports, p.amountTokens, minted);
+  const supplySource = minted === undefined ? "curve" : "minted";
+  const supplyUsed = minted ?? supplyAtPool(poolLamports);
   const minSolOut = withSlippage(quote.lamportsOut, p.slippageBps);
 
   const priceImpact = assessPriceImpact(
@@ -305,6 +343,8 @@ export async function planSell(p: PlanSellParams): Promise<SellPlan> {
     minSolOut,
     feeLamports: quote.feeLamports,
     priceImpact,
+    supplySource,
+    supplyUsed,
   };
 }
 

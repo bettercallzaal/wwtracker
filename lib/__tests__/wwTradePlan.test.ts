@@ -286,3 +286,54 @@ describe("the headroom window, where the program mints and our floor reads 0", (
     expect(plan.estimatedTokensOut).toBe(0);
   });
 });
+
+/**
+ * The minted supply reaches the sell quote. Until 2026-09-21 `planSell` called
+ * `quoteSell(pool, tokens)` with no third argument, so every plan priced off
+ * the CURVE's supply at that pool - an upper bound that overstates proceeds on
+ * a battle with many trades, by about 10 lamports on the measured case and by
+ * more the longer a battle trades. quote.ts said to pass the minted supply
+ * "whenever you have the account, which is whenever you are about to sell", and
+ * the planner had the account and did not pass it.
+ */
+describe("planSell prices off the minted supply when the state carries it", () => {
+  const POOL = 5_000_000_000;
+  const tokens = 1_000_000;
+  const minted = Math.floor(supplyAtPool(POOL) * 0.996);
+  const sellBase = {
+    battleId,
+    trader,
+    side: "a" as const,
+    amountTokens: tokens,
+    slippageBps: 100,
+    deadlineSeconds: 60,
+    now: () => 1_700_000_000_000,
+  };
+
+  it("uses mintedSupply for the side being sold", async () => {
+    const plan = await planSell({
+      ...sellBase,
+      readBattleState: async () => ({ ...state(POOL), mintedSupply: { a: minted, b: minted * 2 } }),
+    });
+    expect(plan.estimatedLamportsOut).toBe(quoteSell(POOL, tokens, minted).lamportsOut);
+    expect(plan.estimatedLamportsOut).not.toBe(quoteSell(POOL, tokens).lamportsOut);
+    expect(plan.supplySource).toBe("minted");
+  });
+
+  it("still plans from the curve when the state has no supply, and says which it used", async () => {
+    const plan = await planSell({ ...sellBase, readBattleState: async () => state(POOL) });
+    expect(plan.estimatedLamportsOut).toBe(quoteSell(POOL, tokens).lamportsOut);
+    expect(plan.supplySource).toBe("curve");
+  });
+
+  it("battleStateFromRaw carries the minted supplies from bytes 196 and 204", async () => {
+    const { battleStateFromRaw } = await import("../ww/tradePlan");
+    const raw = new Uint8Array(Buffer.from(buyFixture.battle_account_base64, "base64"));
+    const s = battleStateFromRaw(raw);
+    const dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+    expect(s.mintedSupply).toEqual({
+      a: Number(dv.getBigUint64(196, true)),
+      b: Number(dv.getBigUint64(204, true)),
+    });
+  });
+});
