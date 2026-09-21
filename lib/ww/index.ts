@@ -399,10 +399,12 @@ export {
   HEARTBEAT_SECONDS,
   chartSeries,
   parseJsonl,
+  recordingState,
   serializeSample,
   shouldRecord,
   type ChartPoint,
   type PoolSample,
+  type RecordingState,
 } from "./poolHistory";
 
 // Pool history from the chain, for a battle the watcher did not watch: one

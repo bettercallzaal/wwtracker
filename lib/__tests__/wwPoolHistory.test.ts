@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { chartSeries, parseJsonl, serializeSample, shouldRecord, type PoolSample } from "../ww/poolHistory";
+import { chartSeries, parseJsonl, recordingState, serializeSample, shouldRecord, type PoolSample } from "../ww/poolHistory";
 import { historyPath, readHistory, recordSample } from "../poolHistoryStore";
 
 const s = (t: number, a = 1_000_000_000, b = 2_000_000_000, sa = 100_000, sb = 200_000): PoolSample => ({ t, a, b, sa, sb });
@@ -90,5 +90,25 @@ describe("the store on disk", () => {
 
   it("refuses a path for an id that is not a battle id", () => {
     expect(() => historyPath("/tmp", 12)).toThrow(/9 to 12/);
+  });
+});
+
+/**
+ * A dead watcher must not look like a quiet market. While a battle is live
+ * the heartbeat guarantees a sample every 30 s, so an old newest sample is
+ * the watcher's absence, not the market's silence.
+ */
+describe("recordingState", () => {
+  it("is none with no samples", () => {
+    expect(recordingState(null, 1000, true)).toBe("none");
+  });
+  it("is recording while the newest sample is inside heartbeat plus two polls", () => {
+    expect(recordingState(1000, 1000 + 30 + 6, true)).toBe("recording");
+  });
+  it("is stale on a live battle once the heartbeat has been missed", () => {
+    expect(recordingState(1000, 1000 + 30 + 7, true)).toBe("stale");
+  });
+  it("never calls a settled battle stale", () => {
+    expect(recordingState(1000, 1000 + 86_400, false)).toBe("recording");
   });
 });

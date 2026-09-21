@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
-import type { ChartPoint } from "@/lib/ww/poolHistory";
+import { recordingState, type ChartPoint } from "@/lib/ww/poolHistory";
 
 /**
  * The two pools over time, from /api/ww/pool-history, which the watcher fills.
@@ -30,6 +30,8 @@ export default function PoolChart({
 }) {
   const [series, setSeries] = useState<ChartPoint[] | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "not-recorded" | "error">("loading");
+  const [newestT, setNewestT] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
   useEffect(() => {
     let alive = true;
@@ -40,6 +42,8 @@ export default function PoolChart({
         if (!alive) return;
         if (j.status === "ok") {
           setSeries(j.series);
+          setNewestT(j.to ?? null);
+          setNow(Math.floor(Date.now() / 1000));
           setState("ok");
         } else if (j.status === "not-recorded") {
           setState("not-recorded");
@@ -95,6 +99,20 @@ export default function PoolChart({
           </ResponsiveContainer>
         </div>
       )}
+      {state === "ok" && (() => {
+        const rec = recordingState(newestT, now, live);
+        const age = newestT === null ? null : now - newestT;
+        // THE LINE THAT TELLS A DEAD WATCHER FROM A QUIET MARKET. On a live
+        // battle the heartbeat writes every 30 s, so an old newest sample means
+        // nobody is recording, and the chart above is history, not now.
+        return (
+          <p style={{ fontSize: 12, margin: "8px 0 0", color: rec === "stale" ? C.danger : C.dim, fontFamily: C.mono }}>
+            {rec === "recording" && live && `Recording. Last sample ${age}s ago.`}
+            {rec === "recording" && !live && "Settled. The series is complete."}
+            {rec === "stale" && `NOT RECORDING: last sample ${age}s ago on a live battle. The watcher is not running from this machine.`}
+          </p>
+        );
+      })()}
       <p style={{ color: C.dim, fontSize: 11, margin: "8px 0 0" }}>
         <span style={{ color: C.accent }}>A</span> {labels.a} <span style={{ color: C.blue, marginLeft: 12 }}>B</span> {labels.b}.
         Read from chain every 3 s by the watcher; a step is a trade landing.

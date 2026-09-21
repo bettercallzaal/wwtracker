@@ -26,10 +26,14 @@
 import { PROGRAM_ID, battlePda } from "@/lib/ww/pda";
 import { supplyAtPool } from "@/lib/ww/quote";
 import { recordSample, DEFAULT_DIR } from "../lib/poolHistoryStore";
+import { redactUrl } from "../lib/redact";
 import { shouldRecord, type PoolSample } from "../lib/ww/poolHistory";
 import { observe, spendForPoolDelta } from "@/lib/ww/tradeObservation";
 
-const RPC = "https://api.mainnet-beta.solana.com";
+// The keyed endpoint when the environment has one, the public one otherwise.
+// The public endpoint served a whole finals night, but it is shared and rate
+// limited per IP; a keyed URL is never printed, only its origin (redactUrl).
+const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 const arg = (n: string, d?: string) => {
   const i = process.argv.indexOf(n);
   return i > 0 ? process.argv[i + 1] : d;
@@ -123,7 +127,7 @@ function compare(id: number, side: "a" | "b", before: State, after: State) {
 }
 
 async function main() {
-  console.log(`watching, polling every ${EVERY / 1000}s. Ctrl-C to stop.\n`);
+  console.log(`watching, polling every ${EVERY / 1000}s via ${redactUrl(RPC)}, store ${STORE}. Ctrl-C to stop.\n`);
   const seen = new Map<number, State>();
   const lastRecorded = new Map<number, PoolSample>();
   let announcedWait = false;
