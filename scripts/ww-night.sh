@@ -13,6 +13,11 @@
 # It never edits .env.local and never prints a secret: a keyed RPC is shown
 # only as its origin. Flags are the operator's to set; this only checks them.
 set -u
+# Job control on, so every background job this script starts leads its own
+# process group and stop can end a whole tree by group id, and nothing else.
+# macOS has no setsid; this is what bash offers instead, and it is measured:
+# leader pgid == its pid, children share it, one group kill ends all of them.
+set -m
 cd "$(dirname "$0")/.." || exit 2
 ROOT="$(pwd)"
 PORT="${WW_PORT:-3520}"
@@ -92,12 +97,17 @@ cmd_status() {
   done
 }
 
+# Stop ends exactly the trees this script started, by process group. The first
+# version finished with `pkill -f "next-server (v"`, which matches EVERY Next
+# server on the machine. That pattern, run by hand at the end of a smoke test
+# on a spare port on 2026-09-22, killed the live server on :3520 and the outage
+# was reported as "died on its own"; then testing THIS fix, with the edit not
+# yet applied, ran the old stop and killed it a second time. A stop that can
+# hit something you did not start is not a stop.
 cmd_stop() {
   local w; w=$(watcher_pid); local s; s=$(server_pid)
-  if [ -n "$w" ]; then kill "$w" && echo "watcher stopped (pid $w)"; else echo "watcher was not running"; fi
-  # npm start forks next-server; kill the group the pidfile's process leads.
-  if [ -n "$s" ]; then pkill -P "$s" 2>/dev/null; kill "$s" 2>/dev/null; echo "server stopped (pid $s)"; else echo "server was not running"; fi
-  pkill -f "next-server \(v" 2>/dev/null || true
+  if [ -n "$w" ]; then kill -- "-$w" 2>/dev/null || kill "$w" 2>/dev/null; echo "watcher stopped (group $w)"; else echo "watcher was not running"; fi
+  if [ -n "$s" ]; then kill -- "-$s" 2>/dev/null || { pkill -P "$s" 2>/dev/null; kill "$s" 2>/dev/null; }; echo "server stopped (group $s)"; else echo "server was not running"; fi
   rm -f var/watcher.pid var/server.pid
 }
 
