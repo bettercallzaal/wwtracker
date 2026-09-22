@@ -449,3 +449,7 @@ export {
   type ConfirmResult,
   type SignatureStatus,
 } from "./confirm";
+
+// Settling: what endBattle will do, in the program's own numbers, before a
+// wallet signs it. Winner by pool, the three legs of the losing pool.
+export { describeAge, secondsSinceEnd, settlePreview, type SettlePreview } from "./settle";

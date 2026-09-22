@@ -87,11 +87,20 @@ export const ALLOWED_PROGRAMS = new Set([
   ASSOCIATED_TOKEN_PROGRAM_ID,
 ]);
 
-/** The three we relay, by discriminator. From chain/wavewarz.idl.json. */
+/**
+ * The four we relay, by discriminator. From chain/wavewarz.idl.json.
+ *
+ * endBattle joined on 2026-09-21 for the operator page. It is permissionless
+ * (seven accounts, no signer) and moves no money to the caller: it marks the
+ * winner and pays the 10% artist and platform legs out of the losing pool.
+ * The launch instructions stay OUT: relaying initializeBattle would launch a
+ * battle in our name, and the platform signs those.
+ */
 export const RELAYABLE = {
   buyShares: "28ef8a9a08256a6c",
   sellShares: "b8a4a910e79ec7c4",
   claimShares: "82831ded86146ef5",
+  endBattle: "5091d030b75ca870",
 } as const;
 
 export type RelayDecision =

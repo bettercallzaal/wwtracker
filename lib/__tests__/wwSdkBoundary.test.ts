@@ -33,7 +33,7 @@ const WW = join(process.cwd(), "lib", "ww");
  * widget flag reads `process.env`. They are still checked for portability
  * where it is free, but they are not promises to a consumer.
  */
-const SERVER_ONLY = new Set(["relayPolicy.ts", "rateLimit.ts", "widgetFlag.ts", "index.ts"]);
+const SERVER_ONLY = new Set(["relayPolicy.ts", "rateLimit.ts", "widgetFlag.ts", "operatorFlag.ts", "index.ts"]);
 
 const sourceFiles = readdirSync(WW).filter((f) => f.endsWith(".ts"));
 const read = (f: string) => readFileSync(join(WW, f), "utf8");
@@ -116,7 +116,7 @@ describe("portability, by inspection", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("only the deliberately server-only widget flag reads process", () => {
+  it("only the deliberately server-only flags (widget, operator) read process", () => {
     const users = sourceFiles.filter((f) => {
       return read(f)
         .split("\n")
@@ -125,7 +125,7 @@ describe("portability, by inspection", () => {
           return /\bprocess\./.test(code);
         });
     });
-    expect(users).toEqual(["widgetFlag.ts"]);
+    expect(users).toEqual(["operatorFlag.ts", "widgetFlag.ts"]);
   });
 });
 
