@@ -51,7 +51,7 @@ import {
   type ParsedMintAccount,
 } from "@/lib/ww/tokenEligibility";
 import { RelayBudget, callerKey } from "@/lib/ww/rateLimit";
-import { quoteClaim } from "@/lib/ww/quote";
+import { quoteClaim, quoteTieClaim } from "@/lib/ww/quote";
 import { redactUrl, redactSecrets } from "@/lib/redact";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
@@ -316,6 +316,37 @@ export async function GET(request: Request) {
     const claimable = claimablePositions(positions, vaultLamportsByBattle, settledByBattle).map((p) => {
       const st = settlementByBattle.get(p.battleId);
       if (!st) return { ...p, claimLamports: null, won: null };
+      // A TIED BATTLE IS NOT WON OR LOST. The program runs its own branch and
+      // pays the whole combined pool pro rata across BOTH sides in ONE claim
+      // (measured on battles 1774061797 and 1789783495, 2026-09-22). Quoting
+      // it side by side with the win/lose split was wrong by 1,652,499
+      // lamports on the real case and offered two claims where the chain
+      // takes one. The row is quoted for the wallet's holdings on both sides,
+      // and `tie` tells the panel to show it once.
+      // Equal AND non-empty: two zero pools are an untraded battle, not a tie,
+      // and there is nothing to pay from either way. The supply guard is the
+      // same shape - a tie with no tokens cannot be quoted, so it reports null
+      // rather than throwing inside the map.
+      if (st.poolA === st.poolB && st.poolA > 0 && st.supplyA + st.supplyB > 0) {
+        const otherSide = p.side === "a" ? "b" : "a";
+        const otherBalance = Number(
+          positions.find((q) => q.battleId === p.battleId && q.side === otherSide)?.amount ?? 0,
+        );
+        const bal = Number(p.amount);
+        if (!Number.isFinite(bal) || !Number.isFinite(otherBalance)) return { ...p, claimLamports: null, won: null, tie: true };
+        const q = quoteTieClaim({
+          balanceA: p.side === "a" ? bal : otherBalance,
+          balanceB: p.side === "b" ? bal : otherBalance,
+          supplyA: st.supplyA,
+          supplyB: st.supplyB,
+          poolALamports: st.poolA,
+          poolBLamports: st.poolB,
+        });
+        // Only the first side carries the amount, so a wallet holding both
+        // does not see the same payout twice.
+        const first = p.side === "a" || otherBalance === 0;
+        return { ...p, claimLamports: first ? q.lamportsOut : 0, won: null, tie: true };
+      }
       const won = st.winnerArtistA ? p.side === "a" : p.side === "b";
       const sideSupply = p.side === "a" ? st.supplyA : st.supplyB;
       const sidePool = p.side === "a" ? st.poolA : st.poolB;

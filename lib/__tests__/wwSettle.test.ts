@@ -22,11 +22,20 @@ describe("settlePreview", () => {
    * same way that day and simulates to the same answer while still unsettled.
    * The first version of this pin said ties go to A.
    */
-  it("gives a tie to B, as the program does, and says it was a tie", () => {
+  it("gives a tie to B, and pays the whole combined pool rather than a split", () => {
     const p = settlePreview(49_250_000, 49_250_000);
     expect(p.winner).toBe("b");
     expect(p.tie).toBe(true);
-    expect(p.winnerDistribution).toBe(49_250_000 + 19_700_000);
+    // MEASURED, and it corrects what this pin used to say. It asserted
+    // 68,950,000 - B's pool plus 40% of A's - which is the win/lose path. A
+    // tie does not take that path: battle 1789783495 paid its sole holder
+    // 98,500,000, the whole of both pools, and battle 1774061797 paid its two
+    // holders 157,599,841 of 157,600,000. Nothing goes to artists or the
+    // platform on a tie.
+    expect(p.combinedPoolLamports).toBe(98_500_000);
+    expect(p.winnerDistribution).toBe(98_500_000);
+    expect(p.loserSharePool).toBe(0);
+    expect(p.leavesVaultLamports).toBe(0);
     expect(settlePreview(6, 5).tie).toBe(false);
   });
 
