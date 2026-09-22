@@ -53,13 +53,13 @@ cmd_ready() {
   if [ "$b" = "200" ]; then pass "/battle/<id> is 200"; else fail "/battle/<id> is ${b}"; fi
   local ph; ph=$(curl -s --max-time 8 "http://localhost:${PORT}/api/ww/pool-history?battleId=1789948124" 2>/dev/null | head -c 60)
   case "$ph" in *'"status":"ok"'*) pass "pool-history serves the store (${ph}...)";; *) fail "pool-history did not answer ok: ${ph:-no response}";; esac
-  if [ "$FAILS" = "0" ]; then echo "READY"; else echo "NOT READY: ${FAILS} failing"; fi
+  if [ "$FAILS" = "0" ]; then echo "READY. Open http://localhost:${PORT}/battle/latest when the first battle starts; it jumps to the newest recorded battle."; else echo "NOT READY: ${FAILS} failing"; fi
   [ "$FAILS" = "0" ]
 }
 
 cmd_start() {
   if [ -z "$(watcher_pid)" ]; then
-    nohup npx tsx scripts/ww-live-watch.ts --every 3 --store "$STORE" > var/ww-live-watch.log 2>&1 &
+    nohup npx tsx scripts/ww-live-watch.ts --every 3 --idle-every 10 --store "$STORE" > var/ww-live-watch.log 2>&1 &
     echo $! > var/watcher.pid
     sleep 4; echo "watcher: $(tail -1 var/ww-live-watch.log)"
   else echo "watcher already running (pid $(watcher_pid))"; fi

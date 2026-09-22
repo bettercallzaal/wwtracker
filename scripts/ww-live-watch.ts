@@ -39,6 +39,13 @@ const arg = (n: string, d?: string) => {
   return i > 0 ? process.argv[i + 1] : d;
 };
 const EVERY = Number(arg("--every", "3")) * 1000;
+/**
+ * How often to look for a NEW battle while none is live. A full
+ * getProgramAccounts each time, so 30 s by default; on a battle night pass 10,
+ * because the chain opens about 45 s before the room hears it and a 30 s
+ * detection lag eats most of that window.
+ */
+const IDLE_EVERY = Number(arg("--idle-every", "30")) * 1000;
 const ONE = arg("--battle");
 /** Where each battle's pool series is appended, one JSONL per battle. `var/` is gitignored. */
 const STORE = arg("--store", DEFAULT_DIR)!;
@@ -127,7 +134,7 @@ function compare(id: number, side: "a" | "b", before: State, after: State) {
 }
 
 async function main() {
-  console.log(`watching, polling every ${EVERY / 1000}s via ${redactUrl(RPC)}, store ${STORE}. Ctrl-C to stop.\n`);
+  console.log(`watching, polling every ${EVERY / 1000}s (idle scan every ${IDLE_EVERY / 1000}s) via ${redactUrl(RPC)}, store ${STORE}. Ctrl-C to stop.\n`);
   const seen = new Map<number, State>();
   const lastRecorded = new Map<number, PoolSample>();
   let announcedWait = false;
@@ -149,7 +156,7 @@ async function main() {
       if (!ids.length) {
         if (!announcedWait) { console.log(`${stamp()} no live battle yet - still watching`); announcedWait = true; }
         beat();
-        await sleep(30_000);   // a full getProgramAccounts - do not hammer it
+        await sleep(IDLE_EVERY);   // a full getProgramAccounts - do not hammer it
         continue;
       }
       if (announcedWait) { console.log(`${stamp()} live battles appeared: ${ids.join(", ")}`); announcedWait = false; }
