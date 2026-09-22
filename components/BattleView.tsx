@@ -83,10 +83,12 @@ export default function BattleView({
     };
   }, [battleId]);
 
-  const labels = {
-    a: sides ? `${sides.a.artist} - ${sides.a.track}` : "Artist A",
-    b: sides ? `${sides.b.artist} - ${sides.b.track}` : "Artist B",
-  };
+  // Quick battles are song versus song and the API often has no handle for a
+  // side; "unknown artist - Song" reads as a bug, so an unknown artist shows
+  // the track alone.
+  const label = (s: SideInfo | undefined, fallback: string) =>
+    !s ? fallback : s.artist === "unknown artist" ? s.track : `${s.artist} - ${s.track}`;
+  const labels = { a: label(sides?.a, "Artist A"), b: label(sides?.b, "Artist B") };
   const live = chain ? !chain.settled && chain.endTime > Math.floor(Date.now() / 1000) : false;
 
   const panel: React.CSSProperties = { background: C.panel, border: `1px solid ${C.grid}`, borderRadius: 10, padding: 16 };

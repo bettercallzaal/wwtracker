@@ -53,20 +53,25 @@ cmd_ready() {
   if [ "$b" = "200" ]; then pass "/battle/<id> is 200"; else fail "/battle/<id> is ${b}"; fi
   local ph; ph=$(curl -s --max-time 8 "http://localhost:${PORT}/api/ww/pool-history?battleId=1789948124" 2>/dev/null | head -c 60)
   case "$ph" in *'"status":"ok"'*) pass "pool-history serves the store (${ph}...)";; *) fail "pool-history did not answer ok: ${ph:-no response}";; esac
-  if [ "$FAILS" = "0" ]; then echo "READY"; else echo "NOT READY: ${FAILS} failing"; fi
+  if [ "$FAILS" = "0" ]; then echo "READY. Open http://localhost:${PORT}/battle/latest when the first battle starts; it jumps to the newest recorded battle."; else echo "NOT READY: ${FAILS} failing"; fi
   [ "$FAILS" = "0" ]
 }
 
 cmd_start() {
   if [ -z "$(watcher_pid)" ]; then
-    nohup npx tsx scripts/ww-live-watch.ts --every 3 --store "$STORE" > var/ww-live-watch.log 2>&1 &
+    nohup npx tsx scripts/ww-live-watch.ts --every 3 --idle-every 10 --store "$STORE" > var/ww-live-watch.log 2>&1 &
     echo $! > var/watcher.pid
     sleep 4; echo "watcher: $(tail -1 var/ww-live-watch.log)"
   else echo "watcher already running (pid $(watcher_pid))"; fi
   if ! server_up; then
-    if [ ! -d .next ] || [ "$(find .next -maxdepth 1 -name BUILD_ID -newer package.json 2>/dev/null | wc -l | tr -d ' ')" = "0" ]; then
-      echo "building (var/build.log)..."; npm run build > var/build.log 2>&1 || { echo "BUILD FAILED, see var/build.log"; return 1; }
-    fi
+    # Rebuild when the build is not from this commit. The first version compared
+    # BUILD_ID to package.json's mtime, which a pull that adds a page does not
+    # touch, so it would have served a stale build with the new page missing.
+    local head; head=$(git rev-parse HEAD 2>/dev/null || echo unknown)
+    if [ ! -f .next/BUILD_ID ] || [ "$(cat var/built.sha 2>/dev/null)" != "$head" ]; then
+      echo "building ${head:0:7} (var/build.log)..."; npm run build > var/build.log 2>&1 || { echo "BUILD FAILED, see var/build.log"; return 1; }
+      echo "$head" > var/built.sha
+    else echo "build is current (${head:0:7})"; fi
     nohup npm run start -- -p "$PORT" > var/server.log 2>&1 &
     echo $! > var/server.pid
     for _ in $(seq 1 30); do server_up && break; sleep 1; done
