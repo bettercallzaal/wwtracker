@@ -152,13 +152,40 @@ export async function connect(
 }
 
 /**
- * Ask Phantom to sign a serialized message, and return the signature.
+ * The bytes a wallet is asked to sign: the full transaction, with an empty
+ * slot where its signature will go.
  *
- * NOT VERIFIED against a live extension. The request shape is Phantom's
- * documented `signTransaction` method; the response is documented as carrying a
- * base58 `signature`. Both response shapes seen in the wild are handled, and an
- * unrecognised one throws with what it actually got rather than returning
- * something that will fail later as a malformed transaction.
+ * THIS IS THE BUG OF 2026-09-21, AND IT COST A LIVE BATTLE. `signMessage` sent
+ * the bare MESSAGE, which was the documented shape when this was written and
+ * is not what the extension parses today. A wallet now deserializes what it is
+ * given as a TRANSACTION: it reads the first byte as a compact-u16 signature
+ * count, takes the next 64 bytes as a signature, and expects a message after
+ * them. Handed a bare message, our first byte (numRequiredSignatures, 1) reads
+ * as "one signature", the next 64 bytes of the header and account keys are
+ * eaten as that signature, and the parser runs off the end - which is exactly
+ * the error that came back, verbatim: "Reached end of buffer unexpectedly".
+ *
+ * Simulation never caught it because the relay is handed this same envelope
+ * and the RPC parses it correctly; only the wallet saw the bare message.
+ *
+ * Same shape as `assembleSignedTransaction`, with zeros instead of a
+ * signature, which is what an unsigned transaction is.
+ */
+export function unsignedTransaction(messageBytes: Uint8Array): Uint8Array {
+  const out = new Uint8Array(1 + 64 + messageBytes.length);
+  out[0] = 1; // one signature slot; compact-u16 encodes 1 as a single byte
+  out.set(messageBytes, 65);
+  return out;
+}
+
+/**
+ * Ask the wallet to sign, and return the signature.
+ *
+ * Sends the unsigned TRANSACTION, base58, via the provider's `signTransaction`
+ * request. Two response shapes are handled by `readSignature`: a base58
+ * `signature`, and a signature as bytes. A wallet that instead returns the
+ * whole signed transaction is handled too - the first 64 bytes after the count
+ * are the signature, and that is what `readSignature` is given.
  */
 export async function signMessage(
   provider: PhantomProvider,
@@ -168,12 +195,12 @@ export async function signMessage(
   try {
     result = await provider.request({
       method: "signTransaction",
-      params: { message: b58encode(messageBytes) },
+      params: { message: b58encode(unsignedTransaction(messageBytes)) },
     });
   } catch (err) {
     throw mapWalletError(err);
   }
-  return readSignature(result);
+  return readSignature(result, messageBytes.length);
 }
 
 /**
@@ -181,11 +208,22 @@ export async function signMessage(
  * `signMessage` so it is testable without a browser, which is the only part of
  * the signing path that can be.
  */
-export function readSignature(result: unknown): string {
-  const r = result as { signature?: unknown };
+export function readSignature(result: unknown, messageLength?: number): string {
+  const r = result as { signature?: unknown; serialize?: unknown; signatures?: unknown };
   if (typeof r?.signature === "string" && r.signature.length > 0) return r.signature;
   // Some builds return the signature as bytes rather than base58.
   if (r?.signature instanceof Uint8Array) return b58encode(r.signature);
+  // A wallet that hands back the whole SIGNED TRANSACTION rather than the
+  // signature: one count byte, then the 64 bytes we want, then the message we
+  // sent. Only read it this way when the length is exactly that, so a
+  // different payload is not silently chopped into a plausible-looking
+  // signature.
+  const bytes = result instanceof Uint8Array ? result : ArrayBuffer.isView(result as never)
+    ? new Uint8Array((result as ArrayBufferView).buffer, (result as ArrayBufferView).byteOffset, (result as ArrayBufferView).byteLength)
+    : null;
+  if (bytes && messageLength !== undefined && bytes.length === 1 + 64 + messageLength && bytes[0] === 1) {
+    return b58encode(bytes.slice(1, 65));
+  }
   if (typeof result === "string" && result.length > 0) return result;
   throw new WalletError(
     "unknown",

@@ -24,6 +24,7 @@ import {
   mapWalletError,
   readSignature,
   signMessage,
+  unsignedTransaction,
   watchWallet,
   type PhantomProvider,
 } from "../ww/wallet";
@@ -187,19 +188,23 @@ describe("connect", () => {
 });
 
 describe("signMessage", () => {
-  it("sends the message base58-encoded, under Phantom's documented method", async () => {
+  /**
+   * THIS TEST USED TO PIN THE BUG. It asserted the bare message was sent,
+   * which is what the wallet rejected live on 2026-09-21 with "Reached end of
+   * buffer unexpectedly". The contract is the unsigned TRANSACTION; the
+   * message must survive inside it byte for byte.
+   */
+  it("sends the unsigned transaction base58-encoded, with the message intact inside it", async () => {
     const request = vi.fn().mockResolvedValue({ signature: buyFixture.signature });
     const p = { isPhantom: true, request, on: vi.fn() } as unknown as PhantomProvider;
 
     await expect(signMessage(p, messageBytes)).resolves.toBe(buyFixture.signature);
     expect(request).toHaveBeenCalledWith({
       method: "signTransaction",
-      params: { message: b58encode(messageBytes) },
+      params: { message: b58encode(unsignedTransaction(messageBytes)) },
     });
-    // The encoding is the contract with the wallet: decoding what we sent must
-    // give back exactly the bytes we meant to sign.
-    const sent = request.mock.calls[0][0].params.message as string;
-    expect(Buffer.from(b58decode(sent)).toString("base64")).toBe(messageFixture.message_base64);
+    const sent = b58decode(request.mock.calls[0][0].params.message as string);
+    expect(Buffer.from(sent.slice(65)).toString("base64")).toBe(messageFixture.message_base64);
   });
 
   it("maps a rejection during signing", async () => {
@@ -249,5 +254,56 @@ describe("watchWallet", () => {
   it("does not throw when the provider has no off()", () => {
     const p = { isPhantom: true, on: vi.fn() } as unknown as PhantomProvider;
     expect(() => watchWallet(p, {})()).not.toThrow();
+  });
+});
+
+/**
+ * WHAT THE WALLET IS SENT. On 2026-09-21, live on battle 1790042941, Simulate
+ * passed and Phantom answered "Reached end of buffer unexpectedly" because it
+ * was handed the bare message. A wallet parses its input as a TRANSACTION, so
+ * the message alone makes it read our first byte as a signature count and run
+ * off the end. These pin the envelope and would have failed the old code.
+ */
+describe("what the wallet is asked to sign", () => {
+  it("is the unsigned TRANSACTION: a count byte, 64 zero bytes, then the message", () => {
+    const tx = unsignedTransaction(messageBytes);
+    expect(tx.length).toBe(1 + 64 + messageBytes.length);
+    expect(tx[0]).toBe(1);
+    expect(Array.from(tx.slice(1, 65))).toEqual(new Array(64).fill(0));
+    expect(Array.from(tx.slice(65))).toEqual(Array.from(messageBytes));
+  });
+
+  it("is the same envelope assembleSignedTransaction produces, minus the signature", () => {
+    const signed = assembleSignedTransaction(messageBytes, buyFixture.signature);
+    const unsigned = unsignedTransaction(messageBytes);
+    expect(unsigned.length).toBe(signed.length);
+    expect(Array.from(unsigned.slice(65))).toEqual(Array.from(signed.slice(65)));
+  });
+
+  it("sends that transaction to the provider, NOT the bare message", async () => {
+    let sentParams: unknown = null;
+    const provider = {
+      request: async (args: { method: string; params?: unknown }) => {
+        sentParams = args.params;
+        return { signature: buyFixture.signature };
+      },
+    } as unknown as PhantomProvider;
+    await signMessage(provider, messageBytes);
+    const sent = b58decode((sentParams as { message: string }).message);
+    expect(sent.length).toBe(1 + 64 + messageBytes.length);
+    // The old code sent exactly messageBytes; this is the assertion that fails on it.
+    expect(sent.length).not.toBe(messageBytes.length);
+    expect(Array.from(sent.slice(65))).toEqual(Array.from(messageBytes));
+  });
+
+  it("reads a signature out of a whole signed transaction, when that is what comes back", () => {
+    const signed = assembleSignedTransaction(messageBytes, buyFixture.signature);
+    expect(readSignature(signed, messageBytes.length)).toBe(buyFixture.signature);
+  });
+
+  it("does not chop an unexpected byte array into a signature", () => {
+    const wrong = new Uint8Array(1 + 64 + messageBytes.length + 3);
+    wrong[0] = 1;
+    expect(() => readSignature(wrong, messageBytes.length)).toThrow(/no signature/);
   });
 });

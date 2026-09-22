@@ -429,3 +429,6 @@ export {
   type BattleWindow,
   type Mark,
 } from "./windowReport";
+
+// The envelope a wallet is handed for signing: the unsigned transaction.
+export { unsignedTransaction } from "./wallet";
