@@ -6,7 +6,7 @@
 //
 // GATED WITH THE PAGE IT FEEDS, like /api/ww/live-battles: a getProgramAccounts
 // over about 1,700 accounts per request is the expensive read, and it answers
-// only where WW_OPERATOR is set. Same-origin, no-store, keyed RPC never
+// only where WW_OPERATOR is set. No CORS headers, no-store, keyed RPC never
 // printed.
 //
 // Decoded through lib/ww/discovery.ts, the same parser the watcher and the

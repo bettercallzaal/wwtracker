@@ -15,7 +15,8 @@
 // malformed reply: those are 502s, because reporting 0 for them would tell a
 // holder they hold nothing. See parseTokenAccountBalance.
 //
-// Same-origin only and rate limited on the relay's budget, like
+// No CORS headers (not a server-side origin check) and rate limited on the
+// relay's budget, like
 // /api/ww/claimable: it spends the keyed RPC on a caller-supplied address.
 
 import { associatedTokenAddress, mintPda } from "@/lib/ww/pda";

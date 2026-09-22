@@ -11,7 +11,7 @@
 // from an empty series. Building the series from trade history is possible
 // (every trade's pool delta is on chain) and is a separate piece of work.
 //
-// No RPC, no upstream: a file read on this machine. Same-origin, no-store.
+// No RPC, no upstream: a file read on this machine. No CORS headers, no-store.
 
 import { readHistory, DEFAULT_DIR } from "@/lib/poolHistoryStore";
 import { chartSeries } from "@/lib/ww/poolHistory";

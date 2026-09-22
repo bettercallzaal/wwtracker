@@ -12,7 +12,7 @@
 // The pools are decoded here as a convenience for the quote, which needs a
 // number rather than a buffer. They are the same offsets `decodeBattle` uses.
 //
-// Same-origin only, like /api/ww/trade and unlike the rest of /api/ww/*: this
+// No CORS headers, like /api/ww/trade and unlike the rest of /api/ww/*: this
 // spends the keyed RPC on request. It is a read, so it is cheaper to abuse than
 // the relay, but it is not free.
 

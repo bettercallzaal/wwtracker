@@ -16,7 +16,13 @@
 //
 // NOT CORS-OPEN, unlike /api/ww/positions and the embeds. This spends
 // SOLANA_RPC_URL per request and takes a caller-supplied address, so it answers
-// same-origin callers only and is rate limited on the same budget as the relay.
+// callers on this origin and is rate limited on the same budget as the relay.
+// "Same-origin" here means NO CORS HEADERS: another website's JavaScript
+// cannot read the response, and curl or a server can, because neither needs
+// CORS. There is no server-side origin check (measured 2026-09-22: the
+// deployed route answered an anonymous request carrying a foreign Origin).
+// That is acceptable because every byte it returns is public on chain, but it
+// is a cost anyone can spend, so the rate limit is the real guard.
 //
 // THE THREE READS, and why the third one is a check rather than a lookup:
 //   1. getTokenAccountsByOwner  - every token the wallet holds
