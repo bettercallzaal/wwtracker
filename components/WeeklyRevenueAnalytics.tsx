@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from "recharts";
 import { C, metaLabel } from "@/lib/theme";
-import { loadWeeklyRevenueFromCsv, WeeklyTrend, WeeklyRevenue } from "@/lib/treasuryAnalytics";
+import { loadWeeklyRevenueFromCsv, trendAge, WeeklyTrend, WeeklyRevenue } from "@/lib/treasuryAnalytics";
 import { getPublicStats } from "@/lib/wavewarzApi";
 import { toNum, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
 
@@ -31,6 +31,8 @@ interface WeeklyRevenueAnalyticsProps {
 export default function WeeklyRevenueAnalytics({ solPrice }: WeeklyRevenueAnalyticsProps) {
   const reduced = useReducedMotion();
   const [trend, setTrend] = useState<WeeklyTrend | null>(null);
+  // Why there is no trend, when there is none: a failed load is not an empty file.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   // The LIVE SOL price from the WaveWarZ API - never a hardcoded default, so USD
   // figures are real (this tracker's "no invented numbers" rule). Falls back to
@@ -48,15 +50,11 @@ export default function WeeklyRevenueAnalytics({ solPrice }: WeeklyRevenueAnalyt
         console.error("Failed to fetch live SOL price, using fallback:", err);
       }
       if (alive) setPrice(livePrice);
-      try {
-        const data = await loadWeeklyRevenueFromCsv(livePrice);
-        if (alive) {
-          setTrend(data);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error("Failed to load weekly revenue:", err);
-        if (alive) setLoading(false);
+      const load = await loadWeeklyRevenueFromCsv(livePrice);
+      if (alive) {
+        if (load.status === "live") setTrend(load.trend);
+        else setLoadError(load.error);
+        setLoading(false);
       }
     })();
     return () => {
@@ -85,19 +83,36 @@ export default function WeeklyRevenueAnalytics({ solPrice }: WeeklyRevenueAnalyt
     );
   }
 
+  if (loadError) {
+    return (
+      <p style={{ ...metaLabel, fontSize: 13, color: C.dim }}>
+        Could not load the treasury file: {loadError}
+      </p>
+    );
+  }
+
   if (!trend || !trend.current_week) {
     return (
       <p style={{ ...metaLabel, fontSize: 13, color: C.dim }}>
-        No revenue data available.
+        The treasury file has no rows.
       </p>
     );
   }
 
   const current = trend.current_week;
+  // "THIS WEEK" only when the file is within seven days of today. The CSV
+  // ended 2026-07-21 and these tiles said "this week" over it into September.
+  const age = trendAge(trend.last_recorded_date, Date.now());
+  const weekLabel = age.current ? "THIS WEEK" : `WEEK OF ${current.week_start_date}`;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* headline tiles - this week's revenue */}
+      <p style={{ ...metaLabel, fontSize: 12, color: age.current ? C.dim : C.danger, margin: 0 }}>
+        Treasury file through {trend.last_recorded_date}
+        {age.days !== null ? ` (${age.days} days ago)` : ""}
+        {age.current ? "" : ". Not this week's figures."}
+      </p>
+      {/* headline tiles - the newest recorded week's revenue */}
       <div
         style={{
           display: "grid",
@@ -105,7 +120,7 @@ export default function WeeklyRevenueAnalytics({ solPrice }: WeeklyRevenueAnalyt
           gap: 12,
         }}
       >
-        <Tile label="THIS WEEK GROSS INFLOW">
+        <Tile label={`${weekLabel} GROSS INFLOW`}>
           <span style={{ fontVariantNumeric: "tabular-nums" }}>
             {fmt(current.gross_inflow_sol, 2)} ◎
           </span>
@@ -113,7 +128,7 @@ export default function WeeklyRevenueAnalytics({ solPrice }: WeeklyRevenueAnalyt
             ~${usd(current.gross_inflow_sol, price)}
           </small>
         </Tile>
-        <Tile label="THIS WEEK NET FLOW">
+        <Tile label={`${weekLabel} NET FLOW`}>
           <span
             style={{
               color: current.net_flow_sol >= 0 ? C.good : C.danger,
@@ -126,7 +141,7 @@ export default function WeeklyRevenueAnalytics({ solPrice }: WeeklyRevenueAnalyt
             ~${usd(current.net_flow_sol, price)}
           </small>
         </Tile>
-        <Tile label="BATTLES THIS WEEK">
+        <Tile label={age.current ? "BATTLES THIS WEEK" : `BATTLES, ${weekLabel}`}>
           <span style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(current.battles_count)}</span>
           <small style={{ display: "block", color: C.dim, fontFamily: C.mono, fontSize: 11 }}>
             battles launched
