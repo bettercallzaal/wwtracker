@@ -145,11 +145,17 @@ async function main() {
   // A HEARTBEAT, because silence from a watcher is ambiguous and the ambiguity
   // is the bug. Without it "no trades yet" and "hung on a rate limit" look
   // identical, and the one you need to know about is the second.
-  let polls = 0, lastBeat = Date.now();
+  // Two counters, because they answer different questions. `polls` counts
+  // passes over live battles; `scans` counts the getProgramAccounts
+  // sweeps that find them, idle or not. Until 2026-09-22 the heartbeat printed only
+  // polls, which stops moving the moment the last battle ends, and a reader
+  // took 400 identical "1032 polls" heartbeats for a hang. The line now moves
+  // whenever the loop does.
+  let polls = 0, scans = 0, lastBeat = Date.now();
   const beat = () => {
     if (Date.now() - lastBeat < 60_000) return;
     lastBeat = Date.now();
-    console.log(`${stamp()} alive - ${polls} polls, ${rpcFailures} rpc failures, ${exact} exact, ${wrong} mismatched, ${merged} uncountable`);
+    console.log(`${stamp()} alive - ${polls} polls, ${scans} scans, ${rpcFailures} rpc failures, ${exact} exact, ${wrong} mismatched, ${merged} uncountable`);
   };
 
   for (;;) {
@@ -157,6 +163,7 @@ async function main() {
     if (ONE) ids = [Number(ONE)];
     else {
       ids = await findLive();
+      scans++;
       if (!ids.length) {
         if (!announcedWait) { console.log(`${stamp()} no live battle yet - still watching`); announcedWait = true; }
         beat();
