@@ -27,11 +27,19 @@
  * judged result is off chain and can differ. A settle preview says which side
  * the PROGRAM will call the winner, and nothing about who sang better.
  *
- * A TIE GOES TO B. Measured 2026-09-22 by simulating endBattle on battle
- * 1790042941, 49,250,000 lamports on each side: the program logged
- * "Winner decided: true, Winner is artist A: false". The first version of
- * this file said ties go to A (a `>=` nobody had checked); the tie was live
- * and the simulation said otherwise. scripts/ww-trade-helper.ts had it right.
+ * A TIE GOES TO B, AND IT HAS ALREADY PAID OUT. Battle 1789783495 closed with
+ * 49,250,000 lamports on each side and is settled: read from chain
+ * 2026-09-22, `winner_decided` (byte 245) is 1 and `winner_artist_a` (byte
+ * 244) is 0. So the money went to B in the real case, not just in a
+ * simulation. Battle 1790042941 closed the same way on 2026-09-22 and is
+ * still unsettled; simulating endBattle on it logs "Winner decided: true,
+ * Winner is artist A: false".
+ *
+ * This file shipped `poolA >= poolB` for a day on 2026-09-22 while
+ * `zao-vault/projects/wavewarz-protocol-truths.md` had said the opposite
+ * since 09-20, naming 1789783495. The fix came from re-deriving it on chain
+ * rather than from reading that file, which is the cheaper check and the one
+ * to run first.
  */
 
 export interface SettlePreview {

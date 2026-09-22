@@ -78,9 +78,21 @@ const IDL_ERRORS: ProgramError[] = [
   { code: 6003, name: "BattleNotActive", message: "Battle is not active", source: "idl" },
   { code: 6004, name: "InvalidStartTime", message: "Invalid start time", source: "idl" },
   { code: 6005, name: "InsufficientFunds", message: "Insufficient SOL balance", source: "idl" },
-  { code: 6006, name: "InvalidAmount", message: "Invalid token amount", source: "idl" },
+  {
+    code: 6006,
+    name: "InvalidAmount",
+    message: "Invalid token amount",
+    source: "idl",
+    advice: "A buy must carry a real slippage floor; the program refuses a floor of zero on a buy, though it accepts one on a sell. Nothing was traded.",
+  },
   { code: 6007, name: "MathOverflow", message: "Calculation overflow", source: "idl" },
-  { code: 6008, name: "InvalidCalculation", message: "Invalid calculation", source: "idl" },
+  {
+    code: 6008,
+    name: "InvalidCalculation",
+    message: "Invalid calculation",
+    source: "idl",
+    advice: "The amount is too small to mint a whole step at this pool size, so the program refused it rather than take the money. The minimum rises as the pool grows: about 0.000287 SOL at a 1 SOL pool. Try a larger amount.",
+  },
   {
     code: 6009,
     name: "BattleNotEnded",
