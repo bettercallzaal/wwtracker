@@ -401,6 +401,7 @@ export {
   parseJsonl,
   recordingState,
   serializeSample,
+  newestBattleId,
   shouldRecord,
   type ChartPoint,
   type PoolSample,
