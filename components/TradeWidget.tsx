@@ -128,6 +128,8 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
   const [balances, setBalances] = useState<{ a: number; b: number } | null>(null);
   /** Whether the balance on screen is known good, or still catching up after a trade. */
   const [balanceState, setBalanceState] = useState<"fresh" | "waiting" | "unconfirmed">("fresh");
+  /** Max is reading the chain; the button says so rather than looking dead. */
+  const [maxReading, setMaxReading] = useState(false);
   /**
    * How far the pool moved between the estimate on screen and the read the
    * transaction was actually built from. Surfaced rather than swallowed: the
@@ -513,17 +515,37 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
               <button
                 type="button"
                 style={button("plain")}
-                disabled={held === null || held === 0}
-                onClick={() => {
-                  if (held !== null) setAmountTokens(String(held));
+                disabled={maxReading || held === null || held === 0}
+                onClick={async () => {
+                  // FILL FROM THE FRESH READ, NOT THE ONE ON SCREEN. The first
+                  // version of this set the amount from `held` - state captured
+                  // at render - and only then asked the chain, so the fresh
+                  // answer landed in `balances` and never reached the input.
+                  // Its own comment claimed the opposite of what it did. If the
+                  // real balance had fallen, Max filled in tokens the wallet no
+                  // longer had and the sell failed at the token program with an
+                  // opaque error; if it had risen, Max quietly undersold.
                   resetOutcome();
-                  // Pressing Max is a person asking what they hold, so ask the
-                  // chain rather than answering from a number that may predate
-                  // their last trade.
-                  if (wallet) refreshBalances(wallet).catch(() => undefined);
+                  if (!wallet) {
+                    if (held !== null) setAmountTokens(String(held));
+                    return;
+                  }
+                  setMaxReading(true);
+                  try {
+                    const fresh = await readBalances(wallet);
+                    setBalances(fresh);
+                    setBalanceState("fresh");
+                    setAmountTokens(String(fresh[side]));
+                  } catch {
+                    // The read failed; fall back to what is on screen rather
+                    // than clearing the box, and leave the state line alone.
+                    if (held !== null) setAmountTokens(String(held));
+                  } finally {
+                    setMaxReading(false);
+                  }
                 }}
               >
-                Max
+                {maxReading ? "..." : "Max"}
               </button>
             </div>
             {wallet && held === 0 && (
