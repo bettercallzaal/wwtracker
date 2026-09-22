@@ -44,6 +44,7 @@ import {
   type BattleMint,
 } from "@/lib/ww/claim";
 import { TOKEN_PROGRAM_ID, vaultPda } from "@/lib/ww/pda";
+import { anyConsumerEnabled, notFoundResponse } from "@/lib/ww/apiSurface";
 import {
   TOKEN_2022_PROGRAM,
   checkTokenEligibility,
@@ -127,6 +128,9 @@ async function rpc<T>(method: string, params: unknown[]): Promise<T> {
 }
 
 export async function GET(request: Request) {
+  // Gated with the interface it serves (see lib/ww/apiSurface.ts). Zaal's
+  // ruling 2026-09-22: restrict these, do not merely describe them.
+  if (!anyConsumerEnabled(["trading"])) return notFoundResponse();
   const decision = budget.take(callerKey(request.headers));
   if (!decision.allowed) {
     return new Response(

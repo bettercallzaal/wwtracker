@@ -18,8 +18,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const WALLET = "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk";
 const realFetch = globalThis.fetch;
-beforeEach(() => vi.resetModules());
-afterEach(() => { globalThis.fetch = realFetch; vi.restoreAllMocks(); });
+const realEnv = process.env;
+// These routes are gated with the interface they serve (lib/ww/apiSurface.ts),
+// so the open path has to be asked for. Without this they answer 404 and the
+// assertions below would pass vacuously on a request that never happened.
+beforeEach(() => {
+  vi.resetModules();
+  process.env = { ...realEnv, WW_WIDGET: "1" };
+});
+afterEach(() => { globalThis.fetch = realFetch; process.env = realEnv; vi.restoreAllMocks(); });
 
 const ok = (result: unknown) => ({ ok: true, json: async () => ({ jsonrpc: "2.0", id: 1, result }) }) as unknown as Response;
 

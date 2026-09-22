@@ -8,20 +8,35 @@ Cached, CORS-open endpoints for showing live WaveWarZ numbers on your own pages.
 
 ## What "not for embedding" means here, exactly
 
-Endpoints marked **NOT for embedding** send **no CORS headers**. A browser on
-another site will refuse to hand the response to that site's JavaScript. That
-is the whole mechanism, and it is worth being precise about what it does not
-do: **there is no server-side origin check**. curl, a script or another server
-can call these and get an answer, because none of them needs CORS. Measured
-2026-09-22 against the deployment, an anonymous request carrying a foreign
-`Origin` header was answered normally.
+Endpoints marked **NOT for embedding** are **not present** in a deployment that
+does not run the interface they serve, and they send **no CORS headers** where
+they are present.
 
-That is a deliberate trade rather than an oversight. Everything these routes
-return is public on chain, so the concern is not disclosure; it is that several
-of them spend our keyed RPC per request. The guard for that is the per-IP rate
-limit, which answers `429` with `Retry-After`. Please use the CORS-open
-endpoints above instead: they are cached, they are faster for you, and they
-cost the chain nothing.
+**They are gated with their own interface** (since 2026-09-22). Each of these
+spends a keyed RPC call per request, and each exists for one screen:
+`/api/ww/claimable` and `/api/ww/token-balance` for the trade and claim panels,
+`/api/ww/trade` for those and the operator page, `/api/ww/diagnose` and
+`/api/ww/live-battles` for the finals dashboard, `/api/ww/unsettled` for the
+operator page. Where `WW_WIDGET`, `WW_OPERATOR` or `WW_FINALS` is unset, the
+screen is a 404 and so is the endpoint - and the 404 is returned before any
+upstream call is made, so the cost is closed and not merely the answer. On
+`wwtracker.vercel.app` all three are unset, so none of these exist there.
+
+**Where they are present, the only boundary is the absence of CORS headers.**
+A browser on another site will refuse to hand the response to that site's
+JavaScript; curl, a script or another server is not stopped, because none of
+them needs CORS. **There is no server-side origin check and there is no token.**
+An `Origin` header cannot do the job - a same-origin GET frequently sends none
+and curl never does - and a token a public page can fetch is a token anyone can
+fetch. Per-IP rate limiting still applies and answers `429` with `Retry-After`,
+but it bounds an accident rather than a determined caller.
+
+`/api/ww/battle-account` is deliberately NOT gated: the public battle page
+reads it for every visitor, so it has a real anonymous caller.
+
+Everything these routes return is public on chain, so the concern was never
+disclosure; it is the spend. Please use the CORS-open endpoints above instead:
+they are cached, they are faster for you, and they cost the chain nothing.
 
 ---
 
