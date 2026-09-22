@@ -26,10 +26,39 @@ export interface WeeklyRevenue {
 
 export interface WeeklyTrend {
   weeks: WeeklyRevenue[];
+  /** The newest week in the file. NOT "this week": see `last_recorded_date`. */
   current_week: WeeklyRevenue | null;
   all_time_gross_sol: number;
   all_time_net_sol: number;
+  /**
+   * The newest day the file records, ISO date, or null with no rows. The panel
+   * dates what it shows from this: the CSV ended 2026-07-21 and the tiles said
+   * "THIS WEEK" over it for two months (found 2026-09-22).
+   */
+  last_recorded_date: string | null;
 }
+
+/**
+ * How old the newest row is. `current` means within seven days, the one case
+ * where "this week" is an honest label; otherwise the panel says the date.
+ */
+export function trendAge(lastRecordedDate: string | null, nowMs: number): { days: number | null; current: boolean } {
+  if (!lastRecordedDate) return { days: null, current: false };
+  const then = Date.parse(`${lastRecordedDate}T00:00:00Z`);
+  if (Number.isNaN(then)) return { days: null, current: false };
+  const days = Math.max(0, Math.floor((nowMs - then) / 86_400_000));
+  return { days, current: days <= 7 };
+}
+
+/**
+ * The loader's answer, on the live / stale / unknown contract of lib/wwCache.ts,
+ * without stale: there is no last-good copy of a static file worth keeping.
+ * On unknown, `trend` is null and `error` says why, so the panel cannot show a
+ * failed fetch as "no revenue data".
+ */
+export type WeeklyTrendLoad =
+  | { status: "live"; trend: WeeklyTrend; error: null }
+  | { status: "unknown"; trend: null; error: string };
 
 function parseCsv(csv: string): TreasuryDay[] {
   const lines = csv.trim().split("\n");
@@ -81,21 +110,6 @@ function groupByWeek(days: TreasuryDay[]): Array<TreasuryDay[]> {
   return weeks;
 }
 
-export function computeWeeklyRevenue(solPrice: number): {
-  weeks: WeeklyRevenue[];
-  current_week_last_7_days: WeeklyRevenue | null;
-} {
-  // Fetch CSV from public/ww-daily-treasury.csv
-  // This is a client-side parse for now; in real use, read from the file at build/fetch time
-  const csvUrl = "/ww-daily-treasury.csv";
-
-  // Return a function that fetches and parses
-  return {
-    weeks: [],
-    current_week_last_7_days: null,
-  };
-}
-
 // Server-side version: parse CSV text directly
 export function parseWeeklyRevenueFromCsv(
   csvText: string,
@@ -108,6 +122,7 @@ export function parseWeeklyRevenueFromCsv(
       current_week: null,
       all_time_gross_sol: 0,
       all_time_net_sol: 0,
+      last_recorded_date: null,
     };
   }
 
@@ -145,23 +160,28 @@ export function parseWeeklyRevenueFromCsv(
     current_week: currentWeek,
     all_time_gross_sol: allTimeGrossSol,
     all_time_net_sol: allTimeNetSol,
+    last_recorded_date: days[days.length - 1].date,
   };
 }
 
-// Client-side hook to load CSV and compute weekly revenue
-export async function loadWeeklyRevenueFromCsv(solPrice: number): Promise<WeeklyTrend> {
+/** Just enough of fetch's Response to load a text file; injectable for tests. */
+type TextFetch = (url: string) => Promise<{ ok: boolean; status: number; text: () => Promise<string> }>;
+
+/**
+ * Client-side loader. Until 2026-09-22 a failed fetch returned an EMPTY trend,
+ * indistinguishable from a file with no rows, and the panel said "No revenue
+ * data available" for an outage. Now the answer says which it was.
+ */
+export async function loadWeeklyRevenueFromCsv(
+  solPrice: number,
+  fetchText: TextFetch = (u) => fetch(u),
+): Promise<WeeklyTrendLoad> {
   try {
-    const res = await fetch("/ww-daily-treasury.csv");
-    if (!res.ok) throw new Error(`Failed to fetch CSV: ${res.status}`);
+    const res = await fetchText("/ww-daily-treasury.csv");
+    if (!res.ok) return { status: "unknown", trend: null, error: `treasury file answered HTTP ${res.status}` };
     const csvText = await res.text();
-    return parseWeeklyRevenueFromCsv(csvText, solPrice);
+    return { status: "live", trend: parseWeeklyRevenueFromCsv(csvText, solPrice), error: null };
   } catch (err) {
-    console.error("Error loading weekly revenue:", err);
-    return {
-      weeks: [],
-      current_week: null,
-      all_time_gross_sol: 0,
-      all_time_net_sol: 0,
-    };
+    return { status: "unknown", trend: null, error: (err as Error).message ?? String(err) };
   }
 }
