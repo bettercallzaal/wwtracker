@@ -59,6 +59,13 @@ export interface ClaimablePosition {
   claimLamports?: number | null;
   /** Whether the held side is the program's winner. Null when unknown. */
   won?: boolean | null;
+  /**
+   * The battle ended with EXACTLY equal pools. The program does not treat that
+   * as a win or a loss: it pays its own tie branch, the whole of both pools
+   * pro rata across both sides, in one claim. `won` is null on these and
+   * `claimLamports` carries the single combined payout on the first side.
+   */
+  tie?: boolean;
 }
 
 /**

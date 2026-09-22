@@ -45,8 +45,14 @@
 export interface SettlePreview {
   /** Which side the program will mark as winner: the larger pool; a tie goes to B (measured). */
   winner: "a" | "b";
-  /** Both pools equal. The program picks B; said separately so a page can say so. */
+  /**
+   * Both pools equal. The winner byte records B, but NO win/lose split runs:
+   * the claim path pays the whole combined pool pro rata across both sides.
+   * On a tie, read `combinedPoolLamports` and ignore the win/lose fields.
+   */
   tie: boolean;
+  /** Both pools added. On a tie this is the entire amount paid to holders. */
+  combinedPoolLamports: number;
   winnerPoolLamports: number;
   loserPoolLamports: number;
   /** 40% of the losing pool, floored, added to the winner distribution. */
@@ -61,6 +67,20 @@ export interface SettlePreview {
   empty: boolean;
 }
 
+/**
+ * WHAT SETTLING A TIE DOES, which is not what the fields below describe.
+ *
+ * `winner`, `winnerDistribution` and `loserSharePool` model the program's
+ * win/lose path. A TIE DOES NOT TAKE THAT PATH. Measured 2026-09-22 on
+ * battles 1774061797 and 1789783495: the program runs a "Tie case" branch at
+ * CLAIM time and pays the whole of both pools pro rata across both sides, with
+ * no 40/50/10 split and nothing to artists or the platform. The winner byte
+ * still records artist B - 26 of 26 settled ties - but nobody is paid as a
+ * winner.
+ *
+ * So on a tie the numbers to show a person are `combinedPoolLamports` and
+ * `quoteTieClaim`, and `leavesVaultLamports` is 0 rather than 10%.
+ */
 export function settlePreview(poolA: number, poolB: number): SettlePreview {
   for (const [k, v] of Object.entries({ poolA, poolB })) {
     if (!Number.isInteger(v) || v < 0) throw new Error(`${k} must be whole lamports >= 0, got ${v}`);
@@ -71,9 +91,25 @@ export function settlePreview(poolA: number, poolB: number): SettlePreview {
   const L = BigInt(lose);
   const fortyPct = Number((L * 40n) / 100n);
   const fiftyPct = Number((L * 50n) / 100n);
+  if (poolA === poolB) {
+    // The tie branch: everything in both pools goes back to holders pro rata.
+    return {
+      winner: "b",
+      tie: true,
+      winnerPoolLamports: win,
+      loserPoolLamports: lose,
+      winnerShareFromLoser: 0,
+      winnerDistribution: poolA + poolB,
+      loserSharePool: 0,
+      leavesVaultLamports: 0,
+      combinedPoolLamports: poolA + poolB,
+      empty: poolA === 0 && poolB === 0,
+    };
+  }
   return {
     winner,
-    tie: poolA === poolB,
+    tie: false,
+    combinedPoolLamports: poolA + poolB,
     winnerPoolLamports: win,
     loserPoolLamports: lose,
     winnerShareFromLoser: fortyPct,

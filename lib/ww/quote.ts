@@ -449,6 +449,58 @@ export interface ClaimQuote {
  * @param p.otherPool    The opposing side's pool, lamports, from the account.
  * @param p.won          Whether the held side won.
  */
+/**
+ * WHAT A TIE PAYS, WHICH IS NOT THE WIN/LOSE SPLIT AT ALL.
+ *
+ * MEASURED 2026-09-22 against two real tied battles. The program has its own
+ * branch for this and prints "Tie case - Distribution" when it runs:
+ *
+ *   battle 1774061797, pools 78,800,000 each, supplies 198,300,000 and
+ *   198,400,000, two traders holding on both sides. One claimed 79.0773% and
+ *   was paid 124,625,824; the other claimed 20.9226% and was paid 32,974,017.
+ *   Together 157,599,841 of the 157,600,000 in the two pools, 159 lamports
+ *   lost to flooring, and the vault was left holding only its rent.
+ *
+ *   battle 1789783495, pools 49,250,000 each, one holder: proportion
+ *   100.0000%, paid 98,500,000, the whole of both pools.
+ *
+ * So on a tie:
+ *   - the two pools are added and the WHOLE of the combined amount is paid out
+ *   - a holder's proportion is their tokens ACROSS BOTH SIDES over the total
+ *     supply across both sides, in one claim, not one claim per side
+ *   - there is no 40/50/10 split and nothing goes to artists or the platform
+ *
+ * IT IS NOT A REFUND, THOUGH IT LOOKS LIKE ONE. Repayment is by token count,
+ * and tokens cost less earlier on the curve, so a tie moves money from late
+ * buyers to early ones. On 1774061797 the early trader put in 98,500,000 and
+ * took 124,625,824; the later one put in 59,100,000 and took 32,974,017. The
+ * battle was a draw and one of them lost 26,125,983 lamports to the other.
+ */
+export function quoteTieClaim(p: {
+  /** This wallet's tokens on side A, base units. Zero if it holds none. */
+  balanceA: number;
+  balanceB: number;
+  supplyA: number;
+  supplyB: number;
+  poolALamports: number;
+  poolBLamports: number;
+}): { lamportsOut: number; proportionPpm: number; distributionLamports: number } {
+  for (const [k, v] of Object.entries(p)) {
+    if (!Number.isInteger(v) || v < 0) throw new Error(`${k} must be a whole number >= 0, got ${v}`);
+  }
+  const totalSupply = BigInt(p.supplyA) + BigInt(p.supplyB);
+  if (totalSupply === 0n) throw new Error("a tied battle with no supply has nothing to claim");
+  const held = BigInt(p.balanceA) + BigInt(p.balanceB);
+  if (held > totalSupply) throw new Error(`held ${held} exceeds total supply ${totalSupply}`);
+  const distribution = BigInt(p.poolALamports) + BigInt(p.poolBLamports);
+  const proportion = (held * 1_000_000n) / totalSupply;
+  return {
+    lamportsOut: Number((distribution * proportion) / 1_000_000n),
+    proportionPpm: Number(proportion),
+    distributionLamports: Number(distribution),
+  };
+}
+
 export function quoteClaim(p: {
   balance: number;
   sideSupply: number;
@@ -457,6 +509,14 @@ export function quoteClaim(p: {
   won: boolean;
 }): ClaimQuote {
   if (p.balance < 0 || p.sideSupply <= 0) throw new Error("balance must be >= 0 and supply > 0");
+  // A TIE IS NOT THIS FUNCTION'S CASE. The program runs a separate branch and
+  // pays the whole combined pool pro rata across both sides; see
+  // quoteTieClaim. Answering with a win or a lose split here would be wrong by
+  // about 5% on the real case measured, and would offer two claims where the
+  // program takes one.
+  if (p.sidePool === p.otherPool) {
+    throw new Error("tied pools: use quoteTieClaim, the program settles a tie on its own branch");
+  }
   if (p.balance > p.sideSupply) {
     throw new Error(`balance ${p.balance} exceeds the side's supply ${p.sideSupply}`);
   }
