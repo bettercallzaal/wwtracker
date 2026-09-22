@@ -52,7 +52,10 @@ const budget = new RelayBudget();
  * any number of calls into one upstream request. That removes the amplification
  * rather than merely rationing it, which is the better fix where it is available.
  */
-const BLOCKHASH_CACHE_MS = 8_000;
+// 4 s, halved from 8 s on 2026-09-21. A finalized blockhash starts about 13 s
+// old, so the cache's own age is now a meaningful share of the window a person
+// has to approve in their wallet, and this route's traffic is one human.
+const BLOCKHASH_CACHE_MS = 4_000;
 let blockhashCache: { at: number; value: { blockhash: string; lastValidBlockHeight: number } } | null = null;
 
 type Json = Record<string, unknown>;
@@ -168,9 +171,24 @@ export async function POST(request: Request) {
       return json(200, { status: "ok", ...blockhashCache.value, cached: true });
     }
     try {
+      // FINALIZED, NOT CONFIRMED, AND THE DIFFERENCE IS A FAILED TRADE.
+      //
+      // Measured live twice on 2026-09-21, battle 1790044803: a trade the
+      // program had already accepted in simulation came back from send with
+      // {"err":"BlockhashNotFound"}. A public RPC endpoint is a POOL of
+      // machines. The blockhash was read from whichever node answered
+      // `prepare`, and the transaction was sent to whichever node answered
+      // `send` - a different one, a beat behind, which had never heard of that
+      // block. Nothing was wrong with the transaction.
+      //
+      // A finalized blockhash is about 13 s older, so every node in the pool
+      // already has it, and it still leaves the better part of a minute of the
+      // roughly 60 s validity window for a person to read a simulation and
+      // press approve in their wallet. Trading a few seconds of headroom for
+      // an error that cannot be retried out of is the right way round.
       const { value } = await rpc<{ value: { blockhash: string; lastValidBlockHeight: number } }>(
         "getLatestBlockhash",
-        [{ commitment: "confirmed" }],
+        [{ commitment: "finalized" }],
       );
       blockhashCache = { at: now, value };
       return json(200, { status: "ok", ...value, cached: false });
