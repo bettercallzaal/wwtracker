@@ -418,3 +418,14 @@ export {
   type TradeStep,
   type TxLike,
 } from "./poolBackfill";
+
+// The 45-second window, measured: marks typed in the room, the watcher's
+// samples and the account's clock, laid side by side per battle.
+export {
+  battleWindow,
+  describeWindow,
+  parseMarkLine,
+  parseMarks,
+  type BattleWindow,
+  type Mark,
+} from "./windowReport";
