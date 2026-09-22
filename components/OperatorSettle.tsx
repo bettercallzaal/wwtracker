@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { C, metaLabel } from "@/lib/theme";
 import {
   assembleSignedTransaction,
@@ -16,6 +16,7 @@ import { battleAccountsFromRaw, endBattleInstruction } from "@/lib/ww/instructio
 import { computeUnitLimitInstruction, computeUnitPriceInstruction, serializeMessage } from "@/lib/ww/message";
 import { lamportsToSol } from "@/lib/ww/quote";
 import { describeAge, secondsSinceEnd, type SettlePreview } from "@/lib/ww/settle";
+import { describeBatches, packSettleBatches, type SettleBatch } from "@/lib/ww/settleBatch";
 import { pollForChange } from "@/lib/ww/pollForChange";
 import { describeConfirmation, type ConfirmResult } from "@/lib/ww/confirm";
 
@@ -37,6 +38,16 @@ import { describeConfirmation, type ConfirmResult } from "@/lib/ww/confirm";
 
 const PRIORITY_MICRO_LAMPORTS = 1_000;
 const COMPUTE_UNITS = 60_000; // measured 11,936 units on a real simulation; headroom, not a guess doubled
+/** Any 32-byte blockhash sizes the same, so batches are packed with a placeholder and signed with a fresh one. */
+const SIZING_BLOCKHASH = "11111111111111111111111111111111";
+
+/** What a finished batch left behind, kept after its rows leave the list. */
+interface BatchResult {
+  index: number;
+  ids: number[];
+  signature: string;
+  confirmation: ConfirmResult | null;
+}
 
 interface Row {
   battleId: number;
@@ -75,6 +86,12 @@ export default function OperatorSettle() {
   const [error, setError] = useState<string | null>(null);
   const [states, setStates] = useState<Record<number, RowState>>({});
   const setRow = (id: number, s: RowState) => setStates((prev) => ({ ...prev, [id]: s }));
+  // The batch run: one approval per transaction instead of one per battle.
+  const [running, setRunning] = useState(false);
+  const [runStep, setRunStep] = useState<string | null>(null);
+  const [runDone, setRunDone] = useState<BatchResult[]>([]);
+  const [runError, setRunError] = useState<string | null>(null);
+  const stopRef = useRef(false);
 
   useEffect(() => {
     let tries = 0;
@@ -202,6 +219,107 @@ export default function OperatorSettle() {
     }
   }, [provider, states, build, rows, scanned, readAt]);
 
+  /** endBattle instructions for a set of rows, in the order given. */
+  const settleInstructions = useCallback(
+    (batch: Row[]) =>
+      batch.map((r) => endBattleInstruction({ battleId: r.battleId, battle: battleAccountsFromRaw(new Uint8Array(Buffer.from(r.account, "base64"))) })),
+    [],
+  );
+
+  /**
+   * The order settles run in: battles that still hold money first, oldest
+   * first inside each group. 71 of the 82 unsettled on 2026-09-22 had empty
+   * pools, and an empty settle distributes nothing; if a run is interrupted,
+   * the ones that matter are already done.
+   */
+  const orderedRows = useMemo(() => {
+    if (!rows) return [];
+    return [...rows].sort((a, b) => Number(a.preview.empty) - Number(b.preview.empty) || a.endTime - b.endTime);
+  }, [rows]);
+
+  const batches: Array<SettleBatch<Row>> = useMemo(() => {
+    if (!wallet || orderedRows.length === 0) return [];
+    return packSettleBatches(orderedRows, (batch) =>
+      serializeMessage(wallet, SIZING_BLOCKHASH, [
+        computeUnitLimitInstruction(1_400_000),
+        computeUnitPriceInstruction(PRIORITY_MICRO_LAMPORTS),
+        ...settleInstructions(batch),
+      ]).length,
+    );
+  }, [wallet, orderedRows, settleInstructions]);
+
+  /**
+   * Run every batch: simulate, sign, send, wait for the chain's word, next.
+   *
+   * SIMULATE EACH BATCH IMMEDIATELY BEFORE SIGNING IT, because one failed
+   * instruction fails the whole transaction: if anyone settles one of these
+   * between the scan and the signature, the batch would fail and the run stops
+   * and re-reads rather than spending an approval on it.
+   */
+  const runBatches = useCallback(async () => {
+    if (!provider || !wallet || batches.length === 0) return;
+    stopRef.current = false;
+    setRunning(true);
+    setRunError(null);
+    setRunDone([]);
+    try {
+      for (let i = 0; i < batches.length; i++) {
+        if (stopRef.current) { setRunStep(`Stopped after ${i} of ${batches.length}.`); return; }
+        const batch = batches[i];
+        const label = `Batch ${i + 1} of ${batches.length} (${batch.items.length} battles)`;
+        const ids = batch.items.map((r) => r.battleId);
+
+        setRunStep(`${label}: checking with the program...`);
+        const prep = await fetch("/api/ww/trade", {
+          method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "prepare" }),
+        }).then((r) => r.json());
+        if (prep.status !== "ok") throw new Error(prep.error ?? "could not get a blockhash");
+        const message = serializeMessage(wallet, prep.blockhash, [
+          computeUnitLimitInstruction(batch.unitLimit),
+          computeUnitPriceInstruction(PRIORITY_MICRO_LAMPORTS),
+          ...settleInstructions(batch.items),
+        ]);
+        const sim = await fetch("/api/ww/trade", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action: "preflight", transaction: Buffer.from(unsignedTransaction(message)).toString("base64") }),
+        }).then((r) => r.json());
+        if (sim.status !== "would-succeed") {
+          setRunError(`${label} would fail: ${sim.error ?? "unknown reason"}. Nothing was signed. Re-reading the list.`);
+          await load();
+          return;
+        }
+
+        setRunStep(`${label}: approve in your wallet...`);
+        const sig = await signMessage(provider, message);
+        const tx = assembleSignedTransaction(message, sig);
+        setRunStep(`${label}: sending...`);
+        const res = await fetch("/api/ww/trade", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action: "send", transaction: Buffer.from(tx).toString("base64") }),
+        }).then((r) => r.json());
+        if (res.status !== "sent") {
+          setRunError(`${label} was not sent: ${res.error ?? "no reason given"}.`);
+          return;
+        }
+        const confirmation: ConfirmResult | null = res.confirmation ?? null;
+        setRunDone((prev) => [...prev, { index: i + 1, ids, signature: res.signature, confirmation }]);
+        for (const id of ids) setRow(id, { phase: "done", signature: res.signature, confirmation, list: "waiting" });
+        if (confirmation && confirmation.outcome === "failed") {
+          setRunError(`${label} was rejected by the chain: ${confirmation.error ?? "no reason given"}. Stopping so the rest are not sent blind.`);
+          await load();
+          return;
+        }
+      }
+      setRunStep("All batches sent. Re-reading the program's accounts...");
+      await load();
+      setRunStep(null);
+    } catch (e) {
+      setRunError(mapWalletError(e).message);
+    } finally {
+      setRunning(false);
+    }
+  }, [provider, wallet, batches, settleInstructions, load]);
+
   const now = Math.floor(Date.now() / 1000);
   const settledHere = Object.entries(states).filter((e): e is [string, Extract<RowState, { phase: "done" }>] => e[1].phase === "done");
 
@@ -211,8 +329,8 @@ export default function OperatorSettle() {
       <h1 style={{ fontSize: 20, margin: "6px 0 4px" }}>Unsettled battles</h1>
       <p style={{ color: C.dim, fontSize: 13, margin: "0 0 16px" }}>
         Past their end time, winner_decided still 0 on chain. A claim against any of these fails until it is
-        settled. endBattle is permissionless: the wallet pays the network fee and receives nothing. Simulate
-        first; sign only after the program says it accepts.
+        settled. endBattle is permissionless: the wallet pays the network fee and receives nothing. Use
+        &quot;Settle everything&quot; for the whole list; the rows below are for settling one on its own.
       </p>
 
       <div style={{ ...panel, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
@@ -229,12 +347,60 @@ export default function OperatorSettle() {
 
       {error && <div style={{ ...panel, borderColor: C.danger, marginBottom: 12 }}><p style={{ margin: 0, fontSize: 13, color: C.danger }}>{error}</p></div>}
 
+      {/* SETTLE EVERYTHING, IN AS FEW APPROVALS AS THE PACKET ALLOWS. Several
+          endBattle instructions fit in one transaction, so 82 battles is 11
+          signatures rather than 82. Sized for a phone: one button, one line
+          saying what is happening. */}
+      {wallet && batches.length > 0 && (
+        <div style={{ ...panel, marginBottom: 12 }}>
+          <p style={{ ...metaLabel, margin: "0 0 6px" }}>Settle everything</p>
+          <p style={{ margin: "0 0 10px", fontSize: 13 }}>{describeBatches(batches)}</p>
+          <p style={{ margin: "0 0 10px", fontSize: 12, color: C.dim }}>
+            Battles that still hold money go first. Each transaction is checked with the program before
+            your wallet is asked, and the run stops if one would fail. You pay network fees only.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              style={{ ...button("accent"), padding: "12px 18px", fontSize: 15, flex: "1 1 220px" }}
+              disabled={running}
+              onClick={runBatches}
+            >
+              {running ? "Settling..." : `Settle all ${orderedRows.length} in ${batches.length} approvals`}
+            </button>
+            {running && (
+              <button type="button" style={{ ...button("plain"), padding: "12px 18px", fontSize: 15 }} onClick={() => { stopRef.current = true; }}>
+                Stop after this one
+              </button>
+            )}
+          </div>
+          {runStep && <p style={{ margin: "10px 0 0", fontSize: 13, color: C.accent }}>{runStep}</p>}
+          {runError && <p style={{ margin: "10px 0 0", fontSize: 13, color: C.danger }}>{runError}</p>}
+          {runDone.length > 0 && (
+            <p style={{ margin: "10px 0 0", fontSize: 12, color: C.dim }}>
+              {runDone.reduce((n, r) => n + r.ids.length, 0)} battles sent in {runDone.length} transaction
+              {runDone.length === 1 ? "" : "s"}
+              {runDone.some((r) => r.confirmation?.outcome !== "landed") ? "; not all confirmed yet, see below." : ", all confirmed on chain."}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Settles from this session live here, not in the row: a settled row
           leaves the list when the chain confirms it, and its message must not
           leave with it. */}
       {settledHere.length > 0 && (
         <div style={{ ...panel, marginBottom: 12 }}>
           <p style={{ ...metaLabel, margin: "0 0 6px" }}>Settled this session</p>
+          {runDone.map((r) => (
+            <div key={`batch-${r.index}`} style={{ fontSize: 12, marginBottom: 6 }}>
+              <span style={{ fontFamily: C.mono }}>Batch {r.index}</span>{" "}
+              <span style={{ color: C.dim }}>{r.ids.length} battles: {r.ids.join(", ")}</span>{" "}
+              <span style={{ color: r.confirmation?.outcome === "landed" ? C.accent : r.confirmation?.outcome === "failed" ? C.danger : C.dim }}>
+                {r.confirmation ? describeConfirmation(r.confirmation, r.signature) : `Sent (${r.signature.slice(0, 8)}...); the route reported no confirmation.`}
+              </span>
+            </div>
+          ))}
           {settledHere.map(([id, st]) => (
             <div key={id} style={{ fontSize: 12, marginBottom: 6 }}>
               <span style={{ fontFamily: C.mono }}>{id}</span>{" "}
