@@ -21,6 +21,7 @@ import { planBuy, planSell, poolMoveBps, type BattleState } from "@/lib/ww/trade
 import { describePriceImpact, type PriceImpactAssessment } from "@/lib/ww/priceImpact";
 import { lamportsToSol, quoteBuy, solToLamports, withSlippage } from "@/lib/ww/quote";
 import { sellEstimate, shareOfSide } from "@/lib/ww/widgetSell";
+import { pollForChange } from "@/lib/ww/pollForChange";
 
 /**
  * The trading widget. Stage 1: prove it here, then it moves to wavewarz.info and
@@ -125,6 +126,8 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
   const [signature, setSignature] = useState<string | null>(null);
   /** The wallet's tokens on each side, base units. null until read. */
   const [balances, setBalances] = useState<{ a: number; b: number } | null>(null);
+  /** Whether the balance on screen is known good, or still catching up after a trade. */
+  const [balanceState, setBalanceState] = useState<"fresh" | "waiting" | "unconfirmed">("fresh");
   /**
    * How far the pool moved between the estimate on screen and the read the
    * transaction was actually built from. Surfaced rather than swallowed: the
@@ -194,11 +197,39 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
    * after every sent trade, not on a timer: it changes only when this wallet
    * trades, and a timer would spend the RPC budget confirming that.
    */
-  const refreshBalances = useCallback(async (key: string) => {
+  const readBalances = useCallback(async (key: string): Promise<{ a: number; b: number }> => {
     const j = await fetch(`/api/ww/token-balance?battleId=${battleId}&wallet=${key}`).then((r) => r.json());
     if (j.status !== "ok") throw new Error(j.error ?? "could not read this wallet's tokens");
-    setBalances(j.balances);
+    return j.balances;
   }, [battleId]);
+
+  const refreshBalances = useCallback(async (key: string) => {
+    setBalances(await readBalances(key));
+  }, [readBalances]);
+
+  /**
+   * After a trade lands, READ AGAIN UNTIL IT MOVES.
+   *
+   * A single read here is the defect that cost the first live sell: the RPC
+   * had not processed the transaction yet, answered 0 correctly for that
+   * moment, and the widget told the person they held nothing while the chain
+   * held 10,800,000 tokens (battle 1790043661, 2026-09-21). `balanceState`
+   * says whether the number on screen is confirmed or still catching up, so
+   * the page can say which rather than showing a stale figure as fact.
+   */
+  const refreshBalancesAfterTrade = useCallback(async (key: string, before: { a: number; b: number } | null) => {
+    if (!before) return refreshBalances(key);
+    setBalanceState("waiting");
+    const r = await pollForChange({
+      read: () => readBalances(key),
+      from: before,
+      same: (x, y) => x.a === y.a && x.b === y.b,
+      attempts: 10,
+      delayMs: 1_500,
+    });
+    setBalances(r.value);
+    setBalanceState(r.changed ? "fresh" : "unconfirmed");
+  }, [readBalances, refreshBalances]);
 
   useEffect(() => {
     if (!wallet) return;
@@ -352,7 +383,7 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
         // The pool and this wallet's balance both changed. Re-read rather than
         // predict: what landed is what the chain says landed.
         readBattle(battleId).then(setBattle).catch(() => undefined);
-        if (wallet) refreshBalances(wallet).catch(() => undefined);
+        if (wallet) refreshBalancesAfterTrade(wallet, balances).catch(() => undefined);
       } else {
         setError(res.error ?? "The trade was not sent.");
         setPhase("ready");
@@ -361,7 +392,7 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
       setError(mapWalletError(e).message);
       setPhase("ready");
     }
-  }, [provider, preflight, build, battleId, wallet, refreshBalances]);
+  }, [provider, preflight, build, battleId, wallet, balances, refreshBalancesAfterTrade]);
 
   const Wrapper = embedded ? "div" : "main";
   return (
@@ -399,6 +430,13 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
           <p style={{ margin: 0, fontSize: 13, fontFamily: C.mono }}>
             <span style={{ color: C.dim }}>Connected </span>
             {wallet.slice(0, 6)}...{wallet.slice(-6)}
+          </p>
+        )}
+        {wallet && balances && battle && balanceState !== "fresh" && (
+          <p style={{ margin: "8px 0 0", fontSize: 12, color: balanceState === "waiting" ? C.dim : C.danger }}>
+            {balanceState === "waiting"
+              ? "Reading your new balance from chain..."
+              : "Your balance has not changed on chain yet. It can take a few seconds; press Max again in a moment."}
           </p>
         )}
         {wallet && balances && battle && (
@@ -479,6 +517,10 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
                 onClick={() => {
                   if (held !== null) setAmountTokens(String(held));
                   resetOutcome();
+                  // Pressing Max is a person asking what they hold, so ask the
+                  // chain rather than answering from a number that may predate
+                  // their last trade.
+                  if (wallet) refreshBalances(wallet).catch(() => undefined);
                 }}
               >
                 Max

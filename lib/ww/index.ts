@@ -432,3 +432,7 @@ export {
 
 // The envelope a wallet is handed for signing: the unsigned transaction.
 export { unsignedTransaction } from "./wallet";
+
+// Read again until the answer changes: for a balance that an RPC has not
+// caught up with yet, right after a trade.
+export { pollForChange, type PollResult } from "./pollForChange";
