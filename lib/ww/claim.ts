@@ -51,6 +51,14 @@ export interface ClaimablePosition {
   amount: string;
   /** Lamports in the battle's vault, from a read. Never a stored figure. */
   vaultLamports: number;
+  /**
+   * What THIS position claims, from quoteClaim on the battle's own bytes;
+   * null when the route could not compute it. Absent from the pure list
+   * builder, added by the route.
+   */
+  claimLamports?: number | null;
+  /** Whether the held side is the program's winner. Null when unknown. */
+  won?: boolean | null;
 }
 
 /**

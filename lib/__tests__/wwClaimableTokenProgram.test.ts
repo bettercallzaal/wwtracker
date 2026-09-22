@@ -171,6 +171,11 @@ describe("the classic path is unchanged", () => {
         mint: CLASSIC_MINT,
         amount: "150000000",
         vaultLamports: VAULT_RENT_FLOOR_LAMPORTS + 60_000_000,
+        // The mocked battle account carries no supply, so the per-position
+        // payout cannot be computed and the route says so with null rather
+        // than a number. `won` reads byte 244 of the same mock, which is 0.
+        claimLamports: null,
+        won: false,
       },
     ]);
     expect(body.totalPayableLamports).toBe(60_000_000);

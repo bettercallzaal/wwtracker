@@ -22,6 +22,7 @@ import { describePriceImpact, type PriceImpactAssessment } from "@/lib/ww/priceI
 import { lamportsToSol, quoteBuy, solToLamports, withSlippage } from "@/lib/ww/quote";
 import { sellEstimate, shareOfSide } from "@/lib/ww/widgetSell";
 import { pollForChange } from "@/lib/ww/pollForChange";
+import { describeConfirmation, type ConfirmResult } from "@/lib/ww/confirm";
 
 /**
  * The trading widget. Stage 1: prove it here, then it moves to wavewarz.info and
@@ -124,6 +125,8 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
   const [preflight, setPreflight] = useState<Preflight | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
+  /** The cluster's own word on the last send: landed, failed, or not known yet. */
+  const [confirmation, setConfirmation] = useState<ConfirmResult | null>(null);
   /** The wallet's tokens on each side, base units. null until read. */
   const [balances, setBalances] = useState<{ a: number; b: number } | null>(null);
   /** Whether the balance on screen is known good, or still catching up after a trade. */
@@ -381,6 +384,7 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
 
       if (res.status === "sent") {
         setSignature(res.signature);
+        setConfirmation(res.confirmation ?? null);
         setPhase("done");
         // The pool and this wallet's balance both changed. Re-read rather than
         // predict: what landed is what the chain says landed.
@@ -688,14 +692,22 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
         </div>
       )}
 
-      {signature && (
-        <div style={{ ...panel, borderColor: C.accent }}>
-          <p style={{ ...metaLabel, color: C.accent, marginBottom: 6 }}>Sent</p>
-          <p style={{ margin: 0, fontSize: 12, fontFamily: C.mono, wordBreak: "break-all" }}>
-            {signature}
-          </p>
-        </div>
-      )}
+      {signature && (() => {
+        // THE COLOUR FOLLOWS THE CHAIN, NOT THE BROADCAST. Landed is green,
+        // failed is red, unknown is neither: it is a true statement that we
+        // could not tell yet, and it shows the signature so the person can.
+        const tone = confirmation?.outcome === "landed" ? C.accent : confirmation?.outcome === "failed" ? C.danger : C.dim;
+        const label = confirmation?.outcome === "landed" ? "Landed" : confirmation?.outcome === "failed" ? "Rejected on chain" : "Sent, not confirmed";
+        return (
+          <div style={{ ...panel, borderColor: tone }}>
+            <p style={{ ...metaLabel, color: tone, marginBottom: 6 }}>{label}</p>
+            {confirmation && <p style={{ margin: "0 0 6px", fontSize: 13 }}>{describeConfirmation(confirmation, signature)}</p>}
+            <p style={{ margin: 0, fontSize: 12, fontFamily: C.mono, wordBreak: "break-all" }}>
+              {signature}
+            </p>
+          </div>
+        );
+      })()}
     </Wrapper>
   );
 }

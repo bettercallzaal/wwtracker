@@ -45,6 +45,7 @@ import {
   type ParsedMintAccount,
 } from "@/lib/ww/tokenEligibility";
 import { RelayBudget, callerKey } from "@/lib/ww/rateLimit";
+import { quoteClaim } from "@/lib/ww/quote";
 import { redactUrl, redactSecrets } from "@/lib/redact";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
@@ -212,6 +213,12 @@ export async function GET(request: Request) {
     // `winnerDecided` - see battleIsSettled. Read from the same bytes, so it
     // costs nothing extra.
     const settledByBattle = new Map<number, boolean>();
+    // The settlement inputs, from the same bytes: pools at 212/220, supplies
+    // at 196/204, the market winner at 244. With those, quoteClaim gives the
+    // wallet's own payout to the lamport (15 of 15 real claims, #340), which
+    // is what a person needs to see before signing. The panel used to show the
+    // vault total with a note that it was not their share.
+    const settlementByBattle = new Map<number, { poolA: number; poolB: number; supplyA: number; supplyB: number; winnerArtistA: boolean }>();
     battleAccounts.forEach((acct, i) => {
       if (!acct) return;
       const raw = new Uint8Array(Buffer.from(acct.data[0], "base64"));
@@ -220,6 +227,16 @@ export async function GET(request: Request) {
       battleIdByAuthority.set(authorities[i], id);
       const settled = battleIsSettled(raw);
       if (settled !== null) settledByBattle.set(id, settled);
+      if (raw.length >= 246) {
+        const dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+        settlementByBattle.set(id, {
+          poolA: Number(dv.getBigUint64(212, true)),
+          poolB: Number(dv.getBigUint64(220, true)),
+          supplyA: Number(dv.getBigUint64(196, true)),
+          supplyB: Number(dv.getBigUint64(204, true)),
+          winnerArtistA: raw[244] !== 0,
+        });
+      }
     });
 
     // Recovered, then CHECKED. A token whose authority is a real battle PDA but
@@ -285,7 +302,20 @@ export async function GET(request: Request) {
       if (acct) vaultLamportsByBattle.set(battleIds[i], acct.lamports);
     });
 
-    const claimable = claimablePositions(positions, vaultLamportsByBattle, settledByBattle);
+    const claimable = claimablePositions(positions, vaultLamportsByBattle, settledByBattle).map((p) => {
+      const st = settlementByBattle.get(p.battleId);
+      if (!st) return { ...p, claimLamports: null, won: null };
+      const won = st.winnerArtistA ? p.side === "a" : p.side === "b";
+      const sideSupply = p.side === "a" ? st.supplyA : st.supplyB;
+      const sidePool = p.side === "a" ? st.poolA : st.poolB;
+      const otherPool = p.side === "a" ? st.poolB : st.poolA;
+      const balance = Number(p.amount);
+      // A balance above the side's supply cannot happen on chain; if the read
+      // says so, report no figure rather than a wrong one.
+      if (!Number.isFinite(balance) || sideSupply <= 0 || balance > sideSupply) return { ...p, claimLamports: null, won };
+      return { ...p, claimLamports: quoteClaim({ balance, sideSupply, sidePool, otherPool, won }).lamportsOut, won };
+    });
+    const totalClaimLamports = claimable.reduce((sum, p) => sum + (p.claimLamports ?? 0), 0);
     const totalPayableLamports = [...new Set(claimable.map((c) => c.battleId))].reduce(
       (sum, id) => sum + vaultPayableLamports(vaultLamportsByBattle.get(id) ?? 0),
       0,
@@ -301,6 +331,9 @@ export async function GET(request: Request) {
       refused,
       scanned,
       totalPayableLamports,
+      // What THIS wallet is owed, summed from per-position quoteClaim; null
+      // figures are skipped, not counted as zero.
+      totalClaimLamports,
     });
   } catch (err) {
     return json(502, { status: "error", error: redactSecrets(String((err as Error).message)) });
