@@ -211,6 +211,10 @@ How many tokens one wallet holds on each side of one battle, read now: two
 `getTokenAccountBalance` calls on the two derived associated token accounts and
 nothing else. It exists for the widget's sell path, which needs the balance to
 cap the amount, offer "max" and show the share of the side that is leaving.
+Read at `confirmed` commitment (since 2026-09-22): the widget polls this after
+a trade until the balance moves, and the node's default, `finalized`, trails
+`confirmed` by about 13 s of that 15 s budget. `/api/ww/claimable` reads at
+`confirmed` for the same reason.
 
 | field | is |
 |---|---|

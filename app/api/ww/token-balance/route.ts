@@ -43,7 +43,11 @@ async function balanceOf(ata: string): Promise<{ amount: number; exists: boolean
   const res = await fetch(RPC, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getTokenAccountBalance", params: [ata] }),
+    // AT CONFIRMED, NOT THE DEFAULT. The widget polls this right after a trade
+    // until the balance moves (10 x 1.5 s). The node's default is finalized,
+    // about 13 s behind confirmed, which spent most of that budget on a
+    // balance the cluster had already agreed on. Audit 2026-09-22.
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getTokenAccountBalance", params: [ata, { commitment: "confirmed" }] }),
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`rpc getTokenAccountBalance: HTTP ${res.status}`);
