@@ -74,6 +74,10 @@ const read = (raw: Buffer) => ({
   supply: { a: Number(raw.readBigUInt64LE(196)), b: Number(raw.readBigUInt64LE(204)) },
   pool: { a: Number(raw.readBigUInt64LE(212)), b: Number(raw.readBigUInt64LE(220)) },
   winnerDecided: raw[245] !== 0,
+  // Byte 244, the program's own verdict. Read, not derived from the pools:
+  // a tie goes to B (measured 2026-09-22, battle 1790042941), and pools can
+  // move in the same slot the settle lands.
+  winnerArtistA: raw[244] !== 0,
 });
 type State = ReturnType<typeof read>;
 
@@ -186,7 +190,7 @@ async function main() {
         // the delta while the battle is still open.
         if (!now.winnerDecided) for (const side of ["a", "b"] as const) compare(id, side, before, now);
         if (!before.winnerDecided && now.winnerDecided)
-          console.log(`${stamp()} ${id} SETTLED - winner_decided flipped to 1, winner ${now.pool.a >= now.pool.b ? "A" : "B"} by pool`);
+          console.log(`${stamp()} ${id} SETTLED - winner_decided flipped to 1, winner ${now.winnerArtistA ? "A" : "B"} per byte 244${now.pool.a === now.pool.b ? " (pools tied)" : ""}`);
       }
       seen.set(id, now);
     }

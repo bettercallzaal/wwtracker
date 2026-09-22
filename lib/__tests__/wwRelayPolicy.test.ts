@@ -28,8 +28,10 @@ import {
   buySharesInstruction,
   claimSharesInstruction,
   initializeBattleInstruction,
+  initializeMintsInstruction,
   sellSharesInstruction,
   traderTokenAccountInstructions,
+  endBattleInstruction,
 } from "../ww/instructions";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, PROGRAM_ID } from "../ww/pda";
 
@@ -135,7 +137,7 @@ describe("what it refuses", () => {
     expect(d.reason).toMatch(/no WaveWarZ trade/);
   });
 
-  it("refuses a WaveWarZ instruction that is not one of the three trades", () => {
+  it("refuses a WaveWarZ instruction that is not relayable (the launch instructions)", () => {
     // initializeBattle's discriminator. The platform signs those, not a trader,
     // and relaying one would launch a battle in our name.
     // Built by the SDK's own launcher rather than hand-typed, so the day
@@ -155,14 +157,18 @@ describe("what it refuses", () => {
     expect(d.reason).toMatch(/not a relayable trade \(discriminator 756ca69f9252f6df\)/);
   });
 
-  it("refuses endBattle specifically, since settling in our name is the worst case", () => {
-    const endBattle = {
-      programId: PROGRAM_ID,
-      keys: [{ pubkey: trader, isSigner: true, isWritable: true }],
-      data: Uint8Array.from([0x50, 0x91, 0xd0, 0x30, 0xb7, 0x5c, 0xa8, 0x70]),
-    };
-    const d = decideRelay(build([endBattle]));
+  /**
+   * Until 2026-09-21 this pin was "refuses endBattle specifically". endBattle
+   * is relayable now, on purpose: it is permissionless, names no signer, and
+   * pays nothing to the caller (see RELAYABLE). What must stay refused is the
+   * OTHER half of a launch, initializeMints, which the SDK can also build.
+   */
+  it("refuses initializeMints, the other half of a launch", () => {
+    const mints = initializeMintsInstruction({ battleId: 1_788_580_997, payer: trader });
+    const d = decideRelay(build([mints]));
     expect(d.ok).toBe(false);
+    if (d.ok) return;
+    expect(d.reason).toMatch(/not a relayable trade \(discriminator bd54558eb1c83916\)/);
   });
 
   it("refuses a real trade with one foreign instruction smuggled alongside it", () => {
@@ -230,11 +236,12 @@ describe("what it refuses", () => {
   });
 });
 
-describe("all three trades are relayable", () => {
+describe("all four relayable instructions are relayable", () => {
   const cases = [
     ["buyShares", buySharesInstruction({ battleId: buyFixture.battle_id, trader, battle, artistA: true, amountLamports: 1, minTokensOut: 1, deadline: 1 })],
     ["sellShares", sellSharesInstruction({ battleId: buyFixture.battle_id, trader, battle, artistA: true, amountTokens: 1, minSolOut: 1, deadline: 1 })],
     ["claimShares", claimSharesInstruction({ battleId: buyFixture.battle_id, trader })],
+    ["endBattle", endBattleInstruction({ battleId: buyFixture.battle_id, battle })],
   ] as const;
 
   for (const [name, ix] of cases) {

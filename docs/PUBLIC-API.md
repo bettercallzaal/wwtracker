@@ -166,6 +166,22 @@ valid, so "no account here" is the only honest answer.
 If you want battle data to embed, use `/api/ww/battle` or `/api/ww/positions`,
 which are public, cached and CORS-open.
 
+### `GET /api/ww/unsettled` - NOT for embedding, gated by WW_OPERATOR
+
+Every battle past its end time whose `winner_decided` byte is still 0, from a
+`getProgramAccounts` over the program, decoded by `lib/ww/discovery.ts`. It is
+a 404 unless `WW_OPERATOR=1`, because the scan is the expensive read and the
+page it feeds (`/operator`) is an operator's page. Same-origin, no-store.
+
+| field | is |
+|---|---|
+| `battles[]` | `battleId`, `pubkey`, `startTime`, `endTime`, `poolLamports {a,b}`, `supply {a,b}`, `account` (the 256-byte discovery slice, base64, enough to build `endBattle`), `preview` |
+| `preview` | what the program will do: `winner` by pool (a tie goes to B, measured 2026-09-22 on battle 1790042941), `tie`, `winnerDistribution`, `loserSharePool`, `leavesVaultLamports` (the 10%), `empty` |
+| `scanned`, `count`, `readAt` | accounts read, rows returned, when |
+
+`endBattle` is permissionless and the relay accepts it since 2026-09-21; the
+launch instructions remain refused.
+
 ### `GET /api/ww/pool-history?battleId=<id>` - NOT for embedding
 
 The two pools and supplies of one battle over time, as `scripts/ww-live-watch.ts`
