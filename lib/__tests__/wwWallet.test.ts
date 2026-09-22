@@ -307,3 +307,40 @@ describe("what the wallet is asked to sign", () => {
     expect(() => readSignature(wrong, messageBytes.length)).toThrow(/no signature/);
   });
 });
+
+/**
+ * WHAT PHANTOM ACTUALLY RETURNED, live on 2026-09-21 after the person had
+ * already approved the trade: the signed transaction as an object, with
+ * `signatures[0]` the 64 bytes as a PLAIN OBJECT with numeric keys. A
+ * Uint8Array does not survive the extension's message channel as itself, so
+ * `instanceof Uint8Array` was false and a real signature was thrown away with
+ * "wallet returned no signature".
+ */
+describe("readSignature, against shapes real wallets return", () => {
+  const bytes = b58decode(buyFixture.signature);
+  const byteMap = Object.fromEntries(Array.from(bytes, (b, i) => [String(i), b]));
+
+  it("reads signatures[0] as a byte-map object, the shape that failed live", () => {
+    expect(readSignature({ signatures: [byteMap] })).toBe(buyFixture.signature);
+  });
+
+  it("reads a byte-map under signature, not only a real Uint8Array", () => {
+    expect(readSignature({ signature: byteMap })).toBe(buyFixture.signature);
+  });
+
+  it("reads signatures[0].signature, base58 or bytes", () => {
+    expect(readSignature({ signatures: [{ signature: buyFixture.signature }] })).toBe(buyFixture.signature);
+    expect(readSignature({ signatures: [{ signature: byteMap }] })).toBe(buyFixture.signature);
+  });
+
+  it("reads a node Buffer's json form and a plain number array", () => {
+    expect(readSignature({ signature: { type: "Buffer", data: Array.from(bytes) } })).toBe(buyFixture.signature);
+    expect(readSignature({ signature: Array.from(bytes) })).toBe(buyFixture.signature);
+  });
+
+  it("still refuses something that is not a signature", () => {
+    expect(() => readSignature({ signatures: [] })).toThrow(/no signature/);
+    expect(() => readSignature({ signature: { 0: 1, 2: 2 } })).toThrow(/no signature/);
+    expect(() => readSignature({ signatures: [{ 0: 1, 1: 2 }] })).toThrow(/no signature/);
+  });
+});
