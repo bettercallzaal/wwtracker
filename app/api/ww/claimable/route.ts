@@ -97,7 +97,9 @@ async function getAccounts<T>(keys: string[], encoding: "base64" | "jsonParsed")
   const out: Array<T | null> = [];
   for (let i = 0; i < keys.length; i += RPC_MAX_KEYS) {
     const page = keys.slice(i, i + RPC_MAX_KEYS);
-    const res = await rpc<{ value: Array<T | null> }>("getMultipleAccounts", [page, { encoding }]);
+    // Same commitment as the token-account read above, so a battle settled
+    // seconds ago is not "unsettled" beside a balance read from a newer slot.
+    const res = await rpc<{ value: Array<T | null> }>("getMultipleAccounts", [page, { encoding, commitment: "confirmed" }]);
     out.push(...res.value);
   }
   return out;
@@ -155,7 +157,10 @@ export async function GET(request: Request) {
         } } } } }> }>("getTokenAccountsByOwner", [
           wallet,
           { programId },
-          { encoding: "jsonParsed" },
+          // At confirmed: the claim panel polls this after a claim until the
+          // burned position leaves the list, and finalized trails confirmed
+          // by about 13 s of its 15 s budget. Audit 2026-09-22.
+          { encoding: "jsonParsed", commitment: "confirmed" },
         ]);
         return { programId, accounts: owned.value };
       }),
