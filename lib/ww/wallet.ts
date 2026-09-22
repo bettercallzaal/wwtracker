@@ -209,26 +209,84 @@ export async function signMessage(
  * the signing path that can be.
  */
 export function readSignature(result: unknown, messageLength?: number): string {
-  const r = result as { signature?: unknown; serialize?: unknown; signatures?: unknown };
+  const r = result as {
+    signature?: unknown;
+    signatures?: unknown;
+  };
+
+  // A base58 signature, the simplest and documented shape.
   if (typeof r?.signature === "string" && r.signature.length > 0) return r.signature;
-  // Some builds return the signature as bytes rather than base58.
-  if (r?.signature instanceof Uint8Array) return b58encode(r.signature);
-  // A wallet that hands back the whole SIGNED TRANSACTION rather than the
-  // signature: one count byte, then the 64 bytes we want, then the message we
-  // sent. Only read it this way when the length is exactly that, so a
-  // different payload is not silently chopped into a plausible-looking
-  // signature.
-  const bytes = result instanceof Uint8Array ? result : ArrayBuffer.isView(result as never)
-    ? new Uint8Array((result as ArrayBufferView).buffer, (result as ArrayBufferView).byteOffset, (result as ArrayBufferView).byteLength)
-    : null;
-  if (bytes && messageLength !== undefined && bytes.length === 1 + 64 + messageLength && bytes[0] === 1) {
-    return b58encode(bytes.slice(1, 65));
+
+  // Bytes, in any of the forms that survive the trip out of an extension.
+  const sig = toBytes(r?.signature);
+  if (sig && sig.length === 64) return b58encode(sig);
+
+  // THE SHAPE PHANTOM ACTUALLY RETURNED, live on 2026-09-21: the whole signed
+  // transaction as an object, with `signatures` an array whose first entry is
+  // the 64 bytes - and those bytes arrive as a PLAIN OBJECT with numeric keys,
+  // because a Uint8Array does not survive the extension's message channel as
+  // itself. `instanceof Uint8Array` was false and the signature was thrown
+  // away with "wallet returned no signature", after the person had already
+  // approved it in Phantom.
+  if (Array.isArray(r?.signatures) && r.signatures.length > 0) {
+    const first = r.signatures[0] as { signature?: unknown } | unknown;
+    if (typeof (first as { signature?: unknown })?.signature === "string") {
+      return (first as { signature: string }).signature;
+    }
+    const inner = toBytes((first as { signature?: unknown })?.signature) ?? toBytes(first);
+    if (inner && inner.length === 64) return b58encode(inner);
   }
+
+  // The whole signed transaction as bytes: one count byte, the 64 we want,
+  // then the message we sent. Length-checked so an unexpected payload is not
+  // chopped into a plausible-looking signature.
+  const whole = toBytes(result);
+  if (whole && messageLength !== undefined && whole.length === 1 + 64 + messageLength && whole[0] === 1) {
+    return b58encode(whole.slice(1, 65));
+  }
+
   if (typeof result === "string" && result.length > 0) return result;
   throw new WalletError(
     "unknown",
     `wallet returned no signature - got ${JSON.stringify(result)?.slice(0, 120)}`,
   );
+}
+
+/**
+ * Bytes out of whatever a wallet handed back.
+ *
+ * An extension talks to the page over a message channel, and a `Uint8Array`
+ * does not always arrive as one: it can come back as a plain object with
+ * numeric keys, as a plain array, or as a `{type:"Buffer",data:[...]}`. A
+ * reader that only knows `instanceof Uint8Array` silently fails on a
+ * signature the person has already approved.
+ */
+function toBytes(v: unknown): Uint8Array | null {
+  if (v instanceof Uint8Array) return v;
+  if (ArrayBuffer.isView(v)) {
+    const view = v as ArrayBufferView;
+    return new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+  }
+  if (Array.isArray(v)) {
+    return v.every((n) => typeof n === "number") ? Uint8Array.from(v as number[]) : null;
+  }
+  if (v && typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    if (Array.isArray(o.data) && o.data.every((n) => typeof n === "number")) {
+      return Uint8Array.from(o.data as number[]);
+    }
+    // Numeric keys 0..n-1, the byte-map form.
+    const keys = Object.keys(o);
+    if (keys.length === 0 || !keys.every((k) => /^\d+$/.test(k))) return null;
+    const out = new Uint8Array(keys.length);
+    for (let i = 0; i < keys.length; i++) {
+      const b = o[String(i)];
+      if (typeof b !== "number" || !Number.isInteger(b) || b < 0 || b > 255) return null;
+      out[i] = b;
+    }
+    return out;
+  }
+  return null;
 }
 
 /**
