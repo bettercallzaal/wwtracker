@@ -453,3 +453,18 @@ export {
 // Settling: what endBattle will do, in the program's own numbers, before a
 // wallet signs it. Winner by pool, the three legs of the losing pool.
 export { describeAge, secondsSinceEnd, settlePreview, type SettlePreview } from "./settle";
+
+// Settling many at once: several endBattle instructions fit in one
+// transaction, so a long list of unsettled battles costs a few approvals
+// rather than one each. The packer measures the real message.
+export {
+  describeBatches,
+  packSettleBatches,
+  unitLimitFor,
+  MAX_UNITS,
+  SIGNATURE_BYTES,
+  TRANSACTION_PACKET_BYTES,
+  UNITS_OVERHEAD,
+  UNITS_PER_SETTLE,
+  type SettleBatch,
+} from "./settleBatch";
