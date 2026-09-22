@@ -6,6 +6,25 @@ Cached, CORS-open endpoints for showing live WaveWarZ numbers on your own pages.
 
 ---
 
+## What "not for embedding" means here, exactly
+
+Endpoints marked **NOT for embedding** send **no CORS headers**. A browser on
+another site will refuse to hand the response to that site's JavaScript. That
+is the whole mechanism, and it is worth being precise about what it does not
+do: **there is no server-side origin check**. curl, a script or another server
+can call these and get an answer, because none of them needs CORS. Measured
+2026-09-22 against the deployment, an anonymous request carrying a foreign
+`Origin` header was answered normally.
+
+That is a deliberate trade rather than an oversight. Everything these routes
+return is public on chain, so the concern is not disclosure; it is that several
+of them spend our keyed RPC per request. The guard for that is the per-IP rate
+limit, which answers `429` with `Retry-After`. Please use the CORS-open
+endpoints above instead: they are cached, they are faster for you, and they
+cost the chain nothing.
+
+---
+
 ## Why use this instead of calling wavewarz.info directly
 
 `wavewarz.info` publishes an open API with no key and no enforced rate limit. It is
@@ -121,7 +140,8 @@ slippage floor, flagging a buy carrying a floor of 0 - which the program
 rejects outright with `InvalidAmount (6006)`. Same answers as
 `scripts/ww-doctor.ts` and `scripts/ww-explain.ts`.
 
-Same-origin only. It spends the keyed endpoint per request, and every error is
+No CORS headers (see "What 'not for embedding' means here"). It spends the
+keyed endpoint per request, and every error is
 passed through `redactSecrets` first, because an RPC failure message carries
 the endpoint and the endpoint carries the key.
 
@@ -131,7 +151,7 @@ Every battle that is running right now, decoded from one `getProgramAccounts`,
 plus a count of those past their end time and never settled. Optional
 `?battle=<id>` pins one battle whatever its phase.
 
-Same-origin only. `getProgramAccounts` over ~1,700 accounts is the most
+No CORS headers. `getProgramAccounts` over ~1,700 accounts is the most
 expensive call this estate makes and it spends the keyed endpoint per request,
 so it is not CORS-open and not cached.
 
@@ -147,7 +167,7 @@ Feeds `/finals`. If you want battle data to embed, use `/api/ww/battle` or
 
 ### `GET /api/ww/battle-account?battleId=<id>` - NOT for embedding
 
-Same-origin only, like `/api/ww/trade`. It returns the raw Battle account as
+No CORS headers, like `/api/ww/trade`. It returns the raw Battle account as
 base64, plus what the widget needs decoded from it: `poolALamports`,
 `poolBLamports`, `supplyA`, `supplyB` (minted supply per side, base units, bytes
 196 and 204), `endTime`, `winnerArtistA` (the MARKET winner byte, the larger
@@ -171,7 +191,7 @@ which are public, cached and CORS-open.
 Every battle past its end time whose `winner_decided` byte is still 0, from a
 `getProgramAccounts` over the program, decoded by `lib/ww/discovery.ts`. It is
 a 404 unless `WW_OPERATOR=1`, because the scan is the expensive read and the
-page it feeds (`/operator`) is an operator's page. Same-origin, no-store.
+page it feeds (`/operator`) is an operator's page. No CORS headers, no-store.
 
 | field | is |
 |---|---|
@@ -206,7 +226,7 @@ Measured exact on 1789948124 (49 trades) on 2026-09-21.
 
 ### `GET /api/ww/token-balance?battleId=<id>&wallet=<address>` - NOT for embedding
 
-Same-origin only and rate limited on the relay's budget, like `/api/ww/claimable`.
+No CORS headers and rate limited on the relay's budget, like `/api/ww/claimable`.
 How many tokens one wallet holds on each side of one battle, read now: two
 `getTokenAccountBalance` calls on the two derived associated token accounts and
 nothing else. It exists for the widget's sell path, which needs the balance to
@@ -230,8 +250,8 @@ nothing.
 
 ### `GET /api/ww/claimable?wallet=<address>` - NOT for embedding
 
-**Same-origin only, like `/api/ww/trade`.** No CORS headers, so a browser on
-another site will refuse the response. Documented because an undocumented route
+**No CORS headers, like `/api/ww/trade`**, so a browser on another site will
+refuse the response - and a non-browser caller is not stopped at all. Documented because an undocumented route
 is worse than a documented refusal, not because it is available. Rate limited on
 the same budget as the relay, and it answers with `Retry-After` when it refuses.
 
@@ -276,9 +296,11 @@ never reported as zero - the rule at the bottom of this page applies here too.
 
 ### `POST /api/ww/trade` - NOT for embedding
 
-**Every other endpoint on this page is yours to call. This one is not.** It is
-same-origin only: it sends no CORS headers, so a browser on another site will
-refuse the response. It is listed here because an undocumented route is worse
+**Every other endpoint on this page is yours to call. This one is not.** It
+sends no CORS headers, so a browser on another site will refuse the response.
+It is a POST that changes nothing on its own - it relays a transaction your
+own wallet has already signed - so the missing CORS headers are the boundary,
+not an authorisation check. It is listed here because an undocumented route is worse
 than a documented refusal, not because it is available.
 
 It exists because the trading widget has to reach an RPC and ours is keyed. The

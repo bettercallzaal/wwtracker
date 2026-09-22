@@ -11,7 +11,9 @@
 // called that endpoint healthy and been right about everything except the tool
 // that needed it.
 //
-// Same-origin only. It spends the keyed endpoint per request and every error
+// No CORS headers, so another site's JavaScript cannot read it; that is not a
+// server-side origin check and curl is unaffected. It spends the keyed
+// endpoint per request and every error
 // goes through redactSecrets, because an RPC failure message carries the
 // endpoint and the endpoint carries the key.
 import { PROGRAM_ID, battlePda, b58decode } from "@/lib/ww/pda";
