@@ -37,6 +37,14 @@ export interface ProgramError {
    * never been seen here.
    */
   observed?: string;
+  /**
+   * What a trader should make of it, appended after the program's own words.
+   * Only where the program's wording reads as a failure when it is a guard
+   * doing its job: on 2026-09-20 traders in the finals Space read
+   * "Slippage tolerance exceeded" as the site being broken, and the memo to
+   * the platform about it says the fix is the sentence, not the guard.
+   */
+  advice?: string;
 }
 
 /**
@@ -84,8 +92,20 @@ const IDL_ERRORS: ProgramError[] = [
   { code: 6010, name: "WinnerAlreadyDecided", message: "Winner already decided", source: "idl" },
   { code: 6011, name: "BattleAlreadyInitialized", message: "Battle already initialized", source: "idl" },
   { code: 6012, name: "MintsAlreadyInitialized", message: "Mints already initialized", source: "idl" },
-  { code: 6013, name: "DeadlineExceeded", message: "Transaction deadline exceeded", source: "idl" },
-  { code: 6014, name: "SlippageExceeded", message: "Slippage tolerance exceeded", source: "idl" },
+  {
+    code: 6013,
+    name: "DeadlineExceeded",
+    message: "Transaction deadline exceeded",
+    source: "idl",
+    advice: "The trade carried a time limit and the chain saw it after that time. Nothing was traded. Build it again and approve it sooner.",
+  },
+  {
+    code: 6014,
+    name: "SlippageExceeded",
+    message: "Slippage tolerance exceeded",
+    source: "idl",
+    advice: "The floor did its job: the price moved past it between the quote and the chain, so nothing was traded at the worse price. Re-quote and try again, or widen the floor.",
+  },
   { code: 6015, name: "InvalidTokenMint", message: "Invalid token mint", source: "idl" },
   { code: 6016, name: "TieNotAllowed", message: "Tie is not allowed", source: "idl" },
   { code: 6017, name: "NoTokensToClaim", message: "No tokens to claim", source: "idl" },
@@ -149,5 +169,5 @@ export function explainSimulationError(err: unknown): string {
   if (!decoded) return "The program refused the transaction, and returned no code this client recognises.";
   const known = programError(decoded.code);
   if (!known) return `The program refused with error code ${decoded.code}, which is not in this client's list.`;
-  return known.message;
+  return known.advice ? `${known.message}. ${known.advice}` : known.message;
 }

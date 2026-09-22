@@ -76,6 +76,22 @@ describe("decoding a simulation error", () => {
   });
 
   /**
+   * The program's wording for a floor that held reads as a failure. Traders in
+   * the finals Space on 2026-09-20 took "Slippage tolerance exceeded" for the
+   * site being broken. The program's words stay first; the sentence after
+   * them says what happened and what to do.
+   */
+  it("keeps the program's words and adds what a trader should do, for the two guards", () => {
+    const slip = explainSimulationError({ InstructionError: [2, { Custom: 6014 }] });
+    expect(slip.startsWith("Slippage tolerance exceeded. ")).toBe(true);
+    expect(slip).toMatch(/floor did its job/);
+    expect(slip).toMatch(/nothing was traded/i);
+    const late = explainSimulationError({ InstructionError: [2, { Custom: 6013 }] });
+    expect(late.startsWith("Transaction deadline exceeded. ")).toBe(true);
+    expect(late).toMatch(/Nothing was traded/);
+  });
+
+  /**
    * An RPC can return a string, a shape from a newer runtime, or nothing.
    * Throwing in a widget over an unrecognised error shape turns a bad trade into
    * a broken page.
