@@ -342,8 +342,19 @@ export default function ClaimPanel() {
                   // not, the vault figure is shown and labelled as the vault.
                   const owed = sides.reduce<number | null>((acc, s) => (s.claimLamports === null || s.claimLamports === undefined ? acc : (acc ?? 0) + s.claimLamports), null);
                   const won = sides.map((s) => s.won).filter((w) => w !== null && w !== undefined);
+                  // A TIE HAS NO WON OR LOST SIDE. The route sets `won` to null
+                  // and puts the whole payout on one row, because the program
+                  // pays a tie in a single claim across both sides. Without
+                  // this the row rendered with no label at all, which reads as
+                  // a battle whose outcome we could not work out.
+                  const tie = sides.some((s) => s.tie);
+                  const label = tie
+                    ? " (tie - both pools shared by token count)"
+                    : won.length
+                      ? won.every(Boolean) ? " (won)" : won.some(Boolean) ? " (won and lost sides)" : " (lost side, half the pool pro rata)"
+                      : "";
                   return owed !== null
-                    ? `${lamportsToSol(owed).toFixed(6)} SOL to you${won.length ? (won.every(Boolean) ? " (won)" : won.some(Boolean) ? " (won and lost sides)" : " (lost side, half the pool pro rata)") : ""}`
+                    ? `${lamportsToSol(owed).toFixed(6)} SOL to you${label}`
                     : `${lamportsToSol(vaultPayableLamports(vault)).toFixed(6)} SOL in vault`;
                 })()}
               </button>
@@ -352,8 +363,8 @@ export default function ClaimPanel() {
           {readAt && (
             <p style={{ color: C.dim, fontSize: 11, margin: "8px 0 0", fontFamily: C.mono }}>
               read {new Date(readAt).toLocaleTimeString()}. "To you" is the program's own arithmetic
-              (exact on 15 real claims); a "vault" figure means the share could not be computed for
-              that battle and the program will work it out.
+              (exact on 15 real claims, and on both ties measured); a "vault" figure means the share
+              could not be computed for that battle and the program will work it out.
             </p>
           )}
         </div>
