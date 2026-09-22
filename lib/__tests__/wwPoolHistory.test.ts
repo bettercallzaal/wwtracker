@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { chartSeries, parseJsonl, recordingState, serializeSample, shouldRecord, type PoolSample } from "../ww/poolHistory";
+import { chartSeries, newestBattleId, parseJsonl, recordingState, serializeSample, shouldRecord, type PoolSample } from "../ww/poolHistory";
 import { historyPath, readHistory, recordSample } from "../poolHistoryStore";
 
 const s = (t: number, a = 1_000_000_000, b = 2_000_000_000, sa = 100_000, sb = 200_000): PoolSample => ({ t, a, b, sa, sb });
@@ -110,5 +110,25 @@ describe("recordingState", () => {
   });
   it("never calls a settled battle stale", () => {
     expect(recordingState(1000, 1000 + 86_400, false)).toBe("recording");
+  });
+});
+
+/**
+ * "Latest" is the battle that started last, and a battle id IS its start time.
+ * Ranking by file modification time instead put a just-ended battle ahead of
+ * the one that had just opened, because the watcher writes heartbeats through
+ * the 300 s grace window. Measured live 2026-09-21: /battle/latest pointed at
+ * a finished battle while another was trading.
+ */
+describe("newestBattleId", () => {
+  it("takes the largest id, which is the latest start time", () => {
+    expect(newestBattleId([1790042941, 1790043661, 1790041886])).toBe(1790043661);
+  });
+  it("is null when nothing is recorded", () => {
+    expect(newestBattleId([])).toBeNull();
+  });
+  it("ignores anything that is not a positive whole id", () => {
+    expect(newestBattleId([0, -5, 1.5, 1790043661])).toBe(1790043661);
+    expect(newestBattleId([0, -5])).toBeNull();
   });
 });

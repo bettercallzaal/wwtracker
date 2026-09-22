@@ -101,3 +101,27 @@ export function recordingState(newestT: number | null, nowSeconds: number, live:
   if (!live) return "recording";
   return nowSeconds - newestT <= HEARTBEAT_SECONDS + pollSeconds * 2 ? "recording" : "stale";
 }
+
+/**
+ * The newest battle among recorded ones, by the battle id itself.
+ *
+ * A BATTLE ID IS ITS START TIME in unix seconds - every id on chain is the
+ * second the battle was initialized - so the largest id is the battle that
+ * started last, which is what "latest" means to a person watching a session.
+ *
+ * WHY NOT THE FILE'S MODIFICATION TIME, which is what this used until
+ * 2026-09-21. The watcher keeps polling a battle for 300 s after it ends (the
+ * grace window that stops a battle being dropped before it settles), writing a
+ * heartbeat every 30 s. So a battle that just ENDED keeps being written while
+ * the battle that just STARTED has one sample, and by mtime the ended one wins.
+ * Measured live that night: /battle/latest pointed at 1790042941, which had
+ * finished, while 1790043661 was open and trading.
+ */
+export function newestBattleId(ids: number[]): number | null {
+  let best: number | null = null;
+  for (const id of ids) {
+    if (!Number.isInteger(id) || id <= 0) continue;
+    if (best === null || id > best) best = id;
+  }
+  return best;
+}

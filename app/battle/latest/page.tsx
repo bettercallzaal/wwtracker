@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { DEFAULT_DIR } from "@/lib/poolHistoryStore";
+import { newestBattleId } from "@/lib/ww/poolHistory";
 import AutoReload from "@/components/AutoReload";
 import { C } from "@/lib/theme";
 
@@ -15,9 +16,11 @@ import { C } from "@/lib/theme";
  * is the battle being recorded right now. With nothing recorded it says so
  * and reloads itself every 5 s.
  *
- * Newest by modification time, not by id: a backfilled old battle written a
- * minute ago is not "latest" in the sense that matters, but the watcher's
- * live file is touched every 30 s at least, so during a battle it wins.
+ * Newest by BATTLE ID, which is the battle's start time in unix seconds. It
+ * used to be newest by file modification time, and that was wrong in exactly
+ * the case it exists for: the watcher keeps writing heartbeats to a battle for
+ * 300 s after it ends, so a just-ended battle outranked the one that just
+ * opened. Measured live on 2026-09-21.
  */
 export const dynamic = "force-dynamic";
 
@@ -25,25 +28,25 @@ export function generateMetadata() {
   return { robots: { index: false, follow: false } };
 }
 
-function newestRecorded(dir: string): number | null {
-  let best: { id: number; mtime: number } | null = null;
+function recordedIds(dir: string): number[] {
   let names: string[];
   try {
     names = readdirSync(dir);
   } catch {
-    return null;
+    return [];
   }
+  const ids: number[] = [];
   for (const name of names) {
     const m = name.match(/^(\d{9,12})\.jsonl$/);
-    if (!m) continue;
-    const mtime = statSync(join(dir, name)).mtimeMs;
-    if (!best || mtime > best.mtime) best = { id: Number(m[1]), mtime };
+    // A file with nothing in it is a battle nobody has recorded a sample for,
+    // and redirecting to its empty chart would be worse than waiting.
+    if (m && statSync(join(dir, name)).size > 0) ids.push(Number(m[1]));
   }
-  return best?.id ?? null;
+  return ids;
 }
 
 export default function LatestBattlePage() {
-  const id = newestRecorded(process.env.WW_LIVE_DIR || DEFAULT_DIR);
+  const id = newestBattleId(recordedIds(process.env.WW_LIVE_DIR || DEFAULT_DIR));
   if (id !== null) redirect(`/battle/${id}`);
   return (
     <main style={{ maxWidth: 720, margin: "32px auto", padding: "0 16px", color: C.text, fontFamily: C.mono }}>
