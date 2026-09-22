@@ -8,6 +8,7 @@ import {
   detectPhantom,
   mapWalletError,
   signMessage,
+  unsignedTransaction,
   watchWallet,
   type PhantomProvider,
 } from "@/lib/ww/wallet";
@@ -15,6 +16,8 @@ import { claimSharesInstruction } from "@/lib/ww/instructions";
 import { computeUnitLimitInstruction, computeUnitPriceInstruction, serializeMessage } from "@/lib/ww/message";
 import { battlesToClaim, vaultPayableLamports, type ClaimablePosition } from "@/lib/ww/claim";
 import { lamportsToSol } from "@/lib/ww/quote";
+import { pollForChange } from "@/lib/ww/pollForChange";
+import { describeConfirmation, type ConfirmResult } from "@/lib/ww/confirm";
 
 /**
  * The claim panel. Stage 1, like the trade widget, and the same order of
@@ -75,6 +78,9 @@ export default function ClaimPanel() {
   const [preflight, setPreflight] = useState<Preflight | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<ConfirmResult | null>(null);
+  /** After a claim: still re-reading, or the list has caught up, or it has not in the time we waited. */
+  const [listState, setListState] = useState<"fresh" | "waiting" | "unconfirmed">("fresh");
 
   useEffect(() => {
     let tries = 0;
@@ -174,9 +180,11 @@ export default function ClaimPanel() {
     try {
       const message = await build();
       if (!message) return;
-      const unsigned = new Uint8Array(1 + 64 + message.length);
-      unsigned[0] = 1;
-      unsigned.set(message, 65);
+      // The same envelope the wallet is asked to sign, from the one function
+      // that defines it. This used to be three lines of inline byte layout,
+      // byte-identical today and silently divergent the day that function
+      // changes.
+      const unsigned = unsignedTransaction(message);
       const res = await fetch("/api/ww/trade", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -216,8 +224,28 @@ export default function ClaimPanel() {
 
       if (res.status === "sent") {
         setSignature(res.signature);
+        setConfirmation(res.confirmation ?? null);
         setPhase("done");
-        // The position just changed. Re-read rather than adjust a number here.
+        // READ AGAIN UNTIL THE CLAIMED BATTLE LEAVES THE LIST. A single read
+        // here is the defect fixed in the trade widget on 2026-09-21 (#348):
+        // the RPC answers from before the claim, and the panel keeps offering
+        // a claim the chain has already paid. The battle id is what changes,
+        // so that is what is polled for; the list state says on screen
+        // whether it caught up.
+        const claimed = selected;
+        setListState("waiting");
+        const r = await pollForChange({
+          read: async () => {
+            const j = await fetch(`/api/ww/claimable?wallet=${encodeURIComponent(wallet)}`).then((x) => x.json());
+            if (j.status !== "ok") throw new Error(j.error ?? "Could not read this wallet.");
+            return j as { positions: Array<{ battleId: number }> };
+          },
+          from: { positions: positions ?? [] },
+          same: (x, y) => x.positions.some((q) => q.battleId === claimed) === y.positions.some((q) => q.battleId === claimed),
+          attempts: 10,
+          delayMs: 1_500,
+        });
+        setListState(r.changed ? "fresh" : "unconfirmed");
         await read(wallet);
       } else {
         setError(res.error ?? "The claim was not sent.");
@@ -227,7 +255,7 @@ export default function ClaimPanel() {
       setError(mapWalletError(e).message);
       setPhase("ready");
     }
-  }, [provider, preflight, build, wallet, read]);
+  }, [provider, preflight, build, wallet, read, selected, positions]);
 
   const total = positions
     ? battlesToClaim(positions).reduce((sum, id) => {
@@ -235,6 +263,10 @@ export default function ClaimPanel() {
         return sum + (p ? vaultPayableLamports(p.vaultLamports) : 0);
       }, 0)
     : 0;
+  /** Summed from per-position payouts; null when the route gave no figure for any of them. */
+  const totalClaim = positions && positions.some((p) => p.claimLamports !== null && p.claimLamports !== undefined)
+    ? positions.reduce((sum, p) => sum + (p.claimLamports ?? 0), 0)
+    : null;
 
   return (
     <main style={{ maxWidth: 520, margin: "40px auto", padding: "0 16px", color: C.text, fontFamily: "inherit" }}>
@@ -280,7 +312,7 @@ export default function ClaimPanel() {
           <p style={{ ...metaLabel, marginBottom: 10 }}>
             {battlesToClaim(positions).length} settled {battlesToClaim(positions).length === 1 ? "battle" : "battles"}
             {" - "}
-            {lamportsToSol(total).toFixed(6)} SOL in their vaults
+            {totalClaim !== null ? `${lamportsToSol(totalClaim).toFixed(6)} SOL owed to this wallet` : `${lamportsToSol(total).toFixed(6)} SOL in their vaults`}
           </p>
           {battlesToClaim(positions).map((id) => {
             const sides = positions.filter((p) => p.battleId === id);
@@ -304,14 +336,24 @@ export default function ClaimPanel() {
                 }}
               >
                 {id} - side {sides.map((s) => s.side.toUpperCase()).join(" and ")} -{" "}
-                {lamportsToSol(vaultPayableLamports(vault)).toFixed(6)} SOL in vault
+                {(() => {
+                  // YOUR PAYOUT, TO THE LAMPORT, not the vault. The route computes
+                  // it with quoteClaim from the battle's own bytes; when it could
+                  // not, the vault figure is shown and labelled as the vault.
+                  const owed = sides.reduce<number | null>((acc, s) => (s.claimLamports === null || s.claimLamports === undefined ? acc : (acc ?? 0) + s.claimLamports), null);
+                  const won = sides.map((s) => s.won).filter((w) => w !== null && w !== undefined);
+                  return owed !== null
+                    ? `${lamportsToSol(owed).toFixed(6)} SOL to you${won.length ? (won.every(Boolean) ? " (won)" : won.some(Boolean) ? " (won and lost sides)" : " (lost side, half the pool pro rata)") : ""}`
+                    : `${lamportsToSol(vaultPayableLamports(vault)).toFixed(6)} SOL in vault`;
+                })()}
               </button>
             );
           })}
           {readAt && (
             <p style={{ color: C.dim, fontSize: 11, margin: "8px 0 0", fontFamily: C.mono }}>
-              read {new Date(readAt).toLocaleTimeString()}. The vault figure is what the battle holds,
-              not what this wallet is owed - the program works out the share.
+              read {new Date(readAt).toLocaleTimeString()}. "To you" is the program's own arithmetic
+              (exact on 15 real claims); a "vault" figure means the share could not be computed for
+              that battle and the program will work it out.
             </p>
           )}
         </div>
@@ -358,12 +400,19 @@ export default function ClaimPanel() {
         </div>
       )}
 
-      {signature && (
-        <div style={{ ...panel, borderColor: C.accent }}>
-          <p style={{ ...metaLabel, color: C.accent, marginBottom: 6 }}>Claimed</p>
-          <p style={{ margin: 0, fontSize: 12, fontFamily: C.mono, wordBreak: "break-all" }}>{signature}</p>
-        </div>
-      )}
+      {signature && (() => {
+        const tone = confirmation?.outcome === "landed" ? C.accent : confirmation?.outcome === "failed" ? C.danger : C.dim;
+        const label = confirmation?.outcome === "landed" ? "Claimed" : confirmation?.outcome === "failed" ? "Rejected on chain" : "Sent, not confirmed";
+        return (
+          <div style={{ ...panel, borderColor: tone }}>
+            <p style={{ ...metaLabel, color: tone, marginBottom: 6 }}>{label}</p>
+            {confirmation && <p style={{ margin: "0 0 6px", fontSize: 13 }}>{describeConfirmation(confirmation, signature)}</p>}
+            <p style={{ margin: 0, fontSize: 12, fontFamily: C.mono, wordBreak: "break-all" }}>{signature}</p>
+            {listState === "waiting" && <p style={{ margin: "6px 0 0", fontSize: 12, color: C.dim }}>Re-reading what this wallet can still claim...</p>}
+            {listState === "unconfirmed" && <p style={{ margin: "6px 0 0", fontSize: 12, color: C.danger }}>The list has not changed on chain yet. Press Re-read in a moment before claiming this battle again.</p>}
+          </div>
+        );
+      })()}
     </main>
   );
 }

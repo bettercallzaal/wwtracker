@@ -29,6 +29,7 @@
 import { decideRelay, splitTransaction } from "@/lib/ww/relayPolicy";
 import { decodeSimulationError, explainSimulationError } from "@/lib/ww/errors";
 import { RelayBudget, callerKey } from "@/lib/ww/rateLimit";
+import { confirmSignature, type SignatureStatus } from "@/lib/ww/confirm";
 import { redactUrl, redactSecrets } from "@/lib/redact";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
@@ -245,15 +246,44 @@ export async function POST(request: Request) {
     });
   }
 
+  let signature: string;
   try {
-    const signature = await rpc<string>("sendTransaction", [
+    signature = await rpc<string>("sendTransaction", [
       Buffer.from(tx).toString("base64"),
       { encoding: "base64", skipPreflight: false, maxRetries: 3 },
     ]);
-    return json(200, { status: "sent", signature, trades: decision.trades, sent: true });
   } catch (err) {
     return json(502, { status: "error", error: redactSecrets((err as Error).message), sent: false });
   }
+
+  // "SENT" IS NOT "LANDED". Until 2026-09-22 this returned success the moment
+  // sendTransaction gave back a signature, and both panels showed a green Sent.
+  // That signature means a node accepted the broadcast, nothing more: the
+  // transaction can still expire or be dropped and never land. So the route
+  // now waits for the cluster's own word, up to about 20 s, and reports one of
+  // three things - landed, failed (with the chain's error), or unknown. Unknown
+  // is NOT a failure and is never reported as one: the transaction may land a
+  // moment later, and a person told it failed might trade twice.
+  //
+  // Done here rather than by the client polling a status action, because
+  // every request on this route costs a unit of a small per-caller budget and
+  // a dozen polls would exhaust it; one request, one unit, one answer.
+  const confirmation = await confirmSignature({
+    readStatus: async () => {
+      const r = await rpc<{ value: Array<SignatureStatus | null> }>("getSignatureStatuses", [[signature], { searchTransactionHistory: false }]);
+      return r.value[0] ?? null;
+    },
+    attempts: 10,
+    delayMs: 2_000,
+  });
+  return json(200, {
+    // Kept for callers that only know "sent"; the new field is what to read.
+    status: "sent",
+    signature,
+    trades: decision.trades,
+    sent: true,
+    confirmation,
+  });
 }
 
 /** No CORS preflight support: this route is same-origin by design. */

@@ -229,7 +229,7 @@ wallet, now, and refuses to remember.
 
 | field | is |
 |---|---|
-| `positions` | one row per held side: `battleId`, `side`, `mint`, `amount` (base units, string), `vaultLamports` |
+| `positions` | one row per held side: `battleId`, `side`, `mint`, `amount` (base units, string), `vaultLamports`, `claimLamports` (what THIS position pays, from `quoteClaim` on the battle's own bytes, exact; null when it could not be computed), `won` |
 | `refused` | positions that ARE this wallet's but sit under a token program this client cannot settle. Always present, empty when there are none |
 | `scanned` | which token programs were queried, and how many accounts each returned |
 | `totalPayableLamports` | vault lamports above the rent floor, summed per battle, not per side |
@@ -266,9 +266,13 @@ key stays on the server and the browser posts through it. Three actions:
 
 | action | does | returns |
 |---|---|---|
-| `prepare` | fetches a recent blockhash to build against | `blockhash`, `lastValidBlockHeight` |
+| `prepare` | fetches a blockhash at `finalized` commitment, cached 4 s | `blockhash`, `lastValidBlockHeight` |
 | `preflight` | simulates a signed transaction, never sends | `would-succeed` or `would-fail` with the program's own error |
-| `send` | simulates, then sends only if it would succeed | `sent` with a `signature`, or `would-fail` and nothing spent |
+| `send` | simulates, sends only if it would succeed, then waits up to about 20 s for the cluster's word | `sent` with a `signature` and a `confirmation` (`outcome` of `landed`, `failed` with the chain's error, or `unknown`), or `would-fail` and nothing spent |
+
+`sent` means a node accepted the broadcast and nothing more; `confirmation` is
+the answer. `unknown` is not a failure: the transaction may still land, and a
+caller should show the signature rather than tell the person it failed.
 
 It refuses to forward anything that is not a WaveWarZ trade. Every instruction
 must target the WaveWarZ program, ComputeBudget, or Lighthouse (which Phantom

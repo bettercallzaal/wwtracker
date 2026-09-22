@@ -437,3 +437,15 @@ export { unsignedTransaction } from "./wallet";
 // Read again until the answer changes: for a balance that an RPC has not
 // caught up with yet, right after a trade.
 export { pollForChange, type PollResult } from "./pollForChange";
+
+// Did it land? sendTransaction's signature means a node accepted the
+// broadcast; the cluster's word is landed, failed, or not known yet, and
+// unknown is never reported as failure.
+export {
+  confirmSignature,
+  describeConfirmation,
+  isLanded,
+  type ConfirmOutcome,
+  type ConfirmResult,
+  type SignatureStatus,
+} from "./confirm";
