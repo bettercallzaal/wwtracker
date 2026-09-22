@@ -26,11 +26,15 @@ import { endStateDiff, replayTrades, tradeFromTransaction, type TradeStep, type 
 import { DEFAULT_DIR, historyPath } from "../lib/poolHistoryStore";
 import { redactUrl } from "../lib/redact";
 import { serializeSample } from "../lib/ww/poolHistory";
+import { optionValue } from "../lib/cliArgs";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 const args = process.argv.slice(2);
 const flag = (n: string) => args.includes(n);
-const opt = (n: string, d: string) => { const i = args.indexOf(n); return i > 0 ? args[i + 1] : d; };
+// Via lib/cliArgs so a flag in FIRST position is not silently dropped: this
+// line used to read `i > 0` against an already-sliced array, which returned
+// the default for `--marks FILE` when --marks was the first argument.
+const opt = (n: string, d: string) => optionValue(args, n, d);
 const battleId = Number(args.find((a) => /^\d{9,12}$/.test(a)));
 if (!battleId) { console.error("usage: ww-pool-backfill.ts <battleId> [--force] [--dry-run] [--store dir]"); process.exit(2); }
 const STORE = opt("--store", DEFAULT_DIR);
