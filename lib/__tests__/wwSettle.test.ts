@@ -16,10 +16,11 @@ describe("settlePreview", () => {
   });
 
   /**
-   * MEASURED, NOT ASSUMED. Battle 1790042941 ended 2026-09-22 with exactly
-   * 49,250,000 lamports on each side. Simulating endBattle on it, the program
-   * logged "Winner decided: true, Winner is artist A: false". The first
-   * version of this pin said ties go to A.
+   * MEASURED ON A TIE THAT ACTUALLY PAID OUT. Battle 1789783495 closed at
+   * 49,250,000 lamports a side and is settled: byte 245 is 1 and byte 244 is
+   * 0, read from chain 2026-09-22, so B took it. Battle 1790042941 closed the
+   * same way that day and simulates to the same answer while still unsettled.
+   * The first version of this pin said ties go to A.
    */
   it("gives a tie to B, as the program does, and says it was a tie", () => {
     const p = settlePreview(49_250_000, 49_250_000);

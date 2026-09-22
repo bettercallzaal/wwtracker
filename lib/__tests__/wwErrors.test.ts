@@ -89,6 +89,14 @@ describe("decoding a simulation error", () => {
     const late = explainSimulationError({ InstructionError: [2, { Custom: 6013 }] });
     expect(late.startsWith("Transaction deadline exceeded. ")).toBe(true);
     expect(late).toMatch(/Nothing was traded/);
+    // The two refusals that look like the client is broken and are the
+    // program protecting the trader: a buy with no floor, and an amount too
+    // small to mint a step. Both are in protocol-truths as measured facts.
+    const noFloor = explainSimulationError({ InstructionError: [2, { Custom: 6006 }] });
+    expect(noFloor).toMatch(/floor of zero on a buy/);
+    const dust = explainSimulationError({ InstructionError: [2, { Custom: 6008 }] });
+    expect(dust).toMatch(/too small to mint/);
+    expect(dust).toMatch(/0\.000287 SOL/);
   });
 
   /**
