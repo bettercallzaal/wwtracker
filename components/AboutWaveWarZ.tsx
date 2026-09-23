@@ -5,6 +5,7 @@ import { WW } from "@/lib/wwData";
 import { usd } from "@/lib/price";
 import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY, FLOOR_SOL } from "@/lib/config";
 import { BATTLE_STATS as S } from "@/lib/battles";
+import { describeSnapshotAge } from "@/lib/snapshotAge";
 
 const fmt = (n: number, dp = 0) =>
   n.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -43,7 +44,7 @@ export default function AboutWaveWarZ() {
           <Stat label="TREASURY NET" value={`${fmt(ps.treasuryNet, 2)} ◎`} sub={`~the ${FLOOR_SOL} floor - ${usd(ps.treasuryNet)}`} />
         </Grid>
         <p style={{ ...metaLabel, fontSize: 11, marginTop: 10, lineHeight: 1.6 }}>
-          since {ps.firstDay} - snapshot {WW.generatedAt}. On-chain vs the
+          since {ps.firstDay} - snapshot {describeSnapshotAge(WW.generatedAt)}. On-chain vs the
           wavewarz.info app: {fmt(p.battlesCreated)} battles (app ~{S.totalShown.toLocaleString()});
           {WW.volume.total > 0 ? ` ${fmt(WW.volume.total)} ◎ traded, both sides (the platform reports ${S.totalVolumeSol.toFixed(2)} ◎);` : ""}
           {` app ${S.traderClaimsSol.toFixed(2)} ◎ claimed by traders (${S.withdrawalCount} withdrawals).`}
