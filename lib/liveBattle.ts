@@ -114,6 +114,29 @@ export function pickBattle(res: RawBattlesResponse): WidgetBattle | null {
   return chosen ? shape(chosen) : null;
 }
 
+/**
+ * One named battle out of the same response, or null when it is not in it.
+ *
+ * WHY THIS EXISTS. `/api/ww/battle` took no parameters at all, so a caller
+ * asking for `?battleId=1789948124` was answered with whatever battle happened
+ * to be current - a 200, with somebody else's battle in it, and nothing saying
+ * so. Measured 2026-09-22: asking for 1789948124 returned 1790046123. The
+ * endpoint's job is the current battle and the docs say so, but silently
+ * discarding a parameter a caller took the trouble to send is how a partner
+ * ends up embedding the wrong round.
+ *
+ * Null means "not in this response", which is a different answer from "no
+ * battles" and the route reports it as such.
+ */
+export function findBattle(res: RawBattlesResponse, battleId: string): WidgetBattle | null {
+  const rows = Array.isArray(res.battles) ? res.battles : [];
+  // Matched on `battleId`, the field upstream actually sends. Our own shaped
+  // output renames it to `id`, and reading that name off the RAW row - which
+  // an earlier version of this function did - matches nothing at all.
+  const found = rows.find((b) => b.battleId != null && String(b.battleId) === battleId);
+  return found ? shape(found) : null;
+}
+
 /** Whole seconds until `endsAt`, floored at 0. Null when there is no end time. */
 export function secondsLeft(endsAt: string | null, now: number): number | null {
   if (!endsAt) return null;
