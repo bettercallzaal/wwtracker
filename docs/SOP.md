@@ -10,9 +10,18 @@ not, unless the entry and the header both say which one.
 
 **Who signs is part of every procedure here.** Anything irreversible, on chain,
 or costing money is Zaal's own hand from his own wallet. No lane holds a key or a
-funded wallet, and `lib/ww/relayPolicy.ts` refuses to relay `initializeBattle` or
-`endBattle` so that a lane cannot settle or launch in anyone's name even by
-accident. **That holds even though the SDK now BUILDS both instructions** - see
+funded wallet, and `lib/ww/relayPolicy.ts` refuses to relay the LAUNCH
+instructions, `initializeBattle` and `initializeMints`, so that a lane cannot
+launch a battle in anyone's name even by accident.
+
+**`endBattle` was on that refused list until 2026-09-21 and is not any more.**
+It is relayable now, deliberately, because the operator page needs it: the
+instruction names seven accounts and **not one is a signer**, it pays nothing to
+whoever sends it, and the wallet at the other end is the only thing that signs.
+Relaying it cannot settle a battle "in our name" because there is no name on it.
+The refusal that matters - the launch instructions - is unchanged. This
+paragraph said otherwise for two days after the code changed, which is why the
+change is spelled out here rather than quietly edited. **That holds even though the SDK now BUILDS both instructions** - see
 SOP 8. Handing a front end bytes for its own user to sign is not the same act as
 putting them through our key, and the refusal is about the key.
 
@@ -66,10 +75,12 @@ that wallet appears nowhere in the instruction. No admin key is needed.
    64-byte signature slot, and call `simulateTransaction` with
    `sigVerify: false, replaceRecentBlockhash: true`. Expect
    `Battle ended successfully` in the logs.
-3. **Sign and send from wherever you normally sign.**
-   **Not through our relay** - `lib/ww/relayPolicy.ts` deliberately refuses
-   `endBattle`, because relaying one would settle a battle in our name. That
-   exclusion is correct and is not to be removed for convenience.
+3. **Sign and send from wherever you normally sign.** Since 2026-09-21 the
+   relay accepts `endBattle` too, so `/operator` can send it - the wallet that
+   signs is still yours, and the instruction names no signer and pays the sender
+   nothing. What the relay still refuses is the launch pair,
+   `initializeBattle` and `initializeMints`, and that refusal is not to be
+   removed for convenience.
 4. **Verify from chain, not from the site.** Re-read byte 245 and the vault
    balance. A settled battle's vault drops by the artist payout; a fully claimed
    one sits at the rent floor, 890,880 lamports.
@@ -406,3 +417,66 @@ than V1" - that reversed sign when re-measured against the chain census. It was
 brought back with the contradiction at the top and the original body untouched.
 **A two-month-old finding restored without re-checking is a false fact with a
 fresh commit date on it.**
+
+---
+
+## SOP 9 - Run a battle night
+
+**Run on 2026-09-21 (first end-to-end trades) and rehearsed on 2026-09-23.** The
+sequence below is what produced the recorded battles in `var/ww-live` and the
+first trades signed through our own widget. It existed only as comments in
+`scripts/ww-night.sh` and as messages in a chat until now, which is why two of
+its three tools were broken for days without anyone noticing.
+
+**Who signs:** Zaal, from his own wallet, for anything that moves. Everything
+below is read-only except the trades and claims he chooses to make.
+
+### Before the session
+
+```bash
+cd ~/Desktop/repos/wwtracker
+git pull --ff-only origin main
+scripts/ww-night.sh rehearse   # the marker and the report, actually run
+scripts/ww-night.sh start      # watcher + built server on :3520
+```
+
+**Rehearse before ready, and treat a FAIL as blocking.** `ready` checks that
+processes are up; `rehearse` checks that the night's own tools work. On
+2026-09-22 `ready` passed while `ww-45s-report.ts --marks FILE` was silently
+reading a different file and the report's battle window could not reach a
+session from the previous evening. Both had been broken for days. A tool that
+runs once a week is a tool nothing exercises.
+
+`start` rebuilds only when `HEAD` differs from `var/built.sha`, and leaves a
+running watcher alone.
+
+### During the session
+
+- **A second terminal for the marks:** `scripts/ww-mark.sh`. Type `announce`
+  and press Enter the moment the host says the round is open; type `sent` when
+  the wallet confirms a trade. Nothing else is needed - every line is stamped
+  from the same clock the watcher uses.
+- **The page to watch:** `http://localhost:3520/battle/latest`. It redirects to
+  the newest recorded battle and reloads every five seconds. If it says it
+  cannot read the store, that is this machine, not the battle.
+- **The watcher heartbeat** is `var/ww-live-watch.log`. Read `scans`, not
+  `polls`: `polls` only moves while a battle is open, so on a quiet stretch it
+  sits still and looks dead. `retries` rising is the early warning that the RPC
+  is pushing back; `dropped reads` are samples that are not in the chart.
+
+### After
+
+```bash
+npx tsx scripts/ww-45s-report.ts        # takes its window from the marks
+```
+
+It uses the marks' own time span, so running it the next morning works. If
+there are no marks it falls back to a clock window and says which it used.
+
+### What the night is supposed to produce
+
+One `var/ww-live/<battleId>.jsonl` per battle, a marks file under
+`~/zao-vault/projects/`, and the report's lag figures. **The 45-second
+announcement lag has never been measured** - the marks have never been typed
+during a live session - so the number that would settle the fairness question
+with Hurricane is still UNKNOWN, not small.
