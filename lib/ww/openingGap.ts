@@ -75,6 +75,12 @@ export interface FirstTrade {
   /** Unix seconds from the ledger, not from this machine. */
   blockTime: number;
   kind: "buy" | "sell";
+  /**
+   * The transaction's fee payer, which on a WaveWarZ trade is the trader.
+   * Optional because a caller that only wants timings should not have to
+   * invent one; `firstBuyer.ts` is what consumes it.
+   */
+  trader?: string;
 }
 
 export interface OpeningGap {

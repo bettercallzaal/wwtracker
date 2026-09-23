@@ -22,8 +22,10 @@ import { PROGRAM_ID, b58decode } from "../lib/ww/pda";
 import { RELAYABLE } from "../lib/ww/relayPolicy";
 import { DISCRIMINATOR_BY_NAME } from "../lib/ww/instructions";
 import { buildOpeningGaps, describeOpeningGaps, type FirstTrade, type Opening } from "../lib/ww/openingGap";
+import { describeFirstBuyers, firstBuyerConcentration, shortAddress, type FirstBuyerRow } from "../lib/ww/firstBuyer";
 import { optionValue } from "../lib/cliArgs";
 import { redactUrl } from "../lib/redact";
+import { TREASURY_WALLET } from "../lib/config";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 const args = process.argv.slice(2);
@@ -127,7 +129,12 @@ async function openingOf(
       continue;
     }
     if (kind === "buy" || kind === "sell") {
-      return { trade: { signature: s.signature, blockTime: s.blockTime, kind }, mintsReadyTime };
+      // accounts[0] is the fee payer and must have signed, so on a trade it is
+      // the trader. Read from the parsed message rather than assumed.
+      const keys: any[] = parsed?.transaction?.message?.accountKeys ?? [];
+      const first = keys[0];
+      const trader = typeof first === "string" ? first : first?.pubkey;
+      return { trade: { signature: s.signature, blockTime: s.blockTime, kind, trader }, mintsReadyTime };
     }
   }
   // Every transaction inspected was a non-trade AND there are more behind them:
@@ -175,6 +182,28 @@ async function main() {
   const lines = describeOpeningGaps(report, WINDOW);
   for (const l of lines) console.log(l);
 
+  // WHO got there first, which is the question the timing alone cannot answer:
+  // a tight floor is either a room reacting together or one wallet on a timer.
+  const buyerRows: FirstBuyerRow[] = report.gaps
+    .filter((g) => typeof g.firstTrade.trader === "string")
+    .map((g) => ({
+      battleId: g.battleId,
+      trader: g.firstTrade.trader as string,
+      gapFromTradeableSeconds: g.gapFromTradeableSeconds,
+    }));
+  // The treasury is the platform's, and lib/config.ts has said since 2026-09-06
+  // that anything treating it as a pure trader is wrong. It creates battles as
+  // well as trading them.
+  const concentration = firstBuyerConcentration(buyerRows, new Set([TREASURY_WALLET]));
+  const buyerLines = describeFirstBuyers(concentration);
+  console.log("");
+  if (buyerRows.length < report.gaps.length) {
+    console.log(
+      `first buyer unreadable on ${report.gaps.length - buyerRows.length} of ${report.gaps.length} gaps, excluded from the counts below`,
+    );
+  }
+  for (const l of buyerLines) console.log(l);
+
   if (OUT) {
     const body = [
       `# Chain open to first trade, ${openings.length} most recent battles`,
@@ -183,17 +212,22 @@ async function main() {
       "",
       ...lines.map((l) => (l.startsWith("  ") ? l : `- ${l}`)),
       "",
+      "## Who was first",
+      "",
+      ...buyerLines.map((l) => (l.startsWith("  ") ? l : `- ${l}`)),
+      "",
       "## Per battle",
       "",
-      "| battle | from start_time (s) | launch took (s) | from tradeable (s) | first trade |",
-      "|---|---|---|---|---|",
+      "| battle | from start_time (s) | launch took (s) | from tradeable (s) | first trade | first buyer |",
+      "|---|---|---|---|---|---|",
       ...report.gaps
         .sort((a, b) => a.gapSeconds - b.gapSeconds)
         .map(
           (g) =>
             `| ${g.battleId} | ${g.gapSeconds} | ` +
             `${g.mintsReadyTime === null ? "UNKNOWN" : g.mintsReadyTime - g.startTime} | ` +
-            `${g.gapFromTradeableSeconds === null ? "UNKNOWN" : g.gapFromTradeableSeconds} | ${g.firstTrade.kind} |`,
+            `${g.gapFromTradeableSeconds === null ? "UNKNOWN" : g.gapFromTradeableSeconds} | ${g.firstTrade.kind} | ` +
+            `${g.firstTrade.trader ? shortAddress(g.firstTrade.trader) : "UNKNOWN"} |`,
         ),
       "",
     ].join("\n");
