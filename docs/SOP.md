@@ -465,10 +465,17 @@ running watcher alone.
 
 ### During the session
 
-- **A second terminal for the marks:** `scripts/ww-mark.sh`. Type `announce`
-  and press Enter the moment the host says the round is open; type `sent` when
-  the wallet confirms a trade. Nothing else is needed - every line is stamped
-  from the same clock the watcher uses.
+- **Mark the announcement. THIS IS THE STEP THAT KEEPS BEING MISSED** - five
+  scheduled sessions have passed and no `ww-45s-marks-*.log` has ever been
+  written, while `rehearse` passed every time. Two ways, and either is enough:
+  - **On the page you are already watching**, if `WW_MARKS=1` was in
+    `.env.local` before `start`: press **Announce** the moment the host opens
+    the round and **Sent** when a wallet confirms. The panel shows how many
+    marks exist today, so a session that has recorded nothing says so all
+    evening instead of looking like a session nobody ran.
+  - **A second terminal:** `scripts/ww-mark.sh`. Type `announce`, press Enter.
+  Both write the same line to the same file, and `ready` and `status` now print
+  the count. Every line is stamped from the same clock the watcher uses.
 - **The page to watch:** `http://localhost:3520/battle/latest`. It redirects to
   the newest recorded battle and reloads every five seconds. If it says it
   cannot read the store, that is this machine, not the battle.

@@ -68,7 +68,23 @@ cmd_ready() {
   if [ "$b" = "200" ]; then pass "/battle/<id> is 200"; else fail "/battle/<id> is ${b}"; fi
   local ph; ph=$(curl -s --max-time 8 "http://localhost:${PORT}/api/ww/pool-history?battleId=1789948124" 2>/dev/null | head -c 60)
   case "$ph" in *'"status":"ok"'*) pass "pool-history serves the store (${ph}...)";; *) fail "pool-history did not answer ok: ${ph:-no response}";; esac
-  if [ "$FAILS" = "0" ]; then echo "READY. Open http://localhost:${PORT}/battle/latest when the first battle starts; it jumps to the newest recorded battle."; else echo "NOT READY: ${FAILS} failing"; fi
+  # THE MARKS. Five sessions have produced none, and every one of them passed a
+  # ready check that never mentioned them. A check that cannot fail on the step
+  # that keeps being skipped is a check that certifies the skip.
+  local marksfile="$HOME/zao-vault/projects/ww-45s-marks-$(date '+%Y-%m-%d').log"
+  local nmarks; nmarks=$(grep -c '[^[:space:]]' "$marksfile" 2>/dev/null || echo 0)
+  if grep -qE "^WW_MARKS=1" .env.local 2>/dev/null; then
+    pass "WW_MARKS=1 in .env.local: the Announce and Sent buttons are on /battle/<id>"
+  else
+    pass "WW_MARKS not set: marks need the second terminal, scripts/ww-mark.sh"
+  fi
+  echo "  MARKS  ${nmarks} recorded today in ${marksfile}"
+  if [ "$FAILS" = "0" ]; then
+    echo "READY. Open http://localhost:${PORT}/battle/latest when the first battle starts; it jumps to the newest recorded battle."
+    echo "THE ONE STEP THAT KEEPS BEING MISSED: mark the announcement. Either press Announce on that page"
+    echo "(needs WW_MARKS=1 before start), or keep a second terminal on: scripts/ww-mark.sh"
+    echo "Nothing else produces the 45-second number, and five sessions have now passed without it."
+  else echo "NOT READY: ${FAILS} failing"; fi
   [ "$FAILS" = "0" ]
 }
 
@@ -167,6 +183,14 @@ cmd_status() {
   echo "  watcher: ${wp:-not running}"; [ -f var/ww-live-watch.log ] && echo "    last: $(tail -1 var/ww-live-watch.log)"
   echo "  server:  ${sp:-not running} (:${PORT} -> $(http "http://localhost:${PORT}/"))"
   echo "  store:   ${STORE}"
+  local marksfile="$HOME/zao-vault/projects/ww-45s-marks-$(date '+%Y-%m-%d').log"
+  if [ -f "$marksfile" ]; then
+    echo "  marks:   $(grep -c '[^[:space:]]' "$marksfile") today ($(basename "$marksfile"))"
+  else
+    # NOT "0 marks". No file and an empty file are the same number and not the
+    # same fact, and only one of them means the marker was never opened.
+    echo "  marks:   NO FILE YET today - nothing has marked an announcement"
+  fi
   for f in "$STORE"/*.jsonl; do [ -f "$f" ] || continue
     local id; id=$(basename "$f" .jsonl); local n; n=$(wc -l < "$f" | tr -d ' '); local last; last=$(tail -1 "$f" | sed -E 's/.*"t":([0-9]+).*/\1/'); local age=$(( $(date +%s) - last ))
     echo "    ${id}: ${n} samples, newest ${age}s ago"

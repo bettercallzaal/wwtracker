@@ -17,7 +17,8 @@ spends a keyed RPC call per request, and each exists for one screen:
 `/api/ww/claimable` and `/api/ww/token-balance` for the trade and claim panels,
 `/api/ww/trade` for those and the operator page, `/api/ww/diagnose` and
 `/api/ww/live-battles` for the finals dashboard, `/api/ww/unsettled` for the
-operator page. Where `WW_WIDGET`, `WW_OPERATOR` or `WW_FINALS` is unset, the
+operator page, `/api/ww/mark` for the battle-night marker. Where `WW_WIDGET`,
+`WW_OPERATOR`, `WW_FINALS` or `WW_MARKS` is unset, the
 screen is a 404 and so is the endpoint - and the 404 is returned before any
 upstream call is made, so the cost is closed and not merely the answer. On
 `wwtracker.vercel.app` all three are unset, so none of these exist there.
@@ -224,6 +225,34 @@ page it feeds (`/operator`) is an operator's page. No CORS headers, no-store.
 
 `endBattle` is permissionless and the relay accepts it since 2026-09-21; the
 launch instructions remain refused.
+
+### `GET|POST /api/ww/mark` - NOT for embedding, NOT reachable off the operator's machine
+
+**The only route in this repo that writes a file**, and the only one that
+refuses a request by where it came from. It appends a line to today's
+`ww-45s-marks-<date>.log`, the record the 45-second announcement-lag report
+reads. `POST {"label":"announce"}` writes a mark; `GET` returns how many exist
+today.
+
+It exists because the marker terminal (`scripts/ww-mark.sh`) has worked since
+2026-09-21 and five scheduled sessions still produced no marks file: the step
+asks for a second terminal to be focused and typed into at an exact moment
+while the operator is trading and listening. The buttons on `/battle/<id>` put
+it on the screen already in front of them.
+
+Four independent fences, each one enough on its own:
+
+| | |
+|---|---|
+| `WW_MARKS` | unset everywhere but the operator's machine; 404 when off, never 403 |
+| loopback only | any `Host` other than localhost, or any `x-forwarded-for` / `x-forwarded-host`, is a 404 |
+| label allowlist | `^[a-z0-9-]{1,32}$`, checked rather than sanitised: the file is parsed by line, so a label carrying a newline would forge marks with times nobody recorded |
+| fixed path | built here from the date, never from the request |
+
+Appends, never rewrites. A failed write returns 500 with the reason and never
+an ok shape - the operator has one chance at that moment. A missing file
+answers `marks: 0`; a file that cannot be read answers 500, because those are
+different facts.
 
 ### `GET /api/ww/pool-history?battleId=<id>` - NOT for embedding
 

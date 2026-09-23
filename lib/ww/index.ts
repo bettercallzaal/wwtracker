@@ -458,6 +458,18 @@ export {
   type TraderTally,
 } from "./firstBuyer";
 
+// Accepting a mark from the page the operator is already watching, rather than
+// from a second terminal that five sessions running never got opened.
+export {
+  acceptMarkLabel,
+  markLine,
+  marksFileName,
+  MAX_LABEL_LENGTH,
+  type MarkAccepted,
+  type MarkRejected,
+} from "./markInput";
+export { marksEnabled } from "./marksFlag";
+
 // The envelope a wallet is handed for signing: the unsigned transaction.
 export { unsignedTransaction } from "./wallet";
 

@@ -3,6 +3,7 @@ import BattleView, { type SideInfo } from "@/components/BattleView";
 import { cachedFetch } from "@/lib/wwCache";
 import { shapeBattle, type RawBattle } from "@/lib/liveBattle";
 import { widgetEnabled } from "@/lib/ww/widgetFlag";
+import { marksEnabled } from "@/lib/ww/marksFlag";
 
 /**
  * /battle/<id>: one battle on one screen. Clock, pools and chart from the
@@ -57,6 +58,7 @@ export default async function BattlePage({ params }: { params: Promise<{ battleI
       streamLink={streamLink}
       siteUrl={url}
       tradingEnabled={widgetEnabled()}
+      marksEnabled={marksEnabled()}
     />
   );
 }
