@@ -5,7 +5,7 @@
  * 9 PM.
  */
 import { describe, expect, it } from "vitest";
-import { battleWindow, describeWindow, parseMarkLine, parseMarks } from "../ww/windowReport";
+import { battleWindow, describeWindow, parseMarkLine, parseMarks, windowFromMarks } from "../ww/windowReport";
 
 describe("parseMarkLine", () => {
   it("reads the marker script's format, offset included", () => {
@@ -70,5 +70,43 @@ describe("battleWindow", () => {
   it("accepts a mark typed up to a minute before the account's start", () => {
     const early = parseMarks(`${new Date((open - 30) * 1000).toISOString().replace(/\.\d{3}Z$/, "+0000")} announce`);
     expect(battleWindow(1, acct, early, []).lagSeconds).toBe(-30);
+  });
+});
+
+/**
+ * WHICH BATTLES A REPORT COVERS. The report used a hardcoded "last 6 hours",
+ * so a session marked at night and reported on the next morning produced
+ * "nothing to report" while the marks sat unused. The marks are the session.
+ */
+describe("windowFromMarks", () => {
+  it("spans the first and last mark, padded an hour each way", () => {
+    const marks = [
+      { t: 1_000_000, label: "announce", raw: "announce" },
+      { t: 1_000_600, label: "sent", raw: "sent" },
+      { t: 1_000_300, label: "sent", raw: "sent" },
+    ];
+    const w = windowFromMarks(marks);
+    expect(w).toEqual({ fromMs: (1_000_000 - 3600) * 1000, toMs: (1_000_600 + 3600) * 1000 });
+  });
+
+  it("does not assume the marks are in order", () => {
+    const w = windowFromMarks([
+      { t: 500, label: "sent", raw: "sent" },
+      { t: 100, label: "announce", raw: "announce" },
+    ]);
+    expect(w!.fromMs).toBe((100 - 3600) * 1000);
+    expect(w!.toMs).toBe((500 + 3600) * 1000);
+  });
+
+  it("is null with no marks, so the caller falls back to a clock window and says so", () => {
+    expect(windowFromMarks([])).toBeNull();
+  });
+
+  it("covers a battle that ran hours ago, which a six-hour clock window would miss", () => {
+    const lastNight = Math.floor(Date.parse("2026-09-21T22:30:00-04:00") / 1000);
+    const w = windowFromMarks([{ t: lastNight, label: "announce", raw: "announce" }])!;
+    const battleFileTouched = Date.parse("2026-09-21T23:14:00-04:00");
+    expect(battleFileTouched).toBeGreaterThanOrEqual(w.fromMs);
+    expect(battleFileTouched).toBeLessThanOrEqual(w.toMs);
   });
 });
