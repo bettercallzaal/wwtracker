@@ -64,6 +64,19 @@ that wallet appears nowhere in the instruction. No admin key is needed.
 
 **Cost.** About 0.000005 SOL in network fees. ~22,000 compute units.
 
+**Check the whole plan before signing any of it.**
+`npx tsx scripts/ww-settle-dry-run.ts` packs every unsettled battle into
+transactions and simulates each one against the program - no wallet, no
+`WW_OPERATOR`, nothing signed, because `endBattle` names no signer and
+`sigVerify: false` needs none. Run 2026-09-23: 82 battles in 11 transactions,
+**11 of 11 would succeed**, 1,069,773 compute units across the run. A batch
+that would fail is worth knowing about before you are standing in front of a
+wallet approving eleven things.
+
+It is a simulation against the chain as it is now. If somebody settles one of
+these in between, that batch fails and `/operator` stops and re-reads, which is
+what it was built to do.
+
 ### Procedure
 
 1. **Find them.** `getProgramAccounts` on the program with
@@ -467,11 +480,26 @@ running watcher alone.
 ### After
 
 ```bash
-npx tsx scripts/ww-45s-report.ts        # takes its window from the marks
+npx tsx scripts/ww-45s-report.ts        # the announcement lag, from the marks
+npx tsx scripts/ww-night-record.ts --out ~/zao-vault/projects/ww-night-$(date +%F).md
 ```
 
-It uses the marks' own time span, so running it the next morning works. If
-there are no marks it falls back to a clock window and says which it used.
+Both take their window from the marks' own time span, so running them the next
+morning works; with no marks they fall back to a clock window and say which
+they used.
+
+The **report** answers one question: how long after the host said "open" did
+the chain actually open. The **record** is everything else the night left
+behind - per battle, its clock, how much of it the samples cover, every
+observed pool move, the largest increase, what moved in the final minute, and
+whether the program has settled it.
+
+**Read the coverage line before quoting anything from the record.** It is the
+share of the battle the samples actually span, and below 90% the record says so
+in bold, because a write-up built from half a battle should not read like a
+record of the battle. And a pool series is READINGS, not trades: two trades
+between two polls read as one move, which is why nothing in either output
+counts trades.
 
 ### What the night is supposed to produce
 
