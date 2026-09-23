@@ -17,6 +17,7 @@
 // goes through redactSecrets, because an RPC failure message carries the
 // endpoint and the endpoint carries the key.
 import { PROGRAM_ID, battlePda, b58decode } from "@/lib/ww/pda";
+import { anyConsumerEnabled, notFoundResponse } from "@/lib/ww/apiSurface";
 import { quoteBuy, supplyAtPool, SUPPLY_QUANTUM } from "@/lib/ww/quote";
 import { programError, decodeSimulationError } from "@/lib/ww/errors";
 import { redactSecrets, redactUrl } from "@/lib/redact";
@@ -156,6 +157,9 @@ async function health() {
 }
 
 export async function GET(request: Request) {
+  // Gated with the interface it serves (see lib/ww/apiSurface.ts). Zaal's
+  // ruling 2026-09-22: restrict these, do not merely describe them.
+  if (!anyConsumerEnabled(["finals"])) return notFoundResponse();
   const p = new URL(request.url).searchParams;
   try {
     const code = p.get("code");

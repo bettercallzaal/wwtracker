@@ -20,6 +20,7 @@
 // /api/ww/claimable: it spends the keyed RPC on a caller-supplied address.
 
 import { associatedTokenAddress, mintPda } from "@/lib/ww/pda";
+import { anyConsumerEnabled, notFoundResponse } from "@/lib/ww/apiSurface";
 import { parseTokenAccountBalance } from "@/lib/ww/widgetSell";
 import { RelayBudget, callerKey } from "@/lib/ww/rateLimit";
 import { redactSecrets, redactUrl } from "@/lib/redact";
@@ -56,6 +57,9 @@ async function balanceOf(ata: string): Promise<{ amount: number; exists: boolean
 }
 
 export async function GET(request: Request) {
+  // Gated with the interface it serves (see lib/ww/apiSurface.ts). Zaal's
+  // ruling 2026-09-22: restrict these, do not merely describe them.
+  if (!anyConsumerEnabled(["trading"])) return notFoundResponse();
   const decision = budget.take(callerKey(request.headers));
   if (!decision.allowed) {
     return json(429, { status: "error", error: decision.reason }, { "Retry-After": String(decision.retryAfter) });

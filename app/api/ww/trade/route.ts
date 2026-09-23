@@ -27,6 +27,7 @@
 // "custom program error: 0x1771" - at the cost of one extra RPC call.
 
 import { decideRelay, splitTransaction } from "@/lib/ww/relayPolicy";
+import { anyConsumerEnabled, notFoundResponse } from "@/lib/ww/apiSurface";
 import { decodeSimulationError, explainSimulationError } from "@/lib/ww/errors";
 import { RelayBudget, callerKey } from "@/lib/ww/rateLimit";
 import { confirmSignature, type SignatureStatus } from "@/lib/ww/confirm";
@@ -139,6 +140,9 @@ async function simulate(tx: Uint8Array): Promise<SimulationValue> {
 }
 
 export async function POST(request: Request) {
+  // Gated with the interface it serves (see lib/ww/apiSurface.ts). Zaal's
+  // ruling 2026-09-22: restrict these, do not merely describe them.
+  if (!anyConsumerEnabled(["trading", "operator"])) return notFoundResponse();
   let body: Json;
   try {
     body = (await request.json()) as Json;

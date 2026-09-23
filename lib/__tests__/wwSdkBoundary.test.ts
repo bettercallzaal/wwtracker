@@ -33,7 +33,7 @@ const WW = join(process.cwd(), "lib", "ww");
  * widget flag reads `process.env`. They are still checked for portability
  * where it is free, but they are not promises to a consumer.
  */
-const SERVER_ONLY = new Set(["relayPolicy.ts", "rateLimit.ts", "widgetFlag.ts", "operatorFlag.ts", "index.ts"]);
+const SERVER_ONLY = new Set(["relayPolicy.ts", "rateLimit.ts", "widgetFlag.ts", "operatorFlag.ts", "apiSurface.ts", "index.ts"]);
 
 const sourceFiles = readdirSync(WW).filter((f) => f.endsWith(".ts"));
 const read = (f: string) => readFileSync(join(WW, f), "utf8");
@@ -116,7 +116,7 @@ describe("portability, by inspection", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("only the deliberately server-only flags (widget, operator) read process", () => {
+  it("only the deliberately server-only flags and the surface that reads them touch process", () => {
     const users = sourceFiles.filter((f) => {
       return read(f)
         .split("\n")
@@ -125,7 +125,10 @@ describe("portability, by inspection", () => {
           return /\bprocess\./.test(code);
         });
     });
-    expect(users).toEqual(["operatorFlag.ts", "widgetFlag.ts"]);
+    // apiSurface names no variable of its own - it asks the flag modules,
+    // which do - but it defaults its `env` argument to process.env, so it is
+    // server-only for the same reason they are.
+    expect(users).toEqual(["apiSurface.ts", "operatorFlag.ts", "widgetFlag.ts"]);
   });
 });
 

@@ -109,9 +109,17 @@ async function callRoute() {
 }
 
 const realFetch = globalThis.fetch;
-beforeEach(() => vi.resetModules());
+const realEnv = process.env;
+// /api/ww/claimable is gated with the trade and claim panels it serves
+// (lib/ww/apiSurface.ts), so this suite asks for the open path. Without it the
+// route answers 404 and every assertion here would be testing the gate.
+beforeEach(() => {
+  vi.resetModules();
+  process.env = { ...realEnv, WW_WIDGET: "1" };
+});
 afterEach(() => {
   globalThis.fetch = realFetch;
+  process.env = realEnv;
   vi.restoreAllMocks();
 });
 
