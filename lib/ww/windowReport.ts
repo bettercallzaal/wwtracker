@@ -38,6 +38,31 @@ export function parseMarks(text: string): Mark[] {
   return text.split("\n").map(parseMarkLine).filter((m): m is Mark => m !== null);
 }
 
+/**
+ * WHICH BATTLES A REPORT SHOULD COVER, decided by the marks rather than by the
+ * clock.
+ *
+ * The 45-second report used a hardcoded "touched in the last 6 h". A session
+ * runs at night and the report gets run the next morning, which is when
+ * somebody has time - and then the window is empty, the report says "nothing
+ * to report", and the marks that were typed during the session are never used.
+ * The marks ARE the session, so they define the window: from the first mark to
+ * the last, padded by an hour each way to catch a battle that opened before
+ * anyone started typing and closed after they stopped.
+ *
+ * Returns null when there are no marks, and the caller falls back to a clock
+ * window and says which it used.
+ */
+export function windowFromMarks(marks: Mark[], padSeconds = 3600): { fromMs: number; toMs: number } | null {
+  if (marks.length === 0) return null;
+  let first = marks[0].t, last = marks[0].t;
+  for (const m of marks) {
+    if (m.t < first) first = m.t;
+    if (m.t > last) last = m.t;
+  }
+  return { fromMs: (first - padSeconds) * 1000, toMs: (last + padSeconds) * 1000 };
+}
+
 export interface BattleWindow {
   battleId: number;
   /** Chain open and close, unix seconds, from the account. */

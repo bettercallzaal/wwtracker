@@ -2,7 +2,8 @@
 /**
  * After a battle night: the 45-second window, per battle, as numbers.
  *
- *   npx tsx scripts/ww-45s-report.ts                          # every battle in the store touched in the last 6 h
+ *   npx tsx scripts/ww-45s-report.ts                          # the battles the marks cover; the last 6 h if there are no marks
+ *   ... --since-hours 24                                      # widen the no-marks window
  *   npx tsx scripts/ww-45s-report.ts 1789948124 1789949789    # named battles
  *   ... --marks ~/zao-vault/projects/ww-45s-marks-2026-09-21.log   # default: today's file
  *   ... --store var/ww-live
@@ -18,7 +19,7 @@ import { join } from "node:path";
 import { battlePda } from "../lib/ww/pda";
 import { parseJsonl } from "../lib/ww/poolHistory";
 import { DEFAULT_DIR, historyPath } from "../lib/poolHistoryStore";
-import { battleWindow, describeWindow, parseMarks } from "../lib/ww/windowReport";
+import { battleWindow, describeWindow, parseMarks, windowFromMarks } from "../lib/ww/windowReport";
 import { redactUrl } from "../lib/redact";
 import { optionValue } from "../lib/cliArgs";
 
@@ -29,7 +30,28 @@ const args = process.argv.slice(2);
 // the default for `--marks FILE` when --marks was the first argument.
 const opt = (n: string, d: string) => optionValue(args, n, d);
 const today = new Date().toISOString().slice(0, 10);
-const MARKS = opt("--marks", join(process.env.HOME ?? "", "zao-vault/projects", `ww-45s-marks-${today}.log`));
+const MARKS_DIR = join(process.env.HOME ?? "", "zao-vault/projects");
+/**
+ * Today's marks file if it exists, otherwise the NEWEST one in that directory.
+ * A session that runs at night is reported on the next morning, by which time
+ * "today" is a different day and the default pointed at a file nobody had
+ * written. Falling back is only safe because the chosen path is printed.
+ */
+function defaultMarksFile(): string {
+  const todays = join(MARKS_DIR, `ww-45s-marks-${today}.log`);
+  if (existsSync(todays)) return todays;
+  try {
+    const prior = readdirSync(MARKS_DIR)
+      .filter((f) => /^ww-45s-marks-\d{4}-\d{2}-\d{2}\.log$/.test(f))
+      .sort();
+    const newest = prior[prior.length - 1];
+    return newest ? join(MARKS_DIR, newest) : todays;
+  } catch {
+    return todays;
+  }
+}
+const MARKS = opt("--marks", defaultMarksFile());
+const SINCE_HOURS = Number(opt("--since-hours", "6"));
 const STORE = opt("--store", DEFAULT_DIR);
 const ids = args.filter((a) => /^\d{9,12}$/.test(a)).map(Number);
 
@@ -47,11 +69,35 @@ async function main() {
   console.log(`marks: ${marks.length} from ${MARKS}${existsSync(MARKS) ? "" : " (FILE MISSING: every lag below is UNKNOWN)"}`);
   let battles = ids;
   if (battles.length === 0) {
-    const cutoff = Date.now() - 6 * 3600 * 1000;
-    battles = readdirSync(STORE)
-      .filter((f) => /^\d{9,12}\.jsonl$/.test(f) && statSync(join(STORE, f)).mtimeMs >= cutoff)
+    // THE MARKS DEFINE THE SESSION. A clock window only applies when there are
+    // none, and either way the window used is printed, because "nothing to
+    // report" is a different statement from "I looked at the wrong hours".
+    const marked = windowFromMarks(marks);
+    const from = marked ? marked.fromMs : Date.now() - SINCE_HOURS * 3600 * 1000;
+    const to = marked ? marked.toMs : Date.now();
+    let names: string[];
+    try {
+      names = readdirSync(STORE);
+    } catch (err) {
+      console.log(`battles: CANNOT READ the store at ${STORE}: ${(err as Error).message}`);
+      console.log("nothing to report, and that is a problem with this machine rather than the session");
+      return;
+    }
+    battles = names
+      .filter((f) => /^\d{9,12}\.jsonl$/.test(f))
+      .filter((f) => {
+        try {
+          const m = statSync(join(STORE, f)).mtimeMs;
+          return m >= from && m <= to;
+        } catch {
+          return false;
+        }
+      })
       .map((f) => Number(f.replace(".jsonl", "")));
-    console.log(`battles: ${battles.length} in ${STORE} touched in the last 6 h`);
+    const window = marked
+      ? `the marks' own span, ${new Date(from).toLocaleString()} to ${new Date(to).toLocaleString()} (one hour either side)`
+      : `the last ${SINCE_HOURS} h, because there are no marks to take a span from`;
+    console.log(`battles: ${battles.length} in ${STORE} touched within ${window}`);
   }
   if (battles.length === 0) { console.log("nothing to report"); return; }
   console.log(`accounts via ${redactUrl(RPC)}\n`);
