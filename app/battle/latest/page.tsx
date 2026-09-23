@@ -28,30 +28,66 @@ export function generateMetadata() {
   return { robots: { index: false, follow: false } };
 }
 
-function recordedIds(dir: string): number[] {
+/**
+ * WHAT THIS RETURNS WHEN IT CANNOT LOOK.
+ *
+ * Until 2026-09-22 an unreadable store returned `[]`, which is byte for byte
+ * what an empty store returns, and the page then said "No battle recorded yet.
+ * The watcher has written nothing to the store." That sentence is a claim
+ * about the watcher, and it was made without being able to see the store at
+ * all - a missing directory, a WW_LIVE_DIR pointing somewhere else, or a
+ * permissions problem all read as "the battle has not started".
+ *
+ * That is the worst possible failure on a battle night: somebody watches a
+ * page that is looking in the wrong place and waits.
+ */
+function recordedIds(dir: string): { ids: number[]; unreadable: string | null } {
   let names: string[];
   try {
     names = readdirSync(dir);
-  } catch {
-    return [];
+  } catch (err) {
+    return { ids: [], unreadable: (err as Error).message };
   }
   const ids: number[] = [];
   for (const name of names) {
     const m = name.match(/^(\d{9,12})\.jsonl$/);
+    if (!m) continue;
     // A file with nothing in it is a battle nobody has recorded a sample for,
-    // and redirecting to its empty chart would be worse than waiting.
-    if (m && statSync(join(dir, name)).size > 0) ids.push(Number(m[1]));
+    // and redirecting to its empty chart would be worse than waiting. The stat
+    // is guarded because the watcher writes here while this reads: a file can
+    // vanish between the listing and the stat, and one such race should not
+    // take out the page.
+    try {
+      if (statSync(join(dir, name)).size > 0) ids.push(Number(m[1]));
+    } catch {
+      continue;
+    }
   }
-  return ids;
+  return { ids, unreadable: null };
 }
 
 export default function LatestBattlePage() {
-  const id = newestBattleId(recordedIds(process.env.WW_LIVE_DIR || DEFAULT_DIR));
+  const dir = process.env.WW_LIVE_DIR || DEFAULT_DIR;
+  const { ids, unreadable } = recordedIds(dir);
+  const id = newestBattleId(ids);
   if (id !== null) redirect(`/battle/${id}`);
   return (
     <main style={{ maxWidth: 720, margin: "32px auto", padding: "0 16px", color: C.text, fontFamily: C.mono }}>
       <AutoReload seconds={5} />
-      <p>No battle recorded yet. The watcher has written nothing to the store. This page reloads every 5 s.</p>
+      {unreadable ? (
+        <>
+          <p style={{ color: C.danger }}>
+            Could not read the store at <code>{dir}</code>, so this page cannot say whether a battle is
+            running: {unreadable}
+          </p>
+          <p style={{ color: C.dim, fontSize: 13 }}>
+            This is a problem with this machine, not with the battle. Check that the watcher is running and
+            writing there: <code>scripts/ww-night.sh status</code>.
+          </p>
+        </>
+      ) : (
+        <p>No battle recorded yet. The watcher has written nothing to {dir}. This page reloads every 5 s.</p>
+      )}
     </main>
   );
 }
