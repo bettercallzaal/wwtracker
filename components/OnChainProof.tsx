@@ -19,6 +19,7 @@ import { FLOOR_SOL } from "@/lib/config";
 import { getPublicStats, type PublicStats } from "@/lib/wavewarzApi";
 import { classifyBalanceResponse } from "@/lib/balanceResponse";
 import { toNum, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
+import { describeSnapshotAge } from "@/lib/snapshotAge";
 
 // The overview overlays four on-chain series that live on wildly different
 // scales (325 SOL of volume vs a ~3.5 SOL treasury vs thousands of trades).
@@ -424,7 +425,7 @@ export default function OnChainProof() {
         {balLive ? "treasury live from Solana." : "treasury unavailable."}{" "}
         {liveStats ? "volume/battles/payouts live from WaveWarZ's API." : "volume and battles from the baked Dune snapshot."}{" "}
         trades are from a complete chain scan; traders are decoded via Dune ({fmt(tot.activeDays)} active days
-        through {tot.lastDay}, generated {WW.generatedAt}). each line is indexed to its own peak so
+        through {tot.lastDay}, generated {describeSnapshotAge(WW.generatedAt)}). each line is indexed to its own peak so
         they share one axis - the Growth and Floor sections show the same series at true scale.
       </p>
     </div>

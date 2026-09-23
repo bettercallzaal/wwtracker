@@ -20,6 +20,7 @@ import { PROGRAM_ID as PROGRAM, TREASURY_WALLET as TREASURY, TRACKED_TRADER_WALL
 import { BATTLE_STATS as S } from "@/lib/battles";
 import { DATA_AS_OF } from "@/lib/freshness";
 import { toNum, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
+import { describeSnapshotAge } from "@/lib/snapshotAge";
 
 const short = (a: string) => `${a.slice(0, 4)}...${a.slice(-4)}`;
 const fmt = (n: number, dp = 0) =>
@@ -436,7 +437,7 @@ export default function PlatformAnalytics() {
           (txs, battles, trades) comes from decoded on-chain instructions - buys, sells and claims
           from a complete chain scan, because Dune&apos;s counts include failed transactions (its txs
           still do); treasury flow, platform
-          buy volume, and trader PnL are from the {WW.generatedAt || "older"} snapshot (these require
+          buy volume, and trader PnL are from the {WW.generatedAt ? describeSnapshotAge(WW.generatedAt) : "older"} snapshot (these require
           separate data pipelines). Treasury wallet FNj signs every battle, so it tops raw tx count and
           is excluded from the trader board. See docs/WAVEWARZ-RESEARCH.md.
         </p>
