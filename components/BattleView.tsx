@@ -6,6 +6,7 @@ import BattleClock from "@/components/BattleClock";
 import PoolChart from "@/components/PoolChart";
 import TradeWidget from "@/components/TradeWidget";
 import ClaimPanel from "@/components/ClaimPanel";
+import MarkPanel from "@/components/MarkPanel";
 import { lamportsToSol } from "@/lib/ww/quote";
 
 /**
@@ -45,12 +46,15 @@ export default function BattleView({
   streamLink,
   siteUrl,
   tradingEnabled,
+  marksEnabled = false,
 }: {
   battleId: number;
   sides: { a: SideInfo; b: SideInfo } | null;
   streamLink: string | null;
   siteUrl: string | null;
   tradingEnabled: boolean;
+  /** WW_MARKS, the operator's own machine during a battle night. Off everywhere else. */
+  marksEnabled?: boolean;
 }) {
   const [chain, setChain] = useState<ChainState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -148,6 +152,11 @@ export default function BattleView({
         <PoolChart battleId={battleId} live={live} labels={{ a: sides?.a.artist ?? "A", b: sides?.b.artist ?? "B" }} />
       </div>
 
+      {marksEnabled && (
+        <div style={{ ...panel, marginBottom: 12 }}>
+          <MarkPanel />
+        </div>
+      )}
       {chain && !chain.settled && tradingEnabled && (
         <div style={{ ...panel, marginBottom: 12 }}>
           <p style={{ ...metaLabel, marginBottom: 10 }}>Trade</p>

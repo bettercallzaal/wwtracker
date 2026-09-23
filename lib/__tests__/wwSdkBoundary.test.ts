@@ -128,7 +128,10 @@ describe("portability, by inspection", () => {
     // apiSurface names no variable of its own - it asks the flag modules,
     // which do - but it defaults its `env` argument to process.env, so it is
     // server-only for the same reason they are.
-    expect(users).toEqual(["apiSurface.ts", "operatorFlag.ts", "widgetFlag.ts"]);
+    // marksFlag.ts joined 2026-09-23 with the battle-night mark buttons. Same
+    // shape as the other two and server-only for the same reason: a flag that
+    // gates a WRITING route has no business being readable in a browser.
+    expect(users).toEqual(["apiSurface.ts", "marksFlag.ts", "operatorFlag.ts", "widgetFlag.ts"]);
   });
 });
 
