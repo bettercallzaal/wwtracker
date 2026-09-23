@@ -11,21 +11,21 @@ number is inherited from somebody else's data rather than measured, it says so.
 
 ---
 
-## 0. What has changed since, re-measured 2026-09-19
+## 0. What has changed since, re-measured 2026-09-23
 
 **Everything below this section is stamped 2026-09-06 and is left exactly as it
-was.** Re-writing those figures without re-deriving each one is the thing this
+was.** The 09-23 column was added the same way: a new column, nothing rewritten. Re-writing those figures without re-deriving each one is the thing this
 document's own header warns against, so the movement is recorded here instead and
 the original measurement stays legible.
 
-| | 2026-09-06 | 2026-09-19 | 2026-09-20 | |
-|---|---|---|---|---|
-| Battle accounts on chain | 1,643 | 1,694 | **1,694** | +51 over the fortnight, flat since |
-| Settled on chain | - | 1,607 | **1,613** | Zaal settled six more by hand |
-| Never ended, past their clock | - | 87 | **81** | the six he cleared |
-| In her public listing | 1,501 | 1,552 | **1,558** | the gap to chain is now 136 |
-| Lifetime volume, her API | 922.3 SOL | **921.99 SOL** | **it went DOWN** |
-| Artist payouts | 14.38 SOL | 14.47 SOL | |
+| | 2026-09-06 | 2026-09-19 | 2026-09-20 | 2026-09-23 | |
+|---|---|---|---|---|---|
+| Battle accounts on chain | 1,643 | 1,694 | 1,694 | **1,702** | +8 in three days; "flat since" was true when written and is not now |
+| Settled on chain | - | 1,607 | 1,613 | **1,620** | |
+| Never ended, past their clock | - | 87 | 81 | **82** | one more than on 09-20: last night's tie, 1790042941 |
+| In her public listing | 1,501 | 1,552 | 1,558 | **1,566** | the gap to chain is now 136, unchanged |
+| Lifetime volume, her API | 922.3 SOL | 921.99 SOL | | **954.49 SOL** | +32.5 SOL since 09-19, and it is rising again after the drop |
+| Artist payouts | 14.38 SOL | 14.47 SOL | | **14.95 SOL** | |
 | Trader claims | - | 481.76 SOL over 3,368 withdrawals | |
 | SOL still sitting in pools | - | **494.39 SOL** | |
 
