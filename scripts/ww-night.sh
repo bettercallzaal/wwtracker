@@ -2,6 +2,7 @@
 # Battle night in one command: start, stop, status, ready.
 #
 #   scripts/ww-night.sh ready     # every precondition, PASS or FAIL per line, exit 1 on any FAIL
+#   scripts/ww-night.sh rehearse  # run the night's OWN TOOLS once, before the night needs them
 #   scripts/ww-night.sh start     # watcher (3 s polls, store var/ww-live) + built server on :3520
 #   scripts/ww-night.sh status    # what is running, what it served, what it recorded
 #   scripts/ww-night.sh stop      # both, cleanly
@@ -68,6 +69,72 @@ cmd_ready() {
   local ph; ph=$(curl -s --max-time 8 "http://localhost:${PORT}/api/ww/pool-history?battleId=1789948124" 2>/dev/null | head -c 60)
   case "$ph" in *'"status":"ok"'*) pass "pool-history serves the store (${ph}...)";; *) fail "pool-history did not answer ok: ${ph:-no response}";; esac
   if [ "$FAILS" = "0" ]; then echo "READY. Open http://localhost:${PORT}/battle/latest when the first battle starts; it jumps to the newest recorded battle."; else echo "NOT READY: ${FAILS} failing"; fi
+  [ "$FAILS" = "0" ]
+}
+
+# REHEARSE THE NIGHT, do not merely check that things are up.
+#
+# `ready` verifies the server answers and the watcher has a pid. It would have
+# passed on 2026-09-22 while two of the three tools the night depends on were
+# broken: `ww-45s-report.ts --marks FILE` silently read a different file (the
+# option parser dropped a flag in first position), and the report selected
+# battles "touched in the last 6 h", so a session marked at night and reported
+# in the morning found nothing. Both had been in place for days. Nothing
+# exercised them, because the 45-second measurement has never once completed.
+#
+# This runs the marker and the report against the store, with a mark whose time
+# is taken from the newest recorded battle, and fails if the tools do not come
+# back with what they are supposed to.
+cmd_rehearse() {
+  echo "rehearsal, $(date '+%Y-%m-%d %H:%M:%S %Z')"
+  local tmp; tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' RETURN
+
+  # 1. The store is readable AND writable, since the watcher appends to it.
+  if [ -d "$STORE" ] && [ -w "$STORE" ]; then pass "store ${STORE} exists and is writable"; else fail "store ${STORE} missing or not writable: the watcher cannot record"; fi
+
+  # 2. The marks directory the marker writes to by default.
+  local marksdir="$HOME/zao-vault/projects"
+  if [ -d "$marksdir" ] && [ -w "$marksdir" ]; then pass "marks directory ${marksdir} is writable"; else fail "marks directory ${marksdir} missing or not writable: scripts/ww-mark.sh cannot save"; fi
+
+  # 3. The marker itself, fed on stdin the way a person types.
+  local marks="$tmp/marks.log"
+  printf 'announce
+sent
+' | bash scripts/ww-mark.sh "$marks" >/dev/null 2>&1 || true
+  if [ "$(wc -l < "$marks" 2>/dev/null | tr -d ' ')" = "2" ]; then pass "ww-mark.sh wrote 2 stamped marks"; else fail "ww-mark.sh did not write both marks to ${marks}"; fi
+
+  # 4. The report, against a mark dated to the NEWEST RECORDED BATTLE rather
+  #    than to now - which is the case that was broken, and the case every real
+  #    morning-after run is.
+  local newest; newest=$(ls -t "$STORE"/*.jsonl 2>/dev/null | head -1)
+  if [ ! -d "$STORE" ]; then
+    # NOT "nothing to check yet": that sentence belongs to an empty store, and
+    # saying it about a store that does not exist is the failure this whole
+    # rehearsal is about - an absence and a breakage reading the same.
+    fail "cannot rehearse the report: ${STORE} does not exist, so whether it works is UNKNOWN"
+  elif [ -z "$newest" ]; then
+    pass "store is readable and holds no recorded battle yet, so the report has nothing to run against"
+  else
+    local mtime; mtime=$(date -r "$newest" '+%Y-%m-%dT%H:%M:%S%z')
+    printf '%s announce
+%s sent
+' "$mtime" "$mtime" > "$marks"
+    local out; out=$(npx tsx scripts/ww-45s-report.ts --marks "$marks" --store "$STORE" 2>&1 | grep -v Warning | grep -v experimental || true)
+    case "$out" in
+      *"FILE MISSING"*) fail "the report could not read the marks file it was handed: ${marks}" ;;
+      *"CANNOT READ the store"*) fail "the report could not read ${STORE}" ;;
+      *) : ;;
+    esac
+    local found; found=$(printf '%s' "$out" | sed -n 's/^battles: \([0-9]*\) .*/\1/p' | head -1)
+    if [ -n "$found" ] && [ "$found" -gt 0 ] 2>/dev/null; then
+      pass "the report found ${found} battle(s) from a mark dated $(basename "$newest" .jsonl)'s own file time"
+    else
+      fail "the report found no battles for a mark dated to the newest recorded battle: it would find nothing the morning after a session"
+    fi
+  fi
+
+  if [ "$FAILS" = "0" ]; then echo "REHEARSED. The marker and the report both work; they are what the night produces."; else echo "NOT REHEARSED: ${FAILS} failing"; fi
   [ "$FAILS" = "0" ]
 }
 
@@ -158,6 +225,7 @@ cmd_stop() {
 
 case "${1:-}" in
   ready) cmd_ready ;;
+  rehearse) cmd_rehearse ;;
   start) cmd_start ;;
   status) cmd_status ;;
   stop) cmd_stop ;;
