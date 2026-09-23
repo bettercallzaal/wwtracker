@@ -111,12 +111,21 @@ export default function BattleView({
             {(["a", "b"] as const).map((s) => {
               const pool = s === "a" ? chain.poolALamports : chain.poolBLamports;
               const supply = s === "a" ? chain.supplyA : chain.supplyB;
-              const leading = s === "a" ? chain.poolALamports >= chain.poolBLamports : chain.poolBLamports > chain.poolALamports;
+              // A TIE IS NOT SIDE A LEADING. This read `poolA >= poolB` for
+              // side A, so two exactly equal pools put "leads" under A - while
+              // the program settles a tie to B (measured 2026-09-22 on battles
+              // 1789783495 and 1790042941, and 28 battles have ended exactly
+              // level). Neither side leads a tie, and saying one does is wrong
+              // in the direction that costs the reader money.
+              const tied = chain.poolALamports === chain.poolBLamports && chain.poolALamports > 0;
+              const leading = !tied && (s === "a" ? chain.poolALamports > chain.poolBLamports : chain.poolBLamports > chain.poolALamports);
               return (
                 <div key={s} style={{ borderLeft: `3px solid ${s === "a" ? C.accent : C.blue}`, paddingLeft: 10 }}>
                   <p style={{ margin: 0, fontSize: 12, color: C.dim }}>{labels[s]}</p>
                   <p style={{ margin: "2px 0 0", fontFamily: C.mono, fontSize: 18 }}>
-                    {lamportsToSol(pool).toFixed(4)} SOL{leading ? <span style={{ color: C.dim, fontSize: 11 }}> leads</span> : null}
+                    {lamportsToSol(pool).toFixed(4)} SOL
+                    {leading ? <span style={{ color: C.dim, fontSize: 11 }}> leads</span> : null}
+                    {tied ? <span style={{ color: C.dim, fontSize: 11 }}> tied</span> : null}
                   </p>
                   <p style={{ margin: 0, fontSize: 11, color: C.dim, fontFamily: C.mono }}>{supply.toLocaleString()} tokens minted</p>
                 </div>
@@ -128,6 +137,9 @@ export default function BattleView({
           <p style={{ margin: "10px 0 0", fontSize: 12, color: C.dim }}>
             Chain winner by pool: {chain.winnerArtistA ? labels.a : labels.b}. The judged result lives on the site, and the
             two are different scoreboards.
+            {chain.poolALamports === chain.poolBLamports && chain.poolALamports > 0
+              ? " The pools finished exactly level: the program pays a tie from both pools together, in proportion to tokens held, rather than to a winner."
+              : ""}
           </p>
         )}
       </div>
