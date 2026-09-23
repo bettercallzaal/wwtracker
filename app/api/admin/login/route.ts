@@ -2,10 +2,34 @@
 //
 // Exchanges the shared password for a short-lived signed cookie. The password
 // itself is never stored client-side and never echoed back.
+//
+// RATE LIMITED, because until 2026-09-23 it was not. `lib/adminAuth.ts` says in
+// its own header that this endpoint is public and "an attacker can measure it
+// as often as they like" - which was written about timing, and was equally true
+// of guessing. One shared password, sized for three people, guarded by a
+// constant-time comparison and nothing else, in front of a page that can
+// publish under the WaveWarZ name and email every subscriber.
+//
+// Ten attempts a minute per caller, forty across the server. Generous for
+// somebody typing a password they know, useless for working through a list. The
+// budget is the same one the relay uses, so there is one implementation of this
+// and not two.
 
 import { checkPassword, issueToken, COOKIE_NAME, SESSION_TTL_MS } from "@/lib/adminAuth";
+import { RelayBudget, callerKey } from "@/lib/ww/rateLimit";
+
+/** Per-instance, like the relay's. A serverless fleet limits per instance; that is a floor, not a ceiling. */
+const logins = new RelayBudget(10, 40);
 
 export async function POST(request: Request): Promise<Response> {
+  // Before reading the body: a refusal should cost less than an attempt.
+  const decision = logins.take(callerKey(request.headers));
+  if (!decision.allowed) {
+    return new Response(JSON.stringify({ ok: false, error: `Too many sign-in attempts: ${decision.reason}` }), {
+      status: 429,
+      headers: { "Content-Type": "application/json", "Retry-After": String(decision.retryAfter) },
+    });
+  }
   let submitted: unknown;
   try {
     submitted = ((await request.json()) as { password?: unknown }).password;

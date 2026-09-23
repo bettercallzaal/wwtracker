@@ -150,6 +150,14 @@ itself into, and it survives a skim.
 `lib/adminAuth.ts` refuses everything when `ADMIN_PASSWORD` is unset, and says
 which side is misconfigured rather than "wrong password".
 
+**And it is rate limited, since 2026-09-23**: ten attempts a minute per caller,
+forty across the server, answered with `429` and a `Retry-After` before the body
+is even read. It was not before, and `adminAuth.ts` had said in its own header
+that an attacker "can measure it as often as they like" - written about timing
+leaks, and just as true of guessing. A shared password sized for three people is
+weak by construction; the thing that makes it survivable is that nobody gets to
+try it a thousand times.
+
 That is the opposite of `lib/refresh-policy.ts`, which fails **open**, and the
 difference is what the endpoint does. One re-runs a read-only query where the
 worst case is a wasted Dune credit. This one publishes under the WaveWarZ name
