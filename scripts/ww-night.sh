@@ -32,6 +32,15 @@ FAILS=0
 # table: pgrep -f matched a shell whose arguments contained the pattern and
 # reported the server "already running" while :3524 answered nothing.
 alive() { [ -n "${1:-}" ] && kill -0 "$1" 2>/dev/null; }
+# THE GROUP A PID IS ACTUALLY IN, asked of the system rather than assumed to be
+# the pid itself. A process this script starts under `set -m` leads its own
+# group, so pgid == pid - but a watcher started by an earlier version of this
+# script did not, and on 2026-09-22 its pidfile said 2184 while its group was
+# 2172. `kill -- -2184` then failed with "no such process", stop fell through
+# to killing the leader alone, and two child processes would have been left
+# polling the RPC with nothing tracking them. A stop that reports success while
+# leaving the work running is worse than one that fails loudly.
+pgid_of() { ps -o pgid= -p "${1:-0}" 2>/dev/null | tr -d ' '; }
 watcher_pid() { local p; p=$(cat var/watcher.pid 2>/dev/null || true); alive "$p" && echo "$p" || true; }
 server_pid()  { local p; p=$(cat var/server.pid 2>/dev/null || true); alive "$p" && echo "$p" || true; }
 http() { curl -s -o /dev/null -w '%{http_code}' --max-time 8 "$1" 2>/dev/null || echo 000; }
@@ -104,11 +113,47 @@ cmd_status() {
 # was reported as "died on its own"; then testing THIS fix, with the edit not
 # yet applied, ran the old stop and killed it a second time. A stop that can
 # hit something you did not start is not a stop.
+# Ends a pid's whole process GROUP, looked up rather than assumed, and says
+# what it actually did. Returns non-zero if anything in the group survives, so
+# a caller is never told a stop succeeded when it did not.
+stop_group() {
+  local label="$1" pid="$2" g
+  [ -n "$pid" ] || { echo "${label} was not running"; return 0; }
+  g=$(pgid_of "$pid")
+  if [ -z "$g" ]; then echo "${label}: pid ${pid} is already gone"; return 0; fi
+  # NEVER GROUP-KILL OUR OWN GROUP. Demonstrated on 2026-09-22 while testing
+  # this function: a process started without job control shares the caller's
+  # group, and `kill -- -$g` then kills the shell running the stop, the
+  # terminal it sits in, and anything else that shell started. If the pidfile
+  # names something in our own group, end that process and its children only.
+  local mine; mine=$(pgid_of $$)
+  local n; n=$(ps -axo pgid= | tr -d ' ' | grep -c "^${g}$")
+  if [ "$g" = "$mine" ]; then
+    echo "${label}: pid ${pid} shares this shell's process group (${g}) - killing it and its children, not the group"
+    pkill -P "$pid" 2>/dev/null
+    kill "$pid" 2>/dev/null
+    sleep 2
+    if kill -0 "$pid" 2>/dev/null; then echo "${label}: pid ${pid} did NOT stop"; return 1; fi
+    echo "${label} stopped (pid ${pid}; its group was shared, so the group was left alone)"
+    return 0
+  fi
+  kill -- "-$g" 2>/dev/null || kill "$pid" 2>/dev/null
+  sleep 2
+  if ps -axo pgid= | tr -d ' ' | grep -q "^${g}$"; then
+    echo "${label}: group ${g} did NOT fully stop - still running:"
+    ps -axo pid,pgid,command | awk -v g="$g" '$2==g'
+    return 1
+  fi
+  echo "${label} stopped (group ${g}, ${n} process(es), pidfile said ${pid})"
+}
+
 cmd_stop() {
   local w; w=$(watcher_pid); local s; s=$(server_pid)
-  if [ -n "$w" ]; then kill -- "-$w" 2>/dev/null || kill "$w" 2>/dev/null; echo "watcher stopped (group $w)"; else echo "watcher was not running"; fi
-  if [ -n "$s" ]; then kill -- "-$s" 2>/dev/null || { pkill -P "$s" 2>/dev/null; kill "$s" 2>/dev/null; }; echo "server stopped (group $s)"; else echo "server was not running"; fi
+  local rc=0
+  stop_group watcher "$w" || rc=1
+  stop_group server "$s" || rc=1
   rm -f var/watcher.pid var/server.pid
+  return $rc
 }
 
 case "${1:-}" in
