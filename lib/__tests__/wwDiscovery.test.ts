@@ -151,3 +151,38 @@ describe("what it refuses", () => {
     expect(parseBattleAccounts(mixed, b64, NOW)).toHaveLength(rows.length);
   });
 });
+
+/**
+ * THE IDLE SCAN IS THE EXPENSIVE ONE. The watcher runs `getProgramAccounts`
+ * every ten seconds while waiting for a session, and unfiltered that is 1,702
+ * accounts and 975 KB each time. Byte 245 is `winner_decided`, so a memcmp of
+ * one zero byte there returns only unsettled battles - 82 accounts, 47 KB.
+ *
+ * Every live battle is unsettled by definition, so the filter cannot hide one.
+ * Verified against mainnet on 2026-09-23: 82 unsettled found by the full scan,
+ * 82 by the filtered scan, 0 in the first and not the second.
+ */
+describe("battleDiscoveryRequest", () => {
+  it("asks for every battle account by default", () => {
+    const req = battleDiscoveryRequest();
+    const opts = req.params[1] as { filters: unknown[] };
+    expect(opts.filters).toHaveLength(1);
+    expect(opts.filters[0]).toEqual({ dataSize: 353 });
+  });
+
+  it("adds the unsettled filter on request, and only then", () => {
+    const req = battleDiscoveryRequest(undefined, true);
+    const opts = req.params[1] as { filters: unknown[] };
+    expect(opts.filters).toHaveLength(2);
+    // "1" is base58 for a single 0x00 byte: winner_decided not set.
+    expect(opts.filters[1]).toEqual({ memcmp: { offset: 245, bytes: "1" } });
+  });
+
+  it("keeps the same program and slice either way, so only the filter differs", () => {
+    const plain = battleDiscoveryRequest();
+    const filtered = battleDiscoveryRequest(undefined, true);
+    expect(filtered.params[0]).toEqual(plain.params[0]);
+    expect((filtered.params[1] as { dataSlice: unknown }).dataSlice)
+      .toEqual((plain.params[1] as { dataSlice: unknown }).dataSlice);
+  });
+});
