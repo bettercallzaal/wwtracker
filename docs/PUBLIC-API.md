@@ -89,6 +89,14 @@ call, and whether it has settled.
 curl https://wwtracker.vercel.app/api/ww/battle
 ```
 
+**`?battleId=<id>` is answered or refused, never ignored** (since 2026-09-22).
+Without it you get the current or most recent battle, which is this endpoint's
+job. With it you get that battle if it is among the recent ones this endpoint
+already fetches, and otherwise `data: null` with an `error` saying it is not in
+the set - which is NOT a statement that the battle does not exist. Before this
+the parameter was silently discarded and the caller was handed whatever battle
+was current, with a 200: asking for 1789948124 returned 1790046123.
+
 `data` carries `id`, `type`, `url`, `live`, `settled`, `endsAt`, `winnerSide`,
 `poll`, `djWavy`, and `a` / `b`, each of which is `{ artist, track, art, poolSol }`.
 Note `artist` and `track` are separate fields here - upstream's own
