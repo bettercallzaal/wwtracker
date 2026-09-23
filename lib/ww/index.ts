@@ -446,6 +446,18 @@ export {
   type OpeningGapReport,
 } from "./openingGap";
 
+// WHO gets there first. A tight arrival floor is either a room reacting
+// together or one wallet on a timer, and the timing alone cannot tell them
+// apart. This counts the first buyers instead.
+export {
+  describeFirstBuyers,
+  firstBuyerConcentration,
+  shortAddress,
+  type FirstBuyerConcentration,
+  type FirstBuyerRow,
+  type TraderTally,
+} from "./firstBuyer";
+
 // The envelope a wallet is handed for signing: the unsigned transaction.
 export { unsignedTransaction } from "./wallet";
 
