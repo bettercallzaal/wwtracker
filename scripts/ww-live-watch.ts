@@ -97,8 +97,13 @@ const read = (raw: Buffer) => ({
 type State = ReturnType<typeof read>;
 
 async function findLive(): Promise<number[]> {
+  // FILTERED AT THE RPC, not here. Byte 245 is `winner_decided`, and every
+  // live battle has it at zero, so asking for only those returns 82 accounts
+  // instead of 1,702 - 47 KB instead of 975 KB, every ten seconds, all day.
+  // The selection below is unchanged: it already dropped settled battles, so
+  // this moves that same test to the side that does not have to send them.
   const accounts: any[] = await rpc("getProgramAccounts", [PROGRAM_ID,
-    { encoding: "base64", filters: [{ dataSize: 353 }], dataSlice: { offset: 0, length: 256 } }]) ?? [];
+    { encoding: "base64", filters: [{ dataSize: 353 }, { memcmp: { offset: 245, bytes: "1" } }], dataSlice: { offset: 0, length: 256 } }]) ?? [];
   const now = Math.floor(Date.now() / 1000);
   const live: number[] = [];
   for (const a of accounts) {
