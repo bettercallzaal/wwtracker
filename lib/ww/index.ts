@@ -454,6 +454,16 @@ export {
 // wallet signs it. Winner by pool, the three legs of the losing pool.
 export { describeAge, secondsSinceEnd, settlePreview, type SettlePreview } from "./settle";
 
+// What a night produced, out of the samples the watcher stored: observed pool
+// moves, the largest one, the final minute, and how much of the battle the
+// samples actually cover.
+export {
+  buildNightRecord,
+  describeNightRecord,
+  type NightRecord,
+  type PoolMove,
+} from "./nightRecord";
+
 // Settling many at once: several endBattle instructions fit in one
 // transaction, so a long list of unsettled battles costs a few approvals
 // rather than one each. The packer measures the real message.
