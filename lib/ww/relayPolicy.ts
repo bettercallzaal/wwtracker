@@ -19,9 +19,15 @@
  *      by discriminator. A transaction that merely mentions our program without
  *      trading is not ours to pay for.
  *
- * Rule 2 also excludes `initializeBattle` and `endBattle`. Those are the
- * platform's to sign, not a trader's, and relaying one through our key would
- * launch or settle a battle in our name.
+ * Rule 2 also excludes the LAUNCH instructions, `initializeBattle` and
+ * `initializeMints`. Those are the platform's to sign, not a trader's, and
+ * relaying one would launch a battle in our name.
+ *
+ * `endBattle` WAS excluded on the same grounds and is not any more, since
+ * 2026-09-21 - see RELAYABLE below, where the reasoning sits next to the
+ * discriminator. This paragraph went on saying it was refused for two days
+ * after the table beside it stopped refusing it, so the file contradicted
+ * itself and `docs/SOP.md` repeated the older half.
  *
  * WHY LIGHTHOUSE IS ALLOWED, because it looks like a hole and is not. Phantom
  * injects Lighthouse (`L2TExMF...`) assertions into a transaction BEFORE it
