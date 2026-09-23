@@ -2,16 +2,20 @@
 //
 // Every battle running right now, decoded from one getProgramAccounts.
 //
-// WHY A ROUTE AND NOT A CLIENT FETCH. getProgramAccounts over 1,694 accounts is
-// the most expensive call this estate makes, and `SOLANA_RPC_URL` must not
-// reach a browser. So it happens here, once per request, and the page polls
-// this instead of the chain.
+// WHY A ROUTE AND NOT A CLIENT FETCH. getProgramAccounts is the most expensive
+// call this estate makes, and `SOLANA_RPC_URL` must not reach a browser. So it
+// happens here, once per request, and the page polls this instead of the chain.
+//
+// Since 2026-09-23 it asks the RPC for only the UNSETTLED accounts - 82 rather
+// than 1,702 - because every row this route keeps is unsettled anyway. The
+// watcher was refused roughly a quarter of its scans after a day of asking for
+// all of them, which is what prompted looking here too.
 //
 // It returns awaiting-settlement battles too, because "past its end time and
 // never settled" is its own state - a claim against one of those returns
 // BattleNotEnded, and a dashboard that showed it as finished would be lying in
 // the direction that costs somebody money.
-import { PROGRAM_ID } from "@/lib/ww/pda";
+import { battleDiscoveryRequest } from "@/lib/ww/discovery";
 import { redactSecrets, redactUrl } from "@/lib/redact";
 import { finalsEnabled } from "@/lib/finalsFlag";
 
@@ -25,14 +29,22 @@ export async function GET(request: Request) {
   // seconds per viewer. Leaving the route open while hiding the page would
   // leave the cost open and only the convenience hidden.
   if (!finalsEnabled()) return new Response("not found", { status: 404 });
+  // Parsed BEFORE the scan, because it decides which scan to make.
+  const pinned = new URL(request.url).searchParams.get("battle");
+  const pinnedId = pinned && /^\d{9,12}$/.test(pinned) ? Number(pinned) : null;
   try {
+    // ASK THE RPC FOR THE UNSETTLED ONES, except when a battle is pinned.
+    // Every row this route keeps is unsettled - a settled battle is neither
+    // live nor awaiting settlement - so the filter changes nothing it returns
+    // while cutting the response from 1,702 accounts and 975 KB to 82 and
+    // 47 KB (measured 2026-09-23). A PIN is the exception and the reason this
+    // is conditional: pinning a battle deliberately returns it whatever its
+    // phase, including settled, so the page's cards can be exercised when
+    // nothing is running. Filtering then would silently return nothing.
     const res = await fetch(RPC, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0", id: 1, method: "getProgramAccounts",
-        params: [PROGRAM_ID, { encoding: "base64", filters: [{ dataSize: 353 }], dataSlice: { offset: 0, length: 256 } }],
-      }),
+      body: JSON.stringify(battleDiscoveryRequest(undefined, pinnedId === null)),
       cache: "no-store",
     });
     const j = await res.json();
@@ -41,8 +53,6 @@ export async function GET(request: Request) {
     // A pinned id is returned as `live` whatever its phase, so the page's card
     // rendering can be exercised while nothing is running. The phase fields are
     // untouched, so a pinned settled battle still reports itself as settled.
-    const pinned = new URL(request.url).searchParams.get("battle");
-    const pinnedId = pinned && /^\d{9,12}$/.test(pinned) ? Number(pinned) : null;
     const live: unknown[] = [];
     const awaiting: unknown[] = [];
     for (const a of j.result ?? []) {
