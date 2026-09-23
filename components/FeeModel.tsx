@@ -53,6 +53,30 @@ interface Loaded {
   stats: PublicStats | null;
 }
 
+/**
+ * THE FIELDS THIS PAGE ACTUALLY READS, CHECKED AT RUNTIME.
+ *
+ * `PublicStats` declares `volume` and `battles` as required, but it is a
+ * declaration about SOMEBODY ELSE'S API and nothing validates the JSON against
+ * it. That left two contradictory assumptions in this file: the revenue memo
+ * read `stats.volume?.totalSol ?? 0`, treating the field as possibly absent
+ * and substituting a zero, while the tile beside it read
+ * `stats.volume.totalSol` and would have thrown. So an upstream that dropped
+ * `volume` produced either a lifetime revenue of 0 SOL presented as measured,
+ * or a crash - and which one depended on where you looked.
+ *
+ * Zero is the worse of the two. `lib/wwCache.ts` says it outright: a consumer
+ * that renders unknown as 0 is lying to its users. This returns the reason
+ * instead, and the page says which field did not arrive.
+ */
+function missingField(stats: PublicStats | null): string | null {
+  if (!stats) return null; // absent stats are already handled as unavailable
+  if (typeof stats.volume?.totalSol !== "number") return "volume.totalSol";
+  if (typeof stats.battles?.quickBattles !== "number") return "battles.quickBattles";
+  if (typeof stats.battles?.communityBattles !== "number") return "battles.communityBattles";
+  return null;
+}
+
 export default function FeeModel() {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -120,23 +144,23 @@ export default function FeeModel() {
 
   // Calculate lifetime revenue from real platform stats.
   const lifetimeBreakdown = useMemo(() => {
-    if (!loaded?.stats) return null;
-    const volumeSol = loaded.stats.volume?.totalSol ?? 0;
+    if (!loaded?.stats || missingField(loaded.stats)) return null;
+    const volumeSol = loaded.stats.volume.totalSol;
     // Note: settlement and skip fees are not yet tracked on-chain,
     // so we show zero for those in the realistic calculation.
     return platformRevenue({
       volumeSol,
       losingPoolSol: 0,
-      quickBattles: loaded.stats.battles?.quickBattles ?? 0,
-      communityBattles: loaded.stats.battles?.communityBattles ?? 0,
+      quickBattles: loaded.stats.battles.quickBattles,
+      communityBattles: loaded.stats.battles.communityBattles,
       skipFeesSol: 0,
     });
   }, [loaded?.stats]);
 
   // Trade fee split for real volume.
   const lifetimeTradeFeeSplit = useMemo(() => {
-    if (!loaded?.stats) return null;
-    const volumeSol = loaded.stats.volume?.totalSol ?? 0;
+    if (!loaded?.stats || missingField(loaded.stats)) return null;
+    const volumeSol = loaded.stats.volume.totalSol;
     return tradeFeeSplit(volumeSol);
   }, [loaded?.stats]);
 
@@ -152,7 +176,8 @@ export default function FeeModel() {
     return "live stats are currently unavailable.";
   })();
 
-  const unavailable = !error && loaded?.status === "unknown";
+  const absentField = missingField(loaded?.stats ?? null);
+  const unavailable = !error && (loaded?.status === "unknown" || absentField !== null);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -306,7 +331,9 @@ export default function FeeModel() {
       {unavailable ? (
         <Panel label="LIFETIME PLATFORM REVENUE">
           <p style={{ ...metaLabel, fontSize: 13, color: C.text }}>
-            Live stats are unavailable right now.
+            {absentField
+              ? `Live stats arrived without ${absentField}, so the figures below cannot be worked out. They are not zero; they are unknown.`
+              : "Live stats are unavailable right now."}
           </p>
           <p style={{ ...metaLabel, fontSize: 12, marginTop: 6 }}>
             This reads live from wavewarz.info and will return when the source is reachable.
