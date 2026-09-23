@@ -51,21 +51,36 @@ const ONE = arg("--battle");
 const STORE = arg("--store", DEFAULT_DIR)!;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * COUNTS THE RETRIES, NOT ONLY THE GIVING UP.
+ *
+ * `rpcFailures` only rose when all eight attempts failed, so a watcher fighting
+ * a rate limit on every single call - eight tries and up to twenty-five seconds
+ * of backoff for one read, on a three-second poll - reported "0 rpc failures"
+ * and looked perfectly healthy. The heartbeat exists so silence is not
+ * ambiguous; a counter that only moves at total collapse has the same problem
+ * one level down. Retries are the early warning, and on a battle night the
+ * thing to know is that sampling has slowed down, not that it has stopped.
+ */
 async function rpc(method: string, params: unknown[]): Promise<any> {
   for (let i = 0; i < 8; i++) {
     try {
       const res = await fetch(RPC, { method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
-      if (res.status === 429) { await sleep(700 * (i + 1)); continue; }
+      if (res.status === 429) { rpcRetries++; rateLimited++; await sleep(700 * (i + 1)); continue; }
       const j = await res.json();
-      if (j.error) { await sleep(500 * (i + 1)); continue; }
+      if (j.error) { rpcRetries++; await sleep(500 * (i + 1)); continue; }
       return j.result;
-    } catch { await sleep(600 * (i + 1)); }
+    } catch { rpcRetries++; await sleep(600 * (i + 1)); }
   }
   rpcFailures++;
   return null;
 }
 let rpcFailures = 0;
+let rpcRetries = 0;
+let rateLimited = 0;
+/** Polls where a battle's account could not be read at all, so no sample was stored. */
+let droppedReads = 0;
 
 const read = (raw: Buffer) => ({
   battleId: Number(raw.readBigUInt64LE(8)),
@@ -155,7 +170,7 @@ async function main() {
   const beat = () => {
     if (Date.now() - lastBeat < 60_000) return;
     lastBeat = Date.now();
-    console.log(`${stamp()} alive - ${polls} polls, ${scans} scans, ${rpcFailures} rpc failures, ${exact} exact, ${wrong} mismatched, ${merged} uncountable`);
+    console.log(`${stamp()} alive - ${polls} polls, ${scans} scans, ${rpcRetries} retries (${rateLimited} rate-limited), ${rpcFailures} rpc failures, ${droppedReads} dropped reads, ${exact} exact, ${wrong} mismatched, ${merged} uncountable`);
   };
 
   for (;;) {
@@ -175,7 +190,10 @@ async function main() {
 
     for (const id of ids) {
       const now = await fetchState(id);
-      if (!now) continue;
+      // A READ THAT FAILED IS A SAMPLE THAT IS NOT IN THE CHART. Counted, so a
+      // gap in the series has a number beside it rather than looking like a
+      // quiet minute in the battle.
+      if (!now) { droppedReads++; continue; }
       const before = seen.get(id);
       // THE STORE. Every poll where a pool or supply moved, plus a heartbeat
       // every 30 s, appended to var/ww-live/<id>.jsonl for the battle page's
