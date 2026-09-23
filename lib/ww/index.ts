@@ -431,6 +431,21 @@ export {
   type Mark,
 } from "./windowReport";
 
+// The half of the announcement-lag question that needs nobody to type: how
+// long after a battle opens on chain the first trade lands. An upper bound on
+// the fastest participant's knowledge, never the lag itself.
+export {
+  buildOpeningGaps,
+  countWithin,
+  describeOpeningGaps,
+  percentile,
+  type FirstTrade,
+  type Opening,
+  type OpeningGap,
+  type OpeningGapMiss,
+  type OpeningGapReport,
+} from "./openingGap";
+
 // The envelope a wallet is handed for signing: the unsigned transaction.
 export { unsignedTransaction } from "./wallet";
 

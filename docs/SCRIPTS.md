@@ -18,6 +18,7 @@ has never been run in full, it says so.
 | `ww-live-watch.ts` | The watcher. Reads live battles every 3 s, checks our curve against every real trade, and appends samples to `var/ww-live/<id>.jsonl` |
 | `ww-mark.sh` | The marker terminal. Type `announce` when the host opens the round, `sent` when a wallet confirms |
 | `ww-45s-report.ts` | After the night: the announcement lag per battle, from the marks |
+| `ww-opening-gap.ts` | Without any marks: how long after a battle opens on chain the first trade lands. An **upper bound** on the fastest participant's knowledge, not the announcement lag |
 | `ww-night-record.ts` | After the night: everything else the samples show - coverage, observed pool moves, the largest increase, the final minute, settled state |
 
 ## Settling and claiming
