@@ -30,6 +30,11 @@ export default function PoolChart({
 }) {
   const [series, setSeries] = useState<ChartPoint[] | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "not-recorded" | "error">("loading");
+  // Lines in the store this client could not parse. The route has always
+  // counted them and nothing showed them, so a chart drawn from 40 samples
+  // with 15 unreadable ones looked exactly like a complete one - the same
+  // mistake as an empty chart reading "nobody traded", one level in.
+  const [skipped, setSkipped] = useState(0);
   const [newestT, setNewestT] = useState<number | null>(null);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
@@ -42,6 +47,7 @@ export default function PoolChart({
         if (!alive) return;
         if (j.status === "ok") {
           setSeries(j.series);
+          setSkipped(typeof j.skipped === "number" ? j.skipped : 0);
           setNewestT(j.to ?? null);
           setNow(Math.floor(Date.now() / 1000));
           setState("ok");
@@ -77,6 +83,12 @@ export default function PoolChart({
         </p>
       )}
       {state === "error" && <p style={{ color: C.danger, fontSize: 13, margin: 0 }}>Could not read the pool history.</p>}
+      {state === "ok" && skipped > 0 && (
+        <p style={{ color: C.danger, fontSize: 12, margin: "6px 0 0" }}>
+          {skipped} recorded {skipped === 1 ? "sample" : "samples"} could not be read, so this chart is
+          missing {skipped === 1 ? "a point" : "points"}. The gaps are this file, not the battle.
+        </p>
+      )}
       {state === "ok" && series && series.length < 2 && (
         <p style={{ color: C.dim, fontSize: 13, margin: 0 }}>
           {series.length} sample so far. The line appears once the watcher has two.
