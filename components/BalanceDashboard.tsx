@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { sampleBalances } from "@/lib/sampleData";
+import { balanceBadge, balanceSource, type BalanceSource } from "@/lib/balanceSourceState";
 import { usd } from "@/lib/price";
 import { C, metaLabel } from "@/lib/theme";
 import { FLOOR_SOL as FLOOR } from "@/lib/config";
@@ -86,34 +87,41 @@ export default function BalanceDashboard() {
 
   const [status, setStatus] = useState<Status>("loading");
   const [rows, setRows] = useState<BalanceRow[]>([]);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  /** Why the numbers are what they are. Rendered, unlike the errorMsg it replaces. */
+  const [source, setSource] = useState<BalanceSource | null>(null);
   const [grain, setGrain] = useState<Grain>("day");
 
   const load = useCallback(async () => {
     setStatus("loading");
-    setErrorMsg(null);
+    setSource(null);
     try {
       const res = await fetch("/api/balance", { cache: "no-store" });
-      if (res.status === 503) {
-        setRows(sampleBalances());
-        setStatus("sample");
-        return;
-      }
-      const data = (await res.json()) as ApiResponse;
-      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      const data = res.status === 503 ? ({} as ApiResponse) : ((await res.json()) as ApiResponse);
       const got = Array.isArray(data.rows) ? data.rows : [];
-      if (got.length === 0) {
-        setRows(sampleBalances());
-        setStatus("sample");
-        return;
-      }
-      setRows(got);
-      setStatus("live");
+      // ONE DECISION, MADE IN ONE PLACE. This used to be four branches that
+      // produced three labels: a 503, an empty result and a thrown error all
+      // set "sample" and drew invented rows, and the only thing telling them
+      // apart was an errorMsg that nothing rendered.
+      const decided = balanceSource({
+        httpStatus: res.status,
+        rowCount: got.length,
+        error: typeof data.error === "string" ? data.error : null,
+      });
+      setSource(decided);
+      setRows(decided.state === "live" ? got : sampleBalances());
+      setStatus(decided.state === "live" ? "live" : decided.sampleIsHonest ? "sample" : "error");
     } catch (err) {
-      // Default load failure -> degrade to sample rather than a blank screen.
-      setErrorMsg(err instanceof Error ? err.message : "Failed to load.");
+      // The request never completed, which is a failure and not an absence.
+      // Sample rows still render so the page is not blank, but the state says
+      // they are not the treasury.
+      const decided = balanceSource({
+        httpStatus: null,
+        rowCount: 0,
+        error: err instanceof Error ? err.message : null,
+      });
+      setSource(decided);
       setRows(sampleBalances());
-      setStatus("sample");
+      setStatus("error");
     }
   }, []);
 
@@ -161,7 +169,19 @@ export default function BalanceDashboard() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <Header status={status} />
+      <Header status={status} source={source} />
+
+      {source && source.message && (
+        <p
+          style={{
+            margin: "10px 0 0",
+            fontSize: 12,
+            color: source.sampleIsHonest ? C.dim : C.danger,
+          }}
+        >
+          {source.message}
+        </p>
+      )}
 
       {status === "loading" ? (
         <Skeletons />
@@ -192,15 +212,16 @@ export default function BalanceDashboard() {
 // Header
 // ---------------------------------------------------------------------------
 
-function Header({ status }: { status: Status }) {
+function Header({ status, source }: { status: Status; source: BalanceSource | null }) {
+  // The badge comes from the SAME decision as the sentence below the chart, so
+  // a page cannot say SAMPLE in one place and explain a dead source in another.
+  const label = source ? balanceBadge(source.state) : status === "loading" ? "LOADING" : "LIVE";
   const badge =
-    status === "live"
-      ? { label: "LIVE", bg: "#1f3a2a", fg: C.good }
-      : status === "sample"
-        ? { label: "SAMPLE", bg: C.elev, fg: C.dim }
-        : status === "error"
-          ? { label: "ERROR", bg: "#3a1f24", fg: C.danger }
-          : { label: "LOADING", bg: C.elev, fg: C.dim };
+    label === "LIVE"
+      ? { label, bg: "#1f3a2a", fg: C.good }
+      : label === "SOURCE DOWN"
+        ? { label, bg: "#3a1f24", fg: C.danger }
+        : { label, bg: C.elev, fg: C.dim };
 
   return (
     <div
