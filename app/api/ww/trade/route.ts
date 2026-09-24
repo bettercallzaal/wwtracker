@@ -28,6 +28,7 @@
 
 import { decideRelay, splitTransaction } from "@/lib/ww/relayPolicy";
 import { anyConsumerEnabled, notFoundResponse } from "@/lib/ww/apiSurface";
+import { launchEnabled } from "@/lib/ww/launchFlag";
 import { decodeSimulationError, explainSimulationError } from "@/lib/ww/errors";
 import { RelayBudget, callerKey } from "@/lib/ww/rateLimit";
 import { confirmSignature, type SignatureStatus } from "@/lib/ww/confirm";
@@ -142,7 +143,7 @@ async function simulate(tx: Uint8Array): Promise<SimulationValue> {
 export async function POST(request: Request) {
   // Gated with the interface it serves (see lib/ww/apiSurface.ts). Zaal's
   // ruling 2026-09-22: restrict these, do not merely describe them.
-  if (!anyConsumerEnabled(["trading", "operator"])) return notFoundResponse();
+  if (!anyConsumerEnabled(["trading", "operator"]) && !launchEnabled()) return notFoundResponse();
   let body: Json;
   try {
     body = (await request.json()) as Json;
@@ -168,6 +169,52 @@ export async function POST(request: Request) {
         },
       },
     );
+  }
+
+  // THREE READS THE LAUNCH SCREEN NEEDS, and nothing else does. They exist
+  // here rather than as their own route because they spend the same keyed RPC
+  // and must sit behind the same gate and the same budget. Each is a read: no
+  // transaction, no signature, nothing sent.
+  //
+  // They answer only where launching is enabled. On a deployment that just
+  // trades, a caller asking for rent or a fee quote is asking for something no
+  // screen there needs.
+  if (action === "rent" || action === "fee" || action === "balance") {
+    if (!launchEnabled()) return notFoundResponse();
+    try {
+      if (action === "rent") {
+        const bytes = (body as { bytes?: unknown }).bytes;
+        // An allowlist, not a range: these are the only account sizes a launch
+        // creates, and a free-form number would make this a way to ask our
+        // keyed endpoint arbitrary questions.
+        if (bytes !== 0 && bytes !== 82 && bytes !== 353) {
+          return json(400, { status: "error", error: `rent is quoted only for launch accounts, not ${String(bytes)} bytes` });
+        }
+        const lamports = await rpc<any>("getMinimumBalanceForRentExemption", [bytes]);
+        if (typeof lamports !== "number") {
+          return json(502, { status: "error", error: "the cluster did not quote a rent figure" });
+        }
+        return json(200, { status: "ok", bytes, lamports });
+      }
+      if (action === "fee") {
+        const message = (body as { message?: unknown }).message;
+        if (typeof message !== "string" || message.length === 0) {
+          return json(400, { status: "error", error: "message must be a base64 string" });
+        }
+        const res = await rpc<any>("getFeeForMessage", [message, { commitment: "processed" }]);
+        // A cluster that will not quote a fee returns null here, and the
+        // client turns that into a FLOOR rather than into zero.
+        return json(200, { status: "ok", lamports: typeof res?.value === "number" ? res.value : null });
+      }
+      const address = (body as { address?: unknown }).address;
+      if (typeof address !== "string" || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
+        return json(400, { status: "error", error: "address must be base58" });
+      }
+      const res = await rpc<any>("getBalance", [address]);
+      return json(200, { status: "ok", lamports: typeof res?.value === "number" ? res.value : null });
+    } catch (err) {
+      return json(502, { status: "error", error: redactSecrets((err as Error).message) });
+    }
   }
 
   if (action === "prepare") {
@@ -215,7 +262,9 @@ export async function POST(request: Request) {
     return json(400, { status: "error", error: redactSecrets((err as Error).message) });
   }
 
-  const decision = decideRelay(message);
+  // Launch instructions are forwarded only where WW_LAUNCH is on. Read here
+  // rather than defaulted in the policy, so the policy's default stays closed.
+  const decision = decideRelay(message, { allowLaunch: launchEnabled() });
   if (!decision.ok) {
     // 403 rather than 400: the transaction is well-formed and we are declining
     // to forward it, which is a different thing for a caller to debug.

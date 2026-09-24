@@ -131,7 +131,16 @@ describe("portability, by inspection", () => {
     // marksFlag.ts joined 2026-09-23 with the battle-night mark buttons. Same
     // shape as the other two and server-only for the same reason: a flag that
     // gates a WRITING route has no business being readable in a browser.
-    expect(users).toEqual(["apiSurface.ts", "marksFlag.ts", "operatorFlag.ts", "widgetFlag.ts"]);
+    // launchFlag.ts joined 2026-09-24 with /launch. Server-only for the
+    // sharpest reason of the four: it decides whether the relay will forward
+    // instructions that CREATE accounts on mainnet.
+    expect(users).toEqual([
+      "apiSurface.ts",
+      "launchFlag.ts",
+      "marksFlag.ts",
+      "operatorFlag.ts",
+      "widgetFlag.ts",
+    ]);
   });
 });
 

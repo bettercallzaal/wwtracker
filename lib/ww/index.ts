@@ -469,6 +469,7 @@ export {
   type MarkRejected,
 } from "./markInput";
 export { marksEnabled } from "./marksFlag";
+export { launchEnabled } from "./launchFlag";
 
 // Launching a battle of our own. The program is permissionless for it,
 // established by simulation 2026-09-24 from a wallet that is not the treasury.
