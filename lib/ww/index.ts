@@ -474,6 +474,21 @@ export { launchEnabled } from "./launchFlag";
 
 // What each battle format is, over every labelled battle rather than the 200
 // the public API returns.
+// Whether the announced winner is the one the program pays, per format. The
+// judging procedure differs by format, so the rate is a question about the
+// procedure rather than about the chain.
+export {
+  agreementByFormat,
+  chanceOfAtLeast,
+  compare as compareWinners,
+  disagreementRate,
+  judgedSide,
+  type AgreementOutcome,
+  type FormatAgreement,
+  type JudgedBattle,
+  type SettledBattle,
+} from "./winnerAgreement";
+
 export {
   buildFormatReport,
   durationHistogram,
