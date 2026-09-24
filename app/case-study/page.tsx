@@ -3,11 +3,11 @@ import { C } from "@/lib/theme";
 import * as M from "@/lib/measured";
 
 export const metadata: Metadata = {
-  title: "The ZAO — DAO Case Study | WaveWarZ Analytics",
+  title: "The ZAO - DAO Case Study | WaveWarZ Analytics",
   description:
     `Verified ZAO case study: 100+ Fractal governance weeks on Optimism, ${M.BATTLES_ON_CHAIN_FMT} WaveWarZ battles on Solana, ${M.VOLUME_SOL} SOL volume measured from chain on ${M.MEASURED_ON_SHORT}, $1,497 raised for charity. The ZAO is a decentralized impact network for independent music artists, founded by Zaal Panthaki.`,
   openGraph: {
-    title: "The ZAO — DAO Case Study (Jul 2026)",
+    title: "The ZAO - DAO Case Study (Jul 2026)",
     description:
       `100+ Fractal governance weeks · ${M.BATTLES_ON_CHAIN_FMT} WaveWarZ battles · ${M.VOLUME_SOL} SOL volume · $1,497 charity · 157 on-chain Respect holders. Measured ${M.MEASURED_ON_LONG}.`,
     url: "https://wwtracker.vercel.app/case-study",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 const FAQ_ITEMS = [
   {
     q: "What is The ZAO?",
-    a: "The ZAO (ZTalent Artist Organization) is a decentralized impact network for independent music artists. It was founded by Zaal Panthaki (@bettercallzaal) and has run weekly Fractal governance sessions for over 100 consecutive weeks since July 2024. Respect (earned peer-ranking reputation) is settled as on-chain tokens on Optimism mainnet after each session — making 63 weeks of governance history publicly verifiable on-chain.",
+    a: "The ZAO (ZTalent Artist Organization) is a decentralized impact network for independent music artists. It was founded by Zaal Panthaki (@bettercallzaal) and has run weekly Fractal governance sessions for over 100 consecutive weeks since July 2024. Respect (earned peer-ranking reputation) is settled as on-chain tokens on Optimism mainnet after each session - making 63 weeks of governance history publicly verifiable on-chain.",
   },
   {
     q: "What is WaveWarZ?",
@@ -27,11 +27,11 @@ const FAQ_ITEMS = [
   },
   {
     q: "What is the ZAO Fractal?",
-    a: "The Fractal game is the weekly governance mechanism: members rank each other's contributions in small-group peer sessions. Rankings are aggregated into a consensus weighted by earned Respect. Each session's Respect allocation is settled on Optimism mainnet — 63 weeks of settlement are publicly verifiable via Blockscout (OG ERC-20: 0x34cE89baA7E4a4B00E17F7E4C0cb97105C216957, ZOR ERC-1155: 0x9885CCeEf7E8371Bf8d6f2413723D25917E7445c).",
+    a: "The Fractal game is the weekly governance mechanism: members rank each other's contributions in small-group peer sessions. Rankings are aggregated into a consensus weighted by earned Respect. Each session's Respect allocation is settled on Optimism mainnet - 63 weeks of settlement are publicly verifiable via Blockscout (OG ERC-20: 0x34cE89baA7E4a4B00E17F7E4C0cb97105C216957, ZOR ERC-1155: 0x9885CCeEf7E8371Bf8d6f2413723D25917E7445c).",
   },
   {
     q: "Who founded The ZAO?",
-    a: "The ZAO was founded by Zaal Panthaki (@bettercallzaal). WaveWarZ was incubated within The ZAO by co-founders including Hurricane, Candy, and Ohnahji. The full contributor roster is tracked via the ZAO's onchain Respect system — members with the highest cumulative Respect scores are the builders who have contributed most.",
+    a: "The ZAO was founded by Zaal Panthaki (@bettercallzaal). WaveWarZ was incubated within The ZAO by co-founders including Hurricane, Candy, and Ohnahji. The full contributor roster is tracked via the ZAO's onchain Respect system - members with the highest cumulative Respect scores are the builders who have contributed most.",
   },
   {
     q: "What is ZABAL Gamez?",
@@ -39,7 +39,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How do I join The ZAO?",
-    a: "Three paths: (1) Battle on WaveWarZ — artists who compete become part of the ZAO ecosystem. (2) Attend weekly Fractal governance calls (Farcaster Spaces, open to all) — active participants earn Respect over time. (3) Apply for ZABAL Gamez (2× per year). Community directory: thezao.com/community.",
+    a: "Three paths: (1) Battle on WaveWarZ - artists who compete become part of the ZAO ecosystem. (2) Attend weekly Fractal governance calls (Farcaster Spaces, open to all) - active participants earn Respect over time. (3) Apply for ZABAL Gamez (2× per year). Community directory: thezao.com/community.",
   },
   {
     q: "How does The ZAO make money?",
@@ -117,13 +117,13 @@ export default function CaseStudyPage() {
       >
         <header style={{ marginBottom: 40 }}>
           <p style={{ margin: "0 0 8px", fontSize: 12, letterSpacing: "0.12em", color: C.dim, fontFamily: C.mono }}>
-            THE ZAO — VERIFIED JULY 2026
+            THE ZAO - VERIFIED JULY 2026
           </p>
           <h1 style={{ margin: "0 0 16px", fontSize: "clamp(28px, 6vw, 44px)", fontWeight: 800, letterSpacing: "-0.02em", color: C.text, lineHeight: 1.15 }}>
             DAO Case Study
           </h1>
           <p style={{ margin: 0, fontSize: 18, color: C.dim, maxWidth: 600 }}>
-            The ZAO is a decentralized impact network for independent music artists — with 100+ weeks
+            The ZAO is a decentralized impact network for independent music artists - with 100+ weeks
             of on-chain governance, a live prediction-market product, and a verified track record in
             charity, community, and IP creation.
           </p>
@@ -178,7 +178,7 @@ export default function CaseStudyPage() {
             independent music artists, founded by Zaal Panthaki (
             <a href="https://x.com/bettercallzaal" style={{ color: C.accent }}>@bettercallzaal</a>
             ). It measures member contribution with{" "}
-            <strong>Respect</strong> — a non-transferable weight earned by peer ranking in weekly Fractal
+            <strong>Respect</strong> - a non-transferable weight earned by peer ranking in weekly Fractal
             governance sessions, not by holding tokens.
           </p>
           <p style={{ margin: "0 0 14px", color: C.text }}>

@@ -35,7 +35,7 @@ const FAQS: QA[] = [
   },
   {
     q: "How do I become a WaveWarZ artist?",
-    a: "Reach out to the team on X (@WaveWarZ) or join the live Telegram community. Artists need a track ready to battle and an Audius profile (the platform uses Audius for streaming). Selection is at the team's discretion — joining the live sessions and showing your music in the community is the fastest path in.",
+    a: "Reach out to the team on X (@WaveWarZ) or join the live Telegram community. Artists need a track ready to battle and an Audius profile (the platform uses Audius for streaming). Selection is at the team's discretion - joining the live sessions and showing your music in the community is the fastest path in.",
   },
   {
     q: `What is the ${FLOOR_SOL} SOL 'floor'?`,
@@ -47,7 +47,7 @@ const FAQS: QA[] = [
   },
   {
     q: "What is DJ Wavy?",
-    a: "The AI judge — one of the three scoring factors in V2 (Poll + Charts + DJ Wavy, best 2 of 3). DJ Wavy evaluates each battle and casts a binding vote. The exact model and criteria are not publicly disclosed by the team.",
+    a: "The AI judge - one of the three scoring factors in V2 (Poll + Charts + DJ Wavy, best 2 of 3). DJ Wavy evaluates each battle and casts a binding vote. The exact model and criteria are not publicly disclosed by the team.",
   },
   {
     q: "What is the Clippers program?",
@@ -59,23 +59,23 @@ const FAQS: QA[] = [
   },
   {
     q: "What is the AI Artist Tournament?",
-    a: "A separate bracket featuring AI-generated tracks — 8 to 16 songs — with community voting determining the winner each round. It runs alongside the human-artist tournament and uses the same SOL trading mechanics.",
+    a: "A separate bracket featuring AI-generated tracks - 8 to 16 songs - with community voting determining the winner each round. It runs alongside the human-artist tournament and uses the same SOL trading mechanics.",
   },
   {
     q: "What is The ZAO?",
-    a: "The DAO that incubated WaveWarZ. The ZAO is a web3 music and creator collective — 100+ consecutive Fractal weeks of onchain governance, Respect-based contribution scores, and ZAO Improvement Proposals (ZIPs). WaveWarZ is the music-battle application layer at the top of the BCZ → The ZAO → WaveWarZ stack.",
+    a: "The DAO that incubated WaveWarZ. The ZAO is a web3 music and creator collective - 100+ consecutive Fractal weeks of onchain governance, Respect-based contribution scores, and ZAO Improvement Proposals (ZIPs). WaveWarZ is the music-battle application layer at the top of the BCZ → The ZAO → WaveWarZ stack.",
   },
   {
     q: "Who founded The ZAO?",
-    a: "The ZAO was founded by Zaal Panthaki (@bettercallzaal). WaveWarZ was incubated within The ZAO by co-founders Hurricane, Candy, and Ohnahji. The full contributor roster is tracked via the ZAO's onchain Respect system — the members with the highest cumulative Respect scores are the builders who've contributed most.",
+    a: "The ZAO was founded by Zaal Panthaki (@bettercallzaal). WaveWarZ was incubated within The ZAO by co-founders Hurricane, Candy, and Ohnahji. The full contributor roster is tracked via the ZAO's onchain Respect system - the members with the highest cumulative Respect scores are the builders who've contributed most.",
   },
   {
     q: "How do I join The ZAO community?",
-    a: "Three paths: (1) Battle on WaveWarZ — a separate project, incubated in The ZAO and since graduated. (2) Attend weekly Fractal governance calls (Farcaster Spaces, open to all) — active participants earn Respect over time. (3) Apply for ZABAL Gamez (the 3-month builder cohort, open enrollment 2× per year). The community directory is at thezao.com/community.",
+    a: "Three paths: (1) Battle on WaveWarZ - a separate project, incubated in The ZAO and since graduated. (2) Attend weekly Fractal governance calls (Farcaster Spaces, open to all) - active participants earn Respect over time. (3) Apply for ZABAL Gamez (the 3-month builder cohort, open enrollment 2× per year). The community directory is at thezao.com/community.",
   },
   {
     q: "What is ZABAL Gamez?",
-    a: "The ZAO's 3-month builder cohort. Builders ship products or features for The ZAO community and keep earning from what they build even after the cohort ends — not a one-time hackathon, but a sustained build track. Open enrollment twice per year.",
+    a: "The ZAO's 3-month builder cohort. Builders ship products or features for The ZAO community and keep earning from what they build even after the cohort ends - not a one-time hackathon, but a sustained build track. Open enrollment twice per year.",
   },
   {
     q: "Is WaveWarZ part of The ZAO?",

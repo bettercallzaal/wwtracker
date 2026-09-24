@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { BATTLES_AS_OF } from "@/lib/freshness";
 
-// Revalidate every 60s — matches wavewarz.info/api/public/stats cache TTL.
+// Revalidate every 60s - matches wavewarz.info/api/public/stats cache TTL.
 export const revalidate = 60;
 
 interface StoredBattle {
