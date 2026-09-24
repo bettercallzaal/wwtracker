@@ -33,6 +33,7 @@ import { CHAIN_DAILY_PATH, ONCHAIN_DAILY_PATH, correctDuneDays, type ChainDaily 
 import { secondsLeft, poolShare, type WidgetBattle } from "@/lib/liveBattle";
 import { labelNum, toNum, type LabelValue, type TooltipName, type TooltipValue } from "@/lib/chartFormat";
 import type { ReactElement } from "react";
+import { describeSnapshotAge } from "@/lib/snapshotAge";
 
 // Every widget is a client component that fetches its own data. That is
 // deliberate: an embed is loaded on a cold cache from an origin we do not
@@ -105,17 +106,34 @@ function tooltipStyle(opts: EmbedOptions) {
 }
 
 /**
- * The last day a snapshot-backed series actually covers.
+ * The last day a snapshot-backed series actually covers, AND HOW OLD THAT IS.
  *
  * These files are rebuilt on a cadence, not live, so a chart drawn from one
  * ends days before today while sitting next to a counter that is live. On a
  * partner's page those two read as a contradiction rather than as two different
  * questions. Deriving the line from the data means it can never be wrong, and
  * it travels with a screenshot.
+ *
+ * THE AGE WAS MISSING UNTIL 2026-09-24. It said "Series runs to 2026-09-05"
+ * and left the reader to do the arithmetic. `lib/snapshotAge.ts` exists
+ * because the treasury panel learned that lesson in #355 - it now reads
+ * "Treasury file through 2026-07-21 (63 days ago)" rather than labelling
+ * two-month-old rows "this week" - and the lesson was never carried here.
+ *
+ * WHICH IS THE SURFACE IT MATTERS MOST ON. These widgets are built to sit on
+ * somebody else's page, where nobody will think to check when the file was
+ * last rebuilt. Measured the same day: `ww-platform-volume.json` and
+ * `ww-onchain-daily.json` were 19 days old and `ww-battles.json` 15, all
+ * rendering with no indication of it.
+ *
+ * It stays quiet under a fortnight, for the reason `snapshotAge.ts` gives: a
+ * week-old all-time total is not misleading, and a badge that always says
+ * something is a badge nobody reads.
  */
 function asOf(rows: { date: string }[]): string | undefined {
   const last = rows[rows.length - 1]?.date;
-  return last ? `Series runs to ${last}. Live totals move ahead of it between rebuilds.` : undefined;
+  if (!last) return undefined;
+  return `Series runs to ${describeSnapshotAge(last)}. Live totals move ahead of it between rebuilds.`;
 }
 
 /** Thin out a long daily series so a 320px-tall chart is not drawing 460 points. */
