@@ -83,3 +83,78 @@ describe("planBuy", () => {
     expect(p.minTokensOut).toBeLessThan(p.estimatedTokensOut);
   });
 });
+
+/**
+ * THE SPOT PRICE MUST COME FROM THE POOL THE TOKENS CAME FROM.
+ *
+ * Impact is the effective price over the spot price, and both halves have to
+ * be quoted at the same position on the curve. When the tokens started coming
+ * from the pool the stored supply implies, this was still reading the spot off
+ * the pool the vault holds - and those differ by the flooring residual.
+ */
+describe("price impact is quoted against one pool, not two", () => {
+  // Battle 1789948124, side A: 37,886,360 lamports against a stored supply of
+  // 133,300,000 - 43 steps of drift, 2,348,580 lamports unrepresented.
+  const DRIFTED_POOL = 37_886_360;
+  const DRIFTED_SUPPLY = 133_300_000;
+
+  const planOn = (mintedSupply?: { a: number; b: number }) =>
+    planBuy({
+      battleId: 1_789_948_124,
+      trader: "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk",
+      side: "a",
+      amountLamports: SPEND,
+      slippageBps: 100,
+      deadlineSeconds: 300,
+      readBattleState: async () => ({
+        accounts,
+        poolLamports: { a: DRIFTED_POOL, b: 0 },
+        ...(mintedSupply ? { mintedSupply } : {}),
+      }),
+    });
+
+  it("reports the impact against the implied pool when it priced off supply", async () => {
+    const p = await planOn({ a: DRIFTED_SUPPLY, b: 0 });
+    // Measured: 2,723 bps against the implied pool, 2,322 against the vault's.
+    expect(p.priceImpact.impactBps).toBeGreaterThan(2_700);
+    expect(p.priceImpact.impactBps).toBeLessThan(2_750);
+  });
+
+  /**
+   * The fallback quotes BOTH halves against the vault pool, which is
+   * internally consistent even though it is not what the program prices from.
+   * 2,583 bps here against 2,723 on the exact path: the gap between the two
+   * pools, not the mixture. The mixture read 2,322 - lower than either, which
+   * is what made it unsafe.
+   */
+  it("uses the vault pool for both halves when it fell back", async () => {
+    const p = await planOn();
+    expect(p.pricedFrom).toBe("pool");
+    expect(p.priceImpact.impactBps).toBeGreaterThan(2_550);
+    expect(p.priceImpact.impactBps).toBeLessThan(2_620);
+  });
+
+  /**
+   * THE SAFETY CASE, and the reason this is not cosmetic. A limit of 2,500 bps
+   * sits between the two figures: the mixed reading passed a trade the limit
+   * was written to refuse.
+   */
+  it("refuses a trade that the mismatched reading would have let through", async () => {
+    await expect(
+      planBuy({
+        battleId: 1_789_948_124,
+        trader: "4aY165b2vWGLWTboE9WQSW6BprcVAs2WJo5E4jhvW1Bk",
+        side: "a",
+        amountLamports: SPEND,
+        slippageBps: 100,
+        deadlineSeconds: 300,
+        maxPriceImpactBps: 2_500,
+        readBattleState: async () => ({
+          accounts,
+          poolLamports: { a: DRIFTED_POOL, b: 0 },
+          mintedSupply: { a: DRIFTED_SUPPLY, b: 0 },
+        }),
+      }),
+    ).rejects.toThrow(/price impact/i);
+  });
+});
