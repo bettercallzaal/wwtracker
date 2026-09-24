@@ -66,9 +66,38 @@ describe("age", () => {
   it("counts from the write to now", () => {
     expect(watcherLogAgeSeconds(1_000_000, 1_039_000)).toBe(39);
   });
-  it("does not go negative on a clock that ran backwards", () => {
-    // Floor of a negative is more negative; the check that matters is that a
-    // future mtime never reads as "very old" and trips the stopped branch.
-    expect(watcherVerdict(watcherLogAgeSeconds(2_000_000, 1_000_000), 5)).toBe("beating");
+  /**
+   * THIS TEST USED TO ASSERT THE BUG, and it read as a safety check.
+   *
+   * It was called "does not go negative on a clock that ran backwards" and it
+   * asserted "beating", on the reasoning that what mattered was a future mtime
+   * not tripping the stopped branch. That half was right. The other half is
+   * that "beating" is a claim the watcher is healthy, made on the strength of
+   * a write stamped after now - which cannot have happened.
+   *
+   * So the check reported a healthy watcher in exactly the case where it had
+   * no idea, which is this repo's recurring defect: absence and failure
+   * returning what a working thing returns.
+   *
+   * The verdict is now its own, because the watcher may genuinely be fine.
+   * What is broken is the ability to say so, and that is the fact worth
+   * printing.
+   */
+  it("calls a future stamp suspect rather than healthy, and never stopped", () => {
+    const age = watcherLogAgeSeconds(2_000_000, 1_000_000);
+    expect(age).toBeLessThan(0);
+    expect(watcherVerdict(age, 5)).toBe("clock-suspect");
+    expect(watcherVerdict(age, 5)).not.toBe("stopped");
+  });
+
+  it("still beats at age 0, so the boundary is the sign and not a margin", () => {
+    expect(watcherVerdict(0, 5)).toBe("beating");
+    expect(watcherVerdict(-1, 5)).toBe("clock-suspect");
+  });
+
+  it("a future stamp with no beats is still never-beat, which is the older fact", () => {
+    // Order matters: "it has never written a beat" is knowable regardless of
+    // what the clock says, so it stays the answer.
+    expect(watcherVerdict(-500, 0)).toBe("never-beat");
   });
 });

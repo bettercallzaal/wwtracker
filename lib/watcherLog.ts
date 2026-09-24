@@ -51,9 +51,21 @@ export const watcherLogAgeSeconds = (mtimeMs: number, now = Date.now()): number 
  * never beaten means started seconds ago, or stuck, and calling that dead
  * would be wrong in the same way calling it healthy would be.
  */
-export type WatcherVerdict = "beating" | "stopped" | "never-beat";
+export type WatcherVerdict = "beating" | "stopped" | "never-beat" | "clock-suspect";
 
 export function watcherVerdict(ageSeconds: number, beatCount: number): WatcherVerdict {
   if (beatCount === 0) return "never-beat";
+  // A NEGATIVE AGE IS NOT A YOUNG LOG. It is a write stamped after now, which
+  // cannot have happened: clock skew between this process and whatever wrote
+  // the file, a restored backup carrying its old mtime, a machine that changed
+  // timezone mid-run. Returning "beating" for it was reporting a healthy
+  // watcher on the strength of a timestamp that cannot be true, and the whole
+  // point of this module is that a health check which reads the wrong thing is
+  // worse than no health check.
+  //
+  // It is a separate verdict rather than "stopped" because the watcher may well
+  // be fine - what is broken is our ability to say so. Those are different
+  // things and collapsing them loses the one fact worth acting on.
+  if (ageSeconds < 0) return "clock-suspect";
   return ageSeconds > 180 ? "stopped" : "beating";
 }
