@@ -18,7 +18,7 @@ spends a keyed RPC call per request, and each exists for one screen:
 `/api/ww/trade` for those and the operator page, `/api/ww/diagnose` and
 `/api/ww/live-battles` for the finals dashboard, `/api/ww/unsettled` for the
 operator page, `/api/ww/mark` for the battle-night marker. Where `WW_WIDGET`,
-`WW_OPERATOR`, `WW_FINALS` or `WW_MARKS` is unset, the
+`WW_OPERATOR`, `WW_FINALS`, `WW_MARKS` or `WW_LAUNCH` is unset, the
 screen is a 404 and so is the endpoint - and the 404 is returned before any
 upstream call is made, so the cost is closed and not merely the answer. On
 `wwtracker.vercel.app` all three are unset, so none of these exist there.
@@ -225,6 +225,25 @@ page it feeds (`/operator`) is an operator's page. No CORS headers, no-store.
 
 `endBattle` is permissionless and the relay accepts it since 2026-09-21; the
 launch instructions remain refused.
+
+### `POST /api/ww/trade` - the launch actions, gated by WW_LAUNCH
+
+`/api/ww/trade` gained three read actions on 2026-09-24, for the launch screen
+and nothing else. They 404 unless `WW_LAUNCH=1`.
+
+| action | is |
+|---|---|
+| `{"action":"rent","bytes":N}` | the rent-exempt minimum for a launch account. `bytes` is an **allowlist** of 0, 82 and 353 - the only sizes a launch creates - so this cannot become a way to ask our keyed endpoint arbitrary questions |
+| `{"action":"fee","message":b64}` | what the cluster would charge for that message, or `null`. Never zero: the client turns `null` into a FLOOR |
+| `{"action":"balance","address":b58}` | lamports at an address, or `null` |
+
+The same flag widens `relayPolicy.ts` to forward `initializeBattle` and
+`initializeMints`. It was refused until then on the reasoning that "relaying
+initializeBattle would launch a battle in our name" - which does not hold,
+because **the relay never signs**, so the `admin` of a relayed launch is the
+caller. And the program is permissionless for launching anyway, proved by
+simulation from a non-treasury wallet the same day. `decideRelay` still
+defaults to refusing: the caller must pass `allowLaunch`.
 
 ### `GET|POST /api/ww/mark` - NOT for embedding, NOT reachable off the operator's machine
 

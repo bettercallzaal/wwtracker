@@ -19,9 +19,41 @@
  *      by discriminator. A transaction that merely mentions our program without
  *      trading is not ours to pay for.
  *
- * Rule 2 also excludes the LAUNCH instructions, `initializeBattle` and
- * `initializeMints`. Those are the platform's to sign, not a trader's, and
- * relaying one would launch a battle in our name.
+ * RULE 2 EXCLUDED THE LAUNCH INSTRUCTIONS FOR A REASON THAT WAS WRONG, and
+ * since 2026-09-24 it excludes them only when `WW_LAUNCH` is off.
+ *
+ * The old reasoning, kept here because it is instructive: "those are the
+ * platform's to sign, not a trader's, and relaying one would launch a battle
+ * in our name." The second half does not hold. THE RELAY NEVER SIGNS. In
+ * `initializeBattle` the account that signs is `admin`, and the sole signer of
+ * a relayed transaction is the caller - so a relayed launch creates a battle
+ * whose admin is the CALLER, never us. The old sentence is the same mistake as
+ * the first version of the Lighthouse defence below: an argument resting on
+ * what somebody would do rather than on what the structure permits.
+ *
+ * The first half does not hold either, and it was the load-bearing half.
+ * Simulated 2026-09-24 with `sigVerify: false` from a wallet that is not the
+ * platform treasury, against a battle id whose accounts did not exist: the
+ * program logged `Battle initialized` and `Mints initialized` and the
+ * transaction would have succeeded. **The program is permissionless for
+ * launching.** Launching was never the platform's to withhold; we were simply
+ * the only ones doing it.
+ *
+ * WHAT IS ACTUALLY TRUE ABOUT A RELAYED LAUNCH, said plainly:
+ *
+ *   - The caller is the sole signer and the sole payer. The ~0.0052 SOL of
+ *     rent for the battle, the vault and two mints comes out of their wallet,
+ *     not ours, and none of it is refundable - no instruction closes those
+ *     accounts.
+ *   - `wavewarzWallet` is an account the CALLER chooses, and it receives the
+ *     platform share of every trade on that battle. A caller can point it at
+ *     themselves. That is their battle's revenue, not a claim on ours, and
+ *     this policy does not check it - see the limits at the bottom.
+ *   - What we spend is RPC calls, exactly as on a trade, and the same budget
+ *     bounds it.
+ *
+ * So it is gated by a flag rather than by a rule: off by default, on where a
+ * deployment means to offer launching. `WW_LAUNCH` is unset in production.
  *
  * `endBattle` WAS excluded on the same grounds and is not any more, since
  * 2026-09-21 - see RELAYABLE below, where the reasoning sits next to the
@@ -109,9 +141,31 @@ export const RELAYABLE = {
   endBattle: "5091d030b75ca870",
 } as const;
 
+/**
+ * The two launch instructions, forwarded only when the caller passes
+ * `allowLaunch`. They are a pair: `initializeBattle` alone leaves a battle
+ * nobody can trade, because the mints a buy needs do not exist yet.
+ */
+export const LAUNCHABLE = {
+  initializeBattle: "756ca69f9252f6df",
+  initializeMints: "bd54558eb1c83916",
+} as const;
+
+export type RelayableName = keyof typeof RELAYABLE | keyof typeof LAUNCHABLE;
+
 export type RelayDecision =
-  | { ok: true; trades: Array<keyof typeof RELAYABLE>; instructionCount: number }
+  | { ok: true; trades: RelayableName[]; instructionCount: number; launch: boolean }
   | { ok: false; reason: string };
+
+export interface RelayOptions {
+  /**
+   * Forward `initializeBattle` and `initializeMints` too. Defaults to FALSE, so
+   * a caller that forgets to pass it gets the old, narrower policy rather than
+   * the wider one. A default that opens a door is a default that opens it by
+   * accident.
+   */
+  allowLaunch?: boolean;
+}
 
 /**
  * The first eight bytes as hex, without `Buffer`.
@@ -132,7 +186,8 @@ const hex8 = (data: Uint8Array) =>
  * turns this into a 4xx with the reason in the body, and a caller sending a
  * malformed transaction deserves to be told which rule it broke.
  */
-export function decideRelay(messageBytes: Uint8Array): RelayDecision {
+export function decideRelay(messageBytes: Uint8Array, opts: RelayOptions = {}): RelayDecision {
+  const allowLaunch = opts.allowLaunch === true;
   /**
    * Versioned (v0) transactions are refused BY DESIGN, not by accident.
    *
@@ -167,7 +222,8 @@ export function decideRelay(messageBytes: Uint8Array): RelayDecision {
     return { ok: false, reason: "no instructions" };
   }
 
-  const trades: Array<keyof typeof RELAYABLE> = [];
+  const trades: RelayableName[] = [];
+  let sawLaunch = false;
   for (const ix of message.instructions) {
     if (!ALLOWED_PROGRAMS.has(ix.programId)) {
       return { ok: false, reason: `program not allowed: ${ix.programId}` };
@@ -178,19 +234,34 @@ export function decideRelay(messageBytes: Uint8Array): RelayDecision {
     const name = (Object.keys(RELAYABLE) as Array<keyof typeof RELAYABLE>).find(
       (k) => RELAYABLE[k] === disc,
     );
-    if (!name) {
-      return {
-        ok: false,
-        reason: `WaveWarZ instruction is not a relayable trade (discriminator ${disc})`,
-      };
+    if (name) {
+      trades.push(name);
+      continue;
     }
-    trades.push(name);
+    const launchName = (Object.keys(LAUNCHABLE) as Array<keyof typeof LAUNCHABLE>).find(
+      (k) => LAUNCHABLE[k] === disc,
+    );
+    if (launchName) {
+      // Named in the refusal rather than lumped in with an unknown
+      // discriminator: a caller whose launch is refused should learn that
+      // launching exists and is off, not that their bytes were unrecognisable.
+      if (!allowLaunch) {
+        return { ok: false, reason: `launching is not enabled here (${launchName})` };
+      }
+      sawLaunch = true;
+      trades.push(launchName);
+      continue;
+    }
+    return {
+      ok: false,
+      reason: `WaveWarZ instruction is not a relayable trade (discriminator ${disc})`,
+    };
   }
 
   if (trades.length === 0) {
     return { ok: false, reason: "no WaveWarZ trade in this transaction" };
   }
-  return { ok: true, trades, instructionCount: message.instructions.length };
+  return { ok: true, trades, instructionCount: message.instructions.length, launch: sawLaunch };
 }
 
 /**

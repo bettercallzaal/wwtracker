@@ -26,6 +26,7 @@ import {
 import {
   battleAccountsFromRaw,
   buySharesInstruction,
+  launchBattleInstructions,
   claimSharesInstruction,
   initializeBattleInstruction,
   initializeMintsInstruction,
@@ -137,12 +138,14 @@ describe("what it refuses", () => {
     expect(d.reason).toMatch(/no WaveWarZ trade/);
   });
 
-  it("refuses a WaveWarZ instruction that is not relayable (the launch instructions)", () => {
-    // initializeBattle's discriminator. The platform signs those, not a trader,
-    // and relaying one would launch a battle in our name.
+  it("refuses a launch BY DEFAULT, and names it rather than calling the bytes unrecognisable", () => {
     // Built by the SDK's own launcher rather than hand-typed, so the day
     // `initializeBattleInstruction` ships to front ends, this test is the one
     // that proves the relay still refuses what they can now construct.
+    //
+    // THE DEFAULT IS THE POINT. `decideRelay` is called here with no options,
+    // the way a caller who forgot about launching would call it. A default
+    // that opens a door is a default that opens it by accident.
     const initialize = initializeBattleInstruction({
       battleId: 1_788_580_997,
       creator: trader,
@@ -154,7 +157,11 @@ describe("what it refuses", () => {
     const d = decideRelay(build([initialize]));
     expect(d.ok).toBe(false);
     if (d.ok) return;
-    expect(d.reason).toMatch(/not a relayable trade \(discriminator 756ca69f9252f6df\)/);
+    // Named, so a caller learns that launching exists and is off - not that
+    // their transaction was gibberish.
+    expect(d.reason).toMatch(/launching is not enabled here \(initializeBattle\)/);
+    expect(decideRelay(build([initialize]), {}).ok).toBe(false);
+    expect(decideRelay(build([initialize]), { allowLaunch: false }).ok).toBe(false);
   });
 
   /**
@@ -168,7 +175,7 @@ describe("what it refuses", () => {
     const d = decideRelay(build([mints]));
     expect(d.ok).toBe(false);
     if (d.ok) return;
-    expect(d.reason).toMatch(/not a relayable trade \(discriminator bd54558eb1c83916\)/);
+    expect(d.reason).toMatch(/launching is not enabled here \(initializeMints\)/);
   });
 
   it("refuses a real trade with one foreign instruction smuggled alongside it", () => {
@@ -282,5 +289,79 @@ describe("splitting a signed transaction", () => {
   it("refuses an unsigned or empty transaction", () => {
     expect(() => splitTransaction(Uint8Array.from([0, 1, 2]))).toThrow(/no signature/);
     expect(() => splitTransaction(new Uint8Array(0))).toThrow(/empty/);
+  });
+});
+
+/**
+ * Launching through the relay, which was refused until 2026-09-24 on a reason
+ * that did not hold: "relaying initializeBattle would launch a battle in our
+ * name". THE RELAY NEVER SIGNS, so the `admin` of a relayed launch is the
+ * caller. And the program turned out to be permissionless for launching
+ * anyway, proved by simulation from a non-treasury wallet the same day.
+ */
+describe("with allowLaunch, and only then", () => {
+  const build = (ixs: Parameters<typeof serializeMessage>[2]) =>
+    serializeMessage(trader, blockhash, ixs);
+  const buy = () =>
+    buySharesInstruction({
+      battleId: buyFixture.battle_id, trader, battle, artistA: true,
+      amountLamports: 10_000_000, minTokensOut: 1, deadline: 1,
+    });
+  const launchIxs = () =>
+    launchBattleInstructions({
+      battleId: 1_790_211_141,
+      creator: trader,
+      artistA: trader,
+      artistB: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+      wavewarzWallet: "FNjYtwKVsbQzSmoBgLqa8ZGSJTzexQJi6xmV97iakq37",
+      durationSeconds: 600,
+    });
+
+  it("forwards a real two-instruction launch and says it was one", () => {
+    const d = decideRelay(build(launchIxs()), { allowLaunch: true });
+    expect(d.ok).toBe(true);
+    if (!d.ok) return;
+    expect(d.trades).toEqual(["initializeBattle", "initializeMints"]);
+    expect(d.launch).toBe(true);
+  });
+
+  it("does not mark an ordinary trade as a launch", () => {
+    const d = decideRelay(build([buy()]), { allowLaunch: true });
+    expect(d.ok).toBe(true);
+    if (!d.ok) return;
+    expect(d.launch).toBe(false);
+  });
+
+  it("still refuses a program that is not on the list, flag or no flag", () => {
+    // The flag widens which WaveWarZ instructions pass. It must not widen
+    // which PROGRAMS do, or it would turn the relay into an open one.
+    const foreign = {
+      programId: "Vote111111111111111111111111111111111111111",
+      keys: [{ pubkey: trader, isSigner: true, isWritable: true }],
+      data: Uint8Array.from([1, 2, 3]),
+    };
+    const d = decideRelay(build([...launchIxs(), foreign]), { allowLaunch: true });
+    expect(d.ok).toBe(false);
+    if (d.ok) return;
+    expect(d.reason).toMatch(/program not allowed/);
+  });
+
+  it("still refuses an unknown WaveWarZ discriminator, flag or no flag", () => {
+    const bogus = {
+      programId: PROGRAM_ID,
+      keys: [{ pubkey: trader, isSigner: true, isWritable: true }],
+      data: Uint8Array.from([9, 9, 9, 9, 9, 9, 9, 9]),
+    };
+    const d = decideRelay(build([bogus]), { allowLaunch: true });
+    expect(d.ok).toBe(false);
+    if (d.ok) return;
+    expect(d.reason).toMatch(/not a relayable trade/);
+  });
+
+  it("still refuses a versioned transaction, flag or no flag", () => {
+    const message = build(launchIxs());
+    const versioned = new Uint8Array(message);
+    versioned[0] = versioned[0] | 0x80;
+    expect(decideRelay(versioned, { allowLaunch: true }).ok).toBe(false);
   });
 });
