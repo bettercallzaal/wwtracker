@@ -20,6 +20,7 @@ import { computeUnitLimitInstruction, computeUnitPriceInstruction, serializeMess
 import { planBuy, planSell, poolMoveBps, type BattleState } from "@/lib/ww/tradePlan";
 import { describePriceImpact, type PriceImpactAssessment } from "@/lib/ww/priceImpact";
 import { lamportsToSol, quoteBuy, solToLamports, withSlippage } from "@/lib/ww/quote";
+import { BUY_OPENS_AFTER_START_SECONDS } from "@/lib/ww/tradeWindow";
 import { sellEstimate, shareOfSide } from "@/lib/ww/widgetSell";
 import { pollForChange } from "@/lib/ww/pollForChange";
 import { describeConfirmation, type ConfirmResult } from "@/lib/ww/confirm";
@@ -67,6 +68,7 @@ interface BattleRead {
   accounts: BattleAccounts;
   poolLamports: { a: number; b: number };
   mintedSupply: { a: number; b: number };
+  startTime: number;
   endTime: number;
   settled: boolean;
 }
@@ -102,6 +104,7 @@ async function readBattle(battleId: number): Promise<BattleRead> {
     accounts: battleAccountsFromRaw(new Uint8Array(Buffer.from(j.account, "base64"))),
     poolLamports: { a: j.poolALamports, b: j.poolBLamports },
     mintedSupply: { a: j.supplyA, b: j.supplyB },
+    startTime: j.startTime,
     endTime: j.endTime,
     settled: j.settled,
   };
@@ -252,7 +255,32 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
     mode === "sell" && battle && held !== null
       ? sellEstimate({ poolLamports: pool, mintedSupply: minted, sellTokens: tokens, balanceTokens: held })
       : null;
-  const canBuild = mode === "buy" ? Boolean(buyEstimate) : Boolean(sell?.ok);
+  // One second is the right resolution for a sixty-second countdown, and the
+  // interval stops with the component rather than outliving it.
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  /**
+   * THE FIRST MINUTE IS CLOSED AND THE PROGRAM SAYS SO WITH AN ERROR CODE.
+   *
+   * Measured 2026-09-24 (`tradeWindow.ts`): every buy before `startTime + 60`
+   * is refused with `BattleNotActive` (6003). A battle in that minute is open,
+   * unsettled and untradeable at the same time, which looks like nothing else
+   * this panel handles - so without this it would let somebody build a trade,
+   * simulate it, and read a program error to learn the clock.
+   *
+   * Recomputed on a ticking clock rather than once on load, because the whole
+   * point is that it stops being true.
+   */
+  const gateOpensAt = battle ? battle.startTime + BUY_OPENS_AFTER_START_SECONDS : null;
+  const secondsUntilOpen =
+    gateOpensAt === null ? null : Math.max(0, gateOpensAt - Math.floor(nowMs / 1000));
+  const beforeGate = secondsUntilOpen !== null && secondsUntilOpen > 0;
+
+  const canBuild = !beforeGate && (mode === "buy" ? Boolean(buyEstimate) : Boolean(sell?.ok));
 
   const resetOutcome = () => {
     setPreflight(null);
@@ -613,6 +641,14 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
         )}
       </div>
 
+      {beforeGate && (
+        <p style={{ fontSize: 12, color: C.dim, marginBottom: 10 }}>
+          The program refuses every buy for the first 60 seconds of a battle. It opens in{" "}
+          <strong style={{ color: C.text }}>{secondsUntilOpen}s</strong>. Nobody can trade before
+          then, so this is a wait and not a queue.
+        </p>
+      )}
+
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         <button
           type="button"
@@ -620,7 +656,11 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
           disabled={!wallet || !battle || !canBuild || phase === "checking"}
           onClick={onPreflight}
         >
-          {phase === "checking" ? "Simulating..." : "Simulate"}
+          {beforeGate
+            ? `Trading opens in ${secondsUntilOpen}s`
+            : phase === "checking"
+              ? "Simulating..."
+              : "Simulate"}
         </button>
         <button
           type="button"

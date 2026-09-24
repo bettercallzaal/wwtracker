@@ -194,11 +194,19 @@ Feeds `/finals`. If you want battle data to embed, use `/api/ww/battle` or
 No CORS headers, like `/api/ww/trade`. It returns the raw Battle account as
 base64, plus what the widget needs decoded from it: `poolALamports`,
 `poolBLamports`, `supplyA`, `supplyB` (minted supply per side, base units, bytes
-196 and 204), `endTime`, `winnerArtistA` (the MARKET winner byte, the larger
-pool, not the judged result) and `settled` (byte 245, `winner_decided`). The
-supplies were added on 2026-09-21 for the sell path, which prices off the minted
-supply rather than the curve's; one decoder, `lib/ww/battleAccountResponse.ts`,
-is pinned against `decodeBattle` so the route and the library cannot drift.
+196 and 204), `startTime`, `endTime`, `winnerArtistA` (the MARKET winner byte,
+the larger pool, not the judged result) and `settled` (byte 245,
+`winner_decided`). The supplies were added on 2026-09-21 for the sell path,
+which prices off the minted supply rather than the curve's; one decoder,
+`lib/ww/battleAccountResponse.ts`, is pinned against `decodeBattle` so the route
+and the library cannot drift.
+
+`startTime` was added on 2026-09-24 because **the program refuses every buy
+until `startTime + 60` seconds** (measured: 59s returns `BattleNotActive` 6003,
+60s is accepted). A battle in that minute is open, unsettled and untradeable at
+once, which looks like nothing else the widget handles. Without the field the
+panel would let somebody build a trade, simulate it, and read a program error to
+learn the clock.
 
 It exists for the trading widget, which needs three wallets that live at fixed
 offsets in that account and puts them straight into an instruction's account
