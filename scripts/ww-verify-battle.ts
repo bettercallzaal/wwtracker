@@ -107,7 +107,7 @@ async function tradesFor(battleId: number): Promise<Row[]> {
   return rows;
 }
 
-function verify(battleId: number, rows: Row[]) {
+async function verify(battleId: number, rows: Row[]) {
   const pool = { a: 0, b: 0 };
   const supply = { a: 0, b: 0 };
   const jsonRows: Array<{ battleId: number; side: "a" | "b"; poolLamports: number; supplyBefore: number; spendLamports: number; programTokens: number; signature: string }> = [];
@@ -218,6 +218,49 @@ function verify(battleId: number, rows: Row[]) {
   console.log(`battle ${battleId}: ${rows.length} trades, ${checked} checked, ${bad} mismatched` +
     (unscored > 0 ? `, ${unscored} UNSCORED (the program did not log both halves of a sell)` : "") +
     (checked === 0 ? "   NOTHING CHECKED - no denominator" : bad === 0 ? "   ALL EXACT" : ""));
+  // DOES THE REPLAY'S OWN BOOKKEEPING SURVIVE? Every mismatch above is a
+  // comparison against a pool and a supply this function accumulated. The
+  // program stores both, so the final values are checkable: if the replay's
+  // numbers do not land on the account's, the pool it was quoting against
+  // drifted and the mismatch count is not evidence of anything.
+  //
+  // This was added after two of our own tools disagreed about the finals - the
+  // live watcher reporting every trade exact where this reported nine wrong -
+  // with no way to tell which was reading a wrong number.
+  try {
+    const acct = await rpc("getAccountInfo", [battlePda(battleId), { encoding: "base64" }]);
+    const raw = acct.value ? Buffer.from(acct.value.data[0], "base64") : null;
+    if (!raw || raw.length < 244) {
+      console.log("  bookkeeping: UNCHECKED - no readable account, so the counts above stand unverified");
+    } else {
+      const u = (o: number) => Number(raw.readBigUInt64LE(o));
+      const chain = { supplyA: u(196), supplyB: u(204), poolA: u(228), poolB: u(236) };
+      const drift = {
+        poolA: pool.a - chain.poolA,
+        poolB: pool.b - chain.poolB,
+        supplyA: supply.a - chain.supplyA,
+        supplyB: supply.b - chain.supplyB,
+      };
+      const off = Object.entries(drift).filter(([, v]) => v !== 0);
+      if (off.length === 0) {
+        console.log("  bookkeeping: the replay lands exactly on the account's pools and supplies");
+      } else {
+        // Settlement moves the pools after the last trade, so a settled battle
+        // is expected to differ there. Supply is not touched by settling.
+        const settled = raw[245] !== 0;
+        const supplyOff = off.filter(([k]) => k.startsWith("supply"));
+        console.log(
+          `  bookkeeping: DRIFT ${off.map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`).join(", ")}` +
+            (settled && supplyOff.length === 0
+              ? "  (pools only, on a settled battle - settlement moves them after the last trade)"
+              : "  - THE COUNTS ABOVE ARE NOT EVIDENCE; the replay was quoting against numbers the program did not hold"),
+        );
+      }
+    }
+  } catch (e) {
+    console.log(`  bookkeeping: UNCHECKED - ${(e as Error).message}`);
+  }
+
   if (model.of > 0) {
     console.log(
       `  buy models over ${model.of} buys: floor-the-difference ${model.difference}, floor-the-total ${model.total}, floor-both-endpoints ${model.endpoints}`,
@@ -247,7 +290,7 @@ async function main() {
   let checked = 0, bad = 0;
   for (const id of ids) {
     const rows = await tradesFor(id);
-    const r = verify(id, rows);
+    const r = await verify(id, rows);
     checked += r.checked; bad += r.bad;
   }
   console.log(`\nTOTAL: ${checked} trades checked, ${bad} mismatched`);
