@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import {
   describeFirstBuyers,
+  MIN_BATTLES_FOR_VERDICT,
   firstBuyerConcentration,
   shortAddress,
   type FirstBuyerRow,
@@ -17,25 +18,36 @@ const row = (battleId: number, trader: string, gap: number | null = 50): FirstBu
   gapFromTradeableSeconds: gap,
 });
 
+/** N rows, cycling the given traders, so a sample is big enough for a verdict. */
+const rows = (traders: string[], n = MIN_BATTLES_FOR_VERDICT) =>
+  Array.from({ length: n }, (_, i) => row(i + 1, traders[i % traders.length]));
+
 describe("it separates one actor from a market", () => {
   it("says so plainly when a single wallet is first every time", () => {
-    const c = firstBuyerConcentration([row(1, "W"), row(2, "W"), row(3, "W")]);
+    const c = firstBuyerConcentration(rows(["W"]));
     expect(c.distinctTraders).toBe(1);
-    expect(c.topTraderBattles).toBe(3);
+    expect(c.topTraderBattles).toBe(MIN_BATTLES_FOR_VERDICT);
     const lines = describeFirstBuyers(c).join("\n");
     expect(lines).toMatch(/ONE WALLET is first every time/);
     expect(lines).toMatch(/not the room's/);
   });
 
   it("says so when one wallet takes more than half", () => {
-    const c = firstBuyerConcentration([row(1, "W"), row(2, "W"), row(3, "W"), row(4, "X"), row(5, "Y")]);
+    // W takes 6 of 10, X and Y two each.
+    const c = firstBuyerConcentration([
+      ...rows(["W"], 6),
+      row(7, "X"),
+      row(8, "X"),
+      row(9, "Y"),
+      row(10, "Y"),
+    ]);
     const lines = describeFirstBuyers(c).join("\n");
     expect(lines).toMatch(/first in more than half/);
     expect(lines).toMatch(/would be quoting one participant/);
   });
 
   it("refuses to upgrade a spread-out result into proof the room heard anything", () => {
-    const c = firstBuyerConcentration([row(1, "W"), row(2, "X"), row(3, "Y"), row(4, "Z")]);
+    const c = firstBuyerConcentration(rows(["W", "X", "Y", "Z"]));
     const lines = describeFirstBuyers(c).join("\n");
     expect(lines).toMatch(/NO SINGLE WALLET dominates/);
     // The limit, stated in the output rather than left to the reader.
@@ -43,8 +55,9 @@ describe("it separates one actor from a market", () => {
   });
 
   it("is exactly at half, which is not more than half", () => {
-    const c = firstBuyerConcentration([row(1, "W"), row(2, "W"), row(3, "X"), row(4, "Y")]);
-    expect(c.topTraderBattles).toBe(2);
+    // W takes 5 of 10.
+    const c = firstBuyerConcentration([...rows(["W"], 5), ...rows(["X", "Y", "Z", "P", "Q"], 5)]);
+    expect(c.topTraderBattles).toBe(5);
     expect(describeFirstBuyers(c).join("\n")).toMatch(/NO SINGLE WALLET dominates/);
   });
 });
@@ -116,14 +129,22 @@ describe("the platform's own wallet is separated from traders", () => {
   });
 
   it("changes the verdict when the house was the one dominating", () => {
-    const rows = [row(1, "TREASURY"), row(2, "TREASURY"), row(3, "TREASURY"), row(4, "W"), row(5, "X")];
-    // Counted as a trader, the treasury takes 3 of 5 and the verdict is "one
-    // wallet dominates". That sentence would be about the house.
+    // Ten battles: the treasury opens six, W three, X one. Counted as a trader
+    // the treasury takes 6 of 10; excluded, W takes 3 of 4.
+    const rows = [
+      ...Array.from({ length: 6 }, (_, i) => row(i + 1, "TREASURY")),
+      row(7, "W"),
+      row(8, "W"),
+      row(9, "W"),
+      row(10, "X"),
+    ];
     expect(describeFirstBuyers(firstBuyerConcentration(rows)).join("\n")).toMatch(
       /first in more than half/,
     );
+    // Excluded, only four battles remain - too thin for any verdict at all,
+    // which is itself the honest answer.
     expect(describeFirstBuyers(firstBuyerConcentration(rows, HOUSE)).join("\n")).toMatch(
-      /NO SINGLE WALLET dominates/,
+      /TOO FEW TO CHARACTERISE/,
     );
   });
 
@@ -144,5 +165,52 @@ describe("the platform's own wallet is separated from traders", () => {
     const lines = describeFirstBuyers(c).join("\n");
     expect(lines).toMatch(/NO OUTSIDE TRADER was ever first/);
     expect(lines).not.toMatch(/dominates/);
+  });
+});
+
+/**
+ * THE VERDICT NEEDS A DENOMINATOR, AND THIS MODULE SHIPPED WITHOUT ONE.
+ *
+ * Run against a single night - seven battles, five opened by the house - it
+ * printed "ONE WALLET is first every time, so the arrival floor is that
+ * wallet's cadence and not the room's" off TWO battles. That sentence is
+ * indistinguishable from the same sentence off two hundred.
+ */
+describe("a thin sample gets no verdict", () => {
+  it("refuses to characterise two battles, the real case that exposed this", () => {
+    const c = firstBuyerConcentration([row(1, "B97z"), row(2, "B97z")]);
+    const lines = describeFirstBuyers(c).join("\n");
+    expect(lines).toMatch(/TOO FEW TO CHARACTERISE: 2 battle\(s\)/);
+    // The wallets are still reported. What is withheld is the claim about them.
+    expect(lines).toMatch(/B97z: 2 battle\(s\)/);
+    expect(lines).not.toMatch(/ONE WALLET is first every time/);
+    // The refusal sentence itself contains the word "dominates" ("whether one
+    // of them dominates is not something this sample can say"), so the check
+    // is against the VERDICTS, not the word.
+    expect(lines).not.toMatch(/NO SINGLE WALLET dominates/);
+    expect(lines).not.toMatch(/first in more than half/);
+  });
+
+  it("counts the sample AFTER the house is excluded, which is the number that matters", () => {
+    // Twenty battles, but nineteen are the house: one trader battle.
+    const rows = [
+      ...Array.from({ length: 19 }, (_, i) => row(i + 1, "TREASURY")),
+      row(20, "W"),
+    ];
+    const lines = describeFirstBuyers(
+      firstBuyerConcentration(rows, new Set(["TREASURY"])),
+    ).join("\n");
+    expect(lines).toMatch(/TOO FEW TO CHARACTERISE: 1 battle\(s\)/);
+  });
+
+  it("gives a verdict at the threshold and not below it", () => {
+    const below = describeFirstBuyers(
+      firstBuyerConcentration(rows(["W"], MIN_BATTLES_FOR_VERDICT - 1)),
+    ).join("\n");
+    const at = describeFirstBuyers(
+      firstBuyerConcentration(rows(["W"], MIN_BATTLES_FOR_VERDICT)),
+    ).join("\n");
+    expect(below).toMatch(/TOO FEW TO CHARACTERISE/);
+    expect(at).toMatch(/ONE WALLET is first every time/);
   });
 });

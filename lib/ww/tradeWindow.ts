@@ -32,6 +32,17 @@
  * propagation is the 66s that was measured. The earlier reading invented an
  * actor to explain a constant.
  *
+ * CONFIRMED ON DATA THAT DID NOT EXIST WHEN THE THEORY WAS FORMED. The gate was
+ * inferred on 2026-09-24 from simulation plus 56 historical battles. A session
+ * ran that same night and produced seven new ones. The prediction - no trade
+ * can land before 60 seconds - held on all seven:
+ *
+ *     from start_time to first trade: fastest 69s, median 88s, slowest 133s
+ *     0 of 7 inside 45s
+ *
+ * The fastest was 69 seconds, nine seconds after the gate opened. A floor that
+ * survives a fresh sample it was not fitted to is the only kind worth quoting.
+ *
  * WHAT IT MEANS FOR THE ANNOUNCEMENT LAG, which is the open fairness question.
  * The working figure for how long the host trails the chain is about 45
  * seconds, and it has never been measured. If it is anywhere under 60, then
