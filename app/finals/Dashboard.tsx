@@ -117,6 +117,15 @@ export default function Dashboard() {
   const [data, setData] = useState<{ live: Battle[]; awaitingSettlement: number; readAt: string } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [spendSol, setSpendSol] = useState("0.05");
+  /**
+   * A one-second re-render, not a number anybody reads.
+   *
+   * The countdowns below recompute from `Date.now()` on every render, so what
+   * this drives is the render itself; the value is never used. That makes it
+   * indistinguishable from state nothing renders - the `errorMsg` shape - so
+   * it is named in the allowance list of `lib/__tests__/stateIsRendered.test.ts`
+   * rather than left to look like an oversight.
+   */
   const [tick, setTick] = useState(0);
   // The buttons. Nothing here needs a terminal.
   const [health, setHealth] = useState<Health | null>(null);
