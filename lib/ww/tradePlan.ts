@@ -40,6 +40,7 @@ import {
   minimumSpendLamports,
   quoteBuy,
   quoteBuyAtSupply,
+  poolAtSupply,
   quoteSell,
   supplyAtPool,
   withSlippage,
@@ -237,9 +238,24 @@ export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
 
   // Computed from the SAME fresh read the floor uses. An impact figure from a
   // stale pool would be the defect #300 fixed, wearing a different name.
+  /**
+   * THE SPOT PRICE MUST COME FROM THE POOL THE TOKENS CAME FROM.
+   *
+   * Impact is the effective price over the spot price, and both halves have to
+   * be quoted at the same position on the curve. Since #412 the tokens are
+   * minted from the pool the STORED SUPPLY implies, while this still read the
+   * spot off the pool the vault holds - and those differ by the flooring
+   * residual, 2,348,580 lamports on battle 1789948124's side A.
+   *
+   * Measured on that side for a 0.05 SOL buy: 2,322 bps against the vault's
+   * pool, 2,723 against the implied one. FOUR PERCENTAGE POINTS, in the unsafe
+   * direction - a `maxPriceImpactBps` of 2,500 would have passed a trade whose
+   * real impact the limit was written to refuse.
+   */
+  const pricingPool = minted === undefined ? poolLamports : poolAtSupply(minted);
   const priceImpact = assessPriceImpact(
     priceImpactBps({
-      poolBeforeLamports: poolLamports,
+      poolBeforeLamports: pricingPool,
       // The pool moves by what reaches it, not by what was spent - the 1.5% fee
       // never enters the pool and so causes no price movement.
       poolDeltaLamports: p.amountLamports * BUY_POOL_SHARE,
