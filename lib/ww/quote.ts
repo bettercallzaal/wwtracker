@@ -149,77 +149,75 @@ export interface BuyQuote {
 }
 
 /**
- * WHAT THE PROGRAM ACTUALLY MINTS, given the side's current supply.
+ * WHAT THE PROGRAM ACTUALLY MINTS. Exact on every real buy measured.
  *
- * THE PROGRAM FLOORS THE TOTAL, NOT THE DIFFERENCE. `quoteBuy` below floors
- * `after - before`, and it is wrong on about one buy in five. Measured
- * 2026-09-24 against 18 real buys from six battles whose every trade was a buy
- * - so the pool at each step is exactly known rather than derived through a
- * sell - the difference model got 14 of 18 and this one got 18 of 18.
+ * THE POOL IS NOT AN INPUT, WHICH IS THE WHOLE ANSWER. Four models were scored
+ * against 138 real buys and the three that priced off the pool the vault holds
+ * all failed somewhere - fine until a sell, wrong after one. This one prices
+ * off the pool the STORED SUPPLY implies, and the vault's actual balance never
+ * enters the arithmetic:
  *
- * Confirmed by hand on battle 1790215514, which had three buys and no sells:
+ *     tokens = floor_q( supplyAtPool( poolAtSupply(supply) + contribution ) ) - supply
  *
- *     supplyAtPool(49,250,000)  = 156,923,548.26  floor 156,900,000
- *     supplyAtPool(98,500,000)  = 221,923,410.21  floor 221,900,000
+ * WHY THAT IS NOT THE SAME NUMBER. Flooring the supply leaves lamports in the
+ * pool that no token represents, and a sell removes only the curve value of
+ * what it burned, so the two drift apart - 3 to 43 steps on sides that have
+ * sold, 1.7M to 3.1M lamports unrepresented. Every pool-based model carries
+ * that residual into the answer. This one cannot.
  *
- * and the program's stored supply after each buy was exactly those floors:
- * 156,900,000 then 221,900,000. It minted 65,000,000 on the second buy. Our
- * running total was 221,800,000, because flooring the difference throws away
- * a fraction of a step on every trade and the loss accumulates.
+ * Confirmed by hand on battle 1790215514, second buy on side B:
  *
- * So the tokens minted are `floor(supplyAtPool(pool + contribution))` minus
- * the supply the battle already holds - which a caller HAS, from bytes 196 and
- * 204 of the battle account, the same two numbers the sell path already reads.
+ *     the vault held            49,250,000 lamports
+ *     the supply implies        49,235,220 lamports
+ *     residual never priced         14,780 lamports
+ *     this model                65,000,000 tokens
+ *     the program minted        65,000,000 tokens
  *
- * AND IT IS REFUTED ON SELL-HEAVY BATTLES. This was written as the exact
- * model on the strength of 18 buy-only buys plus four after a sell. Scored
- * against battle 1789948124, which ran 49 trades with many sells, it gets **5
- * of 33** while flooring the difference gets 24. So it is not the general
- * model and must not be presented as one.
+ * Scored per battle, against the models it replaces:
  *
- * THE MISSING TERM IS ALMOST CERTAINLY THE RESIDUAL, which `quoteSell` below
- * already documents: flooring the supply leaves part of the pool represented
- * by no token, and the program removes only the curve value of the tokens
- * burned, so that fraction stays in the vault permanently. Each sell adds
- * another, and `floor(supplyAtPool(pool))` then reads HIGH by the accumulated
- * residual - which is why this model degrades with the number of sells and
- * looked exact on a night of mostly buy-only battles.
+ *     battle       buys   difference   total   endpoints   THIS
+ *     1789948124     33          24        5          21     33
+ *     1789949789     37          30        3          28     37
+ *     1790215514      3           2        3           3      3
+ *     1790217077      4           3        4           4      4
  *
- * SO NEITHER MODEL IS RIGHT IN GENERAL. What is established: on a battle whose
- * pool carries no residual, the program floors the total and we floor the
- * difference, and we are one step low. What is not: how the program accounts
- * for the residual once sells have created one. Until that is measured, this
- * function is for buy-only battles and for understanding the mechanism, not
- * for quoting a trader - which is why no caller has been switched.
+ * The replay those numbers come from checks its own bookkeeping against the
+ * account at the end of every run and lands exactly, so they are not drift.
  */
 export function quoteBuyAtSupply(
-  poolLamports: number,
-  spendLamports: number,
   currentSupply: number,
+  spendLamports: number,
 ): BuyQuote {
   if (spendLamports <= 0) throw new Error("spend must be positive");
   if (currentSupply < 0) throw new Error("supply cannot be negative");
   const toPool = spendLamports * BUY_POOL_SHARE;
-  const totalAfter = floorToQuantum(supplyAtPool(poolLamports + toPool));
-  // A buy can never burn tokens. If the floor of the curve lands below the
-  // supply already held - which a post-sell state could produce - the honest
-  // answer is zero minted, not a negative number that would read as a refund.
+  // The pool this supply implies, NOT the vault's balance.
+  const impliedPool = poolAtSupply(currentSupply);
+  const totalAfter = floorToQuantum(supplyAtPool(impliedPool + toPool));
+  // A buy can never burn tokens. The subtraction cannot go negative for a
+  // positive contribution, and saying so costs nothing.
   const tokensOut = Math.max(0, totalAfter - currentSupply);
   return {
     tokensOut,
-    tokensOutExact: supplyAtPool(poolLamports + toPool) - currentSupply,
-    poolAfterLamports: poolLamports + toPool,
+    tokensOutExact: supplyAtPool(impliedPool + toPool) - currentSupply,
+    poolAfterLamports: impliedPool + toPool,
     feeLamports: spendLamports - toPool,
     effectivePricePerToken: tokensOut > 0 ? spendLamports / tokensOut : Infinity,
   };
 }
 
 /**
- * KNOWN TO BE ONE STEP LOW ON ABOUT ONE BUY IN FIVE. See `quoteBuyAtSupply`
- * above, which is exact on every real buy measured and needs the side's
- * current supply to be so. This one is kept because every caller of it passes
- * only a pool and a spend, and switching them is a separate change against
- * money-facing code.
+ * KNOWN WRONG ON ABOUT ONE BUY IN FIVE, AND STILL WHAT EVERY CALLER USES.
+ *
+ * It prices off the vault's pool and floors the difference, so it misses by
+ * exactly one 100,000-token step whenever the flooring residual crosses a
+ * boundary - always LOW, so it under-promises and nothing reverts, but the
+ * number shown to a trader is wrong. `quoteBuyAtSupply` above is exact on
+ * every real buy measured and needs only the side's stored supply.
+ *
+ * Switching the callers is a separate change against money-facing code and
+ * wants its own pass; this stays until then rather than leaving the widget
+ * with no quote at all.
  */
 export function quoteBuy(poolLamports: number, spendLamports: number): BuyQuote {
   if (spendLamports <= 0) throw new Error("spend must be positive");

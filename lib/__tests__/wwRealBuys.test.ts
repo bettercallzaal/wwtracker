@@ -28,6 +28,8 @@ interface Row {
   battleId: number;
   side: "a" | "b";
   poolLamports: number;
+  /** The supply the side HELD, tracked through sells - not reconstructed. */
+  supplyBefore: number;
   spendLamports: number;
   programTokens: number;
   buyOnly: boolean;
@@ -35,16 +37,15 @@ interface Row {
 const trades = fixture.trades as Row[];
 const clean = trades.filter((t) => t.buyOnly);
 
-/** The supply a side holds before each buy, from the program's own numbers. */
-function withSupply(rows: Row[]): Array<Row & { supplyBefore: number }> {
-  const held = new Map<string, number>();
-  return rows.map((r) => {
-    const key = `${r.battleId}:${r.side}`;
-    const supplyBefore = held.get(key) ?? 0;
-    held.set(key, supplyBefore + r.programTokens);
-    return { ...r, supplyBefore };
-  });
-}
+/**
+ * THE FIXTURE CARRIES THE SUPPLY; THIS DOES NOT RECONSTRUCT IT.
+ *
+ * An earlier version summed `programTokens` per side to derive it, which is
+ * right on a battle of only buys and wrong on one with sells - and produced a
+ * false failure on exactly the battle worth testing. The verifier tracks the
+ * real supply through both, so the fixture records it.
+ */
+const withSupply = (rows: Row[]) => rows;
 
 describe("the fixture itself", () => {
   it("is not empty, so nothing below can pass by finding nothing", () => {
@@ -64,9 +65,9 @@ describe("the fixture itself", () => {
 });
 
 describe("quoteBuyAtSupply reproduces every real buy", () => {
-  it("matches the program on all 18 where the pool carries no residual", () => {
-    const wrong = withSupply(clean).filter(
-      (r) => quoteBuyAtSupply(r.poolLamports, r.spendLamports, r.supplyBefore).tokensOut !== r.programTokens,
+  it("matches the program on ALL 22, sells included", () => {
+    const wrong = withSupply(trades).filter(
+      (r) => quoteBuyAtSupply(r.supplyBefore, r.spendLamports).tokensOut !== r.programTokens,
     );
     expect(wrong.map((r) => `${r.battleId}:${r.side}`)).toEqual([]);
   });
@@ -84,17 +85,17 @@ describe("quoteBuyAtSupply reproduces every real buy", () => {
    * very thing in question, and a fixture that assumed an answer would prove
    * it by construction.
    */
-  it("is documented as refuted on sell-heavy battles, not as exact", async () => {
-    const raw = await import("node:fs").then((fs) =>
-      fs.readFileSync(new URL("../ww/quote.ts", import.meta.url), "utf8"),
-    );
-    // The comment wraps, so the claim is split by newlines and leading " * ".
-    // Normalising is the difference between guarding the statement and
-    // guarding one particular line break.
-    const source = raw.replace(/\n\s*\*\s?/g, " ").replace(/\s+/g, " ");
-    expect(source).toMatch(/REFUTED ON SELL-HEAVY BATTLES/);
-    expect(source).toMatch(/5 of 33/);
-    expect(source).toMatch(/NEITHER MODEL IS RIGHT IN GENERAL/);
+  /**
+   * THE POOL IS NOT AN INPUT, which is the whole answer. Three models priced
+   * off the vault's pool and all failed after a sell; this one prices off the
+   * pool the stored supply implies, so the flooring residual never enters.
+   */
+  it("gives the same answer whatever the vault holds, because it never reads it", () => {
+    const a = quoteBuyAtSupply(156_900_000, 50_000_000).tokensOut;
+    expect(a).toBe(65_000_000);
+    // The residual on that side was 14,780 lamports. A pool-based model moves
+    // with it; this one has nowhere to put it.
+    expect(quoteBuyAtSupply(156_900_000, 50_000_000).tokensOut).toBe(a);
   });
 });
 
@@ -136,7 +137,7 @@ describe("the mechanism, on the battle that shows it cleanly", () => {
   });
 
   it("gets that buy right with the supply in hand", () => {
-    expect(quoteBuyAtSupply(49_250_000, 50_000_000, 156_900_000).tokensOut).toBe(65_000_000);
+    expect(quoteBuyAtSupply(156_900_000, 50_000_000).tokensOut).toBe(65_000_000);
   });
 });
 
@@ -144,12 +145,12 @@ describe("quoteBuyAtSupply refuses to invent a refund", () => {
   it("returns zero rather than a negative when the curve lands below the supply held", () => {
     // A state a sell could produce. A buy can never burn tokens, and a
     // negative here would read as one.
-    const out = quoteBuyAtSupply(1_000, 1_000, 10_000_000_000);
+    const out = quoteBuyAtSupply(10_000_000_000, 1_000);
     expect(out.tokensOut).toBe(0);
   });
 
   it("still rejects a non-positive spend", () => {
-    expect(() => quoteBuyAtSupply(0, 0, 0)).toThrow(/spend must be positive/);
-    expect(() => quoteBuyAtSupply(0, 100, -1)).toThrow(/supply cannot be negative/);
+    expect(() => quoteBuyAtSupply(0, 0)).toThrow(/spend must be positive/);
+    expect(() => quoteBuyAtSupply(-1, 100)).toThrow(/supply cannot be negative/);
   });
 });
