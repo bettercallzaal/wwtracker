@@ -470,6 +470,20 @@ export {
 } from "./markInput";
 export { marksEnabled } from "./marksFlag";
 
+// Whether going first pays: the opening side against the larger final pool.
+// Carries its own limit, because the first buy moves the outcome it is scored
+// against.
+export {
+  coinTailProbability,
+  describeFirstSide,
+  firstSideReport,
+  marginShare,
+  outcomeOf,
+  type FirstSideOutcome,
+  type FirstSideReport,
+  type FirstSideRow,
+} from "./firstSide";
+
 // The envelope a wallet is handed for signing: the unsigned transaction.
 export { unsignedTransaction } from "./wallet";
 

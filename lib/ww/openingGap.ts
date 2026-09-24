@@ -81,6 +81,10 @@ export interface FirstTrade {
    * invent one; `firstBuyer.ts` is what consumes it.
    */
   trader?: string;
+  /** On a buy, the side it landed on, from the instruction's own bytes. */
+  side?: "a" | "b";
+  /** On a buy, the lamports it spent. Used to size it against the final margin. */
+  amountLamports?: number;
 }
 
 export interface OpeningGap {
