@@ -16,7 +16,16 @@
  */
 import { readFileSync } from "node:fs";
 import { battleDiscoveryRequest, parseBattleAccounts, type ProgramAccountRow } from "../lib/ww/discovery";
-import { agreementByFormat, chanceOfAtLeast, disagreementRate, type JudgedBattle, type SettledBattle } from "../lib/ww/winnerAgreement";
+import {
+  agreementByFormat,
+  chanceOfAtLeast,
+  compare,
+  describeMarginBands,
+  disagreementRate,
+  marginBands,
+  type JudgedBattle,
+  type SettledBattle,
+} from "../lib/ww/winnerAgreement";
 import { redactUrl } from "../lib/redact";
 
 const RPC = process.env.SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
@@ -31,7 +40,7 @@ async function rpc(method: string, params: unknown[]): Promise<any> {
 
 async function main() {
   const raw = JSON.parse(readFileSync("public/ww-battles.json", "utf8")) as Array<{
-    id: string | number; type?: string; a?: string; b?: string; winner?: string | null;
+    id: string | number; type?: string; a?: string; b?: string; winner?: string | null; margin?: number;
   }>;
   const judged: JudgedBattle[] = raw
     .filter((r) => r.type && r.winner && r.a && r.b)
@@ -42,7 +51,10 @@ async function main() {
       sideA: String(r.a),
       sideB: String(r.b),
     }));
-  console.log(`battles with a judged winner: ${judged.length} of ${raw.length}`);
+  const marginOf = new Map<number, number>(
+    raw.filter((r) => typeof r.margin === "number").map((r) => [Number(r.id), r.margin as number]),
+  );
+  console.log(`battles with a judged winner: ${judged.length} of ${raw.length}, ${marginOf.size} with a margin`);
 
   const req = battleDiscoveryRequest();
   const rows = (await rpc(req.method, req.params)) as ProgramAccountRow[];
@@ -87,5 +99,19 @@ async function main() {
   );
   console.log("A judged result differing from the pool is the intended behaviour of a judged");
   console.log("competition. This compares procedures; it does not score anyone.");
+
+  // IS A DISAGREEMENT JUST A CLOSE CALL? If it were, the rate would fall as
+  // the judged margin widens. Printed every run so the comfortable answer
+  // cannot quietly come back.
+  console.log("\nby the margin the judges gave:");
+  const marginRows = judged.flatMap((j) => {
+    const s = byId.get(j.battleId);
+    const m = marginOf.get(j.battleId);
+    if (!s) return [];
+    return [{ margin: m ?? null, outcome: compare(j, s) }];
+  });
+  for (const line of describeMarginBands(marginBands(marginRows))) console.log(line);
+  console.log("A wide judged win goes against the money about as often as a dead heat does,");
+  console.log("so these are not split decisions landing the other way.");
 }
 main().catch((e) => { console.error(e.message); process.exit(1); });

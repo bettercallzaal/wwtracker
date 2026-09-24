@@ -481,11 +481,14 @@ export {
   agreementByFormat,
   chanceOfAtLeast,
   compare as compareWinners,
+  describeMarginBands,
   disagreementRate,
   judgedSide,
+  marginBands,
   type AgreementOutcome,
   type FormatAgreement,
   type JudgedBattle,
+  type MarginBand,
   type SettledBattle,
 } from "./winnerAgreement";
 
