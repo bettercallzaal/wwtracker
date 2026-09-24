@@ -38,6 +38,7 @@ import {
   BUY_POOL_SHARE,
   SUPPLY_QUANTUM,
   minimumSpendLamports,
+  minimumSpendAtSupply,
   quoteBuy,
   quoteBuyAtSupply,
   poolAtSupply,
@@ -219,7 +220,13 @@ export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
   // the chain's. So the test is against the CONTINUOUS figure with headroom,
   // and anything inside the window is handed to the program to decide.
   if (quote.tokensOut <= 0 && quote.tokensOutExact < SUPPLY_QUANTUM - 16) {
-    const need = minimumSpendLamports(poolLamports);
+    // From the SAME basis the quote used. Quoting a minimum off the vault's
+    // pool while the tokens came from the supply's would name a threshold that
+    // is 3.3% too high on a drifted side - telling somebody a trade is
+    // impossible when it is not, in the message that exists to tell them what
+    // would work.
+    const need =
+      minted === undefined ? minimumSpendLamports(poolLamports) : minimumSpendAtSupply(minted);
     throw new DustTradeError(
       `${p.amountLamports} lamports mints no tokens at a pool of ${poolLamports}. ` +
         `The minimum here is ${need} lamports (${(need / 1e9).toFixed(9)} SOL), and it rises as the pool grows.`,

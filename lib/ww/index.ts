@@ -98,6 +98,7 @@ export {
   PLATFORM_FEE_BPS,
   floorToQuantum,
   minimumSpendLamports,
+  minimumSpendAtSupply,
   TRADE_FEE,
   feeSplit,
   lamportsToSol,
