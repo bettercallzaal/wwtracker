@@ -470,6 +470,21 @@ export {
 } from "./markInput";
 export { marksEnabled } from "./marksFlag";
 
+// Launching a battle of our own. The program is permissionless for it,
+// established by simulation 2026-09-24 from a wallet that is not the treasury.
+export {
+  BATTLE_ACCOUNT_BYTES as LAUNCH_BATTLE_ACCOUNT_BYTES,
+  canAfford,
+  checkLaunch,
+  launchCost,
+  LAUNCH_ACCOUNTS,
+  MINT_ACCOUNT_BYTES,
+  VAULT_ACCOUNT_BYTES,
+  type LaunchCheck,
+  type LaunchCost,
+  type LaunchParams,
+} from "./launchPlan";
+
 // Whether going first pays: the opening side against the larger final pool.
 // Carries its own limit, because the first buy moves the outcome it is scored
 // against.
