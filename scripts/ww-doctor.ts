@@ -155,6 +155,7 @@ async function main() {
       const mismatches = text.split("\n").filter((l) => l.includes("MISMATCH"));
       const verdict = watcherVerdict(age, beats.length);
       if (verdict === "never-beat") meh(`log exists but has never beaten - started under a minute ago, or stuck`);
+      else if (verdict === "clock-suspect") meh(`stamped ${-age}s in the FUTURE - clock skew or a restored file. The watcher may be fine; this cannot tell you.`);
       else if (verdict === "stopped") bad(`last wrote ${age}s ago - it should beat every 60s. Probably dead.`);
       else ok(`beating, last write ${age}s ago`);
       if (beats.length) console.log(`  ----  ${beats[beats.length - 1].trim()}`);
