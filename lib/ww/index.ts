@@ -102,6 +102,7 @@ export {
   feeSplit,
   lamportsToSol,
   quoteBuy,
+  quoteBuyAtSupply,
   quoteSell,
   quoteClaim,
   SETTLEMENT_WINNING_TRADERS,

@@ -1,0 +1,204 @@
+{
+  "_comment": "Real buys from the 2026-09-24 session, with the tokens the PROGRAM said it minted (from its own logs, via scripts/ww-verify-battle.ts --json). buyOnly marks battles whose every trade was a buy, so poolLamports is exactly known at each step rather than derived through a sell.",
+  "capturedAt": "2026-09-24",
+  "trades": [
+    {
+      "battleId": 1790214545,
+      "side": "a",
+      "poolLamports": 0,
+      "spendLamports": 5000000,
+      "programTokens": 49600000,
+      "signature": "2kpfy6Dp18eHF6qASR1TciXk3gBnsLdzkH3V7W3qsYiXMUSbTwUfGkjTAztJ4pvM1uXiSSdusNhmitEuPkoy3m3L",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790214545,
+      "side": "b",
+      "poolLamports": 0,
+      "spendLamports": 5000000,
+      "programTokens": 49600000,
+      "signature": "4tjV3sht5EQVvKNvH8ZhWyD7VKtidhDAKz3XSYuDVqCr9MesFVXg2EH3UkePwYFNnyrxaaAssEPUC7S4UxRmRM2z",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790214545,
+      "side": "b",
+      "poolLamports": 4925000,
+      "spendLamports": 3000000,
+      "programTokens": 13100000,
+      "signature": "36ibq7Hnn8UWC218xUA9BBeUARiXyTr9SsHQWQ7w6kKWYnVpWzJ6d1wVBdXM2euSFBBA8c5iUiaSheAoGZWBxMnj",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790215514,
+      "side": "a",
+      "poolLamports": 0,
+      "spendLamports": 50000000,
+      "programTokens": 156900000,
+      "signature": "bGeX1PamTQRiNELPCbVbDW5EknXXRFqcRRdQpiGWArUCy3zaMRQez2WdjgfmybL7HdvWde2TdJaGNJ5YR5FgaG9",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790215514,
+      "side": "b",
+      "poolLamports": 0,
+      "spendLamports": 50000000,
+      "programTokens": 156900000,
+      "signature": "4udZkhob3DGQGdmFt3SQPdPUj3mn6b9aoJKPFKmi91tscWvLDc3rQ87iWLDeDz5KbJ5oXsQeqNmPfDbgBJqiN7zg",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790215514,
+      "side": "b",
+      "poolLamports": 49250000,
+      "spendLamports": 50000000,
+      "programTokens": 65000000,
+      "signature": "2potfbgi7WJmybrqwX2j69fMtTbtPcS18B3zef7FFj4Y3NoAwjvUQfSi7mKSjoNaxwwEz2NHhiir1xfd9iaTSdCR",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790216068,
+      "side": "a",
+      "poolLamports": 0,
+      "spendLamports": 50000000,
+      "programTokens": 156900000,
+      "signature": "26rtYYbZYStSEwRSA7kpWxhdBRC1EVxymwtuVvFRaiLi9irga5b5Ne2VQns5c1LpSALcRdK9GniHzFhjpohWDoSx",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790216068,
+      "side": "b",
+      "poolLamports": 0,
+      "spendLamports": 50000000,
+      "programTokens": 156900000,
+      "signature": "3Rqp9N5Wr12yddKzzttm81kqKnqjY8bNtkTe2WBRsPa98F7SJdvvxfUBbPC7xdx4fJCGmZXW2gYqASZNQkoNT9Vm",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790216068,
+      "side": "b",
+      "poolLamports": 49250000,
+      "spendLamports": 50000000,
+      "programTokens": 65000000,
+      "signature": "5sEFtn3xgeMSSvY9czQkk5dEbmky8pPfs67pb6FYmTpw3j6goG5tcDMkM7RFDGL2gwC7RSxHMddWevjjnSftgywb",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790216570,
+      "side": "a",
+      "poolLamports": 0,
+      "spendLamports": 50000000,
+      "programTokens": 156900000,
+      "signature": "2hkNx1kjvPgVXHyzdqwwu4GHgcR7nV6XgJcQ9LKxd9FWk1XATaL7ypsvc8FtnRS1wLYLbWunDXy3Zry149sFBiEa",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790216570,
+      "side": "b",
+      "poolLamports": 0,
+      "spendLamports": 50000000,
+      "programTokens": 156900000,
+      "signature": "5aVBBeKsUNAzquVnuhomkf7Rt8uU15Qzi1hbdbYLq9zqhnKK8reJNeYuXKrt2GWqc9VujDLNxy33irpmRgeECHsJ",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790216570,
+      "side": "b",
+      "poolLamports": 49250000,
+      "spendLamports": 50000000,
+      "programTokens": 65000000,
+      "signature": "gc1AsmTZUSPB7fZjku8Xc5Xp6sC6WhdmaVt3wVaUB9etCbCMT8cvsUPGxhdwxvjL3DzGZnBE5sVvyyuN8R328oK",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790217077,
+      "side": "a",
+      "poolLamports": 0,
+      "spendLamports": 50000000,
+      "programTokens": 156900000,
+      "signature": "5ntRfjJRMATGRkwkukVQyhPGb5DFHiqbBsXHvwgEs4BN9jmwqARcGnECn72r8cKuhCUj97zfHsc6QztGXAdmFEsh",
+      "buyOnly": false
+    },
+    {
+      "battleId": 1790217077,
+      "side": "b",
+      "poolLamports": 0,
+      "spendLamports": 5000000,
+      "programTokens": 49600000,
+      "signature": "ThEYD61P6Y6DKKQcWRKMgWwSNtL3L8GVhQDKt4cMTi9FaeNiQMeVyD5q3dcbhoQFLiYU6kYEp9WuDvzwP2xMhSK",
+      "buyOnly": false
+    },
+    {
+      "battleId": 1790217077,
+      "side": "b",
+      "poolLamports": 4925000,
+      "spendLamports": 3000000,
+      "programTokens": 13100000,
+      "signature": "Ej2PYvpFAQEdiT9RoEpXSSL3FZdTqyocZ9TxonPMuaxhLrxzEet5SQTfg9HZkeevYP6yx5dvqdoohAYJAeWGfRv",
+      "buyOnly": false
+    },
+    {
+      "battleId": 1790217077,
+      "side": "a",
+      "poolLamports": 12307900,
+      "spendLamports": 50000000,
+      "programTokens": 97000000,
+      "signature": "2F8ZutMqXFFdjLQik4z8GQQfZg4fgtCKDrw7L8qBUjMWXDKa19vQV9me9nQJSJvuXQUjDFkzBCNXNSLQFFebPKda",
+      "buyOnly": false
+    },
+    {
+      "battleId": 1790218496,
+      "side": "a",
+      "poolLamports": 0,
+      "spendLamports": 50000000,
+      "programTokens": 156900000,
+      "signature": "55X8hHocfxiWCoJYvvkLUuUU9drCWFYibibqNY1hBW9mMAUnNPr41Y4fxeRFMj9JQ8A1wbVwTSVXcYgjboptVipr",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790218496,
+      "side": "b",
+      "poolLamports": 0,
+      "spendLamports": 5000000,
+      "programTokens": 49600000,
+      "signature": "5MW7YgmEDLMz4HM2rnHoCn6HtgHfvKix9gZhafSydfwRCaq2qXpqY8MEVqSn2DiT5eTCqg195vWiZFLNnGd1wcNo",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790218496,
+      "side": "b",
+      "poolLamports": 4925000,
+      "spendLamports": 3000000,
+      "programTokens": 13100000,
+      "signature": "5d9PvgkmuVEqoAW5XXgDDFvKeBX7ycronmwajo8jLVt5f1njwAFS9UZwNHMqCfXcHrwMFEZNLzTB1Lr4TomHGRi8",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790219409,
+      "side": "b",
+      "poolLamports": 0,
+      "spendLamports": 50000000,
+      "programTokens": 156900000,
+      "signature": "2z8aMhjsYgGzwCYB62bEmrmhcWH6Ruum8WS5EoRxSMjZ6YhxYLPben3D4GMmbGuw8hvN4jT7ytee4wSBytLrA6hs",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790219409,
+      "side": "a",
+      "poolLamports": 0,
+      "spendLamports": 50000000,
+      "programTokens": 156900000,
+      "signature": "4UyWitZUsbLGoyEGWLdPWG4TbbE3QdNwfM3RcZ9Kwb2aB1HkzY1DZWUBu3VSKfufhjWg4yT6F77pFQqhvQ93ZxXb",
+      "buyOnly": true
+    },
+    {
+      "battleId": 1790219409,
+      "side": "b",
+      "poolLamports": 49250000,
+      "spendLamports": 50000000,
+      "programTokens": 65000000,
+      "signature": "4GJcnfQGYz45K1ZrQbiWpE2ZCgeeJnyNa7NaGPBhRjwg45rshW2H5MtKtFZbtwu94T7M9MpDn9ejZwSQaaCDimh8",
+      "buyOnly": true
+    }
+  ]
+}

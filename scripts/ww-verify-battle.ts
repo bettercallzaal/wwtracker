@@ -4,6 +4,7 @@
  *
  *   npx tsx scripts/ww-verify-battle.ts <battleId> [--rpc URL]
  *   npx tsx scripts/ww-verify-battle.ts --live        # every battle running now
+ *   npx tsx scripts/ww-verify-battle.ts <battleId> --json   # the rows, for a fixture
  *
  * WHY THIS AND NOT A SIMULATION. Everything verified so far was a transaction
  * this estate built. This reads trades other people made, in the order they
@@ -17,6 +18,13 @@
  * trade against the program's stated result.
  *
  * Exit code 1 if any trade disagrees, so it can gate.
+ *
+ * `--json` prints one row per buy - the pool it went into, the lamports spent
+ * and THE TOKENS THE PROGRAM SAID IT MINTED - so a real trade can become a
+ * test fixture. Added 2026-09-24 after this tool found that our quote misses
+ * 5 of 24 real trades by exactly one 100,000-token step: a model that has been
+ * wrong needs ground truth checked into the repo, not a tool anyone has to
+ * re-run against mainnet to discover it again.
  */
 import { b58decode, battlePda, PROGRAM_ID } from "@/lib/ww/pda";
 import { quoteBuy, quoteSell, feeSplit, TRADE_FEE, BUY_POOL_SHARE } from "@/lib/ww/quote";
@@ -102,7 +110,16 @@ async function tradesFor(battleId: number): Promise<Row[]> {
 function verify(battleId: number, rows: Row[]) {
   const pool = { a: 0, b: 0 };
   const supply = { a: 0, b: 0 };
-  let checked = 0, bad = 0;
+  const jsonRows: Array<{ battleId: number; side: "a" | "b"; poolLamports: number; spendLamports: number; programTokens: number; signature: string }> = [];
+  // AFTER A SELL THE POOL IS DERIVED, NOT OBSERVED. A buy's contribution comes
+  // from the program's own log, so the pool stays exact through buys. A sell's
+  // does not: this replay subtracts a figure it computed itself, so any error
+  // in the sell model moves the pool, and every later buy is then scored
+  // against a number nobody observed. Those buys are counted separately rather
+  // than reported as mismatches, because a mismatch there cannot tell a wrong
+  // buy model from a wrong sell model.
+  const derived = { a: false, b: false };
+  let checked = 0, bad = 0, unscored = 0;
   const fail = (sig: string, what: string, ours: unknown, theirs: unknown) => {
     bad++;
     console.log(`  MISMATCH ${what}\n     ours ${ours}   program ${theirs}\n     ${sig}`);
@@ -112,6 +129,16 @@ function verify(battleId: number, rows: Row[]) {
     if (r.kind === "buy") {
       if (r.statedTokens === null) continue;
       const q = quoteBuy(pool[r.side], r.amount);
+      if (derived[r.side]) {
+        unscored++;
+        jsonRows.push({
+          battleId, side: r.side, poolLamports: pool[r.side], spendLamports: r.amount,
+          programTokens: r.statedTokens, signature: r.sig,
+        });
+        pool[r.side] += r.statedToPool ?? Math.round(r.amount * BUY_POOL_SHARE);
+        supply[r.side] += r.statedTokens;
+        continue;
+      }
       checked++;
       if (q.tokensOut !== r.statedTokens) fail(r.sig, `buy tokens (${r.amount} lamports into pool ${pool[r.side]})`, q.tokensOut, r.statedTokens);
       if (r.statedToPool !== null && Math.round(r.amount * BUY_POOL_SHARE) !== r.statedToPool)
@@ -124,6 +151,14 @@ function verify(battleId: number, rows: Row[]) {
         if (r.statedPlatform !== null && split.platformLamports !== r.statedPlatform)
           fail(r.sig, "platform share", split.platformLamports, r.statedPlatform);
       }
+      jsonRows.push({
+        battleId,
+        side: r.side,
+        poolLamports: pool[r.side],
+        spendLamports: r.amount,
+        programTokens: r.statedTokens,
+        signature: r.sig,
+      });
       pool[r.side] += r.statedToPool ?? Math.round(r.amount * BUY_POOL_SHARE);
       supply[r.side] += r.statedTokens;
     } else {
@@ -134,9 +169,17 @@ function verify(battleId: number, rows: Row[]) {
         fail(r.sig, `sell proceeds (${r.amount} tokens from supply ${supply[r.side]})`, Math.round(q.lamportsOut), r.statedReturn);
       pool[r.side] -= Math.round(q.grossLamports);
       supply[r.side] -= r.amount;
+      derived[r.side] = true;
     }
   }
+  if (process.argv.includes("--json")) {
+    // The rows only. Anything else on stdout would have to be stripped before
+    // this could be redirected into a fixture file.
+    console.log(JSON.stringify(jsonRows, null, 2));
+    return { checked, bad };
+  }
   console.log(`battle ${battleId}: ${rows.length} trades, ${checked} checked, ${bad} mismatched` +
+    (unscored > 0 ? `, ${unscored} UNSCORED (a sell put the pool beyond observation)` : "") +
     (checked === 0 ? "   NOTHING CHECKED - no denominator" : bad === 0 ? "   ALL EXACT" : ""));
   return { checked, bad };
 }
