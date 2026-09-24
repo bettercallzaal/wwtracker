@@ -24,7 +24,7 @@
 export const DATA_AS_OF = "2026-09-05";
 
 /** The battle-history file's own date - what /api/battles/stats is computed from. */
-export const BATTLES_AS_OF = "2026-09-08";
+export const BATTLES_AS_OF = "2026-09-24";
 
 /** Which baked dataset DATA_AS_OF is the date of - the banner names it. */
 export const OLDEST_BAKED = "on-chain daily activity, volume timeline and program snapshot";
@@ -41,7 +41,7 @@ export const FRESHNESS: Record<string, string> = {
   "platform volume timeline (per-battle, from 2025-05-28)": "2026-09-05",
   "program + treasury snapshot (lib/wwData.ts)": "2026-09-05",
   "SOL/USD reference price": "2026-09-08",
-  "battle history file (recap tooling, npm run fetch:battles)": "2026-09-08",
+  "battle history file (recap tooling, npm run fetch:battles)": "2026-09-24",
   // Static /artist/* routes only - not on the homepage, so not in DATA_AS_OF.
   "artist roster for static routes (lib/leaderboard.ts)": "2026-06-15",
   "ops ledger + distributions (team-reported, manual)": "manual",
