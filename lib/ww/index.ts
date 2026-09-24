@@ -471,6 +471,15 @@ export {
 export { marksEnabled } from "./marksFlag";
 export { launchEnabled } from "./launchFlag";
 
+// WHEN a battle can actually be traded: the program refuses every buy until
+// start_time + 60 seconds. Measured 2026-09-24, and it corrects what
+// openingGap.ts concluded about the arrival floor earlier the same day.
+export {
+  bindingConstraint,
+  tradeableFrom,
+  BUY_OPENS_AFTER_START_SECONDS,
+} from "./tradeWindow";
+
 // Launching a battle of our own. The program is permissionless for it,
 // established by simulation 2026-09-24 from a wallet that is not the treasury.
 export {

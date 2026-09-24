@@ -21,7 +21,11 @@
  * simulator needs to balance the message; it is never asked for a signature
  * and no lamports move.
  */
-import { launchBattleInstructions } from "../lib/ww/instructions";
+import {
+  buySharesInstruction,
+  launchBattleInstructions,
+  traderTokenAccountInstructions,
+} from "../lib/ww/instructions";
 import { battlePda, vaultPda, mintPda } from "../lib/ww/pda";
 import { canAfford, checkLaunch, launchCost, LAUNCH_ACCOUNTS } from "../lib/ww/launchPlan";
 import { computeUnitLimitInstruction, serializeMessage } from "../lib/ww/message";
@@ -37,6 +41,25 @@ const CREATOR = optionValue(args, "--creator", "4aY165b2vWGLWTboE9WQSW6BprcVAs2W
 const ARTIST_A = optionValue(args, "--artist-a", CREATOR);
 const ARTIST_B = optionValue(args, "--artist-b", CREATOR);
 const DURATION = Number(optionValue(args, "--duration", "600"));
+/**
+ * Also buy into the battle being created, in the SAME transaction.
+ *
+ * Instructions in one transaction run in order against the state the previous
+ * one left, so a buy here executes against a battle that did not exist when
+ * the transaction was submitted. That is the only way to prove "we can launch
+ * a battle AND trade it" without first spending real SOL on a battle that
+ * might turn out to be untradeable.
+ */
+const WITH_TRADE_SOL = Number(optionValue(args, "--with-trade", "0"));
+/**
+ * Seconds from now to the battle's start. The id IS the start time.
+ *
+ * DEFAULT 0 WHEN TRADING, AND THE REASON IS A REAL FAILURE. The first run of
+ * `--with-trade` put the start 300 seconds ahead and the buy failed with
+ * `BattleNotActive` (6003): a battle cannot be traded before it starts, which
+ * is obvious afterwards. A launch-and-trade proof has to put the start at now.
+ */
+const STARTS_IN = Number(optionValue(args, "--starts-in", WITH_TRADE_SOL > 0 ? "0" : "300"));
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -60,7 +83,7 @@ async function main() {
   // A battle id IS its start time in unix seconds. A few minutes ahead, so the
   // id is certainly unused and the accounts certainly do not exist yet - which
   // is the state a real launch runs in.
-  const battleId = Math.floor(Date.now() / 1000) + 300;
+  const battleId = Math.floor(Date.now() / 1000) + STARTS_IN;
   const battle = battlePda(battleId);
   const vault = vaultPda(battleId);
   console.log(`\nbattle id ${battleId} (start ${new Date(battleId * 1000).toISOString()}), duration ${DURATION}s`);
@@ -98,6 +121,28 @@ async function main() {
     battleId, creator: CREATOR, artistA: ARTIST_A, artistB: ARTIST_B,
     wavewarzWallet: TREASURY_WALLET, durationSeconds: DURATION,
   })];
+
+  if (WITH_TRADE_SOL > 0) {
+    const lamports = Math.round(WITH_TRADE_SOL * 1e9);
+    // The two token accounts first: the WaveWarZ program does not create them,
+    // so a first-time trader's buy needs them in the same transaction. They are
+    // idempotent, so they cost nothing if they somehow already exist.
+    ixs.push(...traderTokenAccountInstructions(battleId, CREATOR));
+    ixs.push(buySharesInstruction({
+      battleId,
+      trader: CREATOR,
+      // Known because we are choosing them; no account read is possible for a
+      // battle this transaction has not created yet.
+      battle: { artistA: ARTIST_A, artistB: ARTIST_B, wavewarzWallet: TREASURY_WALLET },
+      artistA: true,
+      amountLamports: lamports,
+      // A real floor, not 0. A buy with minTokensOut 0 is rejected by the
+      // program outright (InvalidAmount 6006), so 0 would test nothing.
+      minTokensOut: 1,
+      deadline: battleId + DURATION,
+    }));
+    console.log(`\nand buying ${WITH_TRADE_SOL} SOL of side A in the SAME transaction, against a battle that does not exist yet`);
+  }
   const { blockhash } = (await rpc("getLatestBlockhash", [{ commitment: "finalized" }])).value;
   const message = serializeMessage(CREATOR, blockhash, ixs);
   const tx = Buffer.from(unsignedTransaction(message)).toString("base64");
@@ -112,10 +157,53 @@ async function main() {
 
   if (sim.value?.err) {
     console.log(`\nWOULD FAIL: ${JSON.stringify(sim.value.err)}`);
-    console.log("So this wallet cannot launch a battle, and the 'any wallet' comment in instructions.ts is wrong.");
+    // WHICH INSTRUCTION FAILED, because the first version of this said "so
+    // this wallet cannot launch a battle" for a failure in the BUY - the
+    // launch had succeeded two instructions earlier and the log said so. A
+    // failure attributed to the wrong instruction is worse than an unexplained
+    // one: it produces a confident wrong conclusion, in this case that the
+    // program is permissioned when it is not.
+    const err = sim.value.err as { InstructionError?: [number, unknown] };
+    const index = Array.isArray(err?.InstructionError) ? err.InstructionError[0] : null;
+    const launchRan = logs.some((l) => l.includes("Battle initialized with ID"));
+    const mintsRan = logs.some((l) => l.includes("Mints initialized for battle"));
+    if (index !== null) {
+      const what =
+        index < ixs.length
+          ? index === 0
+            ? "the compute budget instruction"
+            : index === 1
+              ? "initializeBattle"
+              : index === 2
+                ? "initializeMints"
+                : index < ixs.length - 1
+                  ? "an associated-token-account creation"
+                  : "buyShares"
+          : "an instruction past the end of this transaction";
+      console.log(`  the failure is at instruction ${index}, which is ${what}`);
+    }
+    console.log(`  initializeBattle ran: ${launchRan ? "YES" : "no"}`);
+    console.log(`  initializeMints ran:  ${mintsRan ? "YES" : "no"}`);
+    if (launchRan && mintsRan) {
+      console.log("  So LAUNCHING is not what failed. Read the program error above for what did.");
+    } else {
+      console.log("  The launch itself did not complete, so this wallet may not be able to launch.");
+    }
     process.exit(2);
   }
   console.log(`\nWOULD SUCCEED. units consumed: ${sim.value?.unitsConsumed ?? "unknown"}`);
+  if (WITH_TRADE_SOL > 0) {
+    // The claim is only as good as the evidence that the buy RAN. A clean
+    // simulation of a transaction whose buy was silently dropped would look
+    // identical, which is the shape this repo keeps finding.
+    const bought = logs.some((l) => l.includes("Instruction: BuyShares"));
+    console.log(
+      bought
+        ? "The buy executed against the battle this same transaction created."
+        : "BUT NO BuyShares INSTRUCTION RAN. The launch succeeded and the trade did not appear in the log.",
+    );
+    if (!bought) process.exit(2);
+  }
 
   // WHAT IT COSTS, via the same module the launch screen uses, so the number
   // quoted here and the number quoted to a signer cannot drift apart. Rent is

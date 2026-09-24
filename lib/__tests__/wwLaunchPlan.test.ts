@@ -83,13 +83,28 @@ describe("what it refuses to launch", () => {
     expect(checkLaunch(ok, now)).toEqual({ ok: true });
   });
 
-  it("refuses a start time in the past, because the id IS the start time", () => {
-    expect(checkLaunch({ ...ok, battleId: now - 1 }, now)).toMatchObject({
-      ok: false,
-      reason: expect.stringContaining("already passed"),
-    });
-    // The boundary is now, not after it.
+  /**
+   * The rule here was "refuse a start time in the past", which sounds right
+   * and is wrong. A battle whose start is a second ago is already trading, and
+   * every real launch lands a few seconds after it is built. It also made the
+   * launch-and-buy-in-one-transaction proof impossible, since the buy needs
+   * the battle active by the time it runs.
+   */
+  it("ALLOWS a start slightly in the past, because that battle is simply already trading", () => {
+    expect(checkLaunch({ ...ok, battleId: now - 1 }, now).ok).toBe(true);
     expect(checkLaunch({ ...ok, battleId: now }, now).ok).toBe(true);
+    // Which is what makes launching and buying in one transaction possible.
+    expect(checkLaunch({ ...ok, battleId: now - 60, durationSeconds: 600 }, now).ok).toBe(true);
+  });
+
+  it("refuses a battle that would already be over", () => {
+    expect(checkLaunch({ ...ok, battleId: now - 601, durationSeconds: 600 }, now)).toMatchObject({
+      ok: false,
+      reason: expect.stringContaining("already be over"),
+    });
+    // The boundary: ending exactly now is over; one second of life is not.
+    expect(checkLaunch({ ...ok, battleId: now - 600, durationSeconds: 600 }, now).ok).toBe(false);
+    expect(checkLaunch({ ...ok, battleId: now - 599, durationSeconds: 600 }, now).ok).toBe(true);
   });
 
   it("refuses both sides being one wallet", () => {

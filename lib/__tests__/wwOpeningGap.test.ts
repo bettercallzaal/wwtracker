@@ -110,14 +110,16 @@ describe("percentile", () => {
 });
 
 /**
- * The two clocks. `start_time` is the battle id, minted before the battle
- * exists on chain; no buy can land until `initializeMints` does. A gap measured
- * from the first charges the launcher's own latency to the trader, and that
- * latency is not constant - 32s on one real battle, 10s on two others probed
- * the same day.
+ * The two clocks, and the correction that matters more than either.
+ *
+ * `start_time` is the battle id, minted before the battle exists on chain. No
+ * buy can land until `initializeMints` does - AND NOT UNTIL `start_time` + 60
+ * SECONDS, which the program enforces (`tradeWindow.ts`, measured: 59s
+ * refused, 60s accepted). Measuring from the mints alone was too generous by
+ * whatever remained of that gate.
  */
-describe("the launcher's latency is not the trader's", () => {
-  it("reports the gap from becoming tradeable separately, and it is the smaller one", () => {
+describe("the tradeable moment is the later of the mints and the 60-second gate", () => {
+  it("measures from the gate when the gate is later, which on real battles it is", () => {
     // The three real battles probed 2026-09-23, in their measured numbers.
     const r = buildOpeningGaps(
       [
@@ -132,11 +134,17 @@ describe("the launcher's latency is not the trader's", () => {
       ]),
     );
     expect(r.gaps.map((g) => g.gapSeconds)).toEqual([66, 66, 67]);
-    expect(r.gaps.map((g) => g.gapFromTradeableSeconds)).toEqual([34, 56, 57]);
+    // THE WHOLE CORRECTION IN ONE ASSERTION. Measured from the mints these
+    // were 34, 56 and 57 seconds, and the spread invited a story about who was
+    // watching what. Measured from when a buy could actually land, they are 6,
+    // 6 and 7 - the first trade arrives within seconds of the gate opening,
+    // every time, and there is nothing left to explain with behaviour.
+    expect(r.gaps.map((g) => g.gapFromTradeableSeconds)).toEqual([6, 6, 7]);
 
     const lines = describeOpeningGaps(r).join("\n");
     expect(lines).toMatch(/from start_time to first trade/);
-    expect(lines).toMatch(/from initializeMints .* to first trade/);
+    expect(lines).toMatch(/refuses every buy until start_time \+ 60s/);
+    expect(lines).toMatch(/gate and not the/);
     expect(lines).toMatch(/the launch itself took median 10s \(10s to 32s\)/);
   });
 
@@ -151,14 +159,23 @@ describe("the launcher's latency is not the trader's", () => {
 
   it("counts only the battles whose tradeable open is known, against that denominator", () => {
     const r = buildOpeningGaps(
+      // Mints at +10, so the 60s gate binds: tradeable at 1,060, trade at 1,070.
       [opening(1, 1_000, 1_010), opening(2, 2_000)],
       new Map([
-        [1, trade(1_030)],
+        [1, trade(1_070)],
         [2, trade(2_030)],
       ]),
     );
+    expect(r.gaps[0].gapFromTradeableSeconds).toBe(10);
     const lines = describeOpeningGaps(r, 45).join("\n");
     expect(lines).toMatch(/over 1 of 2 battles/);
     expect(lines).toMatch(/1 of 1 of those traded within 45s of becoming tradeable/);
+  });
+
+  it("uses the MINTS when they are the later of the two", () => {
+    // Mints at +200, well past the 60s gate, so they bind instead.
+    const r = buildOpeningGaps([opening(1, 1_000, 1_200)], new Map([[1, trade(1_210)]]));
+    expect(r.gaps[0].gapFromTradeableSeconds).toBe(10);
+    expect(describeOpeningGaps(r).join("\n")).toMatch(/gate and not the/);
   });
 });

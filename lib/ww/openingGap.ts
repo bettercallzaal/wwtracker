@@ -47,12 +47,27 @@
  * gaps are 34s, 56s and 57s, not 66s, 66s and 67s.
  *
  * BOTH are reported, because the difference between them is itself the finding.
- * The first buy sits at 66 to 67 seconds after `start_time` on all three
- * DESPITE the mints being ready 22 seconds apart - so whatever the first buyer
- * is timing off tracks the id's timestamp, not the moment the battle became
- * tradeable. A one-clock report would have shown a clean 66s floor and hidden
- * the fact that it survives a 22-second change in the other clock.
+ *
+ * THE FIRST READING OF THAT DIFFERENCE WAS WRONG, AND THE CORRECTION IS THE
+ * WHOLE POINT OF THIS PARAGRAPH. This file said: the first buy sits at 66 to
+ * 67 seconds after `start_time` on all three battles despite the mints being
+ * ready 22 seconds apart, so "whatever the first buyer is timing off tracks
+ * the id's timestamp, not the moment the battle became tradeable."
+ *
+ * There is no such buyer. **The program refuses every buy until `start_time` +
+ * 60 seconds** - measured 2026-09-24, see `tradeWindow.ts`, where 59 seconds
+ * is refused and 60 is accepted. No trade CAN land earlier, so the floor is
+ * the protocol's and not the population's, and 60s of gate plus a few seconds
+ * of propagation is exactly the 66s observed. The earlier reading invented an
+ * actor to explain a constant, which is the failure this repo is supposed to
+ * be good at catching.
+ *
+ * So the tradeable moment is the LATER of the mints landing and the gate
+ * opening, and `gapFromTradeableSeconds` is measured from that. Against the
+ * mints alone it was too generous by however much of the gate remained.
  */
+
+import { bindingConstraint, tradeableFrom, BUY_OPENS_AFTER_START_SECONDS } from "./tradeWindow";
 
 /** A battle's opening, as the account records it. */
 export interface Opening {
@@ -150,7 +165,10 @@ export function buildOpeningGaps(
     gaps.push({
       battleId: o.battleId,
       gapSeconds: t.blockTime - o.startTime,
-      gapFromTradeableSeconds: o.mintsReadyTime === null ? null : t.blockTime - o.mintsReadyTime,
+      gapFromTradeableSeconds: (() => {
+        const from = tradeableFrom(o.startTime, o.mintsReadyTime);
+        return from === null ? null : t.blockTime - from;
+      })(),
       startTime: o.startTime,
       mintsReadyTime: o.mintsReadyTime,
       firstTrade: t,
@@ -229,8 +247,16 @@ export function describeOpeningGaps(r: OpeningGapReport, windowSeconds = 45): st
   } else {
     const tv = tradeable.map((g) => g.gapFromTradeableSeconds);
     const within = tradeable.filter((g) => g.gapFromTradeableSeconds <= windowSeconds).length;
+    const bound = tradeable.map((g) => bindingConstraint(g.startTime, g.mintsReadyTime));
+    const byGate = bound.filter((b) => b === "gate").length;
     out.push(
-      `from initializeMints (the first moment a buy could land) to first trade: ` +
+      `the program refuses every buy until start_time + ${BUY_OPENS_AFTER_START_SECONDS}s, so that gate and not the`,
+    );
+    out.push(
+      `mints is what opened trading on ${byGate} of ${tradeable.length} of these. The floor above is the protocol's.`,
+    );
+    out.push(
+      `from the first moment a buy could land to the first trade: ` +
         `median ${percentile(tv, 50)}s, fastest ${Math.min(...tv)}s, slowest ${Math.max(...tv)}s, ` +
         `over ${tradeable.length} of ${r.gaps.length} battles`,
     );
