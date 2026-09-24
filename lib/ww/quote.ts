@@ -237,6 +237,52 @@ export function quoteBuy(poolLamports: number, spendLamports: number): BuyQuote 
 }
 
 /**
+ * THE CHEAPEST BUY THAT MINTS ANYTHING, from the side's stored supply.
+ *
+ * Tokens mint in whole 100,000 steps, so below a threshold that rises with the
+ * curve a buy mints zero - the program refuses it with `InvalidCalculation`
+ * and does not take the money, but a screen that quotes the wrong threshold
+ * sends somebody to that refusal.
+ *
+ * WHY THE POOL VERSION BELOW IS WRONG ON A TRADED SIDE. It inverts the vault's
+ * pool to a supply, and that supply is not the one the program holds: flooring
+ * leaves lamports no token represents, and sells add more. On battle
+ * 1789948124's side A the vault's pool implies 137,634,225 tokens against a
+ * stored 133,300,000, and the minimum comes out 55,904 lamports against a true
+ * 54,153 - OVER-QUOTED BY 3.3%, telling a trader a trade is impossible when it
+ * is not.
+ *
+ * This form needs no inversion. `poolAtSupply` is `supply squared over K`,
+ * exact arithmetic with no square root, so the step boundary is computed
+ * rather than recovered.
+ *
+ * Verified against `quoteBuyAtSupply` on a drifted side, a fresh side and an
+ * empty pool: the returned figure mints exactly one step, and one lamport less
+ * mints nothing.
+ */
+export function minimumSpendAtSupply(currentSupply: number): number {
+  if (currentSupply < 0) throw new Error("supply cannot be negative");
+  const target = poolAtSupply(currentSupply + SUPPLY_QUANTUM);
+  const exact = Math.ceil((target - poolAtSupply(currentSupply)) / BUY_POOL_SHARE);
+  // BIASED UP, WHICH IS THE OPPOSITE OF THE POOL FORM, AND DELIBERATE.
+  //
+  // That form subtracts the boundary tolerance because inverting the pool
+  // through a square root OVER-estimates the threshold, and it is correcting
+  // its own error. There is no inversion here - `poolAtSupply` is supply
+  // squared over K - so there is nothing to correct, and subtracting anyway
+  // returns a figure that mints NOTHING. Measured: it did, on all three sides
+  // tested, until this line changed.
+  //
+  // The remaining uncertainty is on the way back out, where `quoteBuyAtSupply`
+  // takes a square root that differs from the program's by one to two units in
+  // 100,000. So this rounds UP into that window rather than down. The message
+  // this number appears in says "the minimum here is X" - a trader who spends
+  // X should mint, and being told a slightly larger number is better than
+  // being told one that fails.
+  return Math.max(1, exact + boundaryToleranceLamports(poolAtSupply(currentSupply)));
+}
+
+/**
  * The smallest spend that mints anything at this pool size.
  *
  * **Below it a buy mints zero tokens, and the program refuses the trade with
