@@ -112,12 +112,26 @@ export function checkLaunch(p: LaunchParams, nowSeconds: number): LaunchCheck {
   if (!Number.isInteger(p.battleId) || p.battleId <= 0) {
     return { ok: false, reason: "battle id must be a positive whole number of unix seconds" };
   }
-  if (p.battleId < nowSeconds) {
-    return { ok: false, reason: "battle id is its start time, and that time has already passed" };
-  }
   if (!Number.isInteger(p.durationSeconds) || p.durationSeconds <= 0) {
     return { ok: false, reason: "duration must be a positive whole number of seconds" };
   }
+  // A START SLIGHTLY IN THE PAST IS LEGAL, AND THE FIRST VERSION OF THIS
+  // REFUSED IT. The rule was "the start time has already passed", which sounds
+  // right and is not: a battle whose start is a second ago is simply already
+  // trading, and every real launch lands a few seconds after it is built. The
+  // rule also made the one proof that matters impossible - launching and
+  // buying in ONE transaction, which needs the battle active by the time the
+  // buy runs, and therefore needs a start at or before now.
+  //
+  // What is genuinely unusable is a battle that is already OVER. That is the
+  // rule.
+  if (p.battleId + p.durationSeconds <= nowSeconds) {
+    return {
+      ok: false,
+      reason: "this battle would already be over: its start plus its duration is in the past",
+    };
+  }
+
   // 24 hours is not an arbitrary ceiling: 26 battles on chain ran exactly
   // 86,400 seconds, so it is a real length, and anything past it has no
   // precedent to lean on.
