@@ -148,6 +148,65 @@ export interface BuyQuote {
   effectivePricePerToken: number;
 }
 
+/**
+ * WHAT THE PROGRAM ACTUALLY MINTS, given the side's current supply.
+ *
+ * THE PROGRAM FLOORS THE TOTAL, NOT THE DIFFERENCE. `quoteBuy` below floors
+ * `after - before`, and it is wrong on about one buy in five. Measured
+ * 2026-09-24 against 18 real buys from six battles whose every trade was a buy
+ * - so the pool at each step is exactly known rather than derived through a
+ * sell - the difference model got 14 of 18 and this one got 18 of 18.
+ *
+ * Confirmed by hand on battle 1790215514, which had three buys and no sells:
+ *
+ *     supplyAtPool(49,250,000)  = 156,923,548.26  floor 156,900,000
+ *     supplyAtPool(98,500,000)  = 221,923,410.21  floor 221,900,000
+ *
+ * and the program's stored supply after each buy was exactly those floors:
+ * 156,900,000 then 221,900,000. It minted 65,000,000 on the second buy. Our
+ * running total was 221,800,000, because flooring the difference throws away
+ * a fraction of a step on every trade and the loss accumulates.
+ *
+ * So the tokens minted are `floor(supplyAtPool(pool + contribution))` minus
+ * the supply the battle already holds - which a caller HAS, from bytes 196 and
+ * 204 of the battle account, the same two numbers the sell path already reads.
+ *
+ * WHERE THIS IS NOT YET PROVEN: after a sell. A sell burns tokens and removes
+ * SOL, and whether the stored supply still equals the floor of the curve at
+ * the new pool has not been established - `ww-verify-battle.ts` cannot score
+ * it, because it computes the post-sell pool itself and any error there
+ * poisons every later buy. So this is exported beside `quoteBuy` rather than
+ * replacing it, and the widget is not switched over in the same change.
+ */
+export function quoteBuyAtSupply(
+  poolLamports: number,
+  spendLamports: number,
+  currentSupply: number,
+): BuyQuote {
+  if (spendLamports <= 0) throw new Error("spend must be positive");
+  if (currentSupply < 0) throw new Error("supply cannot be negative");
+  const toPool = spendLamports * BUY_POOL_SHARE;
+  const totalAfter = floorToQuantum(supplyAtPool(poolLamports + toPool));
+  // A buy can never burn tokens. If the floor of the curve lands below the
+  // supply already held - which a post-sell state could produce - the honest
+  // answer is zero minted, not a negative number that would read as a refund.
+  const tokensOut = Math.max(0, totalAfter - currentSupply);
+  return {
+    tokensOut,
+    tokensOutExact: supplyAtPool(poolLamports + toPool) - currentSupply,
+    poolAfterLamports: poolLamports + toPool,
+    feeLamports: spendLamports - toPool,
+    effectivePricePerToken: tokensOut > 0 ? spendLamports / tokensOut : Infinity,
+  };
+}
+
+/**
+ * KNOWN TO BE ONE STEP LOW ON ABOUT ONE BUY IN FIVE. See `quoteBuyAtSupply`
+ * above, which is exact on every real buy measured and needs the side's
+ * current supply to be so. This one is kept because every caller of it passes
+ * only a pool and a spend, and switching them is a separate change against
+ * money-facing code.
+ */
 export function quoteBuy(poolLamports: number, spendLamports: number): BuyQuote {
   if (spendLamports <= 0) throw new Error("spend must be positive");
   const toPool = spendLamports * BUY_POOL_SHARE;
