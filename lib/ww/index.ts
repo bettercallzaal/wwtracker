@@ -472,6 +472,18 @@ export {
 export { marksEnabled } from "./marksFlag";
 export { launchEnabled } from "./launchFlag";
 
+// What each battle format is, over every labelled battle rather than the 200
+// the public API returns.
+export {
+  buildFormatReport,
+  durationHistogram,
+  median,
+  type ChainBattle,
+  type FormatReport,
+  type FormatStat,
+  type LabelledBattle,
+} from "./formatStats";
+
 // Names for battles we launch ourselves. The chain stores two wallets, and
 // wavewarz.info only indexes battles it created, so without this a community
 // battle renders as A versus B forever.
