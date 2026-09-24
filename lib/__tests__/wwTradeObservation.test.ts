@@ -119,3 +119,67 @@ describe("it can actually fail, which is the point", () => {
     expect(o.note).toMatch(/MISMATCH/);
   });
 });
+
+/**
+ * The replay that caught it.
+ *
+ * The watcher called `quoteBuy` - the POOL form - while `before.supply` sat in
+ * the same object, and its "off by exactly one step" branch then filed every
+ * resulting failure as uncountable. One step is precisely how the pool form is
+ * wrong, so the model's own error was being swallowed by the branch built to
+ * excuse it, and the tally read 0 mismatched because nothing could ever reach
+ * the mismatch column.
+ *
+ * The fixture is every pool-up move this watcher has ever stored, lifted out of
+ * `var/ww-live` (gitignored, so it is copied here to be replayable). The counts
+ * below are the measurement, and the last case is the positive control: if the
+ * two models ever agree everywhere, this file is no longer testing anything and
+ * says so rather than passing.
+ */
+import moves from "../__fixtures__/ww-live-pool-moves-2026-09-24.json";
+import { quoteBuy, quoteBuyAtSupply } from "../ww/quote";
+
+type Move = { battleId: string; side: string; before: BattleSideRow; after: BattleSideRow };
+type BattleSideRow = { poolLamports: number; supply: number };
+const live = (moves as unknown as { moves: Move[] }).moves;
+
+describe("every pool-up move the watcher has stored", () => {
+  it("has enough moves and battles to mean anything", () => {
+    expect(live.length).toBe(135);
+    expect(new Set(live.map((m) => m.battleId)).size).toBe(14);
+  });
+
+  it("is reproduced exactly by the supply-based quote, 135 of 135", () => {
+    const exact = live.filter((m) => {
+      const spend = spendForPoolDelta(m.after.poolLamports - m.before.poolLamports);
+      return quoteBuyAtSupply(m.before.supply, spend).tokensOut === m.after.supply - m.before.supply;
+    });
+    expect(exact.length).toBe(live.length);
+  });
+
+  it("was reproduced by the pool-based quote on only 102 of 135", () => {
+    // The 33 it misses are the ones the escape hatch was absorbing. If this
+    // number climbs to 135, the pool form is no longer distinguishable here and
+    // the case above stops proving anything - which is what the control checks.
+    const exact = live.filter((m) => {
+      const spend = spendForPoolDelta(m.after.poolLamports - m.before.poolLamports);
+      return quoteBuy(m.before.poolLamports, spend).tokensOut === m.after.supply - m.before.supply;
+    });
+    expect(exact.length).toBe(102);
+  });
+
+  it("CONTROL: the two models really do disagree on some stored move", () => {
+    const disagree = live.filter((m) => {
+      const spend = spendForPoolDelta(m.after.poolLamports - m.before.poolLamports);
+      return quoteBuy(m.before.poolLamports, spend).tokensOut
+        !== quoteBuyAtSupply(m.before.supply, spend).tokensOut;
+    });
+    expect(disagree.length).toBeGreaterThan(0);
+  });
+
+  it("and `observe` calls every one of them an exact buy, none uncountable", () => {
+    const kinds = live.map((m) => observe(m.before, m.after));
+    expect(kinds.filter((o) => o.kind === "buy" && o.exact === true).length).toBe(live.length);
+    expect(kinds.filter((o) => o.kind === "uncountable").length).toBe(0);
+  });
+});

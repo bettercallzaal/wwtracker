@@ -16,7 +16,7 @@
  * fail column. A denominator that quietly absorbs them is worse than a smaller
  * one.
  */
-import { quoteBuy, poolAtSupply, BUY_POOL_SHARE, SUPPLY_QUANTUM } from "./quote";
+import { quoteBuyAtSupply, poolAtSupply, BUY_POOL_SHARE, SUPPLY_QUANTUM } from "./quote";
 
 export interface BattleSide {
   poolLamports: number;
@@ -66,17 +66,37 @@ export function observe(before: BattleSide, after: BattleSide): TradeObservation
 
   if (poolDelta > 0) {
     const spend = spendForPoolDelta(poolDelta);
-    const predicted = quoteBuy(before.poolLamports, spend).tokensOut;
+    // FROM THE SUPPLY THE SIDE HELD, not the pool the vault held. A buy is
+    // minted off the pool the stored supply implies (see `quote.ts`), and
+    // `before.supply` is right here - the sell branch below has always used
+    // it. Replayed over every sample this watcher has ever stored, 135 pool-up
+    // moves: the pool form reproduces 102, this one reproduces 135.
+    const predicted = quoteBuyAtSupply(before.supply, spend).tokensOut;
     const off = predicted - supplyDelta;
     if (off === 0) {
       return { kind: "buy", exact: true, poolDelta, supplyDelta, predicted, actual: supplyDelta,
         note: `buy ${(spend / 1e9).toFixed(4)} SOL -> ${supplyDelta.toLocaleString()} tokens` };
     }
-    // Off by whole steps, and the pool moved by more than one plausible trade:
-    // two buys inside the interval, which cannot sum. Not a failure.
+    /**
+     * THIS BRANCH WAS ABSORBING THE MODEL'S OWN ERROR, and that is why the
+     * watcher kept reporting 0 mismatched.
+     *
+     * "Off by exactly one step" was read as two buys inside one interval,
+     * which cannot sum. It is ALSO the exact signature of the pool-based
+     * quote, which is wrong by one 100,000 step on about one buy in five - so
+     * every one of those failures was being routed here and counted as
+     * uncountable rather than as a mismatch. The reassuring number came from
+     * the escape hatch, not from the model.
+     *
+     * With the supply-based quote above, NONE of the 135 stored pool-up moves
+     * lands here. Two buys in one interval remains physically possible, so the
+     * branch stays - but it is no longer the explanation for anything
+     * observed, and if it starts firing that is worth looking at rather than
+     * shrugging at.
+     */
     if (Math.abs(off) % SUPPLY_QUANTUM === 0 && Math.abs(off) <= SUPPLY_QUANTUM) {
       return { kind: "uncountable", exact: null, poolDelta, supplyDelta, predicted, actual: supplyDelta,
-        note: `off by exactly one step (${off}) - probably two buys in one interval, not counted` };
+        note: `off by exactly one step (${off}) - two buys in one interval, not counted. Unobserved since the quote was corrected.` };
     }
     return { kind: "buy", exact: false, poolDelta, supplyDelta, predicted, actual: supplyDelta,
       note: `MISMATCH on a buy: ours ${predicted.toLocaleString()}, program ${supplyDelta.toLocaleString()}, off ${off}` };

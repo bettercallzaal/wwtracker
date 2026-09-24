@@ -1,0 +1,1761 @@
+{
+  "capturedFrom": "var/ww-live",
+  "battles": 14,
+  "moves": [
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948191,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948196,
+      "before": {
+        "poolLamports": 98500000,
+        "supply": 221900000
+      },
+      "after": {
+        "poolLamports": 197000000,
+        "supply": 313800000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948202,
+      "before": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      },
+      "after": {
+        "poolLamports": 147750000,
+        "supply": 271700000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948216,
+      "before": {
+        "poolLamports": 197000000,
+        "supply": 313800000
+      },
+      "after": {
+        "poolLamports": 246250000,
+        "supply": 350800000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948223,
+      "before": {
+        "poolLamports": 147750000,
+        "supply": 271700000
+      },
+      "after": {
+        "poolLamports": 394000000,
+        "supply": 443700000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948231,
+      "before": {
+        "poolLamports": 246250000,
+        "supply": 350800000
+      },
+      "after": {
+        "poolLamports": 413700000,
+        "supply": 454700000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948231,
+      "before": {
+        "poolLamports": 394000000,
+        "supply": 443700000
+      },
+      "after": {
+        "poolLamports": 472800000,
+        "supply": 486000000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948279,
+      "before": {
+        "poolLamports": 413700000,
+        "supply": 454700000
+      },
+      "after": {
+        "poolLamports": 492500000,
+        "supply": 496100000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948289,
+      "before": {
+        "poolLamports": 492500000,
+        "supply": 496100000
+      },
+      "after": {
+        "poolLamports": 522050000,
+        "supply": 510700000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948297,
+      "before": {
+        "poolLamports": 522050000,
+        "supply": 510700000
+      },
+      "after": {
+        "poolLamports": 600850000,
+        "supply": 547900000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948326,
+      "before": {
+        "poolLamports": 600850000,
+        "supply": 547900000
+      },
+      "after": {
+        "poolLamports": 699350000,
+        "supply": 591100000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948445,
+      "before": {
+        "poolLamports": 699350000,
+        "supply": 591100000
+      },
+      "after": {
+        "poolLamports": 945600000,
+        "supply": 687400000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948465,
+      "before": {
+        "poolLamports": 472800000,
+        "supply": 486000000
+      },
+      "after": {
+        "poolLamports": 551600000,
+        "supply": 524900000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948467,
+      "before": {
+        "poolLamports": 742080900,
+        "supply": 608900000
+      },
+      "after": {
+        "poolLamports": 988330900,
+        "supply": 702700000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948537,
+      "before": {
+        "poolLamports": 967918640,
+        "supply": 695400000
+      },
+      "after": {
+        "poolLamports": 1046718640,
+        "supply": 723100000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948557,
+      "before": {
+        "poolLamports": 1046718640,
+        "supply": 723100000
+      },
+      "after": {
+        "poolLamports": 1292968640,
+        "supply": 803700000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948574,
+      "before": {
+        "poolLamports": 392349500,
+        "supply": 442600000
+      },
+      "after": {
+        "poolLamports": 1377349500,
+        "supply": 829600000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948591,
+      "before": {
+        "poolLamports": 700385100,
+        "supply": 591400000
+      },
+      "after": {
+        "poolLamports": 729935100,
+        "supply": 603700000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948614,
+      "before": {
+        "poolLamports": 729935100,
+        "supply": 603700000
+      },
+      "after": {
+        "poolLamports": 976185100,
+        "supply": 698200000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948622,
+      "before": {
+        "poolLamports": 892064140,
+        "supply": 667400000
+      },
+      "after": {
+        "poolLamports": 970864140,
+        "supply": 696200000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948632,
+      "before": {
+        "poolLamports": 957722380,
+        "supply": 691600000
+      },
+      "after": {
+        "poolLamports": 1203972380,
+        "supply": 775500000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948646,
+      "before": {
+        "poolLamports": 1203972380,
+        "supply": 775500000
+      },
+      "after": {
+        "poolLamports": 1282772380,
+        "supply": 800500000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948676,
+      "before": {
+        "poolLamports": 688736140,
+        "supply": 586200000
+      },
+      "after": {
+        "poolLamports": 934986140,
+        "supply": 683100000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948687,
+      "before": {
+        "poolLamports": 934986140,
+        "supply": 683100000
+      },
+      "after": {
+        "poolLamports": 984236140,
+        "supply": 700800000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948702,
+      "before": {
+        "poolLamports": 742295980,
+        "supply": 608400000
+      },
+      "after": {
+        "poolLamports": 791545980,
+        "supply": 628300000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948706,
+      "before": {
+        "poolLamports": 1282772380,
+        "supply": 800500000
+      },
+      "after": {
+        "poolLamports": 1332022380,
+        "supply": 815700000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948710,
+      "before": {
+        "poolLamports": 791545980,
+        "supply": 628300000
+      },
+      "after": {
+        "poolLamports": 840795980,
+        "supply": 647600000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948716,
+      "before": {
+        "poolLamports": 840795980,
+        "supply": 647600000
+      },
+      "after": {
+        "poolLamports": 870345980,
+        "supply": 658900000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948724,
+      "before": {
+        "poolLamports": 870345980,
+        "supply": 658900000
+      },
+      "after": {
+        "poolLamports": 1116595980,
+        "supply": 746500000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "a",
+      "t": 1789948944,
+      "before": {
+        "poolLamports": 1083109560,
+        "supply": 735200000
+      },
+      "after": {
+        "poolLamports": 1280109560,
+        "supply": 799300000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789948957,
+      "before": {
+        "poolLamports": 1169598380,
+        "supply": 764300000
+      },
+      "after": {
+        "poolLamports": 1415848380,
+        "supply": 840900000
+      }
+    },
+    {
+      "battleId": "1789948124",
+      "side": "b",
+      "t": 1789949024,
+      "before": {
+        "poolLamports": 1242565340,
+        "supply": 787700000
+      },
+      "after": {
+        "poolLamports": 1488815340,
+        "supply": 862300000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789949855,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 886500000,
+        "supply": 665700000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789949861,
+      "before": {
+        "poolLamports": 886500000,
+        "supply": 665700000
+      },
+      "after": {
+        "poolLamports": 935750000,
+        "supply": 683900000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789949865,
+      "before": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      },
+      "after": {
+        "poolLamports": 147750000,
+        "supply": 271700000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789949866,
+      "before": {
+        "poolLamports": 935750000,
+        "supply": 683900000
+      },
+      "after": {
+        "poolLamports": 985000000,
+        "supply": 701600000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789949872,
+      "before": {
+        "poolLamports": 147750000,
+        "supply": 271700000
+      },
+      "after": {
+        "poolLamports": 197000000,
+        "supply": 313700000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789949884,
+      "before": {
+        "poolLamports": 985000000,
+        "supply": 701600000
+      },
+      "after": {
+        "poolLamports": 1083500000,
+        "supply": 735800000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789949884,
+      "before": {
+        "poolLamports": 197000000,
+        "supply": 313700000
+      },
+      "after": {
+        "poolLamports": 246250000,
+        "supply": 350700000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789949895,
+      "before": {
+        "poolLamports": 246250000,
+        "supply": 350700000
+      },
+      "after": {
+        "poolLamports": 492500000,
+        "supply": 496100000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789949905,
+      "before": {
+        "poolLamports": 492500000,
+        "supply": 496100000
+      },
+      "after": {
+        "poolLamports": 738750000,
+        "supply": 607600000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789949920,
+      "before": {
+        "poolLamports": 1083500000,
+        "supply": 735800000
+      },
+      "after": {
+        "poolLamports": 1270650000,
+        "supply": 796800000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789949946,
+      "before": {
+        "poolLamports": 501194800,
+        "supply": 500400000
+      },
+      "after": {
+        "poolLamports": 747444800,
+        "supply": 611100000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789949960,
+      "before": {
+        "poolLamports": 747444800,
+        "supply": 611100000
+      },
+      "after": {
+        "poolLamports": 993694800,
+        "supply": 704600000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789949996,
+      "before": {
+        "poolLamports": 744728500,
+        "supply": 609900000
+      },
+      "after": {
+        "poolLamports": 990978500,
+        "supply": 703600000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950012,
+      "before": {
+        "poolLamports": 990978500,
+        "supply": 703600000
+      },
+      "after": {
+        "poolLamports": 1237228500,
+        "supply": 786200000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950026,
+      "before": {
+        "poolLamports": 1237228500,
+        "supply": 786200000
+      },
+      "after": {
+        "poolLamports": 1286478500,
+        "supply": 801700000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950028,
+      "before": {
+        "poolLamports": 1286478500,
+        "supply": 801700000
+      },
+      "after": {
+        "poolLamports": 1306178500,
+        "supply": 807800000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950034,
+      "before": {
+        "poolLamports": 1306178500,
+        "supply": 807800000
+      },
+      "after": {
+        "poolLamports": 1355428500,
+        "supply": 822900000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789950044,
+      "before": {
+        "poolLamports": 1256031200,
+        "supply": 792200000
+      },
+      "after": {
+        "poolLamports": 1305281200,
+        "supply": 807500000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950057,
+      "before": {
+        "poolLamports": 1355428500,
+        "supply": 822900000
+      },
+      "after": {
+        "poolLamports": 1404678500,
+        "supply": 837700000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950078,
+      "before": {
+        "poolLamports": 1404678500,
+        "supply": 837700000
+      },
+      "after": {
+        "poolLamports": 1601678500,
+        "supply": 894500000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789950118,
+      "before": {
+        "poolLamports": 1305281200,
+        "supply": 807500000
+      },
+      "after": {
+        "poolLamports": 1551531200,
+        "supply": 880400000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950125,
+      "before": {
+        "poolLamports": 1503062500,
+        "supply": 866500000
+      },
+      "after": {
+        "poolLamports": 1700062500,
+        "supply": 921500000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950140,
+      "before": {
+        "poolLamports": 728473680,
+        "supply": 602800000
+      },
+      "after": {
+        "poolLamports": 974723680,
+        "supply": 697400000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950158,
+      "before": {
+        "poolLamports": 974723680,
+        "supply": 697400000
+      },
+      "after": {
+        "poolLamports": 1220973680,
+        "supply": 780600000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950182,
+      "before": {
+        "poolLamports": 1220973680,
+        "supply": 780600000
+      },
+      "after": {
+        "poolLamports": 1319473680,
+        "supply": 811500000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950231,
+      "before": {
+        "poolLamports": 1186977500,
+        "supply": 769600000
+      },
+      "after": {
+        "poolLamports": 1433227500,
+        "supply": 845800000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789950278,
+      "before": {
+        "poolLamports": 1504007360,
+        "supply": 866800000
+      },
+      "after": {
+        "poolLamports": 1523707360,
+        "supply": 872400000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789950386,
+      "before": {
+        "poolLamports": 1523707360,
+        "supply": 872400000
+      },
+      "after": {
+        "poolLamports": 1769957360,
+        "supply": 940300000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789950394,
+      "before": {
+        "poolLamports": 1769957360,
+        "supply": 940300000
+      },
+      "after": {
+        "poolLamports": 1868457360,
+        "supply": 966100000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950412,
+      "before": {
+        "poolLamports": 1433227500,
+        "supply": 845800000
+      },
+      "after": {
+        "poolLamports": 1531727500,
+        "supply": 874400000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789950439,
+      "before": {
+        "poolLamports": 1868457360,
+        "supply": 966100000
+      },
+      "after": {
+        "poolLamports": 1917707360,
+        "supply": 978700000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789950524,
+      "before": {
+        "poolLamports": 1661113260,
+        "supply": 910800000
+      },
+      "after": {
+        "poolLamports": 1670963260,
+        "supply": 913400000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950557,
+      "before": {
+        "poolLamports": 1459159900,
+        "supply": 853400000
+      },
+      "after": {
+        "poolLamports": 1508409900,
+        "supply": 867700000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950571,
+      "before": {
+        "poolLamports": 1508409900,
+        "supply": 867700000
+      },
+      "after": {
+        "poolLamports": 1606909900,
+        "supply": 895600000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "a",
+      "t": 1789950617,
+      "before": {
+        "poolLamports": 1569515200,
+        "supply": 885100000
+      },
+      "after": {
+        "poolLamports": 1589215200,
+        "supply": 890600000
+      }
+    },
+    {
+      "battleId": "1789949789",
+      "side": "b",
+      "t": 1789950642,
+      "before": {
+        "poolLamports": 1670963260,
+        "supply": 913400000
+      },
+      "after": {
+        "poolLamports": 1917213260,
+        "supply": 978400000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789951832,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 246250000,
+        "supply": 350800000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789951837,
+      "before": {
+        "poolLamports": 246250000,
+        "supply": 350800000
+      },
+      "after": {
+        "poolLamports": 492500000,
+        "supply": 496100000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789951846,
+      "before": {
+        "poolLamports": 492500000,
+        "supply": 496100000
+      },
+      "after": {
+        "poolLamports": 591000000,
+        "supply": 543400000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789951853,
+      "before": {
+        "poolLamports": 246250000,
+        "supply": 350800000
+      },
+      "after": {
+        "poolLamports": 256100000,
+        "supply": 357700000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789951855,
+      "before": {
+        "poolLamports": 256100000,
+        "supply": 357700000
+      },
+      "after": {
+        "poolLamports": 502350000,
+        "supply": 501000000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789951873,
+      "before": {
+        "poolLamports": 502350000,
+        "supply": 501000000
+      },
+      "after": {
+        "poolLamports": 551600000,
+        "supply": 525000000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789951883,
+      "before": {
+        "poolLamports": 591000000,
+        "supply": 543400000
+      },
+      "after": {
+        "poolLamports": 640250000,
+        "supply": 565600000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789951892,
+      "before": {
+        "poolLamports": 551600000,
+        "supply": 525000000
+      },
+      "after": {
+        "poolLamports": 650100000,
+        "supply": 569900000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789951910,
+      "before": {
+        "poolLamports": 640250000,
+        "supply": 565600000
+      },
+      "after": {
+        "poolLamports": 689500000,
+        "supply": 586900000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789951941,
+      "before": {
+        "poolLamports": 650100000,
+        "supply": 569900000
+      },
+      "after": {
+        "poolLamports": 655025000,
+        "supply": 572000000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789951977,
+      "before": {
+        "poolLamports": 556325820,
+        "supply": 527100000
+      },
+      "after": {
+        "poolLamports": 802575820,
+        "supply": 633200000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789951980,
+      "before": {
+        "poolLamports": 689500000,
+        "supply": 586900000
+      },
+      "after": {
+        "poolLamports": 788000000,
+        "supply": 627400000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789952019,
+      "before": {
+        "poolLamports": 802575820,
+        "supply": 633200000
+      },
+      "after": {
+        "poolLamports": 851825820,
+        "supply": 652300000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789952032,
+      "before": {
+        "poolLamports": 833917560,
+        "supply": 645400000
+      },
+      "after": {
+        "poolLamports": 841797560,
+        "supply": 648400000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789952041,
+      "before": {
+        "poolLamports": 841797560,
+        "supply": 648400000
+      },
+      "after": {
+        "poolLamports": 940297560,
+        "supply": 685300000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952125,
+      "before": {
+        "poolLamports": 788000000,
+        "supply": 627400000
+      },
+      "after": {
+        "poolLamports": 1034250000,
+        "supply": 718800000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789952149,
+      "before": {
+        "poolLamports": 940297560,
+        "supply": 685300000
+      },
+      "after": {
+        "poolLamports": 1186547560,
+        "supply": 769900000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952198,
+      "before": {
+        "poolLamports": 444020100,
+        "supply": 470700000
+      },
+      "after": {
+        "poolLamports": 493270100,
+        "supply": 496100000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952211,
+      "before": {
+        "poolLamports": 493270100,
+        "supply": 496100000
+      },
+      "after": {
+        "poolLamports": 739520100,
+        "supply": 607600000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952219,
+      "before": {
+        "poolLamports": 739520100,
+        "supply": 607600000
+      },
+      "after": {
+        "poolLamports": 985770100,
+        "supply": 701600000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952228,
+      "before": {
+        "poolLamports": 985770100,
+        "supply": 701600000
+      },
+      "after": {
+        "poolLamports": 1232020100,
+        "supply": 784400000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952268,
+      "before": {
+        "poolLamports": 840483960,
+        "supply": 647700000
+      },
+      "after": {
+        "poolLamports": 889733960,
+        "supply": 666400000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789952300,
+      "before": {
+        "poolLamports": 1186547560,
+        "supply": 769900000
+      },
+      "after": {
+        "poolLamports": 1285047560,
+        "supply": 801200000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952327,
+      "before": {
+        "poolLamports": 889733960,
+        "supply": 666400000
+      },
+      "after": {
+        "poolLamports": 1135983960,
+        "supply": 753100000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952434,
+      "before": {
+        "poolLamports": 1135983960,
+        "supply": 753100000
+      },
+      "after": {
+        "poolLamports": 1382233960,
+        "supply": 830800000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952495,
+      "before": {
+        "poolLamports": 1382233960,
+        "supply": 830800000
+      },
+      "after": {
+        "poolLamports": 1431483960,
+        "supply": 845400000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952595,
+      "before": {
+        "poolLamports": 1431483960,
+        "supply": 845400000
+      },
+      "after": {
+        "poolLamports": 1431976460,
+        "supply": 845500000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952638,
+      "before": {
+        "poolLamports": 1431976460,
+        "supply": 845500000
+      },
+      "after": {
+        "poolLamports": 1481226460,
+        "supply": 859900000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952658,
+      "before": {
+        "poolLamports": 995010940,
+        "supply": 704500000
+      },
+      "after": {
+        "poolLamports": 1241260940,
+        "supply": 787000000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "a",
+      "t": 1789952658,
+      "before": {
+        "poolLamports": 13845180,
+        "supply": 79500000
+      },
+      "after": {
+        "poolLamports": 506345180,
+        "supply": 502500000
+      }
+    },
+    {
+      "battleId": "1789951764",
+      "side": "b",
+      "t": 1789952663,
+      "before": {
+        "poolLamports": 1241260940,
+        "supply": 787000000
+      },
+      "after": {
+        "poolLamports": 9121260940,
+        "supply": 2135200000
+      }
+    },
+    {
+      "battleId": "1790042941",
+      "side": "b",
+      "t": 1790043045,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790042941",
+      "side": "a",
+      "t": 1790043061,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790043661",
+      "side": "a",
+      "t": 1790043892,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790043661",
+      "side": "b",
+      "t": 1790043904,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790043661",
+      "side": "a",
+      "t": 1790043950,
+      "before": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      },
+      "after": {
+        "poolLamports": 98500000,
+        "supply": 221900000
+      }
+    },
+    {
+      "battleId": "1790043661",
+      "side": "a",
+      "t": 1790044253,
+      "before": {
+        "poolLamports": 98500000,
+        "supply": 221900000
+      },
+      "after": {
+        "poolLamports": 108350000,
+        "supply": 232700000
+      }
+    },
+    {
+      "battleId": "1790044803",
+      "side": "a",
+      "t": 1790045074,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790044803",
+      "side": "b",
+      "t": 1790045086,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790044803",
+      "side": "a",
+      "t": 1790045173,
+      "before": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      },
+      "after": {
+        "poolLamports": 59100000,
+        "supply": 171800000
+      }
+    },
+    {
+      "battleId": "1790046123",
+      "side": "a",
+      "t": 1790046203,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 9850000,
+        "supply": 70100000
+      }
+    },
+    {
+      "battleId": "1790046123",
+      "side": "b",
+      "t": 1790046212,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 9850000,
+        "supply": 70100000
+      }
+    },
+    {
+      "battleId": "1790046123",
+      "side": "a",
+      "t": 1790046322,
+      "before": {
+        "poolLamports": 9850000,
+        "supply": 70100000
+      },
+      "after": {
+        "poolLamports": 59100000,
+        "supply": 171800000
+      }
+    },
+    {
+      "battleId": "1790046123",
+      "side": "b",
+      "t": 1790046358,
+      "before": {
+        "poolLamports": 9850000,
+        "supply": 70100000
+      },
+      "after": {
+        "poolLamports": 59100000,
+        "supply": 171800000
+      }
+    },
+    {
+      "battleId": "1790046123",
+      "side": "b",
+      "t": 1790046418,
+      "before": {
+        "poolLamports": 59100000,
+        "supply": 171800000
+      },
+      "after": {
+        "poolLamports": 68950000,
+        "supply": 185500000
+      }
+    },
+    {
+      "battleId": "1790214545",
+      "side": "a",
+      "t": 1790214624,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 4925000,
+        "supply": 49600000
+      }
+    },
+    {
+      "battleId": "1790214545",
+      "side": "b",
+      "t": 1790214633,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 4925000,
+        "supply": 49600000
+      }
+    },
+    {
+      "battleId": "1790214545",
+      "side": "b",
+      "t": 1790214676,
+      "before": {
+        "poolLamports": 4925000,
+        "supply": 49600000
+      },
+      "after": {
+        "poolLamports": 7880000,
+        "supply": 62700000
+      }
+    },
+    {
+      "battleId": "1790215514",
+      "side": "a",
+      "t": 1790215612,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790215514",
+      "side": "b",
+      "t": 1790215627,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790215514",
+      "side": "b",
+      "t": 1790215759,
+      "before": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      },
+      "after": {
+        "poolLamports": 98500000,
+        "supply": 221900000
+      }
+    },
+    {
+      "battleId": "1790216068",
+      "side": "a",
+      "t": 1790216165,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790216068",
+      "side": "b",
+      "t": 1790216178,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790216068",
+      "side": "b",
+      "t": 1790216287,
+      "before": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      },
+      "after": {
+        "poolLamports": 98500000,
+        "supply": 221900000
+      }
+    },
+    {
+      "battleId": "1790216570",
+      "side": "a",
+      "t": 1790216713,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790216570",
+      "side": "b",
+      "t": 1790216744,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790216570",
+      "side": "b",
+      "t": 1790216931,
+      "before": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      },
+      "after": {
+        "poolLamports": 98500000,
+        "supply": 221900000
+      }
+    },
+    {
+      "battleId": "1790217077",
+      "side": "a",
+      "t": 1790217187,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790217077",
+      "side": "b",
+      "t": 1790217190,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 4925000,
+        "supply": 49600000
+      }
+    },
+    {
+      "battleId": "1790217077",
+      "side": "b",
+      "t": 1790217215,
+      "before": {
+        "poolLamports": 4925000,
+        "supply": 49600000
+      },
+      "after": {
+        "poolLamports": 7880000,
+        "supply": 62700000
+      }
+    },
+    {
+      "battleId": "1790217077",
+      "side": "a",
+      "t": 1790217884,
+      "before": {
+        "poolLamports": 12307900,
+        "supply": 78400000
+      },
+      "after": {
+        "poolLamports": 61557900,
+        "supply": 175400000
+      }
+    },
+    {
+      "battleId": "1790218496",
+      "side": "a",
+      "t": 1790218587,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790218496",
+      "side": "b",
+      "t": 1790218587,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 4925000,
+        "supply": 49600000
+      }
+    },
+    {
+      "battleId": "1790218496",
+      "side": "b",
+      "t": 1790218651,
+      "before": {
+        "poolLamports": 4925000,
+        "supply": 49600000
+      },
+      "after": {
+        "poolLamports": 7880000,
+        "supply": 62700000
+      }
+    },
+    {
+      "battleId": "1790219409",
+      "side": "b",
+      "t": 1790219536,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790219409",
+      "side": "a",
+      "t": 1790219555,
+      "before": {
+        "poolLamports": 0,
+        "supply": 0
+      },
+      "after": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      }
+    },
+    {
+      "battleId": "1790219409",
+      "side": "b",
+      "t": 1790219853,
+      "before": {
+        "poolLamports": 49250000,
+        "supply": 156900000
+      },
+      "after": {
+        "poolLamports": 98500000,
+        "supply": 221900000
+      }
+    }
+  ]
+}
