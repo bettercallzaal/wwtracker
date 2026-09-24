@@ -1,0 +1,112 @@
+# Rebuild public/ww-battles.json, and open a PR when it changed.
+#
+# WHY THIS EXISTS. The embed widgets draw from four baked files in public/. On
+# 2026-09-24 they were 14 to 19 days old and rendering on pages we do not
+# control with no indication of it. Looking for the job that should have
+# rebuilt them found there wasn't one: checks.yml's daily schedule runs a
+# contract check and writes nothing, live-watch.yml has no schedule at all, and
+# the only cron in vercel.json refreshes Dune.
+#
+# validate.mjs DOES check staleness, by the newest date inside the data, and it
+# runs on every build. Its threshold is 45 days - so 19 days of drift on
+# partner-facing charts passed it in silence. That threshold is right for the
+# datasets it was written for and too loose for these.
+#
+# ONLY ONE OF THE FOUR CAN BE AUTOMATED TODAY. `npm run fetch:battles` rebuilds
+# ww-battles.json from WaveWarZ's own public API, needs no secret, and fails
+# loud on any HTTP or parse error rather than writing partial data. The other
+# three arrive from Dune exports done by hand and have no generator in this
+# repo; automating them needs those written first.
+#
+# IT OPENS A PR RATHER THAN PUSHING TO MAIN. This is partner-facing data and
+# the repo merges through review; a bot committing to main would route around
+# it. A PR only appears when the data actually changed, and only when one is
+# not already open, so a quiet week is silent.
+name: refresh-battles
+
+on:
+  schedule:
+    # 06:00 UTC daily, after the night's battles have settled and before
+    # anybody is looking at a chart.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Fails the job on an upstream error, which is the intent: a failed
+      # refresh should be visible, not a silently skipped one.
+      - run: npm run fetch:battles
+
+      - name: Stop if nothing changed
+        id: diff
+        run: |
+          # BOTH PATHS. `fetch:battles` also moves the two freshness stamps in
+          # lib/freshness.ts, because a test asserts each stamp equals its
+          # source's own newest date. Committing only the JSON would open a PR
+          # that fails its own build.
+          if git diff --quiet -- public/ww-battles.json lib/freshness.ts; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Nothing changed - no PR to open."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git --no-pager diff --stat -- public/ww-battles.json lib/freshness.ts
+          fi
+
+      # The same validator the build runs, in STRICT mode so a stale or
+      # malformed refresh fails here rather than in a PR nobody reads.
+      - name: Validate the rebuilt data
+        if: steps.diff.outputs.changed == 'true'
+        run: node scripts/validate.mjs --strict
+
+      - name: Open a pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          BRANCH="bot/refresh-battles"
+          git config user.name "wwtracker-bot"
+          git config user.email "noreply@anthropic.com"
+          git checkout -b "$BRANCH"
+          git add -- public/ww-battles.json lib/freshness.ts
+          git commit -m "data: refresh public/ww-battles.json from the public API"
+          # One branch, force-updated. A new branch per day would leave a month
+          # of abandoned refs behind, and nothing else ever commits here.
+          git push --force origin "$BRANCH"
+          OPEN=$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')
+          if [ "$OPEN" != "0" ]; then
+            echo "A refresh PR is already open; its branch now carries the newer data."
+            exit 0
+          fi
+          {
+            echo "Automated by \`.github/workflows/refresh-battles.yml\`."
+            echo
+            echo "\`npm run fetch:battles\` produced a different \`public/ww-battles.json\`, moved the"
+            echo "two freshness stamps in \`lib/freshness.ts\` to match, and"
+            echo "\`node scripts/validate.mjs --strict\` passed on the result."
+            echo
+            echo "The embeds draw from this file and render it on pages we do not control, so it"
+            echo "going stale is invisible to us and visible to everyone else."
+            echo
+            echo "## Not in this PR"
+            echo
+            echo "The other three baked files, and they cannot be:"
+            echo "\`ww-platform-volume.json\`, \`ww-onchain-daily.json\` and \`ww-chain-daily.json\`"
+            echo "come from Dune exports done by hand and have no generator in this repo."
+          } > /tmp/refresh-body.md
+          gh pr create --base main --head "$BRANCH" \
+            --title "data: refresh public/ww-battles.json" \
+            --body-file /tmp/refresh-body.md

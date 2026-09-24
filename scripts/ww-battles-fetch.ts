@@ -17,6 +17,57 @@ import { parseWaveWarzBattlesPage } from "./recap/battle-parser";
 import type { StoredBattle } from "./recap/types";
 
 const BATTLES_JSON_PATH = fileURLToPath(new URL("../public/ww-battles.json", import.meta.url));
+const FRESHNESS_PATH = fileURLToPath(new URL("../lib/freshness.ts", import.meta.url));
+/** The stamp the battle-stats endpoint serves. */
+const BATTLES_AS_OF_LINE = /export const BATTLES_AS_OF = "(\d{4}-\d{2}-\d{2})";/;
+/** The same date again, in the per-source table this file's entry lives in. */
+const SOURCE_LINE = /("battle history file \(recap tooling, npm run fetch:battles\)": )"(\d{4}-\d{2}-\d{2})"/;
+
+/**
+ * KEEP THE DECLARED DATE WITH THE DATA IT DESCRIBES.
+ *
+ * `lib/freshness.ts` states when each dataset is from, and a test asserts each
+ * stamp equals its source's own newest date. Writing the battles file without
+ * moving those two stamps leaves the repo failing its own build - measured
+ * 2026-09-24, when a refresh that recovered 56 battles broke two tests and the
+ * reason took a minute to find.
+ *
+ * Worse for the scheduled refresh: every run would have opened a red PR. A
+ * generator that changes data and not the declaration of its date is only half
+ * a generator, so this is here rather than in the workflow.
+ *
+ * Returns what it changed, so the caller can say so rather than edit silently.
+ */
+function stampFreshness(newest: string): string[] {
+  const before = readFileSync(FRESHNESS_PATH, "utf8");
+  let after = before;
+  const changed: string[] = [];
+  const asOf = before.match(BATTLES_AS_OF_LINE);
+  if (!asOf) throw new Error("lib/freshness.ts: BATTLES_AS_OF not found - refusing to leave the stamp behind");
+  if (asOf[1] !== newest) {
+    after = after.replace(BATTLES_AS_OF_LINE, `export const BATTLES_AS_OF = "${newest}";`);
+    changed.push(`BATTLES_AS_OF ${asOf[1]} -> ${newest}`);
+  }
+  const source = after.match(SOURCE_LINE);
+  if (!source) throw new Error("lib/freshness.ts: the battle-history row not found - refusing to leave the stamp behind");
+  if (source[2] !== newest) {
+    after = after.replace(SOURCE_LINE, `$1"${newest}"`);
+    changed.push(`the battle-history row ${source[2]} -> ${newest}`);
+  }
+  if (after !== before) writeFileSync(FRESHNESS_PATH, after);
+  return changed;
+}
+
+/** The newest battle date in the file, as an ISO day. */
+function newestDate(rows: StoredBattle[]): string | null {
+  let best: number | null = null;
+  for (const r of rows) {
+    const t = Date.parse(r.date);
+    if (Number.isNaN(t)) continue;
+    if (best === null || t > best) best = t;
+  }
+  return best === null ? null : new Date(best).toISOString().slice(0, 10);
+}
 
 /** The API caps a page at 200 however much you ask for - measured, not documented. */
 const PAGE = 200;
@@ -107,6 +158,19 @@ async function main() {
   }
 
   writeFileSync(BATTLES_JSON_PATH, JSON.stringify(merged, null, 2) + "\n");
+
+  const newest = newestDate(merged);
+  if (newest === null) {
+    // Refusing rather than guessing: a file whose dates will not parse is not
+    // a file to stamp a date on.
+    throw new Error("no parseable battle date in the merged file - not stamping freshness");
+  }
+  const stamped = stampFreshness(newest);
+  console.log(
+    stamped.length
+      ? `lib/freshness.ts updated: ${stamped.join("; ")}`
+      : `lib/freshness.ts already reads ${newest}.`,
+  );
 
   const vol = merged.reduce((s, b) => s + b.vol, 0);
   const noWinner = merged.filter((b) => b.winner === null).length;

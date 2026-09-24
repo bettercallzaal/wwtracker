@@ -28,21 +28,37 @@
 /** A baked file the embeds read, and the command that regenerates it. */
 export interface PublicDataFile {
   path: string;
-  rebuiltBy: string;
+  /** The command that regenerates it, or null when nothing in this repo does. */
+  rebuiltBy: string | null;
 }
 
+/**
+ * THREE OF THESE FOUR HAVE NO GENERATOR IN THIS REPO, and the first version of
+ * this file said otherwise.
+ *
+ * It listed `node scripts/ww-gen.mjs` as the rebuild for the volume and daily
+ * files. That script READS them - its own header lists them under "Inputs" -
+ * and writes `lib/wwData.ts`. So the instruction sent a reader to a script
+ * that consumes the stale file rather than producing it, which is worse than
+ * no instruction: it looks like the fix has been tried.
+ *
+ * Only `ww-battles.json` can be rebuilt from anything in the repo. The other
+ * three arrive from Dune exports done by hand, and automating them needs their
+ * generators written first. That is the real blocker, and it is work rather
+ * than a cron line.
+ */
 export const PUBLIC_DATA: ReadonlyArray<PublicDataFile> = [
   { path: "public/ww-battles.json", rebuiltBy: "npm run fetch:battles" },
-  { path: "public/ww-platform-volume.json", rebuiltBy: "node scripts/ww-gen.mjs" },
-  { path: "public/ww-onchain-daily.json", rebuiltBy: "node scripts/ww-gen.mjs" },
-  { path: "public/ww-chain-daily.json", rebuiltBy: "node scripts/ww-gen.mjs" },
+  { path: "public/ww-platform-volume.json", rebuiltBy: null },
+  { path: "public/ww-onchain-daily.json", rebuiltBy: null },
+  { path: "public/ww-chain-daily.json", rebuiltBy: null },
 ];
 
 export type DataAgeVerdict = "fresh" | "ageing" | "stale" | "missing";
 
 export interface DataAge {
   path: string;
-  rebuiltBy: string;
+  rebuiltBy: string | null;
   /** Null when the file is not there at all, which is not an age of zero. */
   days: number | null;
   verdict: DataAgeVerdict;
@@ -84,13 +100,19 @@ export function publicDataAges(
 export function describePublicDataAges(ages: DataAge[]): string[] {
   const notable = ages.filter((a) => a.verdict !== "fresh");
   if (notable.length === 0) return [];
+  const how = (a: DataAge) =>
+    a.rebuiltBy === null
+      ? "NOTHING IN THIS REPO REBUILDS IT (a Dune export done by hand)"
+      : `rebuild with ${a.rebuiltBy}`;
   const out = notable.map((a) =>
     a.days === null
-      ? `${a.path} is MISSING - rebuild with ${a.rebuiltBy}`
-      : `${a.path} is ${a.days} days old - rebuild with ${a.rebuiltBy}`,
+      ? `${a.path} is MISSING - ${how(a)}`
+      : `${a.path} is ${a.days} days old - ${how(a)}`,
   );
-  out.push(
-    "No job rebuilds these. The daily workflow only runs a contract check and the only Vercel cron refreshes Dune.",
-  );
+  if (notable.some((a) => a.rebuiltBy === null)) {
+    out.push(
+      "The files with no generator cannot be automated until one is written; that is work, not a cron line.",
+    );
+  }
   return out;
 }

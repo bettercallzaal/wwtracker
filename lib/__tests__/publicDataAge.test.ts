@@ -34,8 +34,24 @@ describe("the files it watches", () => {
     }
   });
 
-  it("names a rebuild command for every one of them", () => {
-    for (const f of PUBLIC_DATA) expect(f.rebuiltBy.length).toBeGreaterThan(0);
+  /**
+   * THE FIRST VERSION OF THIS CLAIMED A REBUILD COMMAND FOR ALL FOUR. It
+   * listed `node scripts/ww-gen.mjs` for the volume and daily files - a script
+   * that READS them and writes `lib/wwData.ts`. An instruction that sends a
+   * reader to the consumer of a stale file is worse than none: it looks like
+   * the fix has been tried.
+   */
+  it("names a command only where one exists, and null where none does", () => {
+    const byPath = Object.fromEntries(PUBLIC_DATA.map((f) => [f.path, f.rebuiltBy]));
+    expect(byPath["public/ww-battles.json"]).toBe("npm run fetch:battles");
+    expect(byPath["public/ww-platform-volume.json"]).toBeNull();
+    expect(byPath["public/ww-onchain-daily.json"]).toBeNull();
+    expect(byPath["public/ww-chain-daily.json"]).toBeNull();
+  });
+
+  it("does not name a script that only reads the file", () => {
+    // ww-gen.mjs consumes these. If it ever appears here again, this fails.
+    for (const f of PUBLIC_DATA) expect(f.rebuiltBy ?? "").not.toMatch(/ww-gen\.mjs/);
   });
 });
 
@@ -79,10 +95,11 @@ describe("the real ages measured on 2026-09-24", () => {
     expect(describePublicDataAges(fresh)).toEqual([]);
   });
 
-  it("names the rebuild command beside each stale file", () => {
+  it("names the rebuild command where there is one, and says so where there is not", () => {
     const lines = describePublicDataAges(publicDataAges((p) => mtimes[p] ?? null, NOW)).join("\n");
-    expect(lines).toMatch(/ww-platform-volume\.json is 19 days old - rebuild with node scripts\/ww-gen\.mjs/);
     expect(lines).toMatch(/ww-battles\.json is 15 days old - rebuild with npm run fetch:battles/);
+    expect(lines).toMatch(/ww-platform-volume\.json is 19 days old - NOTHING IN THIS REPO REBUILDS IT/);
+    expect(lines).toMatch(/cannot be automated until one is written/);
     // The fresh one is not mentioned, so the list stays worth reading.
     expect(lines).not.toMatch(/ww-chain-daily/);
   });
@@ -91,10 +108,12 @@ describe("the real ages measured on 2026-09-24", () => {
    * The line that turns a symptom into a cause. Without it a reader assumes a
    * job failed and waits for the next run.
    */
-  it("says that no job rebuilds them", () => {
-    const lines = describePublicDataAges(publicDataAges((p) => mtimes[p] ?? null, NOW)).join("\n");
-    expect(lines).toMatch(/No job rebuilds these/);
-    expect(lines).toMatch(/only runs a contract check/);
+  it("distinguishes a file that can be rebuilt from one that cannot", () => {
+    const lines = describePublicDataAges(publicDataAges((p) => mtimes[p] ?? null, NOW));
+    const battles = lines.find((l) => l.includes("ww-battles.json"));
+    const volume = lines.find((l) => l.includes("ww-platform-volume.json"));
+    expect(battles).toMatch(/rebuild with/);
+    expect(volume).not.toMatch(/rebuild with/);
   });
 
   it("reports a missing file as missing rather than as very old", () => {

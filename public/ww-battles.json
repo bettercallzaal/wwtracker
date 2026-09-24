@@ -1,5 +1,713 @@
 [
   {
+    "id": "1790219409",
+    "type": "QUICK",
+    "date": "Sep 24, 2026",
+    "a": "Cannon Jones - Back To The Barz",
+    "b": "Designer V1 x LUI x Hurric4n3 x Aporkalypse",
+    "aHandle": "CannonJones973",
+    "bHandle": "luiwrites",
+    "winner": "Designer V1 x LUI x Hurric4n3 x Aporkalypse",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1790218496",
+    "type": "QUICK",
+    "date": "Sep 24, 2026",
+    "a": "All That",
+    "b": "WhatchaSayWavez x Hurric4n3Ike",
+    "aHandle": "NessyTheRilla",
+    "bHandle": "Hurric4n3Ike",
+    "winner": "All That",
+    "vol": 0.058,
+    "margin": 72
+  },
+  {
+    "id": "1790217077",
+    "type": "QUICK",
+    "date": "Sep 24, 2026",
+    "a": "WHO CUT THE LIGHTS",
+    "b": "Miss You",
+    "aHandle": "BennyJ504WaveWarz",
+    "bHandle": "BennyJ504WaveWarz",
+    "winner": "Miss You",
+    "vol": 0.1524,
+    "margin": 99
+  },
+  {
+    "id": "1790216570",
+    "type": "QUICK",
+    "date": "Sep 24, 2026",
+    "a": "Switch Bitch",
+    "b": "The Word",
+    "aHandle": "jetdigital321",
+    "bHandle": "jetdigital321",
+    "winner": "The Word",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1790216068",
+    "type": "QUICK",
+    "date": "Sep 24, 2026",
+    "a": "IMan Afrikah - 10 10",
+    "b": "Don't Miss",
+    "aHandle": "WaveWarzAfrica",
+    "bHandle": "_0xQuan",
+    "winner": "Don't Miss",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1790215514",
+    "type": "QUICK",
+    "date": "Sep 24, 2026",
+    "a": "NSG Mentality x Where4ArtThouRomeo x LUI",
+    "b": "Big L Freestyle v2 ( Moves like jagger remix )",
+    "aHandle": "luiwrites",
+    "bHandle": "luiwrites",
+    "winner": "NSG Mentality x Where4ArtThouRomeo x LUI",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1790214545",
+    "type": "QUICK",
+    "date": "Sep 24, 2026",
+    "a": "Cannon Jones - Back To The Barz",
+    "b": "Limit Breaker Ft Cannon Jones",
+    "aHandle": "CannonJones973",
+    "bHandle": "Kata7yst",
+    "winner": "Limit Breaker Ft Cannon Jones",
+    "vol": 0.013,
+    "margin": 23
+  },
+  {
+    "id": "1790046123",
+    "type": "QUICK",
+    "date": "Sep 22, 2026",
+    "a": "Saturday in LA Featuring DopeStilo",
+    "b": "For my PeopleZ",
+    "aHandle": "BennyJ504WaveWarz",
+    "bHandle": "luiwrites",
+    "winner": "For my PeopleZ",
+    "vol": 0.1563,
+    "margin": 36
+  },
+  {
+    "id": "1790044803",
+    "type": "QUICK",
+    "date": "Sep 22, 2026",
+    "a": "LETS PLAY",
+    "b": "50 kal kash feat Cannon Jones973 X Bucketts- Soul Food ",
+    "aHandle": "frameworkfortune",
+    "bHandle": "CannonJones973",
+    "winner": null,
+    "vol": 0.1198,
+    "margin": 0
+  },
+  {
+    "id": "1790043661",
+    "type": "QUICK",
+    "date": "Sep 22, 2026",
+    "a": "Lighthouse",
+    "b": "100z",
+    "aHandle": "srchappell",
+    "bHandle": "_0xQuan",
+    "winner": "Lighthouse",
+    "vol": 0.16,
+    "margin": 37
+  },
+  {
+    "id": "1790042941",
+    "type": "QUICK",
+    "date": "Sep 22, 2026",
+    "a": "So Confused",
+    "b": "What Do YOU Want from me?",
+    "aHandle": "shawnsporter",
+    "bHandle": "Stormbourne",
+    "winner": "So Confused",
+    "vol": 0.1,
+    "margin": 0
+  },
+  {
+    "id": "1790041886",
+    "type": "QUICK",
+    "date": "Sep 22, 2026",
+    "a": "NSG Steppin x Kata7yst x LUI ",
+    "b": "NSG Mentality x Where4ArtThouRomeo x LUI",
+    "aHandle": "luiwrites",
+    "bHandle": "luiwrites",
+    "winner": "NSG Mentality x Where4ArtThouRomeo x LUI",
+    "vol": 0.008,
+    "margin": 24
+  },
+  {
+    "id": "1789951764",
+    "type": "MAIN",
+    "date": "Sep 21, 2026",
+    "a": "STORMI",
+    "b": "GEEK MYTH",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": "GEEK MYTH",
+    "vol": 15.5804,
+    "margin": 90
+  },
+  {
+    "id": "1789949789",
+    "type": "MAIN",
+    "date": "Sep 21, 2026",
+    "a": "STORMI",
+    "b": "GEEK MYTH",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": "GEEK MYTH",
+    "vol": 9.3375,
+    "margin": 92
+  },
+  {
+    "id": "1789948124",
+    "type": "MAIN",
+    "date": "Sep 20, 2026",
+    "a": "STORMI",
+    "b": "GEEK MYTH",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": "STORMI",
+    "vol": 8.835,
+    "margin": 95
+  },
+  {
+    "id": "1789790992",
+    "type": "QUICK",
+    "date": "Sep 19, 2026",
+    "a": "SAY IT WITH YOUR CHEST",
+    "b": "Big L Freestyle v2 ( Moves like jagger remix )",
+    "aHandle": "srchappell",
+    "bHandle": "luiwrites",
+    "winner": "SAY IT WITH YOUR CHEST",
+    "vol": 0.11,
+    "margin": 9
+  },
+  {
+    "id": "1789789481",
+    "type": "QUICK",
+    "date": "Sep 19, 2026",
+    "a": "Gimme a break brother",
+    "b": "Dolphin Flippin",
+    "aHandle": "geekmyth",
+    "bHandle": "geekmyth",
+    "winner": null,
+    "vol": 0.0671,
+    "margin": 53
+  },
+  {
+    "id": "1789787784",
+    "type": "QUICK",
+    "date": "Sep 19, 2026",
+    "a": "SNS",
+    "b": "I Dont Fuck With You",
+    "aHandle": "Stormbourne",
+    "bHandle": "Stormbourne",
+    "winner": "SNS",
+    "vol": 0.0649,
+    "margin": 82
+  },
+  {
+    "id": "1789787083",
+    "type": "QUICK",
+    "date": "Sep 19, 2026",
+    "a": "Limit breaker- Kata7yst feat Cannon Jones973 (Ruff Mix)",
+    "b": "UGOTMESAYIN 2.10 (Pitch 0.41 - Tempo 103)",
+    "aHandle": "CannonJones973",
+    "bHandle": "dopestilo",
+    "winner": null,
+    "vol": 0.2372,
+    "margin": 37
+  },
+  {
+    "id": "1789785804",
+    "type": "QUICK",
+    "date": "Sep 19, 2026",
+    "a": "Summer 26 ft. Godcloud",
+    "b": "Poet's Kiss",
+    "aHandle": "RoCkY2GriMeY",
+    "bHandle": "srchappell",
+    "winner": "Poet's Kiss",
+    "vol": 0.9263,
+    "margin": 49
+  },
+  {
+    "id": "1789784459",
+    "type": "QUICK",
+    "date": "Sep 19, 2026",
+    "a": "Double Back",
+    "b": "GOTMESAYIN",
+    "aHandle": "Kata7yst",
+    "bHandle": "dopestilo",
+    "winner": "GOTMESAYIN",
+    "vol": 0.0388,
+    "margin": 52
+  },
+  {
+    "id": "1789783495",
+    "type": "QUICK",
+    "date": "Sep 19, 2026",
+    "a": "Big L v1 ( Moves like jagger remix )",
+    "b": "For my PeopleZ",
+    "aHandle": "luiwrites",
+    "bHandle": "luiwrites",
+    "winner": "For my PeopleZ",
+    "vol": 0.1,
+    "margin": 0
+  },
+  {
+    "id": "1789618085",
+    "type": "QUICK",
+    "date": "Sep 17, 2026",
+    "a": "Young Buck",
+    "b": "Future & Hakeem Prime - Fast Enough",
+    "aHandle": "dopestilo",
+    "bHandle": "hakeemprime",
+    "winner": "Young Buck",
+    "vol": 0.0901,
+    "margin": 73
+  },
+  {
+    "id": "1789616633",
+    "type": "QUICK",
+    "date": "Sep 17, 2026",
+    "a": "DREAM TIL’ YOU DIE",
+    "b": "HAKEEM PRIME - RATHER DIE",
+    "aHandle": "srchappell",
+    "bHandle": "hakeemprime",
+    "winner": "HAKEEM PRIME - RATHER DIE",
+    "vol": 0.1594,
+    "margin": 0
+  },
+  {
+    "id": "1789615392",
+    "type": "QUICK",
+    "date": "Sep 17, 2026",
+    "a": "Designer V1 x LUI x Hurric4n3 x Aporkalypse",
+    "b": "Kata7yst and RoCkY2GriMeY - Who I Was ",
+    "aHandle": "luiwrites",
+    "bHandle": "RoCkY2GriMeY",
+    "winner": null,
+    "vol": 0.0624,
+    "margin": 24
+  },
+  {
+    "id": "1789614669",
+    "type": "QUICK",
+    "date": "Sep 17, 2026",
+    "a": "Clean Out My Heart (Audio)",
+    "b": "Mexico Lindo",
+    "aHandle": "hakeemprime",
+    "bHandle": "jetdigital321",
+    "winner": "Clean Out My Heart (Audio)",
+    "vol": 0.0771,
+    "margin": 7
+  },
+  {
+    "id": "1789613825",
+    "type": "QUICK",
+    "date": "Sep 17, 2026",
+    "a": "Dead Already",
+    "b": "Familiar (Audio)",
+    "aHandle": "PKMNCTO",
+    "bHandle": "hakeemprime",
+    "winner": "Familiar (Audio)",
+    "vol": 0.0624,
+    "margin": 9
+  },
+  {
+    "id": "1789612291",
+    "type": "QUICK",
+    "date": "Sep 17, 2026",
+    "a": "Limit Breaker Ft Cannon Jones",
+    "b": "Water ",
+    "aHandle": "Kata7yst",
+    "bHandle": "PKMNCTO",
+    "winner": "Limit Breaker Ft Cannon Jones",
+    "vol": 0.013,
+    "margin": 23
+  },
+  {
+    "id": "1789611626",
+    "type": "QUICK",
+    "date": "Sep 17, 2026",
+    "a": "GangWavez (Prod. x K1DDV3NOM)",
+    "b": "Make Them Remember Freestyle",
+    "aHandle": "Hurric4n3Ike",
+    "bHandle": "RoCkY2GriMeY",
+    "winner": "Make Them Remember Freestyle",
+    "vol": 0.1532,
+    "margin": 78
+  },
+  {
+    "id": "1789610754",
+    "type": "QUICK",
+    "date": "Sep 17, 2026",
+    "a": "Summer 26 ft. Godcloud",
+    "b": "We On Freestyle ",
+    "aHandle": "RoCkY2GriMeY",
+    "bHandle": "RoCkY2GriMeY",
+    "winner": null,
+    "vol": 0.1264,
+    "margin": 91
+  },
+  {
+    "id": "1789472805",
+    "type": "QUICK",
+    "date": "Sep 15, 2026",
+    "a": "Summer 26 ft. Godcloud",
+    "b": "We On Freestyle ",
+    "aHandle": "RoCkY2GriMeY",
+    "bHandle": "RoCkY2GriMeY",
+    "winner": null,
+    "vol": 0,
+    "margin": null
+  },
+  {
+    "id": "1789442838",
+    "type": "QUICK",
+    "date": "Sep 15, 2026",
+    "a": "Poet's Kiss",
+    "b": "BRAIN ON SHUFFLE ",
+    "aHandle": "srchappell",
+    "bHandle": "geekmyth",
+    "winner": "BRAIN ON SHUFFLE ",
+    "vol": 0.243,
+    "margin": 72
+  },
+  {
+    "id": "1789442218",
+    "type": "QUICK",
+    "date": "Sep 15, 2026",
+    "a": "Rude Girl ",
+    "b": "Lady Justice",
+    "aHandle": "srchappell",
+    "bHandle": "jetdigital321",
+    "winner": "Rude Girl ",
+    "vol": 0.01,
+    "margin": 0
+  },
+  {
+    "id": "1789440847",
+    "type": "QUICK",
+    "date": "Sep 15, 2026",
+    "a": "BookedWavez x Hurric4n3Ike x Kata7yst",
+    "b": "NSG Steppin x Kata7yst x LUI ",
+    "aHandle": "Hurric4n3Ike",
+    "bHandle": "luiwrites",
+    "winner": null,
+    "vol": 0.1092,
+    "margin": 100
+  },
+  {
+    "id": "1789439746",
+    "type": "QUICK",
+    "date": "Sep 15, 2026",
+    "a": "Bionic",
+    "b": "NO WARNING",
+    "aHandle": "BennyJ504WaveWarz",
+    "bHandle": "BennyJ504WaveWarz",
+    "winner": null,
+    "vol": 0,
+    "margin": null
+  },
+  {
+    "id": "1789439017",
+    "type": "QUICK",
+    "date": "Sep 15, 2026",
+    "a": "Saturday in LA Featuring DopeStilo",
+    "b": "WYAU",
+    "aHandle": "BennyJ504WaveWarz",
+    "bHandle": "PKMNCTO",
+    "winner": "Saturday in LA Featuring DopeStilo",
+    "vol": 0.203,
+    "margin": 51
+  },
+  {
+    "id": "1789438473",
+    "type": "QUICK",
+    "date": "Sep 15, 2026",
+    "a": "La La Smoking V5 x WZRD",
+    "b": "Big L v1 ( Moves like jagger remix )",
+    "aHandle": "luiwrites",
+    "bHandle": "luiwrites",
+    "winner": "Big L v1 ( Moves like jagger remix )",
+    "vol": 0.134,
+    "margin": 25
+  },
+  {
+    "id": "1789437284",
+    "type": "QUICK",
+    "date": "Sep 15, 2026",
+    "a": "Angels Eat Free on Tuesdays (mix3d3d vp mix)",
+    "b": "Pleasant Dreams",
+    "aHandle": "shawnsporter",
+    "bHandle": "BennyJ504WaveWarz",
+    "winner": "Pleasant Dreams",
+    "vol": 0.2,
+    "margin": 50
+  },
+  {
+    "id": "1789436777",
+    "type": "QUICK",
+    "date": "Sep 15, 2026",
+    "a": "Bionic",
+    "b": "NO WARNING",
+    "aHandle": "BennyJ504WaveWarz",
+    "bHandle": "BennyJ504WaveWarz",
+    "winner": "Bionic",
+    "vol": 0,
+    "margin": null
+  },
+  {
+    "id": "1789184502",
+    "type": "QUICK",
+    "date": "Sep 12, 2026",
+    "a": "DRIPN ALL NIGHT",
+    "b": "ChinAmerica",
+    "aHandle": "frameworkfortune",
+    "bHandle": "jetdigital321",
+    "winner": "DRIPN ALL NIGHT",
+    "vol": 0.1613,
+    "margin": 96
+  },
+  {
+    "id": "1789183384",
+    "type": "QUICK",
+    "date": "Sep 12, 2026",
+    "a": "Designer V1 x LUI x Hurric4n3 x Aporkalypse",
+    "b": "NSG Steppin x Kata7yst x LUI ",
+    "aHandle": "luiwrites",
+    "bHandle": "luiwrites",
+    "winner": "NSG Steppin x Kata7yst x LUI ",
+    "vol": 0.0548,
+    "margin": 20
+  },
+  {
+    "id": "1789182760",
+    "type": "QUICK",
+    "date": "Sep 12, 2026",
+    "a": "IMan Afrikah - TOPIER (ISLAND VILLA RIDDIM)",
+    "b": "Don't Forget Who You Are-N3m3sis ",
+    "aHandle": "WaveWarzAfrica",
+    "bHandle": "NemesisLadyRyn",
+    "winner": "Don't Forget Who You Are-N3m3sis ",
+    "vol": 0.1012,
+    "margin": 22
+  },
+  {
+    "id": "1789182094",
+    "type": "QUICK",
+    "date": "Sep 12, 2026",
+    "a": "Perfect Cell",
+    "b": "God Please",
+    "aHandle": "GodclouD",
+    "bHandle": "jetdigital321",
+    "winner": "Perfect Cell",
+    "vol": 0.5174,
+    "margin": 82
+  },
+  {
+    "id": "1789180504",
+    "type": "QUICK",
+    "date": "Sep 12, 2026",
+    "a": "Aether",
+    "b": "GODS O WARS",
+    "aHandle": "IAM_SLAVA",
+    "bHandle": "frameworkfortune",
+    "winner": "Aether",
+    "vol": 0.0358,
+    "margin": 25
+  },
+  {
+    "id": "1789179660",
+    "type": "QUICK",
+    "date": "Sep 12, 2026",
+    "a": "Krypto Kingz Mix",
+    "b": "IMan Afrikah - WGE",
+    "aHandle": "SteveStrange",
+    "bHandle": "WaveWarzAfrica",
+    "winner": "IMan Afrikah - WGE",
+    "vol": 0.1019,
+    "margin": 9
+  },
+  {
+    "id": "1789178609",
+    "type": "QUICK",
+    "date": "Sep 12, 2026",
+    "a": "NSG Steppin x Kata7yst x LUI ",
+    "b": "WYAU",
+    "aHandle": "luiwrites",
+    "bHandle": "PKMNCTO",
+    "winner": "WYAU",
+    "vol": 0.1168,
+    "margin": 12
+  },
+  {
+    "id": "1789177998",
+    "type": "QUICK",
+    "date": "Sep 12, 2026",
+    "a": "New Sick",
+    "b": "Finger Me a Tune",
+    "aHandle": "GodclouD",
+    "bHandle": "jetdigital321",
+    "winner": "New Sick",
+    "vol": 0.3033,
+    "margin": 82
+  },
+  {
+    "id": "1789177343",
+    "type": "QUICK",
+    "date": "Sep 12, 2026",
+    "a": "Roll it",
+    "b": "Head Case",
+    "aHandle": "AporkALYPSE78",
+    "bHandle": "AporkALYPSE78",
+    "winner": "Roll it",
+    "vol": 0.1263,
+    "margin": 100
+  },
+  {
+    "id": "1789176790",
+    "type": "QUICK",
+    "date": "Sep 12, 2026",
+    "a": "ChinAmerica",
+    "b": "The French Love Connection",
+    "aHandle": "jetdigital321",
+    "bHandle": "jetdigital321",
+    "winner": "ChinAmerica",
+    "vol": 0.1006,
+    "margin": 55
+  },
+  {
+    "id": "1789144453",
+    "type": "MAIN",
+    "date": "Sep 11, 2026",
+    "a": " IndieZ",
+    "b": "ClassicZ",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": null,
+    "vol": 0.036,
+    "margin": 46
+  },
+  {
+    "id": "1789142718",
+    "type": "MAIN",
+    "date": "Sep 11, 2026",
+    "a": " IndieZ",
+    "b": "ClassicZ",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": null,
+    "vol": 0.1292,
+    "margin": 6
+  },
+  {
+    "id": "1789141124",
+    "type": "MAIN",
+    "date": "Sep 11, 2026",
+    "a": " IndieZ",
+    "b": "ClassicZ",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": null,
+    "vol": 0.0318,
+    "margin": 41
+  },
+  {
+    "id": "1789010047",
+    "type": "QUICK",
+    "date": "Sep 10, 2026",
+    "a": "HuracánWavez x Hurric4n3Ike (Prod. x Hurric4n3Ike) (432 hz)",
+    "b": "ELTÍO NO SE CAE",
+    "aHandle": "Hurric4n3Ike",
+    "bHandle": "hoodrats",
+    "winner": "HuracánWavez x Hurric4n3Ike (Prod. x Hurric4n3Ike) (432 hz)",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1789008817",
+    "type": "QUICK",
+    "date": "Sep 10, 2026",
+    "a": "Angels Eat Free on Tuesdays (Acoustic Postcore)",
+    "b": "Be Mine Tonight",
+    "aHandle": "shawnsporter",
+    "bHandle": "Stormbourne",
+    "winner": "Angels Eat Free on Tuesdays (Acoustic Postcore)",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1789007976",
+    "type": "QUICK",
+    "date": "Sep 10, 2026",
+    "a": "Designer V1 x LUI x Hurric4n3 x Aporkalypse",
+    "b": "BookedWavez x Hurric4n3Ike x Kata7yst",
+    "aHandle": "luiwrites",
+    "bHandle": "Hurric4n3Ike",
+    "winner": "BookedWavez x Hurric4n3Ike x Kata7yst",
+    "vol": 0.25,
+    "margin": 20
+  },
+  {
+    "id": "1789007167",
+    "type": "QUICK",
+    "date": "Sep 10, 2026",
+    "a": "HighWavez x Hurric4n3Ike",
+    "b": "Bonita ",
+    "aHandle": "Hurric4n3Ike",
+    "bHandle": "dopestilo",
+    "winner": "HighWavez x Hurric4n3Ike",
+    "vol": 0.07,
+    "margin": 57
+  },
+  {
+    "id": "1789006425",
+    "type": "QUICK",
+    "date": "Sep 10, 2026",
+    "a": "Limit breaker- Kata7yst feat Cannon Jones973 (Ruff Mix)",
+    "b": "Mamacita",
+    "aHandle": "CannonJones973",
+    "bHandle": "dopestilo",
+    "winner": "Mamacita",
+    "vol": 0.025,
+    "margin": 20
+  },
+  {
+    "id": "1789005188",
+    "type": "QUICK",
+    "date": "Sep 10, 2026",
+    "a": "Polished Obsidian (slvdg3d)",
+    "b": "CATCH ME",
+    "aHandle": "shawnsporter",
+    "bHandle": "_0xQuan",
+    "winner": "CATCH ME",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1789004085",
+    "type": "QUICK",
+    "date": "Sep 10, 2026",
+    "a": "AI LUI - WOND3R BOY",
+    "b": "The Black and White Policy!",
+    "aHandle": "luiwrites",
+    "bHandle": "jetdigital321",
+    "winner": "AI LUI - WOND3R BOY",
+    "vol": 0.02,
+    "margin": 50
+  },
+  {
     "id": "1788840215",
     "type": "QUICK",
     "date": "Sep 8, 2026",
@@ -7080,16 +7788,16 @@
     "margin": 2
   },
   {
-    "aHandle": null,
-    "bHandle": null,
-    "margin": null,
     "id": "1778346690",
     "type": "MAIN",
     "date": "May 9, 2026",
     "a": "Hurric4n3Ike",
     "b": "Hurric4n3Ike",
+    "aHandle": null,
+    "bHandle": null,
     "winner": "Hurric4n3Ike",
-    "vol": 0
+    "vol": 0.0496,
+    "margin": 100
   },
   {
     "id": "1778345385",
@@ -13820,7 +14528,7 @@
     "aHandle": "Murderphace",
     "bHandle": "Murderphace",
     "winner": "Rise of the Lions",
-    "vol": 0.01,
+    "vol": 0.0099,
     "margin": 100
   },
   {
@@ -14300,7 +15008,7 @@
     "aHandle": "CannonJones973",
     "bHandle": "dopestilo",
     "winner": "Cannon Jones973 feat Khila k-Money to choke",
-    "vol": 0.0319,
+    "vol": 0.0733,
     "margin": 24
   },
   {
@@ -15428,7 +16136,7 @@
     "aHandle": "CannonJones973",
     "bHandle": "Kata7yst",
     "winner": "Lets do it taz FT Kata7yst",
-    "vol": 0.0693,
+    "vol": 0.02,
     "margin": 97
   },
   {
@@ -15632,7 +16340,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "MOZAY",
-    "vol": 0.0866,
+    "vol": 1.2393,
     "margin": 76
   },
   {
@@ -15740,7 +16448,7 @@
     "aHandle": "luiwrites",
     "bHandle": "Kata7yst",
     "winner": "Dale Vuelta 360",
-    "vol": 0.0739,
+    "vol": 0.075,
     "margin": 60
   },
   {
@@ -15836,7 +16544,7 @@
     "aHandle": "SteveStrange",
     "bHandle": "Stormbourne",
     "winner": "Crypto Fam Radio Remix",
-    "vol": 0.2887,
+    "vol": 0.406,
     "margin": 18
   },
   {
@@ -16064,7 +16772,7 @@
     "aHandle": "SteveStrange",
     "bHandle": "Stormbourne",
     "winner": "UNBECOME",
-    "vol": 0.4407,
+    "vol": 0.7543,
     "margin": 11
   },
   {
@@ -16088,7 +16796,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "Ramone",
-    "vol": 0.0209,
+    "vol": 0.3364,
     "margin": 99
   },
   {
@@ -16148,7 +16856,7 @@
     "aHandle": "luiwrites",
     "bHandle": "dopestilo",
     "winner": "AI LUI - A Christmas Love Song",
-    "vol": 0.1183,
+    "vol": 0.12,
     "margin": 17
   },
   {
@@ -16172,7 +16880,7 @@
     "aHandle": "luiwrites",
     "bHandle": "dopestilo",
     "winner": "AI LUI - A Christmas Love Song",
-    "vol": 0.0217,
+    "vol": 0.022,
     "margin": 82
   },
   {
@@ -16340,7 +17048,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "IndieZ",
-    "vol": 0.0628,
+    "vol": 0.4732,
     "margin": 97
   },
   {
@@ -16532,7 +17240,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "JayStreetz",
-    "vol": 0.0602,
+    "vol": 0.3666,
     "margin": 64
   },
   {
@@ -16592,7 +17300,7 @@
     "aHandle": "Hurric4n3Ike",
     "bHandle": "Hurric4n3Ike",
     "winner": "PlanWavez x Hurric4n3Ike (Prod. x Hurric4n3Ike)",
-    "vol": 0.069,
+    "vol": 0.1295,
     "margin": 100
   },
   {
@@ -16887,24 +17595,24 @@
     "id": "1764207785",
     "type": "MAIN",
     "date": "Nov 27, 2025",
-    "a": "MOZAY CALLOWAY",
+    "a": "MOZAY",
     "b": "LUI",
     "aHandle": null,
     "bHandle": null,
     "winner": "LUI",
-    "vol": 0.7811,
+    "vol": 0.4121,
     "margin": 48
   },
   {
     "id": "1764205612",
     "type": "MAIN",
     "date": "Nov 27, 2025",
-    "a": "MOZAY CALLOWAY",
+    "a": "MOZAY",
     "b": "LUI",
     "aHandle": null,
     "bHandle": null,
     "winner": "LUI",
-    "vol": 0.5751,
+    "vol": 0.0402,
     "margin": 91
   },
   {
@@ -16916,7 +17624,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "LUI",
-    "vol": 0.0925,
+    "vol": 0.5623,
     "margin": 99
   },
   {
@@ -16976,7 +17684,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "KPOD Label",
-    "vol": 0.0467,
+    "vol": 0.5091,
     "margin": 63
   },
   {
@@ -17043,12 +17751,12 @@
     "id": "1763042352",
     "type": "COMMUNITY",
     "date": "Nov 13, 2025",
-    "a": "Hurric4n3Ike x UdeWavez",
-    "b": "Hurric4n3Ike x ConceptWavez",
+    "a": "UdeWavez x Hurric4n3Ike",
+    "b": "ConceptWavez x Hurric4n3Ike",
     "aHandle": null,
     "bHandle": null,
     "winner": "Hurric4n3Ike x ConceptWavez",
-    "vol": 0.026,
+    "vol": 0.0256,
     "margin": 16
   },
   {
@@ -17084,7 +17792,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "Yoshiro Mare",
-    "vol": 1.2093,
+    "vol": 0.201,
     "margin": 17
   },
   {
@@ -17095,7 +17803,7 @@
     "b": "Davyd",
     "aHandle": null,
     "bHandle": null,
-    "winner": "Yoshiro Mare",
+    "winner": "Davyd",
     "vol": 1.0633,
     "margin": 60
   },
@@ -17132,7 +17840,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "Owskie",
-    "vol": 0.0874,
+    "vol": 0.7463,
     "margin": 27
   },
   {
@@ -17168,7 +17876,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "12xce",
-    "vol": 0.1242,
+    "vol": 0.128,
     "margin": 75
   },
   {
@@ -17203,8 +17911,8 @@
     "b": "APORKALYPSE",
     "aHandle": null,
     "bHandle": null,
-    "winner": "ONE",
-    "vol": 0.4756,
+    "winner": "APORKALYPSE",
+    "vol": 0.0087,
     "margin": 89
   },
   {
@@ -17257,14 +17965,14 @@
   },
   {
     "id": "1761437309",
-    "type": "COMMUNITY",
+    "type": "MAIN",
     "date": "Oct 26, 2025",
     "a": "LilBonez",
     "b": "V.D.O.",
     "aHandle": null,
     "bHandle": null,
     "winner": "V.D.O.",
-    "vol": 0.2262,
+    "vol": 0.0318,
     "margin": 67
   },
   {
@@ -17283,24 +17991,24 @@
     "id": "1760666134",
     "type": "MAIN",
     "date": "Oct 17, 2025",
-    "a": "APORKALYPSE",
+    "a": "Aporkalypse",
     "b": "The Tech",
     "aHandle": null,
     "bHandle": null,
     "winner": "The Tech",
-    "vol": 0.8611,
+    "vol": 0.6277,
     "margin": 25
   },
   {
     "id": "1760663446",
     "type": "MAIN",
     "date": "Oct 17, 2025",
-    "a": "APORKALYPSE",
+    "a": "Aporkalypse",
     "b": "The Tech",
     "aHandle": null,
     "bHandle": null,
-    "winner": "APORKALYPSE",
-    "vol": 0.734,
+    "winner": "Aporkalypse",
+    "vol": 0.1791,
     "margin": 97
   },
   {
@@ -17312,7 +18020,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "Aporkalypse",
-    "vol": 0.1266,
+    "vol": 1.0843,
     "margin": 99
   },
   {
@@ -17336,7 +18044,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "K1DDV3NOM",
-    "vol": 1.046,
+    "vol": 0.3138,
     "margin": 20
   },
   {
@@ -17347,9 +18055,21 @@
     "b": "K1DDV3NOM",
     "aHandle": null,
     "bHandle": null,
-    "winner": "ONE",
-    "vol": 1.2621,
+    "winner": "K1DDV3NOM",
+    "vol": 0.1274,
     "margin": 74
+  },
+  {
+    "id": "1760226775",
+    "type": "MAIN",
+    "date": "Oct 11, 2025",
+    "a": "Hurric4n3Ike",
+    "b": "Zaal",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": null,
+    "vol": 0.0001,
+    "margin": 100
   },
   {
     "id": "1760215752",
@@ -17420,7 +18140,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "Goose Pärk",
-    "vol": 0.2287,
+    "vol": 1.3791,
     "margin": 59
   },
   {
@@ -17475,12 +18195,12 @@
     "id": "1759715433",
     "type": "MAIN",
     "date": "Oct 6, 2025",
-    "a": "ONE",
+    "a": "One",
     "b": "Crypto Beat Radio",
     "aHandle": null,
     "bHandle": null,
-    "winner": "ONE",
-    "vol": 2.0237,
+    "winner": "Crypto Beat Radio",
+    "vol": 0.3682,
     "margin": 15
   },
   {
@@ -17508,6 +18228,18 @@
     "margin": 85
   },
   {
+    "id": "1759452150",
+    "type": "MAIN",
+    "date": "Oct 3, 2025",
+    "a": "Hurric4n3Ike",
+    "b": "Zaal",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": null,
+    "vol": 0,
+    "margin": null
+  },
+  {
     "id": "1758731739",
     "type": "QUICK",
     "date": "Sep 24, 2025",
@@ -17528,7 +18260,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "WaitWavez x Hurric4n3Ike",
-    "vol": 0.1723,
+    "vol": 0.4152,
     "margin": 83
   },
   {
@@ -17539,8 +18271,8 @@
     "b": "$STUPID: Atchblockbaby",
     "aHandle": null,
     "bHandle": null,
-    "winner": "$BONGA: VibeLord",
-    "vol": 2.3058,
+    "winner": "$STUPID: Atchblockbaby",
+    "vol": 0.4037,
     "margin": 10
   },
   {
@@ -17600,7 +18332,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "Preshzino Songz",
-    "vol": 6.7992,
+    "vol": 1.8753,
     "margin": 8
   },
   {
@@ -17617,14 +18349,14 @@
   },
   {
     "id": "1757211619",
-    "type": "COMMUNITY",
+    "type": "MAIN",
     "date": "Sep 7, 2025",
-    "a": "CANNON JONES",
+    "a": "Cannon Jones973",
     "b": "IAmThanos",
     "aHandle": null,
     "bHandle": null,
-    "winner": "CANNON JONES",
-    "vol": 0.3155,
+    "winner": "Cannon Jones973",
+    "vol": 0.014,
     "margin": 50
   },
   {
@@ -17641,14 +18373,14 @@
   },
   {
     "id": "1757207855",
-    "type": "COMMUNITY",
+    "type": "MAIN",
     "date": "Sep 7, 2025",
-    "a": "CANNON JONES",
+    "a": "Cannon Jones973",
     "b": "IAmThanos",
     "aHandle": null,
     "bHandle": null,
-    "winner": "CANNON JONES",
-    "vol": 2.6898,
+    "winner": "Cannon Jones973",
+    "vol": 0.0515,
     "margin": 95
   },
   {
@@ -17755,8 +18487,8 @@
     "b": "Rome",
     "aHandle": null,
     "bHandle": null,
-    "winner": "Rome",
-    "vol": 1.9034,
+    "winner": "Visionz",
+    "vol": 0.3833,
     "margin": 36
   },
   {
@@ -17782,6 +18514,30 @@
     "winner": "Visionz",
     "vol": 4.2354,
     "margin": 15
+  },
+  {
+    "id": "1754605788",
+    "type": "MAIN",
+    "date": "Aug 7, 2025",
+    "a": "Hurric4n3Ike",
+    "b": "Zaal",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": null,
+    "vol": 0.001,
+    "margin": 100
+  },
+  {
+    "id": "1753856330",
+    "type": "MAIN",
+    "date": "Jul 30, 2025",
+    "a": "Hurric4n3Ike",
+    "b": "Zaal",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": null,
+    "vol": 0.0001,
+    "margin": 100
   },
   {
     "id": "1753667652",
@@ -17816,7 +18572,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "Krem",
-    "vol": 0.6369,
+    "vol": 2.357,
     "margin": 94
   },
   {
@@ -17847,12 +18603,12 @@
     "id": "1753063414",
     "type": "MAIN",
     "date": "Jul 21, 2025",
-    "a": "CANNON JONES",
+    "a": "Cannon Jones",
     "b": "Chief",
     "aHandle": null,
     "bHandle": null,
-    "winner": "CANNON JONES",
-    "vol": 1.6156,
+    "winner": "Chief",
+    "vol": 0.0816,
     "margin": 29
   },
   {
@@ -17864,7 +18620,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "Cannon Jones",
-    "vol": 1.7406,
+    "vol": 2.811,
     "margin": 3
   },
   {
@@ -17880,6 +18636,18 @@
     "margin": 6
   },
   {
+    "id": "1752335404",
+    "type": "MAIN",
+    "date": "Jul 12, 2025",
+    "a": "Hurric4n3Ike",
+    "b": "Zaal",
+    "aHandle": null,
+    "bHandle": null,
+    "winner": null,
+    "vol": 0.003,
+    "margin": 100
+  },
+  {
     "id": "1751837807",
     "type": "MAIN",
     "date": "Jul 6, 2025",
@@ -17888,7 +18656,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "DUAL WIELD x Jango UU",
-    "vol": 0.267,
+    "vol": 0.263,
     "margin": 53
   },
   {
@@ -17923,8 +18691,8 @@
     "b": "Shatterpoint x Jango UU",
     "aHandle": null,
     "bHandle": null,
-    "winner": "Shatterpoint x Jango UU",
-    "vol": 0.21,
+    "winner": "When I'm High x Jango UU",
+    "vol": 0.2069,
     "margin": 5
   },
   {
@@ -17935,8 +18703,8 @@
     "b": "Cigs Inside x Jango UU",
     "aHandle": null,
     "bHandle": null,
-    "winner": "Cigs Inside x Jango UU",
-    "vol": 0.095,
+    "winner": "Amaretto x Jango UU",
+    "vol": 0.0936,
     "margin": 47
   },
   {
