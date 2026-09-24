@@ -20,6 +20,7 @@
 import { PROGRAM_ID, battlePda } from "@/lib/ww/pda";
 import { parseBattleAccounts, phaseCounts } from "@/lib/ww/discovery";
 import { newestWatcherLog, watcherLogAgeSeconds, watcherVerdict } from "@/lib/watcherLog";
+import { describePublicDataAges, publicDataAges } from "@/lib/publicDataAge";
 import { quoteBuy, supplyAtPool, SUPPLY_QUANTUM } from "@/lib/ww/quote";
 import { readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
@@ -165,6 +166,24 @@ async function main() {
       // the same lie in the other direction.
       bad(`${chosen.path} exists but could not be read: ${(err as Error).message}`);
     }
+  }
+
+  // THE BAKED FILES THE EMBEDS DRAW FROM. They sit on pages we do not control
+  // and nothing rebuilds them on a schedule, so the only thing standing
+  // between them and another three weeks is somebody noticing.
+  console.log(`\nthe baked public data:`);
+  const ages = publicDataAges((path) => {
+    try {
+      return statSync(path).mtimeMs;
+    } catch {
+      return null;
+    }
+  });
+  const notes = describePublicDataAges(ages);
+  if (notes.length === 0) {
+    ok(`all ${ages.length} files rebuilt within a fortnight`);
+  } else {
+    for (const n of notes) meh(n);
   }
 
   console.log(`\n${pass} pass, ${fail} fail, ${warn} warn`);
