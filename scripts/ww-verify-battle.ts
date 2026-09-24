@@ -27,7 +27,7 @@
  * re-run against mainnet to discover it again.
  */
 import { b58decode, battlePda, PROGRAM_ID } from "@/lib/ww/pda";
-import { quoteBuy, quoteBuyAtSupply, quoteSell, feeSplit, TRADE_FEE, BUY_POOL_SHARE } from "@/lib/ww/quote";
+import { quoteBuy, quoteBuyAtSupply, quoteSell, feeSplit, TRADE_FEE, BUY_POOL_SHARE, supplyAtPool, SUPPLY_QUANTUM } from "@/lib/ww/quote";
 
 const RPC = process.env.SOLANA_RPC_URL_PUBLIC ?? "https://api.mainnet-beta.solana.com";
 const DISC = {
@@ -124,7 +124,19 @@ function verify(battleId: number, rows: Row[]) {
   // is one step low on about a buy in five; quoteBuyAtSupply floors the total.
   // Reporting both on every run is how the next model change gets evidence
   // instead of an argument.
-  const model = { difference: 0, total: 0, of: 0 };
+  const model = { difference: 0, total: 0, endpoints: 0, of: 0 };
+  /**
+   * THE THIRD FORM: floor the curve at BOTH ends and subtract.
+   *
+   * It equals floor-the-total on a pool carrying no residual, because there
+   * the stored supply IS the floor of the curve. Where sells have left a
+   * residual the two part company: this one subtracts the floor at the CURRENT
+   * pool rather than the supply actually held, so the residual cancels instead
+   * of accumulating.
+   */
+  const floorQ = (x: number) => Math.floor(x / SUPPLY_QUANTUM) * SUPPLY_QUANTUM;
+  const endpoints = (poolLamports: number, spend: number) =>
+    floorQ(supplyAtPool(poolLamports + spend * BUY_POOL_SHARE)) - floorQ(supplyAtPool(poolLamports));
   const fail = (sig: string, what: string, ours: unknown, theirs: unknown) => {
     bad++;
     console.log(`  MISMATCH ${what}\n     ours ${ours}   program ${theirs}\n     ${sig}`);
@@ -148,6 +160,7 @@ function verify(battleId: number, rows: Row[]) {
       model.of++;
       if (q.tokensOut === r.statedTokens) model.difference++;
       if (quoteBuyAtSupply(pool[r.side], r.amount, supply[r.side]).tokensOut === r.statedTokens) model.total++;
+      if (endpoints(pool[r.side], r.amount) === r.statedTokens) model.endpoints++;
       if (q.tokensOut !== r.statedTokens) fail(r.sig, `buy tokens (${r.amount} lamports into pool ${pool[r.side]})`, q.tokensOut, r.statedTokens);
       if (r.statedToPool !== null && Math.round(r.amount * BUY_POOL_SHARE) !== r.statedToPool)
         fail(r.sig, "pool contribution", Math.round(r.amount * BUY_POOL_SHARE), r.statedToPool);
@@ -207,7 +220,7 @@ function verify(battleId: number, rows: Row[]) {
     (checked === 0 ? "   NOTHING CHECKED - no denominator" : bad === 0 ? "   ALL EXACT" : ""));
   if (model.of > 0) {
     console.log(
-      `  buy models over ${model.of} buys: floor-the-difference ${model.difference}, floor-the-total ${model.total}`,
+      `  buy models over ${model.of} buys: floor-the-difference ${model.difference}, floor-the-total ${model.total}, floor-both-endpoints ${model.endpoints}`,
     );
   }
   return { checked, bad };
