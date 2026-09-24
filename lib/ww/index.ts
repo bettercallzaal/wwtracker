@@ -471,6 +471,20 @@ export {
 export { marksEnabled } from "./marksFlag";
 export { launchEnabled } from "./launchFlag";
 
+// Names for battles we launch ourselves. The chain stores two wallets, and
+// wavewarz.info only indexes battles it created, so without this a community
+// battle renders as A versus B forever.
+export {
+  describeNameSource,
+  lookupCommunityBattle,
+  parseCommunityRegistry,
+  type CommunityBattle,
+  type CommunityRegistry,
+  type CommunitySide,
+  type NameSource,
+  type RegistryProblem,
+} from "./communityBattles";
+
 // WHEN a battle can actually be traded: the program refuses every buy until
 // start_time + 60 seconds. Measured 2026-09-24, and it corrects what
 // openingGap.ts concluded about the arrival floor earlier the same day.
