@@ -151,3 +151,82 @@ export function chanceOfAtLeast(disagree: number, comparable: number, baselineRa
   }
   return Math.min(1, total);
 }
+
+/**
+ * IS A DISAGREEMENT JUST A CLOSE CALL? Measured: no.
+ *
+ * The obvious benign explanation for the judged winner differing from the pool
+ * is that those were the split decisions - judges nearly tied, so which way it
+ * fell is close to a coin, and the money landed on the other side. If that
+ * were it, the disagreement rate would fall as the judged margin widens.
+ *
+ * It does not. Over 1,445 comparable battles, by the margin the judges gave:
+ *
+ *      0-9%    22 of 179   12.3%
+ *     20-29%    9 of 144    6.2%
+ *     90-99%   25 of 274    9.1%
+ *
+ * and no band differs from the overall 10.2% by more than chance - the closest
+ * band comes out at P = 21%, the most decisive at P = 76%. **A judged win of
+ * 90-plus percent goes against the money about as often as a dead heat does.**
+ *
+ * So the two results are closer to independent than to noisy agreement. What
+ * that means is a question for whoever knows how the judging and the trading
+ * relate; the measurement only rules out the comfortable answer.
+ */
+export interface MarginBand {
+  /** Lower edge, in whole percent. The band is [from, from + width). */
+  from: number;
+  disagree: number;
+  comparable: number;
+}
+
+/**
+ * Bucket comparable battles by the judged margin.
+ *
+ * A battle with no margin is skipped rather than bucketed at zero: a missing
+ * number is not a dead heat, and 11 of them at the closest band would be the
+ * one place it changed the reading.
+ */
+export function marginBands(
+  rows: Array<{ margin: number | null; outcome: AgreementOutcome }>,
+  width = 10,
+): MarginBand[] {
+  const bands = new Map<number, MarginBand>();
+  for (const r of rows) {
+    if (r.outcome !== "agree" && r.outcome !== "disagree") continue;
+    if (r.margin === null || !Number.isFinite(r.margin)) continue;
+    // 100% lands in the top band rather than opening one of its own.
+    const from = Math.min(100 - width, Math.floor(r.margin / width) * width);
+    const b = bands.get(from) ?? { from, disagree: 0, comparable: 0 };
+    b.comparable += 1;
+    if (r.outcome === "disagree") b.disagree += 1;
+    bands.set(from, b);
+  }
+  return [...bands.values()].sort((a, b) => a.from - b.from);
+}
+
+/**
+ * Whether any band stands out from the overall rate.
+ *
+ * Returns the bands with their tails so a reader sees the qualification beside
+ * the number, not instead of it. `null` for a band with nothing comparable.
+ */
+export function describeMarginBands(bands: MarginBand[], width = 10): string[] {
+  const totalD = bands.reduce((t, b) => t + b.disagree, 0);
+  const totalC = bands.reduce((t, b) => t + b.comparable, 0);
+  if (totalC === 0) return ["NO COMPARABLE BATTLES CARRY A MARGIN - nothing to say about close calls."];
+  const overall = totalD / totalC;
+  const out = [`overall ${totalD} of ${totalC} disagree (${(overall * 100).toFixed(1)}%)`];
+  for (const b of bands) {
+    const rate = b.comparable === 0 ? null : b.disagree / b.comparable;
+    const p = chanceOfAtLeast(b.disagree, b.comparable, overall);
+    out.push(
+      `  margin ${String(b.from).padStart(2)}-${b.from + width - 1}%  ` +
+        `${String(b.disagree).padStart(3)} of ${String(b.comparable).padStart(4)}  ` +
+        `${rate === null ? "UNKNOWN" : `${(rate * 100).toFixed(1)}%`}  ` +
+        `${p === null ? "" : `(chance gives this or more ${(p * 100).toFixed(0)}% of the time)`}`,
+    );
+  }
+  return out;
+}

@@ -12,6 +12,8 @@ import {
   agreementByFormat,
   chanceOfAtLeast,
   compare,
+  describeMarginBands,
+  marginBands,
   disagreementRate,
   judgedSide,
   type JudgedBattle,
@@ -142,5 +144,64 @@ describe("the tail, which is what separates the two high rates", () => {
     expect(chanceOfAtLeast(5, 3, 0.1)).toBeNull();
     expect(chanceOfAtLeast(1, 10, 0)).toBeNull();
     expect(chanceOfAtLeast(1, 10, 1)).toBeNull();
+  });
+});
+
+/**
+ * IS A DISAGREEMENT JUST A CLOSE CALL? The comfortable answer is that these
+ * were split decisions - judges nearly tied, so which way it fell was close to
+ * a coin and the money landed the other way. If that were it, the rate would
+ * fall as the judged margin widens. Measured over 1,445 comparable battles, it
+ * does not: no band differs from the overall 10.2% by more than chance.
+ */
+describe("disagreements are not close calls", () => {
+  const row = (margin: number | null, outcome: "agree" | "disagree") => ({ margin, outcome });
+
+  it("buckets by the judged margin, ten points at a time", () => {
+    const bands = marginBands([row(0, "disagree"), row(9, "agree"), row(10, "agree")]);
+    expect(bands.map((b) => b.from)).toEqual([0, 10]);
+    expect(bands[0]).toMatchObject({ disagree: 1, comparable: 2 });
+  });
+
+  /**
+   * A MISSING MARGIN IS NOT A DEAD HEAT. Bucketing it at zero would put every
+   * unknown in the closest band, which is the one place it would change the
+   * reading.
+   */
+  it("skips a battle with no margin rather than calling it zero", () => {
+    const bands = marginBands([row(null, "disagree"), row(null, "agree")]);
+    expect(bands).toEqual([]);
+  });
+
+  it("puts a perfect 100 in the top band rather than opening one for it", () => {
+    const bands = marginBands([row(100, "agree"), row(95, "agree")]);
+    expect(bands.map((b) => b.from)).toEqual([90]);
+    expect(bands[0].comparable).toBe(2);
+  });
+
+  it("leaves ties and unsettled battles out, as everywhere else", () => {
+    const bands = marginBands([
+      { margin: 50, outcome: "tie" },
+      { margin: 50, outcome: "unsettled" },
+      { margin: 50, outcome: "unresolvable" },
+    ]);
+    expect(bands).toEqual([]);
+  });
+
+  it("prints a tail beside every band, so a flat result cannot read as a trend", () => {
+    const lines = describeMarginBands(
+      marginBands([
+        ...Array.from({ length: 179 }, (_, i) => row(5, i < 22 ? "disagree" : "agree")),
+        ...Array.from({ length: 274 }, (_, i) => row(95, i < 25 ? "disagree" : "agree")),
+      ]),
+    ).join("\n");
+    // The real numbers: 12.3% at the closest, 9.1% at the most decisive.
+    expect(lines).toMatch(/margin {2}0-9% {3}22 of {2}179 {2}12\.3%/);
+    expect(lines).toMatch(/margin 90-99% {3}25 of {2}274 {2}9\.1%/);
+    expect(lines).toMatch(/chance gives this or more/);
+  });
+
+  it("says so plainly when nothing carries a margin", () => {
+    expect(describeMarginBands([]).join("\n")).toMatch(/NO COMPARABLE BATTLES CARRY A MARGIN/);
   });
 });
