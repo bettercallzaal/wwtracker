@@ -35,7 +35,33 @@ export const BATTLE_ACCOUNT_BYTES = 353;
 /** Everything this module reads lives in the first 256 bytes. */
 export const DISCOVERY_SLICE_BYTES = 256;
 
-const OFFSET = { startTime: 20, endTime: 28, poolA: 212, poolB: 220, winnerArtistA: 244 } as const;
+/**
+ * WHAT 212 AND 220 ACTUALLY ARE, because this file has called them the pools
+ * since it was written and the IDL disagrees.
+ *
+ * The Battle account carries SIX u64s in a row, and two of them are SOL per
+ * side, not one:
+ *
+ *     196 artist_a_supply        204 artist_b_supply
+ *     212 artist_a_sol_balance   220 artist_b_sol_balance
+ *     228 artist_a_pool          236 artist_b_pool
+ *
+ * So `poolA: 212` reads `artist_a_sol_balance`. MEASURED 2026-09-24 on five
+ * battles including the three largest ever run: the two fields hold the same
+ * value on every side of every one of them, so nothing downstream is wrong.
+ * They are read as a pair below and a disagreement is reported rather than
+ * silently resolved, because "we checked once" is not a property of the code
+ * and the next reader cannot tell it from a guess.
+ */
+const OFFSET = {
+  startTime: 20,
+  endTime: 28,
+  solBalanceA: 212,
+  solBalanceB: 220,
+  poolA: 228,
+  poolB: 236,
+  winnerArtistA: 244,
+} as const;
 
 /**
  * The JSON-RPC body to POST at any Solana endpoint.
@@ -93,6 +119,14 @@ export interface BattleSummary {
   startTime: number;
   endTime: number;
   poolLamports: { a: number; b: number };
+  /**
+   * True when `artist_*_sol_balance` and `artist_*_pool` disagree on a side.
+   *
+   * They matched on every battle measured, so this should never be true. It
+   * exists because the day it is, every quote built off the wrong one of the
+   * two is wrong, and nothing else would say so.
+   */
+  poolDisagreesWithBalance: boolean;
   settled: boolean;
   /**
    * Which side the PROGRAM settled on: the larger pool. Null until it settles.
@@ -140,8 +174,14 @@ export function parseBattleAccount(
 
   const view = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
   const endTime = u64(view, OFFSET.endTime);
+  // The 256-byte discovery slice reaches 236, so both pairs are in range. A
+  // caller passing a shorter buffer would read past it, so the length check
+  // above is now load-bearing for these two as well.
+  if (raw.length <= OFFSET.poolB + 7) return null;
   const poolA = u64(view, OFFSET.poolA);
   const poolB = u64(view, OFFSET.poolB);
+  const balanceA = u64(view, OFFSET.solBalanceA);
+  const balanceB = u64(view, OFFSET.solBalanceB);
 
   return {
     battleId,
@@ -149,6 +189,7 @@ export function parseBattleAccount(
     startTime: u64(view, OFFSET.startTime),
     endTime,
     poolLamports: { a: poolA, b: poolB },
+    poolDisagreesWithBalance: poolA !== balanceA || poolB !== balanceB,
     settled,
     // On a tie the program settles to artist B - its own "Tie detected!" branch,
     // 68 of 68 tied battles on chain. This field reads the flag rather than
