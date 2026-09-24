@@ -25,7 +25,15 @@ export interface BattleAccountResponse {
   /** Minted supply per side, base units (bytes 196 and 204). The sell quote needs these. */
   supplyA: number;
   supplyB: number;
-  /** Unix seconds. The widget's clock. */
+  /**
+   * Unix seconds. The widget's clock.
+   *
+   * `startTime` joined 2026-09-24 because the widget needs it: the program
+   * refuses every buy until `startTime + 60` (`tradeWindow.ts`), so a battle
+   * can be open, unsettled, and still reject a trade. Without this the panel
+   * lets someone spend a signature to learn that.
+   */
+  startTime: number;
   endTime: number;
   /** The MARKET winner byte (244): the larger pool, not the judged result. */
   winnerArtistA: boolean;
@@ -44,6 +52,7 @@ export function decodeBattleAccountResponse(raw: Uint8Array): BattleAccountRespo
     poolBLamports: u64(220),
     supplyA: u64(196),
     supplyB: u64(204),
+    startTime: Number(dv.getBigInt64(20, true)),
     endTime: Number(dv.getBigInt64(28, true)),
     winnerArtistA: raw[244] !== 0,
     settled: raw[245] !== 0,
