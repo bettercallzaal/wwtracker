@@ -27,7 +27,7 @@
  * re-run against mainnet to discover it again.
  */
 import { b58decode, battlePda, PROGRAM_ID } from "@/lib/ww/pda";
-import { quoteBuy, quoteSell, feeSplit, TRADE_FEE, BUY_POOL_SHARE } from "@/lib/ww/quote";
+import { quoteBuy, quoteBuyAtSupply, quoteSell, feeSplit, TRADE_FEE, BUY_POOL_SHARE } from "@/lib/ww/quote";
 
 const RPC = process.env.SOLANA_RPC_URL_PUBLIC ?? "https://api.mainnet-beta.solana.com";
 const DISC = {
@@ -110,7 +110,7 @@ async function tradesFor(battleId: number): Promise<Row[]> {
 function verify(battleId: number, rows: Row[]) {
   const pool = { a: 0, b: 0 };
   const supply = { a: 0, b: 0 };
-  const jsonRows: Array<{ battleId: number; side: "a" | "b"; poolLamports: number; spendLamports: number; programTokens: number; signature: string }> = [];
+  const jsonRows: Array<{ battleId: number; side: "a" | "b"; poolLamports: number; supplyBefore: number; spendLamports: number; programTokens: number; signature: string }> = [];
   // AFTER A SELL THE POOL IS DERIVED, NOT OBSERVED. A buy's contribution comes
   // from the program's own log, so the pool stays exact through buys. A sell's
   // does not: this replay subtracts a figure it computed itself, so any error
@@ -120,6 +120,11 @@ function verify(battleId: number, rows: Row[]) {
   // buy model from a wrong sell model.
   const derived = { a: false, b: false };
   let checked = 0, bad = 0, unscored = 0;
+  // BOTH BUY MODELS, SCORED SIDE BY SIDE. quoteBuy floors the difference and
+  // is one step low on about a buy in five; quoteBuyAtSupply floors the total.
+  // Reporting both on every run is how the next model change gets evidence
+  // instead of an argument.
+  const model = { difference: 0, total: 0, of: 0 };
   const fail = (sig: string, what: string, ours: unknown, theirs: unknown) => {
     bad++;
     console.log(`  MISMATCH ${what}\n     ours ${ours}   program ${theirs}\n     ${sig}`);
@@ -132,14 +137,17 @@ function verify(battleId: number, rows: Row[]) {
       if (derived[r.side]) {
         unscored++;
         jsonRows.push({
-          battleId, side: r.side, poolLamports: pool[r.side], spendLamports: r.amount,
-          programTokens: r.statedTokens, signature: r.sig,
+          battleId, side: r.side, poolLamports: pool[r.side], supplyBefore: supply[r.side],
+          spendLamports: r.amount, programTokens: r.statedTokens, signature: r.sig,
         });
         pool[r.side] += r.statedToPool ?? Math.round(r.amount * BUY_POOL_SHARE);
         supply[r.side] += r.statedTokens;
         continue;
       }
       checked++;
+      model.of++;
+      if (q.tokensOut === r.statedTokens) model.difference++;
+      if (quoteBuyAtSupply(pool[r.side], r.amount, supply[r.side]).tokensOut === r.statedTokens) model.total++;
       if (q.tokensOut !== r.statedTokens) fail(r.sig, `buy tokens (${r.amount} lamports into pool ${pool[r.side]})`, q.tokensOut, r.statedTokens);
       if (r.statedToPool !== null && Math.round(r.amount * BUY_POOL_SHARE) !== r.statedToPool)
         fail(r.sig, "pool contribution", Math.round(r.amount * BUY_POOL_SHARE), r.statedToPool);
@@ -155,6 +163,11 @@ function verify(battleId: number, rows: Row[]) {
         battleId,
         side: r.side,
         poolLamports: pool[r.side],
+        // THE SUPPLY THE SIDE HELD, tracked through sells as well as buys. A
+        // fixture that omitted it would force a reader to reconstruct it by
+        // summing buys, which is wrong on any battle that had a sell - and
+        // that is exactly the battle worth testing.
+        supplyBefore: supply[r.side],
         spendLamports: r.amount,
         programTokens: r.statedTokens,
         signature: r.sig,
@@ -167,9 +180,20 @@ function verify(battleId: number, rows: Row[]) {
       const q = quoteSell(pool[r.side], r.amount, supply[r.side]);
       if (Math.round(q.lamportsOut) !== r.statedReturn)
         fail(r.sig, `sell proceeds (${r.amount} tokens from supply ${supply[r.side]})`, Math.round(q.lamportsOut), r.statedReturn);
-      pool[r.side] -= Math.round(q.grossLamports);
+      // THE POOL STAYS OBSERVED THROUGH A SELL WHEN THE PROGRAM SAID BOTH
+      // HALVES. It logs the SOL returned and the fee, and the gross that left
+      // the pool is their sum - so nothing here has to be inferred from our
+      // own sell model. Using our figure instead was what put the pool beyond
+      // observation and made every later buy unscorable.
+      if (r.statedReturn !== null && r.statedFee !== null) {
+        pool[r.side] -= r.statedReturn + r.statedFee;
+      } else {
+        // One of the two was missing from the log. Now the pool IS derived,
+        // and saying so is the whole point.
+        pool[r.side] -= Math.round(q.grossLamports);
+        derived[r.side] = true;
+      }
       supply[r.side] -= r.amount;
-      derived[r.side] = true;
     }
   }
   if (process.argv.includes("--json")) {
@@ -179,8 +203,13 @@ function verify(battleId: number, rows: Row[]) {
     return { checked, bad };
   }
   console.log(`battle ${battleId}: ${rows.length} trades, ${checked} checked, ${bad} mismatched` +
-    (unscored > 0 ? `, ${unscored} UNSCORED (a sell put the pool beyond observation)` : "") +
+    (unscored > 0 ? `, ${unscored} UNSCORED (the program did not log both halves of a sell)` : "") +
     (checked === 0 ? "   NOTHING CHECKED - no denominator" : bad === 0 ? "   ALL EXACT" : ""));
+  if (model.of > 0) {
+    console.log(
+      `  buy models over ${model.of} buys: floor-the-difference ${model.difference}, floor-the-total ${model.total}`,
+    );
+  }
   return { checked, bad };
 }
 

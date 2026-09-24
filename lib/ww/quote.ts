@@ -171,12 +171,26 @@ export interface BuyQuote {
  * the supply the battle already holds - which a caller HAS, from bytes 196 and
  * 204 of the battle account, the same two numbers the sell path already reads.
  *
- * WHERE THIS IS NOT YET PROVEN: after a sell. A sell burns tokens and removes
- * SOL, and whether the stored supply still equals the floor of the curve at
- * the new pool has not been established - `ww-verify-battle.ts` cannot score
- * it, because it computes the post-sell pool itself and any error there
- * poisons every later buy. So this is exported beside `quoteBuy` rather than
- * replacing it, and the widget is not switched over in the same change.
+ * AND IT IS REFUTED ON SELL-HEAVY BATTLES. This was written as the exact
+ * model on the strength of 18 buy-only buys plus four after a sell. Scored
+ * against battle 1789948124, which ran 49 trades with many sells, it gets **5
+ * of 33** while flooring the difference gets 24. So it is not the general
+ * model and must not be presented as one.
+ *
+ * THE MISSING TERM IS ALMOST CERTAINLY THE RESIDUAL, which `quoteSell` below
+ * already documents: flooring the supply leaves part of the pool represented
+ * by no token, and the program removes only the curve value of the tokens
+ * burned, so that fraction stays in the vault permanently. Each sell adds
+ * another, and `floor(supplyAtPool(pool))` then reads HIGH by the accumulated
+ * residual - which is why this model degrades with the number of sells and
+ * looked exact on a night of mostly buy-only battles.
+ *
+ * SO NEITHER MODEL IS RIGHT IN GENERAL. What is established: on a battle whose
+ * pool carries no residual, the program floors the total and we floor the
+ * difference, and we are one step low. What is not: how the program accounts
+ * for the residual once sells have created one. Until that is measured, this
+ * function is for buy-only battles and for understanding the mechanism, not
+ * for quoting a trader - which is why no caller has been switched.
  */
 export function quoteBuyAtSupply(
   poolLamports: number,

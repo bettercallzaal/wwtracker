@@ -5,12 +5,20 @@
  * 22 buys and `scripts/ww-verify-battle.ts` disagreed with the program on 5 of
  * them - every one by exactly one 100,000-token step, always low.
  *
- * WHY THE FIXTURE SPLITS ON `buyOnly`. The verifier replays a battle and
- * accumulates the pool as it goes. For a buy it uses the program's own stated
- * contribution, so the pool stays exact. For a SELL it subtracts a figure it
- * computed itself - so after any sell the pool is derived rather than
- * observed, and a buy scored against it cannot tell a wrong buy model from a
- * wrong sell model. Those rows are kept but never used to score.
+ * WHY THE FIXTURE CARRIES `buyOnly`, AND WHY IT NO LONGER GATES THE SCORING.
+ * The verifier replays a battle accumulating the pool. For a buy it uses the
+ * program's own stated contribution, so the pool stays exact. For a SELL it
+ * used to subtract a figure it computed itself, which put the pool beyond
+ * observation and made every later buy unscorable.
+ *
+ * The program logs both halves of a sell - the SOL returned and the fee - and
+ * their sum is the gross that left the pool, so nothing has to be inferred.
+ * Since that fix the pool is observed throughout and ALL 22 rows are scorable.
+ *
+ * The flag stays because it records a real property of each battle, and
+ * because the rows it marks were captured BEFORE the fix: re-derived with the
+ * pool observed, all four came back byte-identical, which is evidence that our
+ * sell model was already exact rather than a reason to have trusted it.
  */
 import { describe, expect, it } from "vitest";
 import fixture from "../__fixtures__/ww-real-buys-2026-09-24.json";
@@ -55,12 +63,38 @@ describe("the fixture itself", () => {
   });
 });
 
-describe("quoteBuyAtSupply reproduces every clean buy", () => {
-  it("matches the program on all 18", () => {
+describe("quoteBuyAtSupply reproduces every real buy", () => {
+  it("matches the program on all 18 where the pool carries no residual", () => {
     const wrong = withSupply(clean).filter(
       (r) => quoteBuyAtSupply(r.poolLamports, r.spendLamports, r.supplyBefore).tokensOut !== r.programTokens,
     );
     expect(wrong.map((r) => `${r.battleId}:${r.side}`)).toEqual([]);
+  });
+
+  /**
+   * AND IS NOT THE GENERAL MODEL. Scored against battle 1789948124 - 49 trades
+   * with many sells - it gets 5 of 33 while flooring the difference gets 24.
+   * The missing term is the residual each sell leaves in the vault, which
+   * `quoteSell` documents: flooring the supply leaves part of the pool
+   * represented by no token, and the program removes only the curve value of
+   * the tokens burned.
+   *
+   * This test is a reminder rather than a measurement. The sell-heavy battle
+   * is not in the fixture because the supply reconstruction it needs is the
+   * very thing in question, and a fixture that assumed an answer would prove
+   * it by construction.
+   */
+  it("is documented as refuted on sell-heavy battles, not as exact", async () => {
+    const raw = await import("node:fs").then((fs) =>
+      fs.readFileSync(new URL("../ww/quote.ts", import.meta.url), "utf8"),
+    );
+    // The comment wraps, so the claim is split by newlines and leading " * ".
+    // Normalising is the difference between guarding the statement and
+    // guarding one particular line break.
+    const source = raw.replace(/\n\s*\*\s?/g, " ").replace(/\s+/g, " ");
+    expect(source).toMatch(/REFUTED ON SELL-HEAVY BATTLES/);
+    expect(source).toMatch(/5 of 33/);
+    expect(source).toMatch(/NEITHER MODEL IS RIGHT IN GENERAL/);
   });
 });
 
