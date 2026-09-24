@@ -39,6 +39,7 @@ import {
   SUPPLY_QUANTUM,
   minimumSpendLamports,
   quoteBuy,
+  quoteBuyAtSupply,
   quoteSell,
   supplyAtPool,
   withSlippage,
@@ -106,6 +107,15 @@ export interface BuyPlan {
   poolLamports: number;
   /** What the curve says, before the program's own arithmetic. */
   estimatedTokensOut: number;
+  /**
+   * Which curve form produced that estimate.
+   *
+   * `minted` is the exact one, priced off the pool the stored supply implies.
+   * `pool` is the older form, used only when the caller's `BattleState` has no
+   * `mintedSupply`; it misses about one buy in five, always LOW by one step.
+   * A caller showing the estimate to somebody should know which it is holding.
+   */
+  pricedFrom: "minted" | "pool";
   /** The floor actually put in the instruction. */
   minTokensOut: number;
   feeLamports: number;
@@ -168,7 +178,27 @@ export class DustTradeError extends Error {
 export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
   const state = await p.readBattleState();
   const poolLamports = state.poolLamports[p.side];
-  const quote = quoteBuy(poolLamports, p.amountLamports);
+  /**
+   * PRICE OFF THE STORED SUPPLY WHEN WE HAVE IT.
+   *
+   * A buy is minted from the pool the supply IMPLIES, not the pool the vault
+   * holds - measured exact on 127 real buys where the pool-based form misses
+   * about one in five, always low by one 100,000 step (see `quote.ts`). The
+   * account carries that supply at bytes 196 and 204, so a caller reading a
+   * 256-byte slice already has it.
+   *
+   * The fallback is the old form rather than a refusal, because `mintedSupply`
+   * is optional on `BattleState` and a caller that cannot supply it should get
+   * a slightly conservative quote instead of an error. Which was used is
+   * reported, the same way `planSell` reports `supplySource`, so nobody has to
+   * guess which number they are holding.
+   */
+  const minted = state.mintedSupply?.[p.side];
+  const buyPricedFrom: "minted" | "pool" = minted === undefined ? "pool" : "minted";
+  const quote =
+    minted === undefined
+      ? quoteBuy(poolLamports, p.amountLamports)
+      : quoteBuyAtSupply(minted, p.amountLamports);
 
   // REFUSE A TRADE THAT MINTS NOTHING, with the number the caller needs.
   //
@@ -238,6 +268,7 @@ export async function planBuy(p: PlanBuyParams): Promise<BuyPlan> {
     }),
     poolLamports,
     estimatedTokensOut: quote.tokensOut,
+    pricedFrom: buyPricedFrom,
     minTokensOut,
     feeLamports: quote.feeLamports,
     priceImpact,

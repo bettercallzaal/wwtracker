@@ -19,7 +19,7 @@ import {
 import { computeUnitLimitInstruction, computeUnitPriceInstruction, serializeMessage } from "@/lib/ww/message";
 import { planBuy, planSell, poolMoveBps, type BattleState } from "@/lib/ww/tradePlan";
 import { describePriceImpact, type PriceImpactAssessment } from "@/lib/ww/priceImpact";
-import { lamportsToSol, quoteBuy, solToLamports, withSlippage } from "@/lib/ww/quote";
+import { lamportsToSol, quoteBuyAtSupply, solToLamports, withSlippage } from "@/lib/ww/quote";
 import { BUY_OPENS_AFTER_START_SECONDS } from "@/lib/ww/tradeWindow";
 import { sellEstimate, shareOfSide } from "@/lib/ww/widgetSell";
 import { pollForChange } from "@/lib/ww/pollForChange";
@@ -250,7 +250,19 @@ export default function TradeWidget({ battleId, embedded = false }: { battleId: 
   const minted = battle ? battle.mintedSupply[side] : null;
   const held = balances ? balances[side] : null;
 
-  const buyEstimate = mode === "buy" && lamports > 0 && battle ? quoteBuy(pool, lamports) : null;
+  /**
+   * THE NUMBER A TRADER READS, priced off the stored supply.
+   *
+   * A buy is minted from the pool the supply implies, not the pool the vault
+   * holds - exact on 127 real buys, where the pool-based form misses about one
+   * in five, always LOW by one 100,000-token step. `mintedSupply` comes from
+   * the same account read that gives the pool, so there is nothing extra to
+   * fetch. See `quote.ts`.
+   */
+  const buyEstimate =
+    mode === "buy" && lamports > 0 && battle && minted !== null
+      ? quoteBuyAtSupply(minted, lamports)
+      : null;
   const sell =
     mode === "sell" && battle && held !== null
       ? sellEstimate({ poolLamports: pool, mintedSupply: minted, sellTokens: tokens, balanceTokens: held })
