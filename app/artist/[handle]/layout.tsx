@@ -18,7 +18,7 @@ export async function generateMetadata({
   if (lb) {
     const title = `${lb.name} (@${lb.handle}) | WaveWarZ Artist`;
     const description =
-      `${lb.name} on WaveWarZ — leaderboard #${lb.rank}, ${lb.rec} record (${lb.win}% win rate), ${lb.vol.toFixed(2)} SOL volume. ` +
+      `${lb.name} on WaveWarZ - leaderboard #${lb.rank}, ${lb.rec} record (${lb.win}% win rate), ${lb.vol.toFixed(2)} SOL volume. ` +
       `A ZAO ecosystem artist competing on the Solana music-battle platform.`;
     return {
       title,
@@ -39,7 +39,7 @@ export async function generateMetadata({
   }
 
   const title = `@${handle} | WaveWarZ Artist`;
-  const description = `${handle}'s WaveWarZ battle profile — on-chain stats, Audius tracks, and leaderboard standing in The ZAO ecosystem.`;
+  const description = `${handle}'s WaveWarZ battle profile - on-chain stats, Audius tracks, and leaderboard standing in The ZAO ecosystem.`;
   return {
     title,
     description,

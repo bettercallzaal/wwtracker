@@ -27,13 +27,13 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://wavewarz.info"),
-  title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
+  title: "WaveWarZ Tracker - On-Chain Music Battle Analytics",
   description:
     `Open-source Solana analytics for WaveWarZ: ${M.BATTLES_ON_CHAIN.toLocaleString()} on-chain music ` +
     `battles, ${M.VOLUME_SOL} SOL total volume, artist earnings, head-to-head records, and the ` +
     `on-chain fee model, measured ${M.MEASURED_ON_LONG}. Data: wavewarz.info/api/public/stats.`,
   openGraph: {
-    title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
+    title: "WaveWarZ Tracker - On-Chain Music Battle Analytics",
     description:
       `${M.BATTLES_ON_CHAIN.toLocaleString()} battles, ${M.VOLUME_SOL} SOL volume, artist earnings and ` +
       `settlement read from chain for the WaveWarZ Solana music-battle platform.`,
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "WaveWarZ Tracker — On-Chain Music Battle Analytics",
+    title: "WaveWarZ Tracker - On-Chain Music Battle Analytics",
     description:
       `${M.BATTLES_ON_CHAIN.toLocaleString()} on-chain music battles, ${M.VOLUME_SOL} SOL volume, artist ` +
       `earnings and settlement read from chain for WaveWarZ on Solana.`,

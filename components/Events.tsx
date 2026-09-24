@@ -136,8 +136,8 @@ export default function Events() {
       <Section label="UPCOMING">
         <ul style={listStyle}>
           <li>
-            <b>ZAOstock</b> — Oct 3, 2026 · Franklin St Parklet, Ellsworth, Maine.
-            The ZAO&apos;s flagship IRL music festival — WaveWarZ is the music-battle layer.{" "}
+            <b>ZAOstock</b> - Oct 3, 2026 · Franklin St Parklet, Ellsworth, Maine.
+            The ZAO&apos;s flagship IRL music festival - WaveWarZ is the music-battle layer.{" "}
             <a href="https://zaostock.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
               zaostock.com &#8599;
             </a>
@@ -150,7 +150,7 @@ export default function Events() {
 
       <Section label="THIRD-PARTY COVERAGE">
         <p style={{ margin: "0 0 10px", color: C.text, lineHeight: 1.6, fontSize: 14 }}>
-          Independent media and community coverage — verified via YouTube oEmbed.
+          Independent media and community coverage - verified via YouTube oEmbed.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <a
@@ -159,7 +159,7 @@ export default function Events() {
             rel="noreferrer"
             style={{ color: C.text, fontFamily: C.mono, fontSize: 12, textDecoration: "none" }}
           >
-            &#8226; Crypto Magic Hour EP. 50 — @VeVeMagic (⭕️VeVeMagic🏰){" "}
+            &#8226; Crypto Magic Hour EP. 50 - @VeVeMagic (⭕️VeVeMagic🏰){" "}
             <span style={{ color: C.accent }}>&#8599;</span>
           </a>
         </div>

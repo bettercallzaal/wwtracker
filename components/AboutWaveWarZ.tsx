@@ -115,7 +115,7 @@ export default function AboutWaveWarZ() {
         <p style={{ margin: "0 0 8px", color: C.text, lineHeight: 1.6 }}>
           WaveWarZ is <b>its own project and ecosystem</b>. It was incubated in{" "}
           <a href="https://thezao.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>The ZAO</a>
-          {" "}by three ZAO members and has since graduated out of it — The ZAO is its
+          {" "}by three ZAO members and has since graduated out of it - The ZAO is its
           incubator and part of its history, not its governance. Related surfaces, some
           shared with that history and some its own:
         </p>

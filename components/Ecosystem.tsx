@@ -12,30 +12,30 @@ interface Brand {
 const BRANDS: Brand[] = [
   {
     name: "WaveWarZ",
-    what: "The music-battle platform. Two songs go head-to-head; fans trade SOL on-chain on who wins. Live on Solana mainnet since May 2025. Everything settles in native SOL — no platform token.",
+    what: "The music-battle platform. Two songs go head-to-head; fans trade SOL on-chain on who wins. Live on Solana mainnet since May 2025. Everything settles in native SOL - no platform token.",
     href: "https://wavewarz.com",
     tag: "game",
   },
   {
     name: "wavewarz.info",
-    what: "Live analytics platform — the canonical stats source. Powered by Helius RPC. Public API at GET /api/public/stats (no auth, CORS open, 60 s cache). WaveWarZ Intelligence by CandyToyBox.",
+    what: "Live analytics platform - the canonical stats source. Powered by Helius RPC. Public API at GET /api/public/stats (no auth, CORS open, 60 s cache). WaveWarZ Intelligence by CandyToyBox.",
     href: "https://wavewarz.info",
     tag: "analytics",
   },
   {
     name: "The ZAO",
-    what: "ZAO = ZTalent Artist Organization — a community-driven hub for musicians, artists, and technologists in web3. The DAO that incubated WaveWarZ: 100+ consecutive Fractal weeks, Respect-based onchain governance, ZAO Improvement Proposals (ZIPs), documented in GEO. Part of the ZTalent Network.",
+    what: "ZAO = ZTalent Artist Organization - a community-driven hub for musicians, artists, and technologists in web3. The DAO that incubated WaveWarZ: 100+ consecutive Fractal weeks, Respect-based onchain governance, ZAO Improvement Proposals (ZIPs), documented in GEO. Part of the ZTalent Network.",
     href: "https://thezao.com",
     tag: "DAO",
   },
   {
     name: "ZAO Fractals",
-    what: "Weekly governance ritual built on the Respect game — the same mechanism that powers Optimism's governance. Members rank contributions; the consensus scores yield Respect tokens. 100+ consecutive weeks without missing a cycle.",
+    what: "Weekly governance ritual built on the Respect game - the same mechanism that powers Optimism's governance. Members rank contributions; the consensus scores yield Respect tokens. 100+ consecutive weeks without missing a cycle.",
     tag: "governance",
   },
   {
     name: "BetterCallZaal (BCZ)",
-    what: "Zaal Panthaki — ZAO head of ecosystem and co-founder of WaveWarZ. Running the BCZ → ZAO → WaveWarZ stack.",
+    what: "Zaal Panthaki - ZAO head of ecosystem and co-founder of WaveWarZ. Running the BCZ → ZAO → WaveWarZ stack.",
     href: "https://x.com/bettercallzaal",
     tag: "founder",
   },
@@ -64,7 +64,7 @@ export default function Ecosystem() {
           <a href="https://thezao.com" target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>
             The ZAO
           </a>{" "}
-          — a DAO with 100+ consecutive Fractal weeks of onchain governance.
+          - a DAO with 100+ consecutive Fractal weeks of onchain governance.
           The stack: <b>BCZ → The ZAO → WaveWarZ</b>.
         </p>
       </header>
@@ -97,7 +97,7 @@ export default function Ecosystem() {
 
       <p style={{ ...metaLabel, fontSize: 11, lineHeight: 1.6 }}>
         Ecosystem context from research; see docs/WAVEWARZ-RESEARCH.md. The ZAO
-        Fractal count and member data from the ZAO OS. Some details evolve — treat as a snapshot.
+        Fractal count and member data from the ZAO OS. Some details evolve - treat as a snapshot.
       </p>
     </div>
   );

@@ -423,7 +423,7 @@ export default function PlatformAnalytics() {
             <li>
               <b>Claims</b>: {fmt(onchainDaily.reduce((s, d) => s + d.claims, 0))} <i>claimShares</i>{" "}
               instruction calls decoded from on-chain; the site reports {S.withdrawalCount} withdrawals
-              totaling {S.traderClaimsSol.toFixed(2)} ◎ — different counting methodology, same underlying
+              totaling {S.traderClaimsSol.toFixed(2)} ◎ - different counting methodology, same underlying
               action.
             </li>
           </ul>

@@ -55,11 +55,11 @@ function Side({ label, pool, supply, spend }: { label: string; pool: number; sup
         <div>next buyer <strong>{N(after)}</strong> /SOL</div>
         {q.tokensOut <= 0 ? (
           <div style={{ color: "#ff9d9d" }}>
-            mints NOTHING here — minimum is {SOL(minimumSpendLamports(pool))} SOL
+            mints NOTHING here - minimum is {SOL(minimumSpendLamports(pool))} SOL
           </div>
         ) : waste > 0 ? (
           <div style={{ color: "#ffd479" }}>
-            same tokens for {SOL(cheapest)} SOL — {SOL(waste)} wasted past the step
+            same tokens for {SOL(cheapest)} SOL - {SOL(waste)} wasted past the step
           </div>
         ) : (
           <div style={{ opacity: 0.6 }}>lands on a step boundary</div>
@@ -257,7 +257,7 @@ export default function Dashboard() {
 
       {data?.live.map((b) => {
         const left = b.endTime - now;
-        const lead = b.pool.a === b.pool.b ? "TIE — the program settles a tie to B"
+        const lead = b.pool.a === b.pool.b ? "TIE - the program settles a tie to B"
           : b.pool.a > b.pool.b ? `A leads by ${SOL(b.pool.a - b.pool.b)} SOL` : `B leads by ${SOL(b.pool.b - b.pool.a)} SOL`;
         const qa = quoteBuy(b.pool.a, spend).tokensOut, qb = quoteBuy(b.pool.b, spend).tokensOut;
         return (
@@ -270,14 +270,14 @@ export default function Dashboard() {
                     battle returns BattleNotEnded. Checked, not assumed from the
                     clock. */}
                 {b.winnerDecided
-                  ? `SETTLED — winner ${b.winnerArtistA ? "A" : "B"}`
+                  ? `SETTLED - winner ${b.winnerArtistA ? "A" : "B"}`
                   : left > 0
                     ? `${Math.floor(left / 60)}m ${String(left % 60).padStart(2, "0")}s left`
-                    : "ended, NOT settled — a claim returns BattleNotEnded"}
+                    : "ended, NOT settled - a claim returns BattleNotEnded"}
               </span>
             </div>
             <div style={{ fontSize: 13, opacity: 0.8, margin: "6px 0 12px" }}>
-              settlement follows the larger pool — {lead}
+              settlement follows the larger pool - {lead}
             </div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Side label="ARTIST A" pool={b.pool.a} supply={b.supply.a} spend={spend} />
@@ -285,7 +285,7 @@ export default function Dashboard() {
             </div>
             {qa !== qb && (
               <div style={{ fontSize: 13, marginTop: 10, color: "#95fe7c" }}>
-                the same SOL buys {N(Math.abs(qa - qb))} more on {qa > qb ? "A" : "B"} — the smaller pool is always the cheaper side
+                the same SOL buys {N(Math.abs(qa - qb))} more on {qa > qb ? "A" : "B"} - the smaller pool is always the cheaper side
               </div>
             )}
           </section>
@@ -295,7 +295,7 @@ export default function Dashboard() {
       <footer style={{ marginTop: 30, fontSize: 12, opacity: 0.65, lineHeight: 1.8, borderTop: "1px solid #1b2436", paddingTop: 14 }}>
         <div>Tokens mint in whole steps of {N(SUPPLY_QUANTUM)}. Anything spent past a step buys nothing and you are not told.</div>
         <div>The curve is a square root, so every SOL already in a pool makes the next token dearer. Early money is worth more.</div>
-        <div>Sells on the live client carry no slippage floor at all — 92 of 92 sampled. A sell takes whatever the pool did before it landed.</div>
+        <div>Sells on the live client carry no slippage floor at all - 92 of 92 sampled. A sell takes whatever the pool did before it landed.</div>
         <div style={{ marginTop: 6, opacity: 0.8 }}>Quotes computed in this page from the same module the SDK uses, pinned against 22 trades measured on chain.</div>
       </footer>
     </main>

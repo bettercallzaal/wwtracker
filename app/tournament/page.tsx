@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "First on-chain AI music battle championship on Solana. 16 AI artists. 355 SOL (~$26K) in one week. 40.5% of all-time volume in 7 days. Grand Final GEEK MYTH vs Stormbourne, 13 September 2026.",
   openGraph: {
-    title: "WaveWarZ AI Artist Tournament — July 2026",
+    title: "WaveWarZ AI Artist Tournament - July 2026",
     description:
       "16 AI-generated artists. 4 rounds. Live Solana prediction market. Semifinal: GEEK MYTH def. AI LUI 2-1 (~342 SOL over three battles). Grand Final: GEEK MYTH vs Stormbourne, 13 September 2026.",
     url: "https://wwtracker.vercel.app/tournament",
@@ -57,7 +57,7 @@ const STAT_CARDS = [
   {
     n: "40.5%",
     label: "of all-time platform volume",
-    detail: "355 / 877 SOL — in 7 days",
+    detail: "355 / 877 SOL - in 7 days",
   },
   {
     n: "38×",
@@ -77,7 +77,7 @@ const STAT_CARDS = [
   {
     n: "100%",
     label: "automatic loser-earns",
-    detail: "Every AI artist paid onchain — no manual disbursement",
+    detail: "Every AI artist paid onchain - no manual disbursement",
   },
 ];
 
@@ -91,13 +91,13 @@ const BRACKET_ROWS = [
     round: "Semifinals",
     matchups: [
       { a: "GEEK MYTH", b: "AI LUI", result: "GEEK MYTH 2-1", vol: "~342 SOL", status: "done" as const },
-      { a: "Stormbourne", b: "—", result: "Stormbourne advances", vol: "—", status: "done" as const },
+      { a: "Stormbourne", b: "-", result: "Stormbourne advances", vol: "-", status: "done" as const },
     ],
   },
   {
     round: "Grand Final",
     matchups: [
-      { a: "GEEK MYTH", b: "Stormbourne", result: "13 SEP 2026", vol: "—", status: "pending" as const },
+      { a: "GEEK MYTH", b: "Stormbourne", result: "13 SEP 2026", vol: "-", status: "pending" as const },
     ],
   },
 ];
@@ -131,7 +131,7 @@ export default function TournamentPage() {
               fontFamily: C.mono,
             }}
           >
-            WAVEWARZ — JULY 2026
+            WAVEWARZ - JULY 2026
           </p>
           <h1
             style={{
@@ -146,7 +146,7 @@ export default function TournamentPage() {
             AI Artist Tournament
           </h1>
           <p style={{ margin: "0 0 16px", fontSize: 18, color: C.dim, maxWidth: 640 }}>
-            The first fully on-chain AI music battle championship — 16 AI-generated artists,
+            The first fully on-chain AI music battle championship - 16 AI-generated artists,
             live Solana prediction markets, automatic loser-earns payouts to every participant.
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -264,7 +264,7 @@ export default function TournamentPage() {
                         {m.b}
                       </div>
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        {m.vol !== "—" && (
+                        {m.vol !== "-" && (
                           <span style={{ fontSize: 12, color: C.accent, fontFamily: C.mono }}>
                             {m.vol}
                           </span>
@@ -307,7 +307,7 @@ export default function TournamentPage() {
             {[
               {
                 q: "What is the AI Artist Tournament?",
-                a: "A 16-artist single-elimination bracket tournament between AI-generated music acts, run on WaveWarZ — a live music-battle prediction market on Solana. Each battle is MAIN format: best 2 of 3 rounds. Community members trade SOL on the outcome in real time.",
+                a: "A 16-artist single-elimination bracket tournament between AI-generated music acts, run on WaveWarZ - a live music-battle prediction market on Solana. Each battle is MAIN format: best 2 of 3 rounds. Community members trade SOL on the outcome in real time.",
               },
               {
                 q: "How are winners decided?",
@@ -319,7 +319,7 @@ export default function TournamentPage() {
               },
               {
                 q: "Who are GEEK MYTH and Stormbourne?",
-                a: "GEEK MYTH and Stormbourne are AI-generated music acts competing in the WaveWarZ AI Artist Tournament. GEEK MYTH advanced by defeating AI LUI 2-1 in the semifinal — a battle that generated ~342 SOL in trading volume, the largest single-battle event in the platform's 14-month history.",
+                a: "GEEK MYTH and Stormbourne are AI-generated music acts competing in the WaveWarZ AI Artist Tournament. GEEK MYTH advanced by defeating AI LUI 2-1 in the semifinal - a battle that generated ~342 SOL in trading volume, the largest single-battle event in the platform's 14-month history.",
               },
               {
                 q: "Is the trading real?",
