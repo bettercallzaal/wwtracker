@@ -1,0 +1,4 @@
+{
+  "_comment": "Names for battles we launch ourselves. wavewarz.info only indexes battles it created, so without an entry here a community battle renders as A versus B. Keys are battle ids, which are the battle's start time in unix seconds. Both sides need an artist name: a half-filled entry is refused, because one real name beside a placeholder reads as an artist with no name.",
+  "battles": {}
+}

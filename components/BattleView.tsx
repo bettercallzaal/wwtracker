@@ -47,6 +47,9 @@ export default function BattleView({
   siteUrl,
   tradingEnabled,
   marksEnabled = false,
+  nameNote = "",
+  communityTitle = null,
+  communityHost = null,
 }: {
   battleId: number;
   sides: { a: SideInfo; b: SideInfo } | null;
@@ -55,6 +58,15 @@ export default function BattleView({
   tradingEnabled: boolean;
   /** WW_MARKS, the operator's own machine during a battle night. Off everywhere else. */
   marksEnabled?: boolean;
+  /**
+   * Where the names came from, in words. Empty when they came from the public
+   * API, which is the unremarkable case. Non-empty means the reader needs to
+   * know: a community battle, a battle nobody has named, or an outage - and
+   * the last two look identical without it.
+   */
+  nameNote?: string;
+  communityTitle?: string | null;
+  communityHost?: string | null;
 }) {
   const [chain, setChain] = useState<ChainState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -99,10 +111,25 @@ export default function BattleView({
 
   return (
     <main style={{ maxWidth: 720, margin: "32px auto", padding: "0 16px", color: C.text, fontFamily: "inherit" }}>
-      <p style={metaLabel}>WaveWarZ battle</p>
-      <h1 style={{ fontSize: 20, margin: "6px 0 12px" }}>
-        {labels.a} <span style={{ color: C.dim }}>vs</span> {labels.b}
+      <p style={metaLabel}>
+        {communityHost ? `Community battle, run by ${communityHost}` : "WaveWarZ battle"}
+      </p>
+      <h1 style={{ fontSize: 20, margin: "6px 0 4px" }}>
+        {communityTitle ?? (
+          <>
+            {labels.a} <span style={{ color: C.dim }}>vs</span> {labels.b}
+          </>
+        )}
       </h1>
+      {communityTitle && (
+        <p style={{ fontSize: 14, color: C.dim, margin: "0 0 4px" }}>
+          {labels.a} vs {labels.b}
+        </p>
+      )}
+      {nameNote && (
+        <p style={{ fontSize: 12, color: C.dim, margin: "0 0 12px" }}>{nameNote}</p>
+      )}
+      {!nameNote && <div style={{ marginBottom: 12 }} />}
 
       <div style={{ ...panel, marginBottom: 12 }}>
         {chain ? (

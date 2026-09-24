@@ -310,10 +310,46 @@ export default function LaunchBattle() {
         </p>
       )}
       {phase === "sent" && signature && (
-        <p style={{ marginTop: 12, fontSize: 13, color: C.text }}>
-          Sent. Signature <span style={{ color: C.accent }}>{signature}</span>. Sent is not landed - open the
-          battle page to see it on chain.
-        </p>
+        <>
+          <p style={{ marginTop: 12, fontSize: 13, color: C.text }}>
+            Sent. Signature <span style={{ color: C.accent }}>{signature}</span>. Sent is not landed - open the
+            battle page to see it on chain.
+          </p>
+          {/*
+            THE NAMES ARE THE NEXT STEP AND NOBODY WOULD REMEMBER THEM.
+            wavewarz.info only indexes battles it created, so this one renders
+            as "A" versus "B" until it is in data/community-battles.json. The
+            entry is printed here, filled in, rather than left as a thing to
+            look up later - which is when it would not happen.
+          */}
+          <p style={{ marginTop: 12, fontSize: 12, color: C.dim }}>
+            This battle has no names yet. wavewarz.info does not index battles it did not create, so
+            it will render as A versus B until you add this to{" "}
+            <code>data/community-battles.json</code> and commit it:
+          </p>
+          <pre
+            style={{
+              marginTop: 6,
+              padding: 10,
+              fontSize: 11,
+              color: C.text,
+              background: C.elev,
+              borderRadius: 6,
+              overflowX: "auto",
+            }}
+          >
+{`"${launched}": {
+  "title": "",
+  "host": "",
+  "a": { "artist": "", "track": "" },
+  "b": { "artist": "", "track": "" }
+}`}
+          </pre>
+          <p style={{ marginTop: 4, fontSize: 12, color: C.dim }}>
+            Both sides need an artist name. A half-filled entry is refused on purpose: one real name
+            beside a blank reads as an artist who has none.
+          </p>
+        </>
       )}
       {error && (
         <p style={{ marginTop: 12, fontSize: 13, color: C.accent }}>NOT LAUNCHED: {error}</p>
