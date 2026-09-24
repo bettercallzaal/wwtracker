@@ -41,6 +41,19 @@
  * opens its own battles, and how concentrated the outside traders are - and
  * because a reader given only the combined number cannot recover either.
  *
+ * A VERDICT NEEDS A DENOMINATOR, AND THIS MODULE SHIPPED WITHOUT ONE. Run
+ * against a single night - seven battles, five of them opened by the house -
+ * it printed "ONE WALLET is first every time, so the arrival floor is that
+ * wallet's cadence and not the room's" **off two battles**. That sentence is
+ * indistinguishable from the same sentence off two hundred, and it is worth
+ * nothing off two.
+ *
+ * `firstSide.ts` already prints the exact binomial tail beside every count for
+ * this reason. The same discipline belongs here: below `MIN_BATTLES_FOR_VERDICT`
+ * the module says the sample is too thin and declines to characterise the
+ * population at all. A concentration verdict is a claim about who shows up,
+ * and two battles is not a population.
+ *
  * ADDRESSES ARE PUBLIC AND THIS MODULE STILL DOES NOT DECIDE TO PUBLISH THEM.
  * Zaal's public-communication ruling of 2026-09-20 was "no wallets named, no
  * one blamed, no individual P&L". Everything here is computable from chain by
@@ -101,6 +114,16 @@ function tally(rows: FirstBuyerRow[]): { distinct: number; tallies: TraderTally[
     .sort((a, b) => b.battles - a.battles || (a.fastestSeconds ?? Infinity) - (b.fastestSeconds ?? Infinity));
   return { distinct: byTrader.size, tallies, top: tallies[0]?.battles ?? 0 };
 }
+
+/**
+ * Below this many battles, no verdict is offered.
+ *
+ * Eight is not a statistical threshold and is not presented as one: it is the
+ * point below which a majority can be two wallets out of three and the
+ * sentence would read like a finding. The number is arbitrary; refusing to
+ * characterise a population from a handful is not.
+ */
+export const MIN_BATTLES_FOR_VERDICT = 8;
 
 export function firstBuyerConcentration(
   rows: FirstBuyerRow[],
@@ -179,6 +202,19 @@ export function describeFirstBuyers(c: FirstBuyerConcentration, topN = 5): strin
     );
   }
   if (scope.tallies.length > topN) out.push(`  and ${scope.tallies.length - topN} more wallets`);
+
+  // THE VERDICT NEEDS A DENOMINATOR. Off two battles, "one wallet is first
+  // every time" reads exactly like the same sentence off two hundred.
+  if (scope.measured < MIN_BATTLES_FOR_VERDICT) {
+    out.push(
+      `TOO FEW TO CHARACTERISE: ${scope.measured} battle(s) after the house is excluded, and this`,
+    );
+    out.push(
+      `module offers no verdict below ${MIN_BATTLES_FOR_VERDICT}. The wallets above are what happened; whether`,
+    );
+    out.push("one of them dominates is not something this sample can say.");
+    return out;
+  }
 
   // The verdict, and only the part the measurement can carry.
   if (scope.distinctTraders === 1) {
