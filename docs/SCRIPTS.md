@@ -26,6 +26,7 @@ has never been run in full, it says so.
 | Script | What it does |
 |---|---|
 | `ww-settle-dry-run.ts` | Packs every unsettled battle into transactions and simulates each one. No wallet, no flag, nothing signed |
+| `ww-winner-agreement.ts` | Does the announced winner match the one the program pays, per format. Prints the chance each rate could come from the baseline, so a small sample cannot read as a finding |
 | `ww-format-stats.ts` | What each battle format actually is, over EVERY labelled battle rather than the 200 the API returns. Joins `public/ww-battles.json` to a chain scan on the battle id and reports what did not join |
 | `ww-launch-dry-run.ts` | Simulates creating a NEW battle from a wallet that is not the platform treasury, and quotes what it costs. Proves launching is permissionless. Nothing signed |
 | `ww-verify-battle.ts` | Replays one battle from chain and checks our model against the program's own numbers |
