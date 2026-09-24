@@ -18,13 +18,39 @@
  * failover in the code that has nowhere to fail over to.
  */
 import { PROGRAM_ID, battlePda } from "@/lib/ww/pda";
+import { parseBattleAccounts, phaseCounts } from "@/lib/ww/discovery";
+import { newestWatcherLog, watcherLogAgeSeconds, watcherVerdict } from "@/lib/watcherLog";
 import { quoteBuy, supplyAtPool, SUPPLY_QUANTUM } from "@/lib/ww/quote";
 import { readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 
 const PRIMARY = process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
 const KEYED = Boolean(process.env.SOLANA_RPC_URL);
-const WATCH_LOG = `${homedir()}/.zao/wwtracker/finals-watch.log`;
+/**
+ * WHERE THE WATCHER ACTUALLY WRITES, in the order to try.
+ *
+ * This checked `~/.zao/wwtracker/finals-watch.log` only. `scripts/ww-night.sh`
+ * has redirected the watcher to `var/ww-live-watch.log` since it was written,
+ * so on 2026-09-24 the doctor reported "last wrote 224510s ago - Probably
+ * dead" and "1 MISMATCH line(s)" while the real watcher was beating every
+ * three seconds two directories away. **A health check pointed at the wrong
+ * file is worse than none: it cries wolf, and the numbers it does report are
+ * from a run nobody is watching.**
+ *
+ * Both paths are tried, newest first, and the one used is PRINTED - naming the
+ * surface you read is the difference between a finding and a guess.
+ */
+const WATCH_LOGS = ["var/ww-live-watch.log", `${homedir()}/.zao/wwtracker/finals-watch.log`];
+
+/** The candidates that exist, in the order listed. The choice is in lib/watcherLog.ts. */
+const existingWatchLogs = () =>
+  WATCH_LOGS.flatMap((path) => {
+    try {
+      return [{ path, mtimeMs: statSync(path).mtimeMs }];
+    } catch {
+      return [];
+    }
+  });
 const KNOWN_BATTLE = 1789790992;
 
 let pass = 0, fail = 0, warn = 0;
@@ -66,19 +92,36 @@ async function main() {
     const rows: any[] = gpa.result ?? [];
     ok(`getProgramAccounts ${gpa.ms}ms, ${rows.length} battle accounts`);
 
-    const now = Math.floor(Date.now() / 1000);
-    let live = 0, awaiting = 0;
-    for (const a of rows) {
-      const raw = Buffer.from(a.account.data[0], "base64");
-      const id = Number(raw.readBigUInt64LE(8));
-      if (id < 1_600_000_000 || id > 2_600_000_000) continue;
-      const end = Number(raw.readBigInt64LE(28));
-      if (end > now && raw[245] === 0) live++;
-      else if (raw[245] === 0) awaiting++;
-    }
+    // THROUGH THE TESTED DECODER, not a second copy of it. This loop used to
+    // re-derive the id, the end time and the settled byte from raw offsets,
+    // which is the same decode `lib/ww/discovery.ts` does and tests. Two
+    // copies of an offset table drift, and the one in a health check drifts
+    // silently because nothing compares them.
+    const battles = parseBattleAccounts(rows, (b) => new Uint8Array(Buffer.from(b, "base64")));
+    const counts = phaseCounts(battles);
     console.log(`\nchain state:`);
-    live ? ok(`${live} battle(s) LIVE right now`) : console.log(`  ----  no live battle (expected before a show starts)`);
-    console.log(`  ----  ${awaiting} past their end time and unsettled`);
+    if (battles.length !== rows.length) {
+      meh(`${rows.length - battles.length} of ${rows.length} accounts did not decode as battles`);
+    }
+    counts.live
+      ? ok(`${counts.live} battle(s) LIVE right now`)
+      : console.log(`  ----  no live battle (expected before a show starts)`);
+    console.log(`  ----  ${counts["awaiting-settlement"]} past their end time and unsettled`);
+
+    // THE FLAG THAT SHOULD NEVER FIRE, read by something. The account holds
+    // artist_*_sol_balance at 212 and artist_*_pool at 228, and this repo read
+    // 212 as the pool until 2026-09-24. They matched on all 1,709 accounts
+    // then. If they ever stop matching, every quote built off the wrong one is
+    // wrong - and a flag nothing reads would not say so.
+    const disagreeing = battles.filter((b) => b.poolDisagreesWithBalance);
+    if (disagreeing.length === 0) {
+      ok(`sol_balance and pool agree on all ${battles.length} battles`);
+    } else {
+      bad(
+        `sol_balance and pool DISAGREE on ${disagreeing.length} of ${battles.length} battles ` +
+          `(first: ${disagreeing[0].battleId}) - every quote built off either is suspect`,
+      );
+    }
   }
 
   console.log(`\nour model against a known battle:`);
@@ -99,18 +142,30 @@ async function main() {
   }
 
   console.log(`\nthe watcher:`);
-  try {
-    const age = Math.floor((Date.now() - statSync(WATCH_LOG).mtimeMs) / 1000);
-    const text = readFileSync(WATCH_LOG, "utf8");
-    const beats = text.split("\n").filter((l) => l.includes("alive -"));
-    const mismatches = text.split("\n").filter((l) => l.includes("MISMATCH"));
-    if (!beats.length) meh(`log exists but has never beaten - started under a minute ago, or stuck`);
-    else if (age > 180) bad(`last wrote ${age}s ago - it should beat every 60s. Probably dead.`);
-    else ok(`beating, last write ${age}s ago`);
-    if (beats.length) console.log(`  ----  ${beats[beats.length - 1].trim()}`);
-    mismatches.length ? bad(`${mismatches.length} MISMATCH line(s) in the log - our model disagreed with the program`)
-                      : console.log(`  ----  no mismatches logged`);
-  } catch { meh(`no log at ${WATCH_LOG} - the watcher is not running`); }
+  const chosen = newestWatcherLog(existingWatchLogs());
+  if (!chosen) {
+    meh(`no watcher log at any of: ${WATCH_LOGS.join(", ")} - the watcher is not running`);
+  } else {
+    console.log(`  ----  reading ${chosen.path}`);
+    try {
+      const age = watcherLogAgeSeconds(chosen.mtimeMs);
+      const text = readFileSync(chosen.path, "utf8");
+      const beats = text.split("\n").filter((l) => l.includes("alive -"));
+      const mismatches = text.split("\n").filter((l) => l.includes("MISMATCH"));
+      const verdict = watcherVerdict(age, beats.length);
+      if (verdict === "never-beat") meh(`log exists but has never beaten - started under a minute ago, or stuck`);
+      else if (verdict === "stopped") bad(`last wrote ${age}s ago - it should beat every 60s. Probably dead.`);
+      else ok(`beating, last write ${age}s ago`);
+      if (beats.length) console.log(`  ----  ${beats[beats.length - 1].trim()}`);
+      mismatches.length
+        ? bad(`${mismatches.length} MISMATCH line(s) in ${chosen.path} - our model disagreed with the program`)
+        : console.log(`  ----  no mismatches logged`);
+    } catch (err) {
+      // Present but unreadable is not "not running", and saying so would be
+      // the same lie in the other direction.
+      bad(`${chosen.path} exists but could not be read: ${(err as Error).message}`);
+    }
+  }
 
   console.log(`\n${pass} pass, ${fail} fail, ${warn} warn`);
   if (fail) console.log(`SOMETHING IS BROKEN - the FAIL lines say what.`);
