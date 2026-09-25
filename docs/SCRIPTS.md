@@ -31,6 +31,7 @@ has never been run in full, it says so.
 | `ww-launch-dry-run.ts` | Simulates creating a NEW battle from a wallet that is not the platform treasury, and quotes what it costs. Proves launching is permissionless. Nothing signed |
 | `ww-verify-battle.ts` | Replays one battle from chain and checks our model against the program's own numbers |
 | `ww-pool-backfill.ts` | Rebuilds a battle's pool history from its own transactions, for a battle the watcher missed |
+| `ww-watch-ours.ts` | After we launch one ourselves: is it really on chain, did BOTH mints get created, and has their listing picked it up. `--follow` re-checks every 60s. Reads only |
 
 ## Asking the chain a question
 
