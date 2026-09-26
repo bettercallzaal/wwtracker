@@ -95,11 +95,32 @@ describe("the route", () => {
     process.env = realEnv;
   });
 
-  const post = async (body: unknown, headers: Record<string, string> = { host: "localhost:3520" }) => {
+  /**
+   * THE HEADERS NEXT ACTUALLY SENDS, not the ones a test finds convenient.
+   *
+   * The default here used to be `{ host: "localhost:3520" }` alone, and every
+   * case passed while the route 404'd on the real server for its whole life.
+   * Next fills two more in on the way in
+   * (`next/dist/server/base-server.js`):
+   *
+   *     req.headers['x-forwarded-host'] ??= req.headers['host'] ?? this.hostname;
+   *     req.headers['x-forwarded-for'] ??= originalRequest?.socket?.remoteAddress;
+   *
+   * so a request that never carries them is a request Next never makes. The
+   * default is now what a browser on this machine really produces, which is why
+   * these cases now fail against the old guard.
+   */
+  const AS_NEXT_SENDS_IT = {
+    host: "localhost:3520",
+    "x-forwarded-host": "localhost:3520",
+    "x-forwarded-for": "::1",
+  };
+
+  const post = async (body: unknown, headers: Record<string, string> = AS_NEXT_SENDS_IT) => {
     const { POST } = await import("../../app/api/ww/mark/route");
     return POST(new Request("http://localhost:3520/api/ww/mark", { method: "POST", headers, body: JSON.stringify(body) }));
   };
-  const get = async (headers: Record<string, string> = { host: "localhost:3520" }) => {
+  const get = async (headers: Record<string, string> = AS_NEXT_SENDS_IT) => {
     const { GET } = await import("../../app/api/ww/mark/route");
     return GET(new Request("http://localhost:3520/api/ww/mark", { headers }));
   };
@@ -130,9 +151,29 @@ describe("the route", () => {
   });
 
   it("is 404 for a request that did not come from this machine", async () => {
-    expect((await post({ label: "announce" }, { host: "wwtracker.vercel.app" })).status).toBe(404);
+    // A remote client: Next puts the real address in x-forwarded-for.
+    expect((await post({ label: "announce" }, { host: "wwtracker.vercel.app", "x-forwarded-host": "wwtracker.vercel.app", "x-forwarded-for": "1.2.3.4" })).status).toBe(404);
+    // Loopback host, remote first hop - something in front of us.
     expect((await post({ label: "announce" }, { host: "localhost:3520", "x-forwarded-for": "1.2.3.4" })).status).toBe(404);
+    // A chain whose first hop is remote, even though a later one is loopback.
+    expect((await post({ label: "announce" }, { host: "localhost:3520", "x-forwarded-for": "1.2.3.4, 127.0.0.1" })).status).toBe(404);
+    // Host rewritten by a proxy.
     expect((await post({ label: "announce" }, { host: "localhost:3520", "x-forwarded-host": "example.com" })).status).toBe(404);
+  });
+
+  it("ACCEPTS every shape a local browser really produces", async () => {
+    // These are the cases the old guard refused, and each is a genuine
+    // same-machine request. If any of them 404s, the Announce button is dead
+    // again and six more sessions produce no marks.
+    for (const headers of [
+      { host: "localhost:3520", "x-forwarded-host": "localhost:3520", "x-forwarded-for": "::1" },
+      { host: "127.0.0.1:3520", "x-forwarded-host": "127.0.0.1:3520", "x-forwarded-for": "127.0.0.1" },
+      { host: "localhost:3520", "x-forwarded-host": "localhost:3520", "x-forwarded-for": "::ffff:127.0.0.1" },
+      { host: "[::1]:3520", "x-forwarded-host": "[::1]:3520", "x-forwarded-for": "::1" },
+    ]) {
+      const res = await post({ label: "announce" }, headers);
+      expect(res.status, JSON.stringify(headers)).toBe(200);
+    }
   });
 
   it("refuses a bad label with the reason, rather than writing something else", async () => {

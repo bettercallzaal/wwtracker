@@ -45,17 +45,49 @@ function marksDir(): string {
 /**
  * Loopback only.
  *
- * `Host` is the one header a browser sets that a same-machine request cannot
- * lie about without the operator's own cooperation, and it is what Next gives
- * us without a socket. A forwarded request carries `x-forwarded-host`, so its
- * presence means the request came through something, which is exactly the case
- * to refuse.
+ * THIS REFUSED EVERY REQUEST EVER MADE TO IT, and the button it guards has
+ * therefore never once worked.
+ *
+ * It used to read: if `x-forwarded-for` or `x-forwarded-host` is present at
+ * all, the request came through something, so refuse. That is true of a bare
+ * Node server and false of Next, which sets both itself on the way in -
+ * `next/dist/server/base-server.js`:
+ *
+ *     req.headers['x-forwarded-host'] ??= req.headers['host'] ?? this.hostname;
+ *     req.headers['x-forwarded-for'] ??= originalRequest?.socket?.remoteAddress;
+ *
+ * So the disqualifying condition was always met and the route always answered
+ * 404. Measured against the running server on 2026-09-26: GET and POST both
+ * 404 with `WW_MARKS=1` set and every other flagged surface on the same process
+ * answering 200.
+ *
+ * THE COST OF IT: #389 built this route because "five sessions have produced no
+ * marks, so let the mark come from the page". Six sessions have now passed with
+ * none. The fix for the missed marks could not be used, and it looked identical
+ * to the flag being off, because both return 404 by design.
+ *
+ * PRESENCE PROVES NOTHING; THE VALUE DOES. Next fills `x-forwarded-for` from
+ * the socket, so on a same-machine request it IS a loopback address and on a
+ * proxied one it is the real client. Judge what the header says rather than
+ * that it exists.
  */
+const LOOPBACK = new Set(["localhost", "127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+
+/** Strip a port and brackets, lowercase - what the operator cannot see. */
+function hostName(value: string | null): string {
+  return (value ?? "").toLowerCase().replace(/:\d+$/, "").replace(/^\[|\]$/g, "");
+}
+
 function fromLoopback(request: Request): boolean {
-  if (request.headers.get("x-forwarded-for") || request.headers.get("x-forwarded-host")) return false;
-  const host = (request.headers.get("host") ?? "").toLowerCase();
-  const name = host.replace(/:\d+$/, "").replace(/^\[|\]$/g, "");
-  return name === "localhost" || name === "127.0.0.1" || name === "::1";
+  if (!LOOPBACK.has(hostName(request.headers.get("host")))) return false;
+  // Next copies `host` here, so a mismatch means something rewrote it.
+  const forwardedHost = hostName(request.headers.get("x-forwarded-host"));
+  if (forwardedHost && !LOOPBACK.has(forwardedHost)) return false;
+  // The FIRST hop is the client. A proxy appends, so anything beyond the first
+  // entry is a chain we did not make and the first entry is who started it.
+  const firstHop = (request.headers.get("x-forwarded-for") ?? "").split(",")[0].trim().toLowerCase();
+  if (firstHop && !LOOPBACK.has(firstHop)) return false;
+  return true;
 }
 
 export async function GET(request: Request) {
