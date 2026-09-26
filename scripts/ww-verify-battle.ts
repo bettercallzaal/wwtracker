@@ -120,10 +120,23 @@ async function verify(battleId: number, rows: Row[]) {
   // buy model from a wrong sell model.
   const derived = { a: false, b: false };
   let checked = 0, bad = 0, unscored = 0;
-  // BOTH BUY MODELS, SCORED SIDE BY SIDE. quoteBuy floors the difference and
-  // is one step low on about a buy in five; quoteBuyAtSupply floors the total.
-  // Reporting both on every run is how the next model change gets evidence
-  // instead of an argument.
+  // FOUR BUY MODELS, SCORED SIDE BY SIDE, and they must be four DISTINCT
+  // functions. Reporting them all on every run is how the next model change
+  // gets evidence instead of an argument - but only while each column is its
+  // own arithmetic.
+  //
+  // IT STOPPED BEING FOUR ON 2026-09-24 AND NOBODY NOTICED FOR TWO DAYS. The
+  // floor-the-total column called `quoteBuyAtSupply`, which was the
+  // floor-the-total model when the line was written and became the
+  // from-stored-supply model in #411. So the scoreboard printed the winner
+  // twice under two names and scored three models while claiming four. On the
+  // three finals it read `floor-the-total 33/37/32` where the real figure is
+  // 5/3/2 - it looked like two independent models agreeing, which is the most
+  // convincing thing a scoreboard can say and here it was one model's echo.
+  //
+  // Every column below is now written out as its own expression rather than
+  // borrowing a library function, because a library function is free to change
+  // meaning under a label that does not.
   const model = { difference: 0, total: 0, endpoints: 0, fromSupply: 0, of: 0 };
   /**
    * THE THIRD FORM: floor the curve at BOTH ends and subtract.
@@ -137,6 +150,19 @@ async function verify(battleId: number, rows: Row[]) {
   const floorQ = (x: number) => Math.floor(x / SUPPLY_QUANTUM) * SUPPLY_QUANTUM;
   const endpoints = (poolLamports: number, spend: number) =>
     floorQ(supplyAtPool(poolLamports + spend * BUY_POOL_SHARE)) - floorQ(supplyAtPool(poolLamports));
+  /**
+   * THE SECOND FORM: floor the TOTAL supply the observed pool implies, then
+   * subtract the supply actually stored.
+   *
+   * The difference from the fourth form is one term and it is the whole
+   * argument of #411: this starts from the pool the VAULT HOLDS, that one from
+   * the pool the STORED SUPPLY IMPLIES. On a side that has never sold they are
+   * the same number. After a sell the vault carries a residual no token
+   * represents and they diverge, which is why this scores 5, 3 and 2 on the
+   * three finals and the fourth form scores 33, 37 and 32.
+   */
+  const floorTheTotal = (poolLamports: number, storedSupply: number, spend: number) =>
+    floorQ(supplyAtPool(poolLamports + spend * BUY_POOL_SHARE)) - storedSupply;
   /**
    * THE FOURTH FORM: price from the pool the STORED SUPPLY implies, not the
    * pool the vault holds.
@@ -173,7 +199,7 @@ async function verify(battleId: number, rows: Row[]) {
       checked++;
       model.of++;
       if (q.tokensOut === r.statedTokens) model.difference++;
-      if (quoteBuyAtSupply(supply[r.side], r.amount).tokensOut === r.statedTokens) model.total++;
+      if (floorTheTotal(pool[r.side], supply[r.side], r.amount) === r.statedTokens) model.total++;
       if (endpoints(pool[r.side], r.amount) === r.statedTokens) model.endpoints++;
       if (fromStoredSupply(supply[r.side], r.amount) === r.statedTokens) model.fromSupply++;
       if (q.tokensOut !== r.statedTokens) fail(r.sig, `buy tokens (${r.amount} lamports into pool ${pool[r.side]})`, q.tokensOut, r.statedTokens);
