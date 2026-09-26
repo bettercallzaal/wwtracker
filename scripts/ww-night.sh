@@ -73,8 +73,26 @@ cmd_ready() {
   # that keeps being skipped is a check that certifies the skip.
   local marksfile="$HOME/zao-vault/projects/ww-45s-marks-$(date '+%Y-%m-%d').log"
   local nmarks; nmarks=$(grep -c '[^[:space:]]' "$marksfile" 2>/dev/null || echo 0)
-  if grep -qE "^WW_MARKS=1" .env.local 2>/dev/null; then
-    pass "WW_MARKS=1 in .env.local: the Announce and Sent buttons are on /battle/<id>"
+  # ASK THE SERVER, DO NOT GREP THE FILE.
+  #
+  # This used to grep .env.local for WW_MARKS=1 and call that PASS - and the
+  # else branch called `pass` too, so the check could not fail whatever the
+  # answer was. Meanwhile /api/ww/mark returned 404 to every request ever made
+  # to it, because its loopback gate refused any request carrying
+  # x-forwarded-for or x-forwarded-host and Next sets both itself
+  # (base-server.js:609). Fixed in #421.
+  #
+  # SIX SESSIONS PRODUCED NO MARKS WITH THIS LINE READING PASS. The flag was set
+  # the whole time. A check that reads configuration cannot see a broken route,
+  # and the route and the flag fail identically from outside - both 404, by
+  # design. So this hits the endpoint.
+  #
+  # GET, not POST: POST writes a line, and this file is the measurement.
+  local markcode; markcode=$(http "http://localhost:${PORT}/api/ww/mark")
+  if [ "$markcode" = "200" ]; then
+    pass "the Announce button really works (GET /api/ww/mark answered 200)"
+  elif grep -qE "^WW_MARKS=1" .env.local 2>/dev/null; then
+    fail "WW_MARKS=1 is set but /api/ww/mark answered ${markcode} - the button is DEAD. Either this server predates #421 (restart it) or the gate is refusing loopback again"
   else
     pass "WW_MARKS not set: marks need the second terminal, scripts/ww-mark.sh"
   fi
@@ -83,7 +101,10 @@ cmd_ready() {
     echo "READY. Open http://localhost:${PORT}/battle/latest when the first battle starts; it jumps to the newest recorded battle."
     echo "THE ONE STEP THAT KEEPS BEING MISSED: mark the announcement. Either press Announce on that page"
     echo "(needs WW_MARKS=1 before start), or keep a second terminal on: scripts/ww-mark.sh"
-    echo "Nothing else produces the 45-second number, and five sessions have now passed without it."
+    # The count used to be hardcoded at "five" and was wrong by two before
+    # anybody noticed - a number typed into a message is a number nothing keeps
+    # current. Say what is measurable instead: today's file.
+    echo "Nothing else produces the 45-second number. Today: ${nmarks} mark(s)."
   else echo "NOT READY: ${FAILS} failing"; fi
   [ "$FAILS" = "0" ]
 }
