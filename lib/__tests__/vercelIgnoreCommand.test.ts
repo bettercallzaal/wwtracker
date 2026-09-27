@@ -102,19 +102,35 @@ describe("the cases that already worked keep working", () => {
     expect(run(head, head)).not.toBe(0);
   });
 
-  it("SKIPS when nothing in a watched path moved", () => {
-    // HEAD against itself has no diff anywhere, so the diff arm is reached and
-    // returns 0. This is the arm that saves the build minutes, and a fix that
-    // broke it would make every push build.
-    const parent = execFileSync("git", ["rev-parse", "HEAD^"], { cwd: root, encoding: "utf8" }).trim();
+  /**
+   * THIS ARM NEEDS TWO COMMITS AND CI HAS ONE, which it took a red CI run to
+   * learn. `actions/checkout` clones at depth 1, so `HEAD^` is not an object
+   * there and this threw `fatal: ambiguous argument 'HEAD^'` - a test about a
+   * command that breaks on a missing git object, breaking on a missing git
+   * object.
+   *
+   * It is SKIPPED rather than quietly passed when the parent is unavailable.
+   * A skip is visible in the run output; a `return` would read as a pass and
+   * this arm would be untested in CI forever without anyone knowing. The arm
+   * does run locally, where the clone is full.
+   */
+  const parent = (() => {
+    try {
+      return execFileSync("git", ["rev-parse", "HEAD^"], { cwd: root, encoding: "utf8", stdio: "pipe" }).trim();
+    } catch {
+      return null;
+    }
+  })();
+
+  it.skipIf(parent === null)("SKIPS when nothing in a watched path moved (needs a parent commit)", () => {
     const touched = execFileSync(
       "git",
-      ["diff", "--name-only", parent, head, "--", "app", "components", "lib", "public", "scripts",
+      ["diff", "--name-only", parent as string, head, "--", "app", "components", "lib", "public", "scripts",
         "package.json", "package-lock.json", "next.config.mjs", "tsconfig.json", "vercel.json"],
       { cwd: root, encoding: "utf8" },
     ).trim();
     // Only assert the skip when this commit really did leave those paths alone.
-    if (touched === "") expect(run(parent, head)).toBe(0);
-    else expect(run(parent, head)).not.toBe(0);
+    if (touched === "") expect(run(parent as string, head)).toBe(0);
+    else expect(run(parent as string, head)).not.toBe(0);
   });
 });
