@@ -66,6 +66,21 @@ export const VOLUME_SOL = 928.52;
  * that population changes. Treating any single read as "N SOL traded, all
  * time" states a property the number does not have.
  *
+ * THE MECHANISM, caught in the act on 2026-09-27. The daily refresh branch that
+ * day changed exactly one line of `public/ww-battles.json`:
+ *
+ *     battle 1758501426, "$BONGA: VibeLord" vs "$STUPID: Atchblockbaby",
+ *     dated Sep 22 2025:   vol 2.1584  ->  0.1462
+ *
+ * A battle from over a year earlier had its recorded volume revised DOWN by
+ * 2.0122 SOL, in a single day's refresh. That is the whole 2.01 SOL gap between
+ * the 959.08 written into the resume PR and the 957.0655 the endpoint served
+ * when two lanes checked it, to within 0.0023 SOL of rounding.
+ *
+ * So the fall is not noise and not a reindexing blip in recent data. Battles
+ * that closed a year ago are still being restated, which means the total over
+ * them is a current opinion rather than a running sum.
+ *
  * THE INVALIDATION CONDITION, rather than a date: this figure is safe to quote
  * only where the sentence around it survives the number going DOWN. "As of
  * <date>, the public API reports N SOL" survives it. "N SOL traded" does not,
