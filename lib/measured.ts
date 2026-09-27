@@ -51,6 +51,46 @@ export const BATTLES_PUBLIC = 1501;
 export const VOLUME_SOL = 928.52;
 
 /**
+ * DO NOT QUOTE THE PUBLIC API'S VOLUME AS A LIFETIME TOTAL. IT IS NOT ONE.
+ *
+ * `volume.totalSol` from `wavewarz.info/api/public/stats` is the figure every
+ * outside surface reaches for, and its name says cumulative. It is not:
+ *
+ *   2026-09-06   922.30 SOL
+ *   2026-09-19   921.99 SOL   <- FELL by 0.31 between reads
+ *   2026-09-23   954.49 SOL
+ *   2026-09-27   957.07 SOL
+ *
+ * A lifetime cumulative cannot fall. So that field is a recomputation over
+ * whatever their indexer currently holds, and it moves in both directions as
+ * that population changes. Treating any single read as "N SOL traded, all
+ * time" states a property the number does not have.
+ *
+ * THE INVALIDATION CONDITION, rather than a date: this figure is safe to quote
+ * only where the sentence around it survives the number going DOWN. "As of
+ * <date>, the public API reports N SOL" survives it. "N SOL traded" does not,
+ * and neither does anything with a plus sign after it.
+ *
+ * Found 2026-09-27 verifying four figures headed for a resume
+ * (bettercallzaal/bettercallzaalwebsite#51), where 959.08 SOL had been written
+ * as a durable claim. Two lanes re-read the endpoint 113 seconds apart and got
+ * different dollar totals from the same SOL figure, because the price field
+ * moved between them. The history above is from docs/ECOSYSTEM.md, which had
+ * recorded the fall and called it "rising again after the drop" without
+ * noticing that the drop was the finding.
+ *
+ * `VOLUME_SOL` above does not have this problem: it comes from our own scan of
+ * a fixed snapshot, so re-running it on the same snapshot gives the same
+ * answer, and MEASURED_ON says which snapshot.
+ */
+export const PUBLIC_API_VOLUME_READS: ReadonlyArray<{ on: string; totalSol: number }> = [
+  { on: "2026-09-06", totalSol: 922.30 },
+  { on: "2026-09-19", totalSol: 921.99 },
+  { on: "2026-09-23", totalSol: 954.49 },
+  { on: "2026-09-27", totalSol: 957.07 },
+];
+
+/**
  * To artists, all three legs. Do not quote this without the legs - it lands within
  * 0.1% of the whole trade fee by coincidence, so the bare number cannot tell an
  * artist total apart from a platform-and-artist total.
