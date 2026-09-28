@@ -7,14 +7,40 @@
 // never steer this at an arbitrary upstream URL. Without that, a pass-through
 // proxy is an open redirect against someone else's infrastructure.
 
-import { cachedFetch } from "@/lib/wwCache";
+import { cachedFetch, type CachedPayload } from "@/lib/wwCache";
 import { publicJson, corsPreflight, REVALIDATE_SECONDS } from "@/lib/wwPublicRoute";
+import { TRADER_PNL_WITHDRAWN } from "@/lib/traderLeaderboard";
 
 const KINDS = ["artists", "traders", "songs"] as const;
 type Kind = (typeof KINDS)[number];
 
 function isKind(v: string): v is Kind {
   return (KINDS as readonly string[]).includes(v);
+}
+
+/**
+ * The UI stops showing Net P&L when TRADER_PNL_WITHDRAWN is true, and this route
+ * is the surface an embedder can hit directly, bypassing the widget entirely.
+ * Pulling the column only from the rendered table would leave the figure sitting
+ * in this JSON for anyone reading the response instead of the page. Strip the
+ * same four fields the widget stops rendering, so the withdrawal is real for
+ * every consumer, not merely the one we render ourselves.
+ */
+function withdrawTraderPnl(payload: CachedPayload<unknown>): CachedPayload<unknown> {
+  const data = payload.data as { traders?: unknown } | null;
+  if (!data || !Array.isArray(data.traders)) return payload;
+  return {
+    ...payload,
+    data: {
+      ...data,
+      traders: data.traders.map((t) => {
+        if (!t || typeof t !== "object") return t;
+        const { netPnlSol, netPnlFmt, netPnlUsd, netPnlPositive, ...rest } =
+          t as Record<string, unknown>;
+        return rest;
+      }),
+    },
+  };
 }
 
 /** Upstream caps at 500. Clamp rather than reject, so a bad limit still returns data. */
@@ -50,6 +76,9 @@ export async function GET(
     `https://wavewarz.info/api/public/leaderboards/${kind}?limit=${limit}`,
     { revalidateSeconds: REVALIDATE_SECONDS },
   );
+  if (kind === "traders" && TRADER_PNL_WITHDRAWN) {
+    return publicJson(withdrawTraderPnl(payload));
+  }
   return publicJson(payload);
 }
 
