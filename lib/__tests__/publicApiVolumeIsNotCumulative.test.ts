@@ -52,6 +52,57 @@ describe("the public API's volume figure", () => {
   });
 });
 
+/**
+ * The cited battle has to be the battle.
+ *
+ * The comment in `measured.ts` first named 1758501426, whose volume has not
+ * moved since 2026-09-09. The real one is 1758503315. Both are
+ * "$BONGA: VibeLord" vs "$STUPID: Atchblockbaby" on Sep 22 2025, adjacent in
+ * the file along with a third, so the wrong id looked exactly as right as the
+ * right one - it was read out of a unified diff through `grep`, where `id` is
+ * the first key of a record and `vol` the ninth, so the id printed below the
+ * changed line belonged to the NEXT record.
+ *
+ * A prose citation of a row in a data file can be checked against that file.
+ * This does that, so the next wrong id fails here rather than being found by
+ * somebody reading carefully.
+ */
+describe("the battle the comment cites", () => {
+  const battles = JSON.parse(readFileSync(`${root}public/ww-battles.json`, "utf8")) as Array<{
+    id: string; vol: number; a: string; b: string;
+  }>;
+  const measured = readFileSync(`${root}lib/measured.ts`, "utf8");
+
+  it("is 1758503315, and it carries the post-revision value", () => {
+    const row = battles.find((x) => String(x.id) === "1758503315");
+    expect(row, "1758503315 is not in public/ww-battles.json").toBeDefined();
+    expect(row!.vol).toBe(0.1462);
+  });
+
+  it("is cited on the CITATION line, not merely mentioned somewhere in the file", () => {
+    // `toContain` over the whole file was the first version of this and it did
+    // not fire under mutation: the wrong id can sit on the citation line while
+    // the right one still appears in the paragraph explaining the mistake.
+    // Anchor on the line that makes the claim.
+    const citation = measured.split("\n").find((l) => /^\s*\*\s+battle \d+, /.test(l));
+    expect(citation, "no 'battle <id>,' citation line in measured.ts").toBeDefined();
+    expect(citation).toContain("1758503315");
+    expect(citation).not.toContain("1758501426");
+  });
+
+  it("is NOT 1758501426, which never moved and was the first answer", () => {
+    // The control. If this row ever reads 0.1462 the two have been confused
+    // again, in the data rather than the prose.
+    const wrong = battles.find((x) => String(x.id) === "1758501426");
+    expect(wrong!.vol).not.toBe(0.1462);
+  });
+
+  it("has look-alike neighbours, which is why the id must be checked and not eyeballed", () => {
+    const sameBill = battles.filter((x) => x.a === "$BONGA: VibeLord");
+    expect(sameBill.length).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe("our own VOLUME_SOL, which does not have that problem", () => {
   it("is a figure from a fixed snapshot, and says which day", () => {
     expect(VOLUME_SOL).toBeGreaterThan(0);
