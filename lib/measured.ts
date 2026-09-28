@@ -69,13 +69,25 @@ export const VOLUME_SOL = 928.52;
  * THE MECHANISM, caught in the act on 2026-09-27. The daily refresh branch that
  * day changed exactly one line of `public/ww-battles.json`:
  *
- *     battle 1758501426, "$BONGA: VibeLord" vs "$STUPID: Atchblockbaby",
+ *     battle 1758503315, "$BONGA: VibeLord" vs "$STUPID: Atchblockbaby",
  *     dated Sep 22 2025:   vol 2.1584  ->  0.1462
  *
  * A battle from over a year earlier had its recorded volume revised DOWN by
- * 2.0122 SOL, in a single day's refresh. That is the whole 2.01 SOL gap between
- * the 959.08 written into the resume PR and the 957.0655 the endpoint served
- * when two lanes checked it, to within 0.0023 SOL of rounding.
+ * 2.0122 SOL, in a single day's refresh. Exactly one row changed and the row
+ * count did not move: the file summed 959.0753 before and 957.0631 after. That
+ * is the whole 2.01 SOL gap between the 959.08 written into the resume PR and
+ * the 957.0655 the endpoint served when two lanes checked it.
+ *
+ * THIS FIRST SHIPPED NAMING THE WRONG BATTLE - 1758501426, whose volume has
+ * been 2.1109 since 2026-09-09 and never moved. The Vault lane caught it by
+ * reading the id out of this file and finding a third value. The cause was
+ * reading a unified diff through `grep` for the interesting field names: `id`
+ * is the FIRST key in each record and `vol` the ninth, so the id that appeared
+ * below the changed line belonged to the NEXT record. There are three battles
+ * for this same pairing on this same date - 1758501426, 1758503315, 1758505532,
+ * adjacent in the file - so the wrong answer was indistinguishable from the
+ * right one by eye. A structural diff keyed on id gives one changed row and no
+ * ambiguity; that is how the number below is now produced.
  *
  * So the fall is not noise and not a reindexing blip in recent data. Battles
  * that closed a year ago are still being restated, which means the total over
