@@ -162,11 +162,33 @@ export const TRADER_PNL_NOTE =
   "Net P&L restored 2026-09-08. Re-measured against a full chain scan: 0 of 157 " +
   "wallets now read profitable while down. Residual is unclaimed winnings.";
 
-/** Columns the widget renders. */
-export const TRADER_TABLE_HEAD = ["#", "Wallet", "Volume", "Win %", "Net P&L"] as const;
-
 /**
- * True while the upstream leaderboard is known to disagree with chain. Flip it
- * only alongside a fresh run of tools/leaderboard-diff.py that agrees.
+ * True while the upstream leaderboard is known to disagree with chain, or while
+ * the check that would confirm it has expired. Flip it back to false only
+ * alongside a fresh run of tools/census.py and tools/pnl-restore-check.py that
+ * agrees.
+ *
+ * Declared before TRADER_TABLE_HEAD because that constant is derived from this
+ * flag, not from a second, independently-maintained copy of it - see
+ * traderTableHead() below.
  */
 export const TRADER_PNL_WITHDRAWN = true;
+
+/** The full column set, before anything is withdrawn. */
+const FULL_TRADER_TABLE_HEAD = ["#", "Wallet", "Volume", "Win %", "Net P&L"] as const;
+
+/**
+ * Columns the widget renders for a given withdrawal state. Exported as a
+ * function - not only as the constant below - so a test can check both states
+ * without flipping the live flag, and so nothing that renders the table needs
+ * its own copy of the "is Net P&L withdrawn" decision: reading TRADER_TABLE_HEAD
+ * (or calling this with the live flag) is the one gate.
+ */
+export function traderTableHead(withdrawn: boolean): string[] {
+  return withdrawn
+    ? FULL_TRADER_TABLE_HEAD.filter((h) => h !== "Net P&L")
+    : [...FULL_TRADER_TABLE_HEAD];
+}
+
+/** Columns the widget renders, for the live TRADER_PNL_WITHDRAWN value. */
+export const TRADER_TABLE_HEAD = traderTableHead(TRADER_PNL_WITHDRAWN);

@@ -7,6 +7,7 @@ import {
   TRADER_PNL_WITHDRAWN,
   TRADER_PNL_MEASUREMENT,
   TRADER_PNL_HISTORY,
+  traderTableHead,
 } from "@/lib/traderLeaderboard";
 
 // The bugs that actually shipped in this repo were displayed figures that
@@ -58,8 +59,22 @@ describe("the top-traders table", () => {
     expect(TRADER_PNL_NOTE.length).toBeLessThan(220);
   });
 
-  it("keeps the columns that are still worth showing", () => {
-    expect([...TRADER_TABLE_HEAD]).toEqual(["#", "Wallet", "Volume", "Win %", "Net P&L"]);
+  it("keeps the columns that are still worth showing, for the live flag", () => {
+    // TRADER_TABLE_HEAD is traderTableHead(TRADER_PNL_WITHDRAWN) - it must
+    // track whichever the flag currently says, not a value frozen at either
+    // withdrawal or restore.
+    expect(TRADER_TABLE_HEAD).toEqual(
+      TRADER_PNL_WITHDRAWN
+        ? ["#", "Wallet", "Volume", "Win %"]
+        : ["#", "Wallet", "Volume", "Win %", "Net P&L"],
+    );
+  });
+
+  it("derives the column set from the flag correctly in both directions", () => {
+    // Only one of these is live at a time, so this calls the function directly
+    // to cover the state the live flag is not currently in.
+    expect(traderTableHead(false)).toEqual(["#", "Wallet", "Volume", "Win %", "Net P&L"]);
+    expect(traderTableHead(true)).toEqual(["#", "Wallet", "Volume", "Win %"]);
   });
 });
 

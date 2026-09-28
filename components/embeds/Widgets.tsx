@@ -23,11 +23,7 @@ import {
   YAxis,
 } from "recharts";
 import EmbedShell, { Counter } from "./EmbedShell";
-import {
-  TRADER_PNL_NOTE,
-  TRADER_PNL_WITHDRAWN,
-  TRADER_TABLE_HEAD,
-} from "@/lib/traderLeaderboard";
+import { TRADER_PNL_NOTE, TRADER_TABLE_HEAD } from "@/lib/traderLeaderboard";
 import { FONTS, shortWallet, type EmbedOptions } from "@/lib/embedTheme";
 import { CHAIN_DAILY_PATH, ONCHAIN_DAILY_PATH, correctDuneDays, type ChainDaily } from "@/lib/onchainDaily";
 import { secondsLeft, poolShare, type WidgetBattle } from "@/lib/liveBattle";
@@ -989,13 +985,13 @@ export function TopArtists({ opts }: { opts: EmbedOptions }) {
   );
 }
 
-// Shown in place of TRADER_PNL_NOTE while TRADER_PNL_WITHDRAWN is true.
-// TRADER_PNL_NOTE itself is pinned by lib/__tests__/traderLeaderboard.test.ts to
-// the restore-era measurement (it must contain "unclaimed" and the 2026-09-08
-// measuredOn date), so it cannot double as the withdrawal caveat - this is a
-// separate string, local to the widget, not exported or asserted on elsewhere.
-// See lib/traderLeaderboard.ts for the 2026-09-28 re-check that withdrew the
-// column again and the scan that restores it.
+// Shown in place of TRADER_PNL_NOTE whenever TRADER_TABLE_HEAD does not carry
+// Net P&L. TRADER_PNL_NOTE itself is pinned by lib/__tests__/traderLeaderboard
+// .test.ts to the restore-era measurement (it must contain "unclaimed" and the
+// 2026-09-08 measuredOn date), so it cannot double as the withdrawal caveat -
+// this is a separate string, local to the widget, not exported or asserted on
+// elsewhere. See lib/traderLeaderboard.ts for the 2026-09-28 re-check that
+// withdrew the column again and the scan that restores it.
 const TRADER_PNL_WITHDRAWN_NOTE =
   "Net P&L hidden: the chain-verification check that supported this column expired " +
   "2026-09-28 against a 21.7-day-old snapshot and can no longer confirm the site " +
@@ -1006,13 +1002,12 @@ export function TopTraders({ opts }: { opts: EmbedOptions }) {
     "/api/ww/leaderboards/traders?limit=25",
   );
   const rows = data?.data?.traders ?? [];
-  // TRADER_TABLE_HEAD always carries "Net P&L" - lib/__tests__/traderLeaderboard
-  // .test.ts pins it to ["#", "Wallet", "Volume", "Win %", "Net P&L"] as the full
-  // set of columns the measurement covers. Whether the column actually renders is
-  // decided here, at display time, from TRADER_PNL_WITHDRAWN.
-  const head = TRADER_PNL_WITHDRAWN
-    ? TRADER_TABLE_HEAD.filter((h) => h !== "Net P&L")
-    : [...TRADER_TABLE_HEAD];
+  // TRADER_TABLE_HEAD is already the withdrawal-aware column list - it is
+  // traderTableHead(TRADER_PNL_WITHDRAWN), computed once in
+  // lib/traderLeaderboard.ts. This widget does not re-check the flag itself;
+  // it reads the one gate and shapes the note and the rows off what it says,
+  // so there is nowhere for the two to drift apart.
+  const showsPnl = TRADER_TABLE_HEAD.includes("Net P&L");
   return (
     <EmbedShell
       title="Top traders"
@@ -1020,18 +1015,18 @@ export function TopTraders({ opts }: { opts: EmbedOptions }) {
       href={`${SITE}/#traders`}
       opts={opts}
       state={rows.length ? "ready" : status}
-      note={TRADER_PNL_WITHDRAWN ? TRADER_PNL_WITHDRAWN_NOTE : TRADER_PNL_NOTE}
+      note={showsPnl ? TRADER_PNL_NOTE : TRADER_PNL_WITHDRAWN_NOTE}
     >
       <Table
         opts={opts}
         // The API returns raw floats here (winRate comes back as 79.3103448...),
         // so every numeric column is rounded before display.
-        head={head}
+        head={TRADER_TABLE_HEAD}
         rows={rows.map((t, i) => {
           const base = [i + 1, shortWallet(t.wallet), num(t.totalVolumeSol, 2), num(t.winRate, 0)];
-          return TRADER_PNL_WITHDRAWN
-            ? base
-            : [...base, `${t.netPnlSol >= 0 ? "+" : ""}${num(t.netPnlSol, 2)}`];
+          return showsPnl
+            ? [...base, `${t.netPnlSol >= 0 ? "+" : ""}${num(t.netPnlSol, 2)}`]
+            : base;
         })}
       />
     </EmbedShell>
