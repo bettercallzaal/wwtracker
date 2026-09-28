@@ -70,11 +70,45 @@
 // reports that age itself - which is the number that decides this, not the
 // calendar. One site wallet the snapshot has never seen, unchanged.
 //
-// RE-CHECK BY 2026-09-27, deliberately the shortest date in this repo. The check
-// compares a live site to a frozen 2026-09-06 snapshot, so it only gets weaker
-// with time and a HOLDS today says nothing about next week. INVALIDATED BY: any
-// condition flipping, or the snapshot passing about three weeks old, whichever
-// comes first - past that the comparison is too weak to carry the column.
+// RE-CHECKED 2026-09-28: THE INSTRUMENT EXPIRED, EXACTLY AS THE LINE BELOW
+// PREDICTED IT WOULD. Run against the same committed snapshot:
+//
+//   site aggregate is negative                 PASS -3.19 SOL
+//   no wallet shown profitable while down      FAIL 2 wallets
+//   largest single delta under 1 SOL           FAIL 8.05 SOL (23oqJnEJhJ3q)
+//   no snapshot trader missing from the site   PASS 0 missing; site 159 chain 157
+//   snapshot newest trade                      2026-09-06 08:22Z (21.7 days old)
+//
+// VERDICT: WITHDRAW THE COLUMN - and that verdict SHOULD NOT BE ACTED ON AS
+// WRITTEN, because the two failures are not evidence about the site.
+//
+// `flattered` and `deltas` are computed only over wallets present in BOTH sets,
+// so neither failure is one of the three wallets the snapshot has never seen.
+// They are wallets we do hold - whose site P&L has moved while our chain side
+// sat frozen for twenty-one days. An active trader moving 8.05 SOL in three
+// weeks is ordinary. The check cannot tell that from the site regressing,
+// because the only thing that changed is which of the two sides is current.
+//
+// So this is not a measurement that the column is wrong, and it is not a
+// measurement that it is right. It is the loss of the ability to measure, and
+// the invalidation condition named it in advance: "the snapshot passing about
+// three weeks old, whichever comes first". It came first.
+//
+// THE COLUMN IS STILL LIVE (TRADER_PNL_WITHDRAWN = false) AND IT RENDERS IN AN
+// EMBEDDABLE WIDGET ON OTHER PEOPLE'S PAGES. Neither leaving it nor pulling it
+// is supported by a measurement right now, which is precisely why the decision
+// is not this file's to make quietly. What restores the ability to decide is a
+// fresh chain scan, not a new date:
+//
+//   cd wavewarz-protocol/data/chain-snapshot-<today>
+//   python3 ../../tools/census.py
+//   python3 ../../tools/pnl-restore-check.py
+//
+// RE-CHECK BY 2026-10-05, and a bare re-run will not clear it: the snapshot has
+// to be refreshed first or the same two conditions fail for the same reason and
+// the date moves for nothing. INVALIDATED BY: any condition flipping against a
+// CURRENT snapshot. The three-week clause has already fired and is now history
+// rather than a rule.
 
 /** A row as the upstream leaderboard returns it. */
 export interface TraderLeaderboardRow {
