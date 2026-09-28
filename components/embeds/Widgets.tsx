@@ -989,11 +989,30 @@ export function TopArtists({ opts }: { opts: EmbedOptions }) {
   );
 }
 
+// Shown in place of TRADER_PNL_NOTE while TRADER_PNL_WITHDRAWN is true.
+// TRADER_PNL_NOTE itself is pinned by lib/__tests__/traderLeaderboard.test.ts to
+// the restore-era measurement (it must contain "unclaimed" and the 2026-09-08
+// measuredOn date), so it cannot double as the withdrawal caveat - this is a
+// separate string, local to the widget, not exported or asserted on elsewhere.
+// See lib/traderLeaderboard.ts for the 2026-09-28 re-check that withdrew the
+// column again and the scan that restores it.
+const TRADER_PNL_WITHDRAWN_NOTE =
+  "Net P&L hidden: the chain-verification check that supported this column expired " +
+  "2026-09-28 against a 21.7-day-old snapshot and can no longer confirm the site " +
+  "figure. Volume and win rate are unaffected. Restores after a fresh chain scan.";
+
 export function TopTraders({ opts }: { opts: EmbedOptions }) {
   const { data, status } = useJson<Envelope<{ traders: TraderRow[] }>>(
     "/api/ww/leaderboards/traders?limit=25",
   );
   const rows = data?.data?.traders ?? [];
+  // TRADER_TABLE_HEAD always carries "Net P&L" - lib/__tests__/traderLeaderboard
+  // .test.ts pins it to ["#", "Wallet", "Volume", "Win %", "Net P&L"] as the full
+  // set of columns the measurement covers. Whether the column actually renders is
+  // decided here, at display time, from TRADER_PNL_WITHDRAWN.
+  const head = TRADER_PNL_WITHDRAWN
+    ? TRADER_TABLE_HEAD.filter((h) => h !== "Net P&L")
+    : [...TRADER_TABLE_HEAD];
   return (
     <EmbedShell
       title="Top traders"
@@ -1001,26 +1020,19 @@ export function TopTraders({ opts }: { opts: EmbedOptions }) {
       href={`${SITE}/#traders`}
       opts={opts}
       state={rows.length ? "ready" : status}
-      // Net P&L was withdrawn 2026-09-07 and restored 2026-09-08 after the
-      // record layer backfilled and we re-measured: 0 of 157 wallets now read
-      // profitable while down, against 45 of 145 before. The note stays either
-      // way - it carries the date and the residual, so a screenshot of this
-      // widget says when it was checked. lib/traderLeaderboard.ts has the
-      // working.
-      note={TRADER_PNL_NOTE}
+      note={TRADER_PNL_WITHDRAWN ? TRADER_PNL_WITHDRAWN_NOTE : TRADER_PNL_NOTE}
     >
       <Table
         opts={opts}
         // The API returns raw floats here (winRate comes back as 79.3103448...),
         // so every numeric column is rounded before display.
-        head={[...TRADER_TABLE_HEAD]}
-        rows={rows.map((t, i) => [
-          i + 1,
-          shortWallet(t.wallet),
-          num(t.totalVolumeSol, 2),
-          num(t.winRate, 0),
-          `${t.netPnlSol >= 0 ? "+" : ""}${num(t.netPnlSol, 2)}`,
-        ])}
+        head={head}
+        rows={rows.map((t, i) => {
+          const base = [i + 1, shortWallet(t.wallet), num(t.totalVolumeSol, 2), num(t.winRate, 0)];
+          return TRADER_PNL_WITHDRAWN
+            ? base
+            : [...base, `${t.netPnlSol >= 0 ? "+" : ""}${num(t.netPnlSol, 2)}`];
+        })}
       />
     </EmbedShell>
   );

@@ -169,4 +169,4 @@ export const TRADER_TABLE_HEAD = ["#", "Wallet", "Volume", "Win %", "Net P&L"] a
  * True while the upstream leaderboard is known to disagree with chain. Flip it
  * only alongside a fresh run of tools/leaderboard-diff.py that agrees.
  */
-export const TRADER_PNL_WITHDRAWN = false;
+export const TRADER_PNL_WITHDRAWN = true;
