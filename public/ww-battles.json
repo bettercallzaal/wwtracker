@@ -1,5 +1,53 @@
 [
   {
+    "id": "1790651382",
+    "type": "QUICK",
+    "date": "Sep 29, 2026",
+    "a": "RUSHIN",
+    "b": "Krypto Mean Green Glow",
+    "aHandle": "_0xQuan",
+    "bHandle": "SteveStrange",
+    "winner": "RUSHIN",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1790649595",
+    "type": "QUICK",
+    "date": "Sep 29, 2026",
+    "a": "7ROO7H - Eve's Daughter",
+    "b": "Santana - GRAVITY",
+    "aHandle": "WaveWarzAfrica",
+    "bHandle": "WaveWarzAfrica",
+    "winner": null,
+    "vol": 0.1,
+    "margin": 0
+  },
+  {
+    "id": "1790647705",
+    "type": "QUICK",
+    "date": "Sep 29, 2026",
+    "a": "IMan Afrikah - NO B.S",
+    "b": "Santana - NONCOMMITTAL",
+    "aHandle": "WaveWarzAfrica",
+    "bHandle": "WaveWarzAfrica",
+    "winner": "Santana - NONCOMMITTAL",
+    "vol": 0.015,
+    "margin": 7
+  },
+  {
+    "id": "1790646428",
+    "type": "QUICK",
+    "date": "Sep 29, 2026",
+    "a": "NSG Mentality x Where4ArtThouRomeo x LUI",
+    "b": "No Logo x MGM x LUI",
+    "aHandle": "luiwrites",
+    "bHandle": "luiwrites",
+    "winner": "NSG Mentality x Where4ArtThouRomeo x LUI",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
     "id": "1790559828",
     "type": "MAIN",
     "date": "Sep 28, 2026",
