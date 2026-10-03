@@ -1,5 +1,89 @@
 [
   {
+    "id": "1790998037",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Cannon Jones - Back To The Barz",
+    "b": "BestWavez x Hurric4n3Ike (Prod. x Hurric4n3Ike) 432 hz",
+    "aHandle": "CannonJones973",
+    "bHandle": "Hurric4n3Ike",
+    "winner": "BestWavez x Hurric4n3Ike (Prod. x Hurric4n3Ike) 432 hz",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1790996678",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Gacy  by Stormbourne & Gorba",
+    "b": "I Hope You Dream of Me",
+    "aHandle": "Stormbourne",
+    "bHandle": "Stormbourne",
+    "winner": "I Hope You Dream of Me",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1790995958",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Don't Miss",
+    "b": "Mindgames",
+    "aHandle": "_0xQuan",
+    "bHandle": "jetdigital321",
+    "winner": "Don't Miss",
+    "vol": 0.12,
+    "margin": 17
+  },
+  {
+    "id": "1790995235",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "WAGBG ",
+    "b": "Fall Thru Me",
+    "aHandle": "NessyTheRilla",
+    "bHandle": "geekmyth",
+    "winner": "Fall Thru Me",
+    "vol": 0.1092,
+    "margin": 100
+  },
+  {
+    "id": "1790994074",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Sun",
+    "b": "Mr. Elephant Man",
+    "aHandle": "GodclouD",
+    "bHandle": "jetdigital321",
+    "winner": null,
+    "vol": 0.1328,
+    "margin": 77
+  },
+  {
+    "id": "1790992537",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Glass Kingdom",
+    "b": "100z",
+    "aHandle": "SteveStrange",
+    "bHandle": "_0xQuan",
+    "winner": null,
+    "vol": 0.0385,
+    "margin": 31
+  },
+  {
+    "id": "1790991840",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Designer V1 x LUI x Hurric4n3 x Aporkalypse",
+    "b": "Original VS Replica",
+    "aHandle": "luiwrites",
+    "bHandle": "luiwrites",
+    "winner": null,
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
     "id": "1790824470",
     "type": "QUICK",
     "date": "Oct 1, 2026",
@@ -14540,7 +14624,7 @@
     "aHandle": "geekmyth",
     "bHandle": "AporkALYPSE78",
     "winner": "Do It for the Vine - Christiano x Nessy the Rilla",
-    "vol": 0.4286,
+    "vol": 0.3654,
     "margin": 46
   },
   {
