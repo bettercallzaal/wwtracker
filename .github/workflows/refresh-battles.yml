@@ -69,7 +69,9 @@ jobs:
       # malformed refresh fails here rather than in a PR nobody reads.
       - name: Validate the rebuilt data
         if: steps.diff.outputs.changed == 'true'
-        run: node scripts/validate.mjs --strict
+        # Overdue re-check dates do not fail this (they used to, which blocked
+        # every data refresh behind an unrelated claim). They go in the PR body.
+        run: node scripts/validate.mjs --strict --recheck-report "$RUNNER_TEMP/recheck.md"
 
       - name: Open a pull request
         if: steps.diff.outputs.changed == 'true'
@@ -106,6 +108,12 @@ jobs:
             echo "The other three baked files, and they cannot be:"
             echo "\`ww-platform-volume.json\`, \`ww-onchain-daily.json\` and \`ww-chain-daily.json\`"
             echo "come from Dune exports done by hand and have no generator in this repo."
+            if [ -s "$RUNNER_TEMP/recheck.md" ]; then
+              echo
+              echo "## Overdue re-check claims (not caused by this PR)"
+              echo
+              cat "$RUNNER_TEMP/recheck.md"
+            fi
           } > /tmp/refresh-body.md
           gh pr create --base main --head "$BRANCH" \
             --title "data: refresh public/ww-battles.json" \

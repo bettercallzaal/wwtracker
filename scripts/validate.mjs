@@ -2,7 +2,8 @@
 // Lightweight data validation. Catches broken/empty snapshots before they ship.
 // Run: node scripts/validate.mjs   (exits 1 on any failure)
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
+import { classifyRechecks, overdueReport, RECHECK_WARN_DAYS } from "./recheck.mjs";
 
 let failures = 0;
 const ok = (m) => console.log(`  ok   ${m}`);
@@ -142,7 +143,20 @@ const KNOWN_STALE = {
 let warnings = 0;
 const warn = (m) => { console.log(`  WARN ${m}`); warnings++; };
 
-const TODAY = new Date();
+// VALIDATE_TODAY=YYYY-MM-DD runs every date check as of that day. It exists so
+// scripts/__tests__/recheck.test.ts can prove the gate both ways (an overdue
+// claim warns, a stale dataset still fails) without waiting for the calendar.
+// Anything other than a plain date is refused rather than silently ignored.
+const TODAY = (() => {
+  const v = process.env.VALIDATE_TODAY;
+  if (v === undefined || v === "") return new Date();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(Date.parse(`${v}T12:00:00Z`))) {
+    console.log(`  FAIL VALIDATE_TODAY=${v} is not a YYYY-MM-DD date`);
+    process.exit(1);
+  }
+  console.log(`  NOTE dates checked as of VALIDATE_TODAY=${v}, not the real clock`);
+  return new Date(`${v}T12:00:00Z`);
+})();
 const daysOld = (d) => Math.floor((TODAY - d) / 86400000);
 
 /** Latest parseable date in a list, or null. Handles ISO and "Aug 25, 2026". */
@@ -221,57 +235,76 @@ for (const [label, raw] of datasets) {
 // honor-system rules run at 3-40% while structurally enforced ones run at ~100%.
 // So the convention is enforced here rather than trusted.
 //
-// Write `RE-CHECK BY YYYY-MM-DD` anywhere in a tracked file. Past that date it
-// fails under --strict, which CI runs, so a stale claim breaks the build instead
-// of sitting there being read.
+// Write `RE-CHECK BY YYYY-MM-DD` anywhere in a tracked file. The rules live in
+// scripts/recheck.mjs. Past the date a claim is OVERDUE: loud everywhere a human
+// looks (this output, a GitHub annotation, the job summary, and the one open
+// issue checks.yml keeps), but NOT a build failure - see recheck.mjs for why
+// that changed on 2026-10-08. A marker whose date is not a real date FAILS.
+//
+// --recheck-report <path> writes the issue body (empty when nothing is overdue).
 
-const RECHECK_RE = /RE-CHECK BY (\d{4}-\d{2}-\d{2})/g;
-const RECHECK_WARN_DAYS = 7;
+const reportFlag = process.argv.indexOf("--recheck-report");
+const reportPath = reportFlag > -1 ? process.argv[reportFlag + 1] : null;
+if (reportFlag > -1 && !reportPath) bad("--recheck-report needs a path");
+let overdueCount = 0;
 
 function scanRecheckDates() {
   let files;
   try {
     files = execSync("git ls-files", { encoding: "utf8" }).trim().split("\n");
   } catch {
-    warn("re-check scan skipped: not a git work tree");
-    return;
+    // Strict callers are CI and the refresh job; both run in a checkout. A scan
+    // that could not run there is a gate that did not run, so it fails.
+    const m = "re-check scan could not run: not a git work tree";
+    strict ? bad(m) : warn(m);
+    return [];
   }
-  let found = 0;
+  const all = [];
   for (const f of files) {
     if (!/\.(md|ts|tsx|mjs|js|sh|json|yml)$/.test(f)) continue;
+    // The files that define and test the marker would otherwise match themselves.
+    if (f === "scripts/validate.mjs" || f === "scripts/recheck.mjs" || f === "scripts/__tests__/recheck.test.ts") continue;
     let text;
     try {
       text = readFileSync(f, "utf8");
     } catch {
       continue;
     }
-    // The regex literal that defines the marker would otherwise match itself.
-    if (f === "scripts/validate.mjs") continue;
-    for (const m of text.matchAll(RECHECK_RE)) {
-      found++;
-      const due = new Date(`${m[1]}T23:59:59Z`);
-      const daysLeft = Math.floor((due - TODAY) / 86400000);
-      const where = `${f}: claim due for re-check ${m[1]}`;
-      if (daysLeft < 0) {
-        // Past due. This is the whole point - it must not be possible to ignore.
-        const msg = `${where} - ${-daysLeft} day(s) OVERDUE, re-verify it or move the date`;
-        strict ? bad(msg) : warn(msg);
-      } else if (daysLeft <= RECHECK_WARN_DAYS) {
-        warn(`${where} - ${daysLeft} day(s) left`);
-      } else {
-        ok(`${where} - ${daysLeft} day(s) left`);
-      }
+    all.push(...classifyRechecks(text, f, TODAY));
+  }
+  const gha = process.env.GITHUB_ACTIONS === "true";
+  for (const e of all) {
+    const where = `${e.file}:${e.line}: claim due for re-check ${e.due}`;
+    if (e.status === "invalid") {
+      bad(`${where} - not a real date, so it can never go overdue. Fix the date`);
+    } else if (e.status === "overdue") {
+      overdueCount++;
+      console.log(`  OVERDUE ${where} - ${-e.daysLeft} day(s) past, re-verify it or move the date`);
+      if (gha) console.log(`::warning file=${e.file},line=${e.line},title=RE-CHECK overdue::claim due ${e.due}, ${-e.daysLeft} day(s) past. Re-verify it or move the date (docs/RECHECK.md).`);
+    } else if (e.status === "soon") {
+      warn(`${where} - ${e.daysLeft} day(s) left (warns inside ${RECHECK_WARN_DAYS})`);
+    } else {
+      ok(`${where} - ${e.daysLeft} day(s) left`);
     }
   }
-  if (found === 0) {
+  if (all.length === 0) {
     // Not a pass. A repo with no dated claims is far likelier to have lost the
     // convention than to have no time-bound claims in it.
     warn("no RE-CHECK BY markers found anywhere - the convention has probably been dropped");
   }
+  return all;
 }
 
-scanRecheckDates();
+const rechecks = scanRecheckDates();
+const report = overdueReport(rechecks);
+if (reportPath) writeFileSync(reportPath, report);
+if (report && process.env.GITHUB_STEP_SUMMARY) {
+  appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Overdue re-check claims\n\n${report}\n`);
+}
 
+if (overdueCount) {
+  console.log(`\n${overdueCount} OVERDUE re-check claim(s) above. Not a build failure; tracked in the "Overdue RE-CHECK claims" issue.`);
+}
 if (warnings && !failures) {
   console.log(`\n${warnings} staleness warning(s) - see docs/REFRESH.md. Re-run with --strict to fail on these.`);
 }

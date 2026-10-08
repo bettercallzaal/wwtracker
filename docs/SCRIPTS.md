@@ -52,6 +52,7 @@ has never been run in full, it says so.
 | `ww-treasury-backfill.ts` | Extends `public/ww-daily-treasury.csv` from chain. **Never run in full**: reaching the 2026-07-22 gap takes ~3,100 RPC calls, about twenty minutes against the endpoint the watcher shares. Proven on a two-day window, where its walk ended exactly on the chain's balance. Run it with `--from` on a keyed endpoint |
 | `capture-ww-fixtures.ts` | Re-captures the transaction fixtures from chain, or checks they still match |
 | `validate.mjs` | Pre-build check that no snapshot is stale or empty |
+| `recheck.mjs` | The `RE-CHECK BY` date rules `validate.mjs` applies: ok, soon, overdue (loud, not a failure), invalid (a failure). Pure, tested in `scripts/__tests__/recheck.test.ts` |
 
 ## Writing and review
 

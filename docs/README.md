@@ -22,6 +22,8 @@ wavewarz.info's public API or linked out to their pages, never copied.
 
 - [**SURFACES.md**](./SURFACES.md) - the three WaveWarZ surfaces and who owns each. Read
   this first. WaveWarZ is not one site; it is three, with three owners.
+- [**REPOS.md**](./REPOS.md) - every public WaveWarZ code repo, its owner, and whether
+  it is alive. SURFACES.md is the sites; this is the repos.
 - [**TEAM.md**](./TEAM.md) - who's who, and two names people routinely get wrong.
 - [**ECOSYSTEM.md**](./ECOSYSTEM.md) - live integrations (Audius, Ignite Radio, Solana, The ZAO).
 

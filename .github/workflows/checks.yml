@@ -33,6 +33,11 @@ jobs:
   build:
     name: types, tests, data
     runs-on: ubuntu-latest
+    # issues: write is for the overdue re-check issue below, and only that step
+    # uses it. Everything else here is read-only.
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -46,7 +51,43 @@ jobs:
       - run: npx vitest run
       # --strict: stale data fails here even though it never fails a deploy.
       # Datasets knowingly parked carry an expiry date in the script itself.
-      - run: node scripts/validate.mjs --strict
+      # An OVERDUE re-check date does NOT fail here (it used to, which turned
+      # main red at midnight with no code change). It is printed, annotated on
+      # the file, written to the job summary, and kept in one issue below.
+      - run: node scripts/validate.mjs --strict --recheck-report "$RUNNER_TEMP/recheck.md"
+
+      # The loud half of that trade. One issue, titled exactly as below, holds
+      # every overdue claim; it is rewritten on each run on main or the daily
+      # schedule and closed when nothing is overdue. Not on pull_request: a PR
+      # from a fork has no write token, and PRs should not race each other on
+      # one issue body. If this step cannot reach the API it fails the job,
+      # because an overdue claim nobody can see is the silent pass this replaced.
+      - name: Keep the overdue re-check issue current
+        if: github.event_name != 'pull_request' && !cancelled()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPORT="$RUNNER_TEMP/recheck.md"
+          if [ ! -f "$REPORT" ]; then
+            echo "validate.mjs did not run, so there is no report. Leaving the issue alone."
+            exit 0
+          fi
+          TITLE="Overdue RE-CHECK claims"
+          NUM=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title \
+            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ -s "$REPORT" ]; then
+            if [ -n "$NUM" ]; then
+              gh issue edit "$NUM" --body-file "$REPORT"
+              echo "Updated issue #$NUM"
+            else
+              gh issue create --title "$TITLE" --body-file "$REPORT"
+            fi
+          elif [ -n "$NUM" ]; then
+            gh issue close "$NUM" --comment "Nothing is overdue as of run ${{ github.run_id }}. Closing."
+          else
+            echo "Nothing overdue and no open issue."
+          fi
       - run: npm run check:review
 
   upstream-contract:
