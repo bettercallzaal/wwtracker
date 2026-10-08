@@ -13,6 +13,11 @@ import { fileURLToPath } from "node:url";
 // honor-system rules against ~100% for structurally enforced ones. So
 // scripts/validate.mjs enforces it and CI runs --strict.
 //
+// Changed 2026-10-08: an overdue claim is LOUD but no longer a build failure
+// (it turned main red on a timer with no code change). The behavior itself is
+// tested end to end in scripts/__tests__/recheck.test.ts; these guard that the
+// loud half was not quietly dropped along with the failure.
+//
 // These tests guard the enforcement itself, because a gate nobody invokes is not
 // a gate - which this repo has already learned once.
 
@@ -20,11 +25,23 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const validate = readFileSync(`${root}scripts/validate.mjs`, "utf8");
 
 describe("re-check dates are enforced, not trusted", () => {
-  it("the validator scans for the marker and fails strictly when overdue", () => {
+  it("the validator scans for the marker and keeps an overdue claim loud", () => {
     expect(validate).toContain("RE-CHECK BY");
     expect(validate).toContain("OVERDUE");
-    // Past due must be a failure under --strict, not a warning forever.
-    expect(validate).toMatch(/daysLeft < 0[\s\S]{0,400}strict \? bad/);
+    // This used to assert that past due was a failure under --strict. That was
+    // the rule until 2026-10-08. Now past due must reach a human three ways:
+    // a GitHub annotation, the job summary, and the report checks.yml turns
+    // into the one open issue.
+    expect(validate).toContain("::warning file=");
+    expect(validate).toContain("GITHUB_STEP_SUMMARY");
+    expect(validate).toContain("--recheck-report");
+    const checks = readFileSync(`${root}.github/workflows/checks.yml`, "utf8");
+    expect(checks).toContain("--recheck-report");
+    expect(checks).toContain('TITLE="Overdue RE-CHECK claims"');
+  });
+
+  it("a marker with an impossible date fails, because it could never go overdue", () => {
+    expect(validate).toMatch(/status === "invalid"\) \{\s*bad\(/);
   });
 
   it("warns when it finds no markers at all", () => {

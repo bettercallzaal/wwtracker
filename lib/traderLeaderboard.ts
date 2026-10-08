@@ -94,6 +94,9 @@
 // the invalidation condition named it in advance: "the snapshot passing about
 // three weeks old, whichever comes first". It came first.
 //
+// [Corrected 2026-10-08: the next sentence was true when written and went stale
+// within hours. #430 set TRADER_PNL_WITHDRAWN = true at 2026-09-28 09:38Z on
+// Zaal's ruling, and the flag has been true since. Kept for the record.]
 // THE COLUMN IS STILL LIVE (TRADER_PNL_WITHDRAWN = false) AND IT RENDERS IN AN
 // EMBEDDABLE WIDGET ON OTHER PEOPLE'S PAGES. Neither leaving it nor pulling it
 // is supported by a measurement right now, which is precisely why the decision
@@ -104,11 +107,40 @@
 //   python3 ../../tools/census.py
 //   python3 ../../tools/pnl-restore-check.py
 //
-// RE-CHECK BY 2026-10-05, and a bare re-run will not clear it: the snapshot has
+// The re-check was due 2026-10-05 (superseded below), and a bare re-run will not clear it: the snapshot has
 // to be refreshed first or the same two conditions fail for the same reason and
 // the date moves for nothing. INVALIDATED BY: any condition flipping against a
 // CURRENT snapshot. The three-week clause has already fired and is now history
 // rather than a rule.
+//
+// RE-CHECKED 2026-10-08 AGAINST A FRESHER SNAPSHOT, not a bare re-run. The
+// protocol repo now holds data/chain-snapshot-2026-09-27 (1,720 battles, 16,115
+// trades, newest 2026-09-28 01:16Z; protocol PR #49). Run twice that day,
+// identical both times:
+//
+//   site aggregate is negative                 FAIL +0.11 SOL (chain -17.07)
+//   no wallet shown profitable while down      FAIL 3 wallets
+//   largest single delta under 1 SOL           FAIL 10.39 SOL (23oqJnEJhJ3q)
+//   no snapshot trader missing from the site   FAIL 1 missing; site 161 chain 161
+//   snapshot newest trade                      2026-09-28 01:16Z (10.6 days old)
+//   site wallets the snapshot has never seen   2
+//
+// VERDICT: WITHDRAW THE COLUMN. This is stronger than the 09-28 reading: the
+// snapshot is half as old, and the aggregate has flipped sign, which is not
+// explained by one side being frozen for a few days. It is still not decisive.
+// The snapshot is 10.6 days old and the tool itself says rescan before
+// concluding the site regressed.
+//
+// THE COLUMN IS WITHDRAWN AND STAYS WITHDRAWN (TRADER_PNL_WITHDRAWN = true,
+// below). Zaal ruled on 2026-09-28 "Pull the column until a scan runs" (zao-vault
+// decisions/grill-2026-09-28-vault-morning.md, item 4), and #430 applied it. On
+// 2026-10-08 he chose a fresh chain scan on the Helius free plan (zao-vault
+// decisions/grill-2026-10-07-seat-morning.md, item 62), and that is the scan
+// item 4 waits for. This re-check agrees with keeping it withdrawn. The column
+// comes back only when the fresh scan passes all four conditions.
+//
+// RE-CHECK BY 2026-10-15. INVALIDATED BY: the fresh scan landing, which replaces
+// this block with its own verdict.
 
 /** A row as the upstream leaderboard returns it. */
 export interface TraderLeaderboardRow {
