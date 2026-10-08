@@ -128,11 +128,19 @@
 // The snapshot is 10.6 days old and the tool itself says rescan before
 // concluding the site regressed.
 //
-// THE COLUMN STAYS LIVE (TRADER_PNL_WITHDRAWN = false) because Zaal ruled on
-// 2026-10-08 how this is settled: a fresh chain scan on the Helius free plan,
-// then a PR either fixing the column or setting TRADER_PNL_WITHDRAWN = true.
-// That scan is waiting on where the RPC key comes from. Flipping the flag here,
-// ahead of the scan, would be this file deciding quietly.
+// TRADER_PNL_WITHDRAWN IS UNCHANGED (false), PENDING ZAAL. Two of his rulings
+// bear on it and they have not been reconciled:
+//
+//   zao-vault decisions/grill-2026-09-28-vault-morning.md, item 4: "Pull the
+//   column until a scan runs" - TRADER_PNL_WITHDRAWN = true, back when a fresh
+//   chain scan supports it. Never applied; the flag has stayed false.
+//
+//   zao-vault decisions/grill-2026-10-07-seat-morning.md, item 62 (2026-10-08):
+//   offered A fresh chain scan on Helius, B withdraw now, C leave, he chose A.
+//   That question did not mention item 4.
+//
+// Whether item 62 replaced item 4 is his to say, and the question is with him.
+// This comment records the measurement and does not decide the flag.
 //
 // RE-CHECK BY 2026-10-15. INVALIDATED BY: the fresh scan landing, which replaces
 // this block with its own verdict.
