@@ -36,6 +36,12 @@ describe("overdueReport", () => {
     const r = overdueReport(classifyRechecks(`\n${MARK} 2026-10-01`, "lib/x.ts", today));
     expect(r).toContain("| `lib/x.ts:2` | 2026-10-01 | 8 |");
   });
+
+  it("lists stale datasets too, and is non-empty on stale data alone", () => {
+    const r = overdueReport([], [{ label: "public/a.json", age: 60, newest: "2026-08-10", note: "parking expired 2026-10-15" }]);
+    expect(r).toContain("1 dataset(s) stale past 45 days");
+    expect(r).toContain("| `public/a.json` | 2026-08-10 | 60 | parking expired 2026-10-15 |");
+  });
 });
 
 // The whole validator, run as CI runs it, against the real repo. Both
@@ -53,15 +59,26 @@ describe("validate.mjs --strict", () => {
     // lib/price.ts carries a claim due 2026-10-08. One day later it is overdue.
     const { code, out } = validate("2026-10-09");
     expect(out).toMatch(/OVERDUE lib\/price\.ts:\d+: claim due for re-check 2026-10-08/);
-    expect(out).toContain("OVERDUE re-check claim(s) above");
+    expect(out).toMatch(/\d+ OVERDUE re-check claim\(s\)/);
     expect(code).toBe(0);
   });
 
-  it("a genuinely failing check still fails: stale data a year on", () => {
-    // Red control. Nothing about the re-check change may turn a real failure
-    // green. A year out, the baked datasets are far past STALE_DAYS.
+  it("stale data a year on is loud and listed, and does not fail the build", () => {
+    // Until 2026-10-08 this was the red control: a year out, stale data FAILED.
+    // Staleness is now timer-driven and loud rather than a failure, so the red
+    // control is the wrong-date case below.
     const { code, out } = validate("2027-10-09");
-    expect(out).toMatch(/FAIL .*days old/);
+    expect(out).toMatch(/STALE public\/ww-battles\.json: \d+ days old/);
+    expect(out).toMatch(/STALE public\/ww-skips\.json: .* parking expired 2026-10-15/);
+    expect(out).toMatch(/\d+ STALE dataset\(s\) above/);
+    expect(code).toBe(0);
+  });
+
+  it("red control: a dataset dated after today is a wrong figure and still fails", () => {
+    // As of 2026-01-01 every baked dataset's newest record is months in the
+    // future. Waiting cannot fix that; the date or the clock is wrong.
+    const { code, out } = validate("2026-01-01");
+    expect(out).toMatch(/FAIL public\/ww-battles\.json: newest record .* in the future - the date is wrong/);
     expect(out).toContain("VALIDATION FAILED");
     expect(code).toBe(1);
   });

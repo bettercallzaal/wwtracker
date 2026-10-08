@@ -3,7 +3,7 @@
 // Run: node scripts/validate.mjs   (exits 1 on any failure)
 import { execSync } from "node:child_process";
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
-import { classifyRechecks, overdueReport, RECHECK_WARN_DAYS } from "./recheck.mjs";
+import { classifyRechecks, overdueReport, RECHECK_WARN_DAYS, STALE_DAYS, WARN_DAYS } from "./recheck.mjs";
 
 let failures = 0;
 const ok = (m) => console.log(`  ok   ${m}`);
@@ -116,25 +116,34 @@ for (const file of ["lib/traders.ts", "lib/songs.ts"]) {
 // snapshot frozen for months passed clean while the site served numbers that
 // were 80+ days out. These report how old each dataset's newest record is.
 //
-// Warnings by default (a stale snapshot must not block an unrelated code
-// deploy); pass --strict to turn them into failures for CI or a data-refresh PR.
-// Thresholds: WARN_DAYS is "someone should refresh", STALE_DAYS is "this is
-// misinforming people".
+// A dataset past STALE_DAYS is printed as STALE, annotated in the GitHub UI,
+// and listed in the "Overdue RE-CHECK claims" issue checks.yml keeps. It does
+// NOT fail the build, under --strict or otherwise.
+//
+// Changed 2026-10-08. It used to fail under --strict, which CI runs, so main
+// went red the day a dataset crossed 45 days with no code change, and every
+// open PR with it - the same timer-red as the re-check dates (see
+// scripts/recheck.mjs). Zaal ruled to fix the cause; the seat applied that
+// ruling to staleness the same day.
+//
+// What still FAILS under --strict is a date that is WRONG rather than old: a
+// dataset with no date the validator can read, or one dated after today. Those
+// are broken figures, and no amount of waiting makes them right.
+// Thresholds live in scripts/recheck.mjs.
 // ---------------------------------------------------------------------------
 const strict = process.argv.includes("--strict");
-const WARN_DAYS = 14;
-const STALE_DAYS = 45;
 
 // Datasets knowingly parked past STALE_DAYS, each with the date its parking
 // expires. These three describe the skip-queue auction and the DJ Wavy split -
 // real, actively maintained data with no section rendering it yet (docs/AUDIT.md
-// 3.4, and 4.2 for the widget that will). They are a backlog item, not neglect,
-// and failing the build on them would mean --strict gets removed within a week.
+// 3.4, and 4.2 for the widget that will). They are a backlog item, not neglect.
 //
 // The expiry is the point. An exemption with no deadline is the check switched
-// off with extra steps: past the date below these fail in strict mode whatever
-// their age, so the decision to keep parking them has to be made again out loud
-// rather than inherited by silence.
+// off with extra steps. While parked, these are a quiet WARN. Past the date they
+// are STALE like any other dataset - in the issue, with "parking expired" beside
+// them - so the decision to keep parking them has to be made again out loud
+// rather than inherited by silence. (Until 2026-10-08 an expired parking failed
+// the build instead; see the staleness note above for why that changed.)
 const KNOWN_STALE = {
   "public/ww-skips.json": "2026-10-15",
   "public/ww-queue.json": "2026-10-15",
@@ -195,22 +204,33 @@ for (const name of ["ww-skips", "ww-queue", "ww-wavysplit"]) {
 }
 
 console.log("");
+const staleItems = [];
+const ghaOn = process.env.GITHUB_ACTIONS === "true";
 for (const [label, raw] of datasets) {
-  if (raw == null) { warn(`${label}: no date found - cannot check staleness`); continue; }
+  // A WRONG date, not an old one: these still fail under --strict.
+  if (raw == null) { const m = `${label}: no date found - cannot check staleness`; strict ? bad(m) : warn(m); continue; }
   const d = raw instanceof Date ? raw : new Date(Date.parse(raw));
-  if (Number.isNaN(d.getTime())) { warn(`${label}: unparseable date ${raw}`); continue; }
+  if (Number.isNaN(d.getTime())) { const m = `${label}: unparseable date ${raw}`; strict ? bad(m) : warn(m); continue; }
   const age = daysOld(d);
   const stamp = d.toISOString().slice(0, 10);
+  if (age < -1) {
+    // More than a day ahead of the clock (a day of slack for time zones). Data
+    // cannot be newer than now, so the date or the clock is wrong.
+    const m = `${label}: newest record ${stamp} is ${-age} days in the future - the date is wrong`;
+    strict ? bad(m) : warn(m);
+    continue;
+  }
   if (age >= STALE_DAYS) {
     const msg = `${label}: ${age} days old (newest ${stamp}, stale past ${STALE_DAYS})`;
     const parkedUntil = KNOWN_STALE[label];
     if (parkedUntil && TODAY < new Date(`${parkedUntil}T23:59:59Z`)) {
       warn(`${msg} - knowingly parked until ${parkedUntil}`);
-    } else if (parkedUntil) {
-      const m = `${msg} - the exemption expired ${parkedUntil}, refresh it or move the date deliberately`;
-      strict ? bad(m) : warn(m);
     } else {
-      strict ? bad(msg) : warn(msg);
+      // Loud, not a failure. See the staleness note above.
+      const note = parkedUntil ? `parking expired ${parkedUntil}` : "";
+      staleItems.push({ label, age, newest: stamp, note });
+      console.log(`  STALE ${msg}${note ? ` - ${note}, refresh it or move the date deliberately` : ""}`);
+      if (ghaOn) console.log(`::warning title=Stale data::${msg}${note ? ` (${note})` : ""}. See docs/REFRESH.md.`);
     }
   } else if (age >= WARN_DAYS) {
     warn(`${label}: ${age} days old (newest ${stamp})`);
@@ -296,14 +316,14 @@ function scanRecheckDates() {
 }
 
 const rechecks = scanRecheckDates();
-const report = overdueReport(rechecks);
+const report = overdueReport(rechecks, staleItems);
 if (reportPath) writeFileSync(reportPath, report);
 if (report && process.env.GITHUB_STEP_SUMMARY) {
-  appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Overdue re-check claims\n\n${report}\n`);
+  appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Overdue re-checks and stale data\n\n${report}\n`);
 }
 
-if (overdueCount) {
-  console.log(`\n${overdueCount} OVERDUE re-check claim(s) above. Not a build failure; tracked in the "Overdue RE-CHECK claims" issue.`);
+if (overdueCount || staleItems.length) {
+  console.log(`\n${overdueCount} OVERDUE re-check claim(s) and ${staleItems.length} STALE dataset(s) above. Not a build failure; tracked in the "Overdue RE-CHECK claims" issue.`);
 }
 if (warnings && !failures) {
   console.log(`\n${warnings} staleness warning(s) - see docs/REFRESH.md. Re-run with --strict to fail on these.`);
