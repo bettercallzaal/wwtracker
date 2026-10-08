@@ -12,7 +12,7 @@ Private repos are not listed here; this repo is public.
 
 | Repo | Owner | What it is | Last commit | Homepage | Open PRs |
 |---|---|---|---|---|---|
-| `bettercallzaal/wwtracker` | Zaal | This repo. The on-chain business layer: treasury, fee model, ledger, decoded program | 2026-10-08 | wwtracker.vercel.app, 200 | 2 (#434 data refresh, #435 SOL price) |
+| `bettercallzaal/wwtracker` | Zaal | This repo. The on-chain business layer: treasury, fee model, ledger, decoded program | 2026-10-01 | wwtracker.vercel.app, 200 | 2 (#434 data refresh, #435 SOL price) |
 | `CandyToyBox/wavewarz-intelligence` | Candy | wavewarz.info. Analytics, leaderboards, the public API. System of record for battle data | 2026-09-15 | wavewarz.info, 200 | 0 |
 | `wavewarz/wavewarz-dj-wavy-api` | WaveWarZ org | Backend for the DJ Wavy audio judging pipeline | 2026-07-12 | wavewarz-dj-wavy-api.vercel.app, 200 | 0 |
 
