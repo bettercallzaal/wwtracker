@@ -6,9 +6,19 @@ record that stays loud after it stops being true is as dangerous as an alarm tha
 goes quiet when things break.
 
 **This file is enforced, not trusted.** `scripts/validate.mjs` scans every tracked
-file for `RE-CHECK BY YYYY-MM-DD`, warns inside seven days, and **fails under
-`--strict`** once the date passes. CI runs `--strict`. So a stale claim breaks the
-build rather than sitting here being read.
+file for `RE-CHECK BY YYYY-MM-DD` and warns inside seven days. Once the date
+passes the claim is **OVERDUE**: printed in the CI log, annotated on the file in
+the GitHub UI, written to the job summary, and listed in the one open issue titled
+**Overdue RE-CHECK claims**, which `checks.yml` rewrites on every run on main and
+closes when the list is empty. A marker whose date is not a real date
+(`2026-13-45`) fails the build, because it could never go overdue.
+
+**Changed 2026-10-08: overdue no longer fails the build.** Until then it failed
+under `--strict`, which CI runs. That turned main red at midnight with no code
+change, blocked every open PR (including unrelated ones) until someone
+re-measured the claim, and left the merge lead needing an override for routine
+work. Zaal ruled to fix the cause. The claim still has to be re-checked; the
+issue is where it waits, instead of in everyone's way.
 
 It also warns if it finds *no* markers at all - a repo with no dated claims is
 far likelier to have lost the convention than to genuinely have none.
