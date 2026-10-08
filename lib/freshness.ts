@@ -40,7 +40,7 @@ export const FRESHNESS: Record<string, string> = {
   "instruction mix (chain scan)": "2026-09-06",
   "platform volume timeline (per-battle, from 2025-05-28)": "2026-09-05",
   "program + treasury snapshot (lib/wwData.ts)": "2026-09-05",
-  "SOL/USD reference price": "2026-09-08",
+  "SOL/USD reference price": "2026-10-08",
   "battle history file (recap tooling, npm run fetch:battles)": "2026-10-01",
   // Static /artist/* routes only - not on the homepage, so not in DATA_AS_OF.
   "artist roster for static routes (lib/leaderboard.ts)": "2026-06-15",

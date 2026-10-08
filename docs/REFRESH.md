@@ -155,6 +155,7 @@ retired-figure registry scans rendered code only, so nothing caught it.)*
 measured price has moved more than 10% from `SOL_USD`. Every figure is shown as
 `≈ $`, and churning every USD number on the site for a few percent buys nothing.
 Re-checked 2026-09-10: 99.83 against 103.34, -3.4%, left as is.
+Re-checked 2026-10-08 at the re-check date: 113.43 against 103.34, +9.8%, updated.
 
 ## Validation & deploy
 

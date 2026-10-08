@@ -24,10 +24,12 @@
 // Measured against the platform's own reported price:
 //   zao-measure --verify "wwtracker: SOL price basis"
 //
-// RE-CHECK BY 2026-10-08. A price is the most perishable number here, and every
+// Re-measured 2026-10-08 at the re-check date: 113.43 against 103.34, +9.8%.
+//
+// RE-CHECK BY 2026-11-08. A price is the most perishable number here, and every
 // USD figure in this repo derives from this one line.
-export const SOL_USD = 103.34;
-export const SOL_USD_AS_OF = "2026-09-08";
+export const SOL_USD = 113.43;
+export const SOL_USD_AS_OF = "2026-10-08";
 
 /** Format a SOL amount as an approximate USD string, e.g. "≈ $247". */
 export function usd(sol: number, dp = 0): string {
