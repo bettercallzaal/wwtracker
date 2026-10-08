@@ -1,4 +1,5 @@
-import { spawnSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { classifyRechecks, overdueReport } from "../recheck.mjs";
 
@@ -48,13 +49,39 @@ function validate(asOf: string) {
   return { code: r.status, out: r.stdout };
 }
 
+// The earliest real marker in the repo, so the test follows the claims instead
+// of pinning one. It first pinned lib/price.ts's 2026-10-08 date, and went red
+// on the PR that re-measured the price and moved that date (#435).
+function earliestMarker(): { file: string; due: string } {
+  const skip = new Set(["scripts/validate.mjs", "scripts/recheck.mjs", "scripts/__tests__/recheck.test.ts"]);
+  const files = execSync("git ls-files", { encoding: "utf8" }).trim().split("\n");
+  let best: { file: string; due: string } | null = null;
+  for (const f of files) {
+    if (skip.has(f) || !/\.(md|ts|tsx|mjs|js|sh|json|yml)$/.test(f)) continue;
+    let text: string;
+    try { text = readFileSync(f, "utf8"); } catch { continue; }
+    for (const e of classifyRechecks(text, f, today)) {
+      if (e.status !== "invalid" && (!best || e.due < best.due)) best = { file: f, due: e.due };
+    }
+  }
+  if (!best) throw new Error("no RE-CHECK markers in the repo - the convention is gone");
+  return best;
+}
+
 describe("validate.mjs --strict", () => {
-  it("an overdue re-check date warns loudly and does not fail the build", () => {
-    // lib/price.ts carries a claim due 2026-10-08. One day later it is overdue.
-    const { code, out } = validate("2026-10-09");
-    expect(out).toMatch(/OVERDUE lib\/price\.ts:\d+: claim due for re-check 2026-10-08/);
-    expect(out).toContain("OVERDUE re-check claim(s) above");
-    expect(code).toBe(0);
+  it("an overdue re-check date warns loudly and is never itself a failure", () => {
+    // The day after the earliest claim falls due, that claim is overdue.
+    const { file, due } = earliestMarker();
+    const dayAfter = new Date(Date.parse(`${due}T12:00:00Z`) + 86400000).toISOString().slice(0, 10);
+    const { code, out } = validate(dayAfter);
+    const esc = file.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+    expect(out).toMatch(new RegExp(`OVERDUE ${esc}:\\d+: claim due for re-check ${due}`));
+    expect(out).toMatch(/\d+ OVERDUE re-check claim/);
+    // No re-check line may be a FAIL. Other date checks (dataset staleness)
+    // can legitimately fail on some future day, so the exit code is only
+    // asserted when nothing else failed.
+    expect(out).not.toMatch(/FAIL .*claim due for re-check/);
+    if (!/^\s*FAIL /m.test(out)) expect(code).toBe(0);
   });
 
   it("a genuinely failing check still fails: stale data a year on", () => {
