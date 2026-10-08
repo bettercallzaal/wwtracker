@@ -104,11 +104,38 @@
 //   python3 ../../tools/census.py
 //   python3 ../../tools/pnl-restore-check.py
 //
-// RE-CHECK BY 2026-10-05, and a bare re-run will not clear it: the snapshot has
+// The re-check was due 2026-10-05 (superseded below), and a bare re-run will not clear it: the snapshot has
 // to be refreshed first or the same two conditions fail for the same reason and
 // the date moves for nothing. INVALIDATED BY: any condition flipping against a
 // CURRENT snapshot. The three-week clause has already fired and is now history
 // rather than a rule.
+//
+// RE-CHECKED 2026-10-08 AGAINST A FRESHER SNAPSHOT, not a bare re-run. The
+// protocol repo now holds data/chain-snapshot-2026-09-27 (1,720 battles, 16,115
+// trades, newest 2026-09-28 01:16Z; protocol PR #49). Run twice that day,
+// identical both times:
+//
+//   site aggregate is negative                 FAIL +0.11 SOL (chain -17.07)
+//   no wallet shown profitable while down      FAIL 3 wallets
+//   largest single delta under 1 SOL           FAIL 10.39 SOL (23oqJnEJhJ3q)
+//   no snapshot trader missing from the site   FAIL 1 missing; site 161 chain 161
+//   snapshot newest trade                      2026-09-28 01:16Z (10.6 days old)
+//   site wallets the snapshot has never seen   2
+//
+// VERDICT: WITHDRAW THE COLUMN. This is stronger than the 09-28 reading: the
+// snapshot is half as old, and the aggregate has flipped sign, which is not
+// explained by one side being frozen for a few days. It is still not decisive.
+// The snapshot is 10.6 days old and the tool itself says rescan before
+// concluding the site regressed.
+//
+// THE COLUMN STAYS LIVE (TRADER_PNL_WITHDRAWN = false) because Zaal ruled on
+// 2026-10-08 how this is settled: a fresh chain scan on the Helius free plan,
+// then a PR either fixing the column or setting TRADER_PNL_WITHDRAWN = true.
+// That scan is waiting on where the RPC key comes from. Flipping the flag here,
+// ahead of the scan, would be this file deciding quietly.
+//
+// RE-CHECK BY 2026-10-15. INVALIDATED BY: the fresh scan landing, which replaces
+// this block with its own verdict.
 
 /** A row as the upstream leaderboard returns it. */
 export interface TraderLeaderboardRow {
