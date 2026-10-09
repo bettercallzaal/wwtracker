@@ -1,5 +1,173 @@
 [
   {
+    "id": "1791425344",
+    "type": "QUICK",
+    "date": "Oct 8, 2026",
+    "a": "Saturday in LA Featuring DopeStilo",
+    "b": "HEART OPEN",
+    "aHandle": "BennyJ504WaveWarz",
+    "bHandle": "dopestilo",
+    "winner": "Saturday in LA Featuring DopeStilo",
+    "vol": 0.028,
+    "margin": 7
+  },
+  {
+    "id": "1791413347",
+    "type": "QUICK",
+    "date": "Oct 7, 2026",
+    "a": "2 OUT THERE ",
+    "b": "WaveWarZ, the electric vibez",
+    "aHandle": "frameworkfortune",
+    "bHandle": "bettercallzaal",
+    "winner": null,
+    "vol": 0,
+    "margin": null
+  },
+  {
+    "id": "1791255934",
+    "type": "QUICK",
+    "date": "Oct 6, 2026",
+    "a": "HEART OPEN",
+    "b": "Super Star",
+    "aHandle": "dopestilo",
+    "bHandle": "srchappell",
+    "winner": "Super Star",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1791254349",
+    "type": "QUICK",
+    "date": "Oct 6, 2026",
+    "a": "Need it © ",
+    "b": "DND",
+    "aHandle": "hakeemprime",
+    "bHandle": "PKMNCTO",
+    "winner": null,
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1791252825",
+    "type": "QUICK",
+    "date": "Oct 6, 2026",
+    "a": "100z",
+    "b": "Ghost Town (Table for One) ",
+    "aHandle": "_0xQuan",
+    "bHandle": "AporkALYPSE78",
+    "winner": "Ghost Town (Table for One) ",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1791250992",
+    "type": "QUICK",
+    "date": "Oct 6, 2026",
+    "a": "The Reflectors",
+    "b": "BANDOLERO ",
+    "aHandle": "jetdigital321",
+    "bHandle": "luiwrites",
+    "winner": "BANDOLERO ",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1791250495",
+    "type": "QUICK",
+    "date": "Oct 6, 2026",
+    "a": "Clogged Kata Converter",
+    "b": "Say El Tio",
+    "aHandle": "hoodrats",
+    "bHandle": "Kata7yst",
+    "winner": "Clogged Kata Converter",
+    "vol": 0.1056,
+    "margin": 25
+  },
+  {
+    "id": "1790998037",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Cannon Jones - Back To The Barz",
+    "b": "BestWavez x Hurric4n3Ike (Prod. x Hurric4n3Ike) 432 hz",
+    "aHandle": "CannonJones973",
+    "bHandle": "Hurric4n3Ike",
+    "winner": "BestWavez x Hurric4n3Ike (Prod. x Hurric4n3Ike) 432 hz",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1790996678",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Gacy  by Stormbourne & Gorba",
+    "b": "I Hope You Dream of Me",
+    "aHandle": "Stormbourne",
+    "bHandle": "Stormbourne",
+    "winner": "I Hope You Dream of Me",
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
+    "id": "1790995958",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Don't Miss",
+    "b": "Mindgames",
+    "aHandle": "_0xQuan",
+    "bHandle": "jetdigital321",
+    "winner": "Don't Miss",
+    "vol": 0.12,
+    "margin": 17
+  },
+  {
+    "id": "1790995235",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "WAGBG ",
+    "b": "Fall Thru Me",
+    "aHandle": "NessyTheRilla",
+    "bHandle": "geekmyth",
+    "winner": "Fall Thru Me",
+    "vol": 0.1092,
+    "margin": 100
+  },
+  {
+    "id": "1790994074",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Sun",
+    "b": "Mr. Elephant Man",
+    "aHandle": "GodclouD",
+    "bHandle": "jetdigital321",
+    "winner": null,
+    "vol": 0.1328,
+    "margin": 77
+  },
+  {
+    "id": "1790992537",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Glass Kingdom",
+    "b": "100z",
+    "aHandle": "SteveStrange",
+    "bHandle": "_0xQuan",
+    "winner": null,
+    "vol": 0.0385,
+    "margin": 31
+  },
+  {
+    "id": "1790991840",
+    "type": "QUICK",
+    "date": "Oct 3, 2026",
+    "a": "Designer V1 x LUI x Hurric4n3 x Aporkalypse",
+    "b": "Original VS Replica",
+    "aHandle": "luiwrites",
+    "bHandle": "luiwrites",
+    "winner": null,
+    "vol": 0.15,
+    "margin": 33
+  },
+  {
     "id": "1790824470",
     "type": "QUICK",
     "date": "Oct 1, 2026",
@@ -14540,7 +14708,7 @@
     "aHandle": "geekmyth",
     "bHandle": "AporkALYPSE78",
     "winner": "Do It for the Vine - Christiano x Nessy the Rilla",
-    "vol": 0.4286,
+    "vol": 0.3654,
     "margin": 46
   },
   {
@@ -15248,7 +15416,7 @@
     "aHandle": "Hurric4n3Ike",
     "bHandle": "Hurric4n3Ike",
     "winner": "PlanWavez x Hurric4n3Ike (Prod. x Hurric4n3Ike)",
-    "vol": 0.0437,
+    "vol": 0.0124,
     "margin": 60
   },
   {
@@ -17948,7 +18116,7 @@
     "aHandle": null,
     "bHandle": null,
     "winner": "Hurric4n3Ike",
-    "vol": 0.5514,
+    "vol": 0.1036,
     "margin": 5
   },
   {
