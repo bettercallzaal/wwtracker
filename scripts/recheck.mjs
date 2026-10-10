@@ -26,6 +26,10 @@
 
 export const RECHECK_RE = /RE-CHECK BY (\d{4}-\d{2}-\d{2})/g;
 export const RECHECK_WARN_DAYS = 7;
+// Dataset staleness, used by validate.mjs. WARN_DAYS is "someone should
+// refresh", STALE_DAYS is "this is misinforming people".
+export const WARN_DAYS = 14;
+export const STALE_DAYS = 45;
 
 /** True only for a real calendar date written as YYYY-MM-DD. */
 function isRealDate(iso) {
@@ -57,26 +61,55 @@ export function classifyRechecks(text, file, today) {
   return out;
 }
 
-/** The issue body checks.yml posts. Empty list = no body (the issue closes). */
-export function overdueReport(entries) {
+/**
+ * The issue body checks.yml posts: overdue re-check claims, plus stale datasets
+ * (a dataset's date is a time-bound claim too - "this is current"). Both lists
+ * empty = empty body, and the issue closes.
+ * @param {ReturnType<typeof classifyRechecks>} entries
+ * @param {{label: string, age: number, newest: string, note: string}[]} [stale]
+ */
+export function overdueReport(entries, stale = []) {
   const overdue = entries.filter((e) => e.status === "overdue");
-  if (overdue.length === 0) return "";
-  const rows = overdue
-    .sort((a, b) => a.due.localeCompare(b.due))
-    .map((e) => `| \`${e.file}:${e.line}\` | ${e.due} | ${-e.daysLeft} |`);
-  return [
-    `${overdue.length} time-bound claim(s) are past their re-check date.`,
+  if (overdue.length === 0 && stale.length === 0) return "";
+  const out = [
+    "Time-bound claims in this repo that nobody has re-verified on time.",
     "",
-    "Each one is a statement this repo makes that nobody has re-verified on time.",
-    "Re-measure it and either move the date with a dated note saying what was",
-    "checked, or correct the claim. See `docs/RECHECK.md`.",
-    "",
-    "These no longer fail the build (they used to, which turned main red on a",
-    "timer). This issue is where they stay visible instead. `checks.yml` updates",
-    "it on every run on main and closes it when the list is empty.",
-    "",
-    "| Where | Due | Days overdue |",
-    "|---|---|---|",
-    ...rows,
-  ].join("\n");
+    "None of these fail the build. They used to, which turned main red on a",
+    "timer with no code change. This issue is where they stay visible instead.",
+    "`checks.yml` rewrites it on every run on main and closes it when both lists",
+    "are empty.",
+  ];
+  if (overdue.length) {
+    const rows = overdue
+      .sort((a, b) => a.due.localeCompare(b.due))
+      .map((e) => `| \`${e.file}:${e.line}\` | ${e.due} | ${-e.daysLeft} |`);
+    out.push(
+      "",
+      `### ${overdue.length} claim(s) past their re-check date`,
+      "",
+      "Re-measure each one and either move the date with a dated note saying what",
+      "was checked, or correct the claim. See `docs/RECHECK.md`.",
+      "",
+      "| Where | Due | Days overdue |",
+      "|---|---|---|",
+      ...rows,
+    );
+  }
+  if (stale.length) {
+    const rows = [...stale]
+      .sort((a, b) => b.age - a.age)
+      .map((s) => `| \`${s.label}\` | ${s.newest} | ${s.age} |${s.note ? ` ${s.note}` : ""} |`);
+    out.push(
+      "",
+      `### ${stale.length} dataset(s) stale past ${STALE_DAYS} days`,
+      "",
+      "The site is serving these as current. Refresh them (`docs/REFRESH.md`), or",
+      "park one deliberately in `KNOWN_STALE` with an expiry date.",
+      "",
+      "| Dataset | Newest record | Days old | Note |",
+      "|---|---|---|---|",
+      ...rows,
+    );
+  }
+  return out.join("\n");
 }

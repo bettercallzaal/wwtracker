@@ -172,9 +172,13 @@ the queue, escalating 0.01 per jump - and the mechanic is already modelled in
 
 As of 2026-09-05 they are parked explicitly rather than tacitly: `KNOWN_STALE`
 in `scripts/validate.mjs` exempts all three from the strict staleness gate
-**until 2026-10-15**, after which strict fails on them whatever their age. The
-exemption has a deadline so that continuing to park them is a decision someone
-makes again, not one inherited by silence.
+**until 2026-10-15**. The exemption has a deadline so that continuing to park
+them is a decision someone makes again, not one inherited by silence.
+
+*(Updated 2026-10-08: past that date they no longer fail the build. They are
+listed as STALE in the "Overdue RE-CHECK claims" issue with "parking expired"
+beside them, the same path every stale dataset now takes. Failing the build on
+a date turned main red with no code change.)*
 
 ### 3.5 The pre-April-2026 volume history is inherited, not verified - MEDIUM
 

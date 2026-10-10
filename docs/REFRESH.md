@@ -164,7 +164,9 @@ After any refresh:
 2. Run validation:
    ```bash
    npm run validate          # warns if data is stale
-   npm run validate -- --strict  # fails build if data > 45 days old
+   npm run validate -- --strict  # fails on a wrong date (missing, unreadable, in the future);
+                                 # data > 45 days old prints STALE and goes in the
+                                 # "Overdue RE-CHECK claims" issue, but does not fail
    ```
 3. Build and deploy:
    ```bash
